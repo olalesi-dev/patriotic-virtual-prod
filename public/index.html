@@ -1,0 +1,4107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patriotic Virtual Telehealth — Healthcare That Comes To You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0A1628;
+      --navy-mid: #111D35;
+      --navy-light: #1A2A4A;
+      --blue: #3B82F6;
+      --blue-bright: #60A5FA;
+      --blue-electric: #2563EB;
+      --blue-pale: #EFF6FF;
+      --indigo: #6366F1;
+      --violet: #8B5CF6;
+      --red: #EF4444;
+      --red-soft: #FEE2E2;
+      --coral: #F97316;
+      --coral-soft: #FFF7ED;
+      --amber: #F59E0B;
+      --amber-soft: #FFFBEB;
+      --emerald: #10B981;
+      --emerald-soft: #ECFDF5;
+      --teal: #14B8A6;
+      --rose: #F43F5E;
+      --rose-soft: #FFF1F2;
+      --white: #FFF;
+      --g50: #F9FAFB;
+      --g100: #F3F4F6;
+      --g200: #E5E7EB;
+      --g300: #D1D5DB;
+      --g400: #9CA3AF;
+      --g500: #6B7280;
+      --g600: #4B5563;
+      --g700: #374151;
+      --g800: #1F2937;
+      --r-sm: 10px;
+      --r-md: 14px;
+      --r-lg: 22px;
+      --r-xl: 30px;
+      --sh-sm: 0 1px 3px rgba(0, 0, 0, .04);
+      --sh-md: 0 4px 20px rgba(0, 0, 0, .06);
+      --sh-lg: 0 12px 40px rgba(0, 0, 0, .1);
+      --sh-xl: 0 24px 60px rgba(0, 0, 0, .14);
+      --ease: cubic-bezier(.4, 0, .2, 1);
+      --ease-b: cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--g800);
+      background: var(--white);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--g300);
+      border-radius: 10px
+    }
+
+    .container {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 28px
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    img {
+      max-width: 100%;
+      display: block
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, .85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(0, 0, 0, .04);
+      transition: all .3s var(--ease)
+    }
+
+    nav.scrolled {
+      box-shadow: var(--sh-sm);
+      background: rgba(255, 255, 255, .95)
+    }
+
+    .nav-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none
+    }
+
+    .logo-mark {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0
+    }
+
+    .logo-mark svg {
+      width: 100%;
+      height: 100%
+    }
+
+    .nav-brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15
+    }
+
+    .nav-brand-top {
+      font-family: 'Fraunces', serif;
+      font-weight: 800;
+      font-size: 17px;
+      color: var(--navy);
+      letter-spacing: -.3px
+    }
+
+    .nav-brand-top .bv {
+      color: var(--blue)
+    }
+
+    .nav-brand-bottom {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 2.8px;
+      text-transform: uppercase;
+      color: var(--g400)
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 6px
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--g600);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: all .2s var(--ease)
+    }
+
+    .nav-links a:hover {
+      color: var(--navy);
+      background: var(--g50)
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all .25s var(--ease);
+      border: none;
+      outline: none;
+      gap: 8px
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--g600)
+    }
+
+    .btn-ghost:hover {
+      color: var(--navy);
+      background: var(--g100)
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue-electric), var(--indigo));
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(59, 130, 246, .25)
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(59, 130, 246, .35)
+    }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--navy);
+      border: 1.5px solid var(--g200)
+    }
+
+    .btn-outline:hover {
+      border-color: var(--blue);
+      color: var(--blue)
+    }
+
+    .btn-large {
+      padding: 15px 32px;
+      font-size: 15px;
+      border-radius: 12px
+    }
+
+    .btn-white {
+      background: #fff;
+      color: var(--navy)
+    }
+
+    .btn-white:hover {
+      background: var(--g50);
+      transform: translateY(-1px);
+      box-shadow: var(--sh-lg)
+    }
+
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--navy);
+      cursor: pointer
+    }
+
+    /* HERO */
+    .hero {
+      padding: 130px 0 40px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 800px 600px at 15% 40%, rgba(59, 130, 246, .07) 0%, transparent 70%), radial-gradient(ellipse 600px 500px at 85% 30%, rgba(139, 92, 246, .05) 0%, transparent 70%), radial-gradient(ellipse 500px 400px at 50% 90%, rgba(249, 115, 22, .04) 0%, transparent 70%);
+      pointer-events: none
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, var(--g200) 1px, transparent 1px);
+      background-size: 32px 32px;
+      opacity: .4;
+      pointer-events: none
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, .08), rgba(139, 92, 246, .08));
+      border: 1px solid rgba(59, 130, 246, .12);
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue-electric);
+      margin-bottom: 28px;
+      animation: fadeUp .6s var(--ease) both
+    }
+
+    .bdot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      animation: pulse 2s infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .5;
+        transform: scale(.85)
+      }
+    }
+
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 58px;
+      line-height: 1.08;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -2px;
+      margin-bottom: 22px;
+      animation: fadeUp .6s var(--ease) .1s both
+    }
+
+    .hero h1 .gt {
+      background: linear-gradient(135deg, var(--blue), var(--violet), var(--coral));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.75;
+      color: var(--g500);
+      max-width: 520px;
+      margin-bottom: 36px;
+      animation: fadeUp .6s var(--ease) .2s both
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      animation: fadeUp .6s var(--ease) .3s both
+    }
+
+    .hero-trust {
+      display: flex;
+      gap: 24px;
+      margin-top: 44px;
+      animation: fadeUp .6s var(--ease) .4s both
+    }
+
+    .tp {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--g500)
+    }
+
+    .ti {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px
+    }
+
+    .ti.s {
+      background: var(--emerald-soft)
+    }
+
+    .ti.d {
+      background: var(--blue-pale)
+    }
+
+    .ti.b {
+      background: var(--amber-soft)
+    }
+
+    .ti.p {
+      background: var(--rose-soft)
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(28px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .fl-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, .08), rgba(20, 184, 166, .08));
+      border: 1px solid rgba(16, 185, 129, .15);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--emerald);
+      margin-top: 14px;
+      animation: fadeUp .6s var(--ease) .45s both
+    }
+
+    /* Hero visual */
+    .hero-vis {
+      position: relative;
+      animation: fadeUp .8s var(--ease) .2s both
+    }
+
+    .hv-main {
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      box-shadow: var(--sh-xl);
+      position: relative;
+      z-index: 2;
+      aspect-ratio: 4/3
+    }
+
+    .hv-float {
+      position: absolute;
+      border-radius: var(--r-md);
+      overflow: hidden;
+      box-shadow: var(--sh-lg);
+      border: 3px solid #fff;
+      z-index: 3
+    }
+
+    .hvf-1 {
+      width: 160px;
+      height: 120px;
+      top: -16px;
+      right: -20px;
+      animation: bob 5s ease-in-out infinite
+    }
+
+    .hvf-2 {
+      width: 140px;
+      height: 105px;
+      bottom: -12px;
+      left: -18px;
+      animation: bob 5s ease-in-out infinite 2.5s
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(0deg)
+      }
+
+      50% {
+        transform: translateY(-10px) rotate(1deg)
+      }
+    }
+
+    .hv-stat {
+      position: absolute;
+      background: #fff;
+      border-radius: var(--r-md);
+      padding: 12px 18px;
+      box-shadow: var(--sh-lg);
+      z-index: 4;
+      border: 1px solid var(--g100)
+    }
+
+    .hvs-1 {
+      top: 40%;
+      right: -36px;
+      animation: bob 6s ease-in-out infinite 1s
+    }
+
+    .hvs-2 {
+      bottom: 20%;
+      left: -30px;
+      animation: bob 6s ease-in-out infinite 3s
+    }
+
+    .hvs-v {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy)
+    }
+
+    .hvs-v.grad {
+      background: linear-gradient(135deg, var(--amber), var(--coral));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text
+    }
+
+    .hvs-l {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--g400);
+      margin-top: 1px
+    }
+
+    /* SAFETY BANNER */
+    .safety-bar {
+      padding: 20px 0;
+      background: linear-gradient(90deg, var(--emerald-soft), var(--blue-pale), var(--amber-soft));
+      border-bottom: 1px solid var(--g100)
+    }
+
+    .safety-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap
+    }
+
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--g700)
+    }
+
+    .sb-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px
+    }
+
+    .sb-icon.bg1 {
+      background: var(--emerald);
+      color: #fff
+    }
+
+    .sb-icon.bg2 {
+      background: var(--blue);
+      color: #fff
+    }
+
+    .sb-icon.bg3 {
+      background: var(--amber);
+      color: #fff
+    }
+
+    .sb-icon.bg4 {
+      background: var(--violet);
+      color: #fff
+    }
+
+    /* MARQUEE */
+    .marquee-section {
+      padding: 36px 0;
+      background: var(--navy);
+      overflow: hidden
+    }
+
+    .marquee-track {
+      display: flex;
+      gap: 48px;
+      animation: mscroll 35s linear infinite;
+      width: max-content
+    }
+
+    .marquee-item {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, .3);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .marquee-item span {
+      color: var(--blue-bright);
+      font-size: 18px
+    }
+
+    @keyframes mscroll {
+      to {
+        transform: translateX(-50%)
+      }
+    }
+
+    /* SECTIONS */
+    .sec-eye {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px
+    }
+
+    .eye-line {
+      width: 28px;
+      height: 3px;
+      border-radius: 2px
+    }
+
+    .eye-blue .eye-line {
+      background: linear-gradient(90deg, var(--blue), var(--indigo))
+    }
+
+    .eye-blue {
+      color: var(--blue)
+    }
+
+    .eye-coral .eye-line {
+      background: linear-gradient(90deg, var(--coral), var(--amber))
+    }
+
+    .eye-coral {
+      color: var(--coral)
+    }
+
+    .eye-em .eye-line {
+      background: linear-gradient(90deg, var(--emerald), var(--teal))
+    }
+
+    .eye-em {
+      color: var(--emerald)
+    }
+
+    .eye-vi .eye-line {
+      background: linear-gradient(90deg, var(--violet), var(--indigo))
+    }
+
+    .eye-vi {
+      color: var(--violet)
+    }
+
+    .eye-amber .eye-line {
+      background: linear-gradient(90deg, var(--amber), var(--coral))
+    }
+
+    .eye-amber {
+      color: var(--amber)
+    }
+
+    .sec-title {
+      font-family: 'Fraunces', serif;
+      font-size: 46px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -1.5px;
+      margin-bottom: 14px;
+      line-height: 1.12
+    }
+
+    .sec-sub {
+      font-size: 17px;
+      color: var(--g500);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 48px
+    }
+
+    /* SERVICES */
+    .services {
+      padding: 100px 0
+    }
+
+    .services-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 36px;
+      flex-wrap: wrap
+    }
+
+    .tab {
+      padding: 9px 20px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--g50);
+      color: var(--g500);
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: all .2s var(--ease)
+    }
+
+    .tab:hover {
+      color: var(--navy);
+      background: var(--g100)
+    }
+
+    .tab.active {
+      background: var(--navy);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(10, 22, 40, .2)
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px
+    }
+
+    .svc {
+      background: #fff;
+      border-radius: var(--r-md);
+      padding: 28px 24px;
+      border: 1.5px solid var(--g100);
+      transition: all .3s var(--ease);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden
+    }
+
+    .svc:hover {
+      border-color: transparent;
+      box-shadow: var(--sh-lg);
+      transform: translateY(-4px)
+    }
+
+    .svc::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      opacity: 0;
+      transition: all .3s var(--ease)
+    }
+
+    .svc:hover::after {
+      opacity: 1
+    }
+
+    .svc[data-c="blue"]::after {
+      background: linear-gradient(90deg, var(--blue), var(--indigo))
+    }
+
+    .svc[data-c="coral"]::after {
+      background: linear-gradient(90deg, var(--coral), var(--amber))
+    }
+
+    .svc[data-c="emerald"]::after {
+      background: linear-gradient(90deg, var(--emerald), var(--teal))
+    }
+
+    .svc[data-c="violet"]::after {
+      background: linear-gradient(90deg, var(--violet), var(--rose))
+    }
+
+    .svc[data-c="rose"]::after {
+      background: linear-gradient(90deg, var(--rose), var(--coral))
+    }
+
+    .svc[data-c="amber"]::after {
+      background: linear-gradient(90deg, var(--amber), var(--coral))
+    }
+
+    .svc[data-c="teal"]::after {
+      background: linear-gradient(90deg, var(--teal), var(--emerald))
+    }
+
+    .svc-ic {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px
+    }
+
+    .svc-ic.blue {
+      background: linear-gradient(135deg, #DBEAFE, #BFDBFE)
+    }
+
+    .svc-ic.coral {
+      background: linear-gradient(135deg, #FFEDD5, #FED7AA)
+    }
+
+    .svc-ic.emerald {
+      background: linear-gradient(135deg, #D1FAE5, #A7F3D0)
+    }
+
+    .svc-ic.violet {
+      background: linear-gradient(135deg, #EDE9FE, #DDD6FE)
+    }
+
+    .svc-ic.rose {
+      background: linear-gradient(135deg, #FFE4E6, #FECDD3)
+    }
+
+    .svc-ic.amber {
+      background: linear-gradient(135deg, #FEF3C7, #FDE68A)
+    }
+
+    .svc-ic.teal {
+      background: linear-gradient(135deg, #CCFBF1, #99F6E4)
+    }
+
+    .svc h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 7px
+    }
+
+    .svc p {
+      font-size: 14px;
+      color: var(--g500);
+      line-height: 1.6;
+      margin-bottom: 18px
+    }
+
+    .svc-bot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .svc-pr {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy)
+    }
+
+    .svc-pr span {
+      font-weight: 400;
+      color: var(--g400);
+      font-size: 12px
+    }
+
+    .svc-arr {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--g50);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--g400);
+      font-size: 14px;
+      transition: all .2s var(--ease)
+    }
+
+    .svc:hover .svc-arr {
+      background: var(--blue);
+      color: #fff;
+      transform: translateX(3px)
+    }
+
+    /* PROTOCOL CALLOUT */
+    .protocol-section {
+      padding: 80px 0;
+      background: var(--white)
+    }
+
+    .proto-box {
+      background: linear-gradient(135deg, var(--navy), #1e293b);
+      border-radius: var(--r-xl);
+      padding: 56px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .proto-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 50%, rgba(16, 185, 129, .1) 0%, transparent 60%);
+      pointer-events: none
+    }
+
+    .proto-left h2 {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 14px;
+      letter-spacing: -.5px;
+      line-height: 1.15
+    }
+
+    .proto-left p {
+      font-size: 16px;
+      color: rgba(255, 255, 255, .45);
+      line-height: 1.7;
+      margin-bottom: 28px
+    }
+
+    .proto-pills {
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .pp {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: var(--r-sm);
+      color: rgba(255, 255, 255, .7);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all .2s var(--ease)
+    }
+
+    .pp:hover {
+      background: rgba(255, 255, 255, .08)
+    }
+
+    .pp-ic {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0
+    }
+
+    .pp-ic.c1 {
+      background: rgba(16, 185, 129, .15);
+      color: var(--emerald)
+    }
+
+    .pp-ic.c2 {
+      background: rgba(59, 130, 246, .15);
+      color: var(--blue)
+    }
+
+    .pp-ic.c3 {
+      background: rgba(245, 158, 11, .15);
+      color: var(--amber)
+    }
+
+    .pp-ic.c4 {
+      background: rgba(139, 92, 246, .15);
+      color: var(--violet)
+    }
+
+    .proto-right {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px
+    }
+
+    .pr-card {
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: var(--r-md);
+      padding: 24px;
+      text-align: center;
+      transition: all .3s var(--ease)
+    }
+
+    .pr-card:hover {
+      background: rgba(255, 255, 255, .06);
+      transform: translateY(-2px)
+    }
+
+    .pr-num {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 4px
+    }
+
+    .pr-num.n1 {
+      color: var(--emerald)
+    }
+
+    .pr-num.n2 {
+      color: var(--blue-bright)
+    }
+
+    .pr-num.n3 {
+      color: var(--amber)
+    }
+
+    .pr-num.n4 {
+      color: var(--violet)
+    }
+
+    .pr-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .35);
+      font-weight: 500
+    }
+
+    /* PHOTO BANNER - SVG illustrations */
+    .photo-banner {
+      padding: 0;
+      overflow: hidden
+    }
+
+    .photo-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px
+    }
+
+    .ph {
+      aspect-ratio: 3/2;
+      overflow: hidden;
+      position: relative
+    }
+
+    .ph svg {
+      width: 100%;
+      height: 100%
+    }
+
+    .ph-ov {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, rgba(10, 22, 40, .65) 0%, transparent 60%);
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      z-index: 2
+    }
+
+    .ph-ov span {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600
+    }
+
+    /* HOW IT WORKS */
+    .how-section {
+      padding: 100px 0;
+      background: linear-gradient(180deg, var(--navy) 0%, #0F172A 100%);
+      position: relative;
+      overflow: hidden
+    }
+
+    .how-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 500px 500px at 20% 80%, rgba(59, 130, 246, .1) 0%, transparent 70%), radial-gradient(ellipse 400px 400px at 80% 20%, rgba(139, 92, 246, .08) 0%, transparent 70%);
+      pointer-events: none
+    }
+
+    .how-section .sec-title {
+      color: #fff
+    }
+
+    .how-section .sec-sub {
+      color: rgba(255, 255, 255, .4)
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      position: relative;
+      z-index: 1
+    }
+
+    .step {
+      padding: 32px 24px;
+      border-radius: var(--r-md);
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid rgba(255, 255, 255, .06);
+      transition: all .3s var(--ease)
+    }
+
+    .step:hover {
+      background: rgba(255, 255, 255, .06);
+      transform: translateY(-4px)
+    }
+
+    .step-acc {
+      width: 40px;
+      height: 3px;
+      border-radius: 2px;
+      margin-bottom: 20px
+    }
+
+    .step:nth-child(1) .step-acc {
+      background: var(--blue)
+    }
+
+    .step:nth-child(2) .step-acc {
+      background: var(--violet)
+    }
+
+    .step:nth-child(3) .step-acc {
+      background: var(--coral)
+    }
+
+    .step:nth-child(4) .step-acc {
+      background: var(--emerald)
+    }
+
+    .step-num {
+      font-family: 'Fraunces', serif;
+      font-size: 56px;
+      font-weight: 800;
+      background: linear-gradient(135deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      line-height: 1
+    }
+
+    .step h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px
+    }
+
+    .step p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, .4);
+      line-height: 1.65
+    }
+
+    /* RADIOLOGY */
+    .radiology {
+      padding: 100px 0;
+      background: var(--g50)
+    }
+
+    .rad-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px
+    }
+
+    .rad-card {
+      background: #fff;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      border: 1.5px solid var(--g100);
+      transition: all .3s var(--ease)
+    }
+
+    .rad-card:hover {
+      box-shadow: var(--sh-lg);
+      transform: translateY(-3px)
+    }
+
+    .rad-card.feat {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 1px var(--amber), var(--sh-md)
+    }
+
+    .rad-top {
+      padding: 32px 28px 0
+    }
+
+    .rad-badge {
+      display: inline-flex;
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 14px
+    }
+
+    .rb-n {
+      background: var(--navy);
+      color: #fff
+    }
+
+    .rb-b {
+      background: linear-gradient(135deg, var(--blue-pale), #E0E7FF);
+      color: var(--blue-electric)
+    }
+
+    .rb-a {
+      background: var(--amber-soft);
+      color: var(--amber)
+    }
+
+    .rad-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+      letter-spacing: -.5px
+    }
+
+    .rad-card .rd {
+      font-size: 14px;
+      color: var(--g500);
+      line-height: 1.7;
+      margin-bottom: 16px
+    }
+
+    .rpt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--g50);
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 16px
+    }
+
+    .rpt span {
+      font-weight: 400;
+      color: var(--g400);
+      font-size: 12px
+    }
+
+    .rad-feats {
+      padding: 20px 28px 28px
+    }
+
+    .rf {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0
+    }
+
+    .rfc {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px
+    }
+
+    .rfc.cb {
+      background: var(--blue-pale);
+      color: var(--blue)
+    }
+
+    .rfc.ce {
+      background: var(--emerald-soft);
+      color: var(--emerald)
+    }
+
+    .rfc.ca {
+      background: var(--amber-soft);
+      color: var(--amber)
+    }
+
+    .rf span {
+      font-size: 14px;
+      color: var(--g600);
+      line-height: 1.5
+    }
+
+    .rad-card.full {
+      grid-column: 1/-1
+    }
+
+    .rad-card.full .rad-feats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 32px
+    }
+
+    /* PRICING */
+    .pricing {
+      padding: 100px 0
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px
+    }
+
+    .pc {
+      background: #fff;
+      border-radius: var(--r-lg);
+      padding: 36px 28px;
+      border: 1.5px solid var(--g100);
+      transition: all .3s var(--ease);
+      position: relative
+    }
+
+    .pc:hover {
+      box-shadow: var(--sh-lg);
+      transform: translateY(-3px)
+    }
+
+    .pc.pop {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 1px var(--blue), var(--sh-md)
+    }
+
+    .pop-b {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--blue), var(--indigo));
+      color: #fff;
+      padding: 4px 18px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+
+    .pc-ic {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px
+    }
+
+    .pc-ic.i1 {
+      background: linear-gradient(135deg, #DBEAFE, #C7D2FE)
+    }
+
+    .pc-ic.i2 {
+      background: linear-gradient(135deg, #D1FAE5, #A7F3D0)
+    }
+
+    .pc-ic.i3 {
+      background: linear-gradient(135deg, #FEF3C7, #FDE68A)
+    }
+
+    .pc h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px
+    }
+
+    .pc .pcd {
+      font-size: 14px;
+      color: var(--g500);
+      line-height: 1.6;
+      margin-bottom: 20px
+    }
+
+    .pcp {
+      margin-bottom: 24px
+    }
+
+    .pca {
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -1px
+    }
+
+    .pcper {
+      font-size: 14px;
+      color: var(--g400);
+      margin-left: 4px
+    }
+
+    .pcf {
+      list-style: none;
+      margin-bottom: 28px
+    }
+
+    .pcf li {
+      padding: 8px 0;
+      font-size: 14px;
+      color: var(--g600);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--g50)
+    }
+
+    .pcf li::before {
+      content: '✓';
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--emerald-soft);
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0
+    }
+
+    .pc .btn {
+      width: 100%
+    }
+
+    /* TESTIMONIALS */
+    .testimonials {
+      padding: 100px 0;
+      background: var(--g50)
+    }
+
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px
+    }
+
+    .tc {
+      padding: 28px;
+      border-radius: var(--r-md);
+      border: 1.5px solid var(--g100);
+      background: #fff;
+      transition: all .3s var(--ease)
+    }
+
+    .tc:hover {
+      box-shadow: var(--sh-md);
+      transform: translateY(-2px)
+    }
+
+    .tc-stars {
+      margin-bottom: 14px;
+      font-size: 15px;
+      letter-spacing: 2px;
+      color: var(--amber)
+    }
+
+    .tc blockquote {
+      font-size: 15px;
+      color: var(--g700);
+      line-height: 1.7;
+      margin-bottom: 20px;
+      font-style: italic
+    }
+
+    .tc-auth {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .tc-av {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff
+    }
+
+    .ta1 {
+      background: linear-gradient(135deg, var(--blue), var(--indigo))
+    }
+
+    .ta2 {
+      background: linear-gradient(135deg, var(--coral), var(--rose))
+    }
+
+    .ta3 {
+      background: linear-gradient(135deg, var(--emerald), var(--teal))
+    }
+
+    .tc-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--navy)
+    }
+
+    .tc-det {
+      font-size: 12px;
+      color: var(--g400);
+      margin-top: 1px
+    }
+
+    /* CTA */
+    .cta-section {
+      padding: 80px 0 100px
+    }
+
+    .cta-box {
+      border-radius: var(--r-xl);
+      padding: 80px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--navy) 0%, #1E293B 50%, var(--navy-mid) 100%)
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(59, 130, 246, .15) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(139, 92, 246, .1) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(249, 115, 22, .08) 0%, transparent 50%)
+    }
+
+    .cta-box::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: var(--r-xl);
+      background: linear-gradient(135deg, var(--blue), var(--violet), var(--coral), var(--blue));
+      background-size: 300% 300%;
+      animation: bshift 6s ease infinite;
+      z-index: -1
+    }
+
+    @keyframes bshift {
+
+      0%,
+      100% {
+        background-position: 0% 50%
+      }
+
+      50% {
+        background-position: 100% 50%
+      }
+    }
+
+    .cta-box h2 {
+      font-family: 'Fraunces', serif;
+      font-size: 44px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+      letter-spacing: -1px
+    }
+
+    .cta-box p {
+      font-size: 17px;
+      color: rgba(255, 255, 255, .5);
+      max-width: 480px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1
+    }
+
+    .cta-box .btn {
+      position: relative;
+      z-index: 1
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--navy);
+      color: rgba(255, 255, 255, .4);
+      padding: 64px 0 28px
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2.2fr 1fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 48px
+    }
+
+    .footer-brand-text {
+      font-size: 14px;
+      line-height: 1.7;
+      margin-top: 16px;
+      max-width: 280px
+    }
+
+    .footer-col h4 {
+      color: rgba(255, 255, 255, .7);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      margin-bottom: 16px
+    }
+
+    .footer-col a {
+      display: block;
+      color: rgba(255, 255, 255, .35);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 4px 0;
+      transition: all .2s var(--ease)
+    }
+
+    .footer-col a:hover {
+      color: #fff
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, .06);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px
+    }
+
+    /* MODALS */
+    .mo {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(10, 22, 40, .6);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all .3s var(--ease)
+    }
+
+    .mo.active {
+      opacity: 1;
+      visibility: visible
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: var(--r-lg);
+      padding: 44px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--sh-xl);
+      transform: translateY(24px) scale(.97);
+      transition: all .35s var(--ease-b)
+    }
+
+    .mo.active .modal {
+      transform: translateY(0) scale(1)
+    }
+
+    .modal h2 {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      color: var(--navy);
+      margin-bottom: 6px;
+      letter-spacing: -.5px
+    }
+
+    .modal .ms {
+      font-size: 14px;
+      color: var(--g500);
+      margin-bottom: 28px
+    }
+
+    .fg {
+      margin-bottom: 16px
+    }
+
+    .fg label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--g700);
+      margin-bottom: 6px
+    }
+
+    .fg input,
+    .fg select,
+    .fg textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--g200);
+      border-radius: var(--r-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      color: var(--g800);
+      transition: all .2s var(--ease);
+      background: #fff
+    }
+
+    .fg input:focus,
+    .fg select:focus,
+    .fg textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, .08)
+    }
+
+    .fr {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px
+    }
+
+    .ff {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--g500);
+      text-align: center
+    }
+
+    .ff a {
+      color: var(--blue);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none
+    }
+
+    .cm {
+      max-width: 560px;
+      max-height: 85vh;
+      overflow-y: auto
+    }
+
+    .ip {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 28px
+    }
+
+    .ipb {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--g200);
+      transition: all .3s var(--ease)
+    }
+
+    .ipb.done {
+      background: linear-gradient(90deg, var(--blue), var(--indigo))
+    }
+
+    .ipb.act {
+      background: var(--blue);
+      opacity: .4
+    }
+
+    .iq {
+      margin-bottom: 22px
+    }
+
+    .iq h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 5px
+    }
+
+    .iq p {
+      font-size: 14px;
+      color: var(--g500);
+      margin-bottom: 14px
+    }
+
+    .rg {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .ro {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border: 1.5px solid var(--g200);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: all .2s var(--ease)
+    }
+
+    .ro:hover {
+      border-color: var(--blue)
+    }
+
+    .ro.sel {
+      border-color: var(--blue);
+      background: var(--blue-pale)
+    }
+
+    .rd2 {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--g300);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s var(--ease)
+    }
+
+    .ro.sel .rd2 {
+      border-color: var(--blue);
+      background: var(--blue)
+    }
+
+    .ro.sel .rd2::after {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fff
+    }
+
+    .ro span {
+      font-size: 14px;
+      font-weight: 500
+    }
+
+    .ia {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 28px
+    }
+
+    /* DASHBOARD */
+    .dashboard {
+      display: none;
+      padding-top: 70px;
+      min-height: 100vh;
+      background: var(--g50)
+    }
+
+    .dash-header {
+      background: #fff;
+      border-bottom: 1px solid var(--g200);
+      padding: 32px 0
+    }
+
+    .dhi {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .dw h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      color: var(--navy);
+      margin-bottom: 4px;
+      letter-spacing: -.5px
+    }
+
+    .dw p {
+      font-size: 14px;
+      color: var(--g500)
+    }
+
+    .db {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px
+    }
+
+    .ds {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px
+    }
+
+    .dsc {
+      background: #fff;
+      border-radius: var(--r-md);
+      padding: 22px;
+      border: 1px solid var(--g100)
+    }
+
+    .dsc-l {
+      font-size: 13px;
+      color: var(--g500);
+      margin-bottom: 8px
+    }
+
+    .dsc-v {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--navy)
+    }
+
+    .dg {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px
+    }
+
+    .dc {
+      background: #fff;
+      border-radius: var(--r-md);
+      border: 1px solid var(--g100);
+      overflow: hidden
+    }
+
+    .dc-h {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--g100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .dc-h h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy)
+    }
+
+    .cli {
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--g50);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all .2s var(--ease);
+      cursor: pointer
+    }
+
+    .cli:hover {
+      background: var(--g50)
+    }
+
+    .cli-ic {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px
+    }
+
+    .cli-info h4 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--g800)
+    }
+
+    .cli-info p {
+      font-size: 12px;
+      color: var(--g400);
+      margin-top: 1px
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 28px;
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: var(--r-md);
+      box-shadow: var(--sh-xl);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 3000;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all .35s var(--ease-b)
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1
+    }
+
+    /* ======= AI NAVIGATOR ======= */
+    .ai-fab {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 1500;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-electric), var(--indigo));
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(59, 130, 246, .35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .3s var(--ease);
+      font-size: 24px
+    }
+
+    .ai-fab:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 32px rgba(59, 130, 246, .45)
+    }
+
+    .ai-fab.open {
+      border-radius: 16px;
+      width: 56px;
+      height: 56px
+    }
+
+    .ai-fab .fab-close {
+      display: none
+    }
+
+    .ai-fab.open .fab-icon {
+      display: none
+    }
+
+    .ai-fab.open .fab-close {
+      display: block;
+      font-size: 20px
+    }
+
+    .ai-pulse {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--blue);
+      animation: aipulse 2.5s ease-out infinite;
+      opacity: 0
+    }
+
+    .ai-fab.open .ai-pulse {
+      display: none
+    }
+
+    @keyframes aipulse {
+      0% {
+        transform: scale(1);
+        opacity: .5
+      }
+
+      100% {
+        transform: scale(1.5);
+        opacity: 0
+      }
+    }
+
+    .ai-label {
+      position: absolute;
+      right: 72px;
+      background: var(--navy);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: var(--sh-md);
+      opacity: 0;
+      transform: translateX(8px);
+      transition: all .3s var(--ease);
+      pointer-events: none
+    }
+
+    .ai-fab:not(.open):hover .ai-label {
+      opacity: 1;
+      transform: translateX(0)
+    }
+
+    .ai-label::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-left-color: var(--navy)
+    }
+
+    .ai-chat {
+      position: fixed;
+      bottom: 100px;
+      right: 28px;
+      z-index: 1500;
+      width: 400px;
+      max-height: 560px;
+      background: #fff;
+      border-radius: var(--r-lg);
+      box-shadow: var(--sh-xl);
+      border: 1px solid var(--g100);
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(16px) scale(.95);
+      transition: all .3s var(--ease-b)
+    }
+
+    .ai-chat.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1)
+    }
+
+    .ai-chat-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--g100);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, .03), rgba(99, 102, 241, .03));
+      border-radius: var(--r-lg) var(--r-lg) 0 0
+    }
+
+    .ai-chat-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue), var(--indigo));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #fff
+    }
+
+    .ai-chat-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--navy)
+    }
+
+    .ai-chat-sub {
+      font-size: 11px;
+      color: var(--g400);
+      margin-top: 1px
+    }
+
+    .ai-chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 360px;
+      min-height: 200px
+    }
+
+    .ai-msg {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: fadeUp .3s var(--ease) both
+    }
+
+    .ai-msg.bot {
+      background: var(--g50);
+      color: var(--g700);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px
+    }
+
+    .ai-msg.user {
+      background: linear-gradient(135deg, var(--blue), var(--indigo));
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px
+    }
+
+    .ai-msg .ai-opts {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px
+    }
+
+    .ai-opt {
+      background: #fff;
+      border: 1.5px solid var(--g200);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--navy);
+      cursor: pointer;
+      transition: all .2s var(--ease);
+      text-align: left;
+      font-family: 'Outfit', sans-serif
+    }
+
+    .ai-opt:hover {
+      border-color: var(--blue);
+      background: var(--blue-pale);
+      color: var(--blue-electric)
+    }
+
+    .ai-chat-input {
+      padding: 12px 16px;
+      border-top: 1px solid var(--g100);
+      display: flex;
+      gap: 8px
+    }
+
+    .ai-chat-input input {
+      flex: 1;
+      border: 1.5px solid var(--g200);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+      outline: none;
+      transition: all .2s var(--ease)
+    }
+
+    .ai-chat-input input:focus {
+      border-color: var(--blue)
+    }
+
+    .ai-chat-input button {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue), var(--indigo));
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s var(--ease)
+    }
+
+    .ai-chat-input button:hover {
+      transform: scale(1.05)
+    }
+
+    .ai-typing {
+      display: flex;
+      gap: 4px;
+      padding: 8px 0;
+      align-self: flex-start
+    }
+
+    .ai-typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--g300);
+      animation: blink 1.4s infinite both
+    }
+
+    .ai-typing span:nth-child(2) {
+      animation-delay: .2s
+    }
+
+    .ai-typing span:nth-child(3) {
+      animation-delay: .4s
+    }
+
+    @keyframes blink {
+
+      0%,
+      80%,
+      100% {
+        opacity: .3
+      }
+
+      40% {
+        opacity: 1
+      }
+    }
+
+    .ai-elig {
+      background: var(--emerald-soft);
+      border: 1px solid rgba(16, 185, 129, .2);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 8px
+    }
+
+    .ai-elig.warn {
+      background: var(--amber-soft);
+      border-color: rgba(245, 158, 11, .2)
+    }
+
+    .ai-elig.no {
+      background: var(--red-soft);
+      border-color: rgba(239, 68, 68, .15)
+    }
+
+    .ai-elig h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .ai-elig p {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--g600)
+    }
+
+    @media(max-width:1024px) {
+      .hero h1 {
+        font-size: 44px
+      }
+
+      .steps-grid,
+      .pricing-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .footer-grid {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      .photo-row {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .proto-box {
+        grid-template-columns: 1fr;
+        padding: 40px 28px
+      }
+    }
+
+    @media(max-width:768px) {
+      .nav-links {
+        display: none
+      }
+
+      .mobile-toggle {
+        display: block
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 40px
+      }
+
+      .hero h1 {
+        font-size: 36px;
+        letter-spacing: -1px
+      }
+
+      .hero-vis {
+        order: -1
+      }
+
+      .services-grid,
+      .rad-grid,
+      .test-grid,
+      .steps-grid,
+      .pricing-grid {
+        grid-template-columns: 1fr
+      }
+
+      .rad-card.full {
+        grid-column: auto
+      }
+
+      .rad-card.full .rad-feats {
+        grid-template-columns: 1fr
+      }
+
+      .ds {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .dg {
+        grid-template-columns: 1fr
+      }
+
+      .cta-box {
+        padding: 48px 24px
+      }
+
+      .cta-box h2 {
+        font-size: 28px
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        gap: 8px
+      }
+
+      .modal {
+        margin: 16px;
+        padding: 28px
+      }
+
+      .sec-title {
+        font-size: 32px
+      }
+
+      .hero-trust {
+        flex-direction: column;
+        gap: 10px
+      }
+
+      .proto-box {
+        padding: 32px 20px
+      }
+
+      .proto-right {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .safety-inner {
+        gap: 16px
+      }
+
+      .sb-item {
+        font-size: 11px
+      }
+
+      .ai-chat {
+        width: calc(100vw - 32px);
+        right: 16px;
+        bottom: 90px;
+        max-height: 70vh
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LOGO SVG -->
+  <svg style="display:none">
+    <defs>
+      <symbol id="pvtLogo" viewBox="0 0 44 44">
+        <rect width="44" height="44" rx="13" fill="#0A1628" />
+        <path d="M11.5 14L22 9L32.5 14V21.5C32.5 27.8 28 32.8 22 34.5C16 32.8 11.5 27.8 11.5 21.5V14Z"
+          fill="url(#logoGrad)" stroke="rgba(255,255,255,0.12)" stroke-width="0.6" />
+        <path d="M22 14.5L23.4 18.5H27.5L24.2 21L25.5 25L22 22.5L18.5 25L19.8 21L16.5 18.5H20.6L22 14.5Z" fill="white"
+          opacity="0.9" />
+        <path d="M14 22.5H18L19.5 19.5L21 24.5L23 20L24.5 22.5H30" stroke="white" stroke-width="1.3"
+          stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55" />
+        <defs>
+          <linearGradient id="logoGrad" x1="11.5" y1="9" x2="32.5" y2="34.5">
+            <stop stop-color="#3B82F6" />
+            <stop offset=".35" stop-color="#6366F1" />
+            <stop offset=".7" stop-color="#8B5CF6" />
+            <stop offset="1" stop-color="#EC4899" />
+          </linearGradient>
+        </defs>
+      </symbol>
+    </defs>
+  </svg>
+
+  <nav id="mainNav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" onclick="showLanding()">
+        <div class="logo-mark"><svg>
+            <use href="#pvtLogo" />
+          </svg></div>
+        <div class="nav-brand">
+          <div class="nav-brand-top">Patriotic <span class="bv">Virtual</span></div>
+          <div class="nav-brand-bottom">Telehealth</div>
+        </div>
+      </a>
+      <div class="nav-links"><a href="#" onclick="openAboutUs()">About Us</a><a href="#"
+          onclick="openConsent()">Privacy/Terms</a><a href="#services">Services</a><a href="#how-it-works">How It
+          Works</a><a href="#radiology">Radiology</a><a href="#pricing">Plans</a><a href="#testimonials">Reviews</a>
+      </div>
+      <div class="nav-actions"><button class="btn btn-ghost" id="loginBtn" onclick="openModal('login')">Log
+          In</button><button class="btn btn-primary" id="signupBtn" onclick="openModal('register')">Get
+          Started</button><button class="btn btn-ghost hidden" id="dashBtn"
+          onclick="showDashboard()">Dashboard</button><button class="btn btn-outline hidden" id="logoutBtn"
+          onclick="logout()">Log Out</button></div>
+      <button class="mobile-toggle" onclick="this.textContent=this.textContent==='☰'?'✕':'☰'">☰</button>
+    </div>
+  </nav>
+
+  <main id="landingPage">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero-inner">
+        <div class="hero-grid">
+          <div>
+            <div class="hero-badge">
+              <div class="bdot"></div>Board-Certified Physicians Online Now
+            </div>
+            <h1>Healthcare<br>that comes<br>to <span class="gt">you.</span></h1>
+            <p class="hero-sub">General telehealth, radiology second opinions, physician-supervised AI imaging, and
+              expert video consults — all protocol-driven, all from board-certified providers.</p>
+            <div class="hero-ctas"><button class="btn btn-primary btn-large" onclick="openModal('register')">Start Your
+                Visit →</button><button class="btn btn-outline btn-large"
+                onclick="document.getElementById('services').scrollIntoView({behavior:'smooth'})">Explore
+                Services</button></div>
+            <div class="hero-trust">
+              <div class="tp">
+                <div class="ti s">🛡</div>HIPAA Compliant
+              </div>
+              <div class="tp">
+                <div class="ti d">⚕️</div>FL-Licensed
+              </div>
+              <div class="tp">
+                <div class="ti b">📦</div>Free Rx Shipping
+              </div>
+              <div class="tp">
+                <div class="ti p">📋</div>Protocol-Based
+              </div>
+            </div>
+            <div class="fl-badge">🌴 Now serving Florida — Virginia coming soon</div>
+          </div>
+          <div class="hero-vis">
+            <div class="hv-main">
+              <!-- Inline SVG: Doctor on video call -->
+              <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="hg1" x1="0" y1="0" x2="400" y2="300" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1a365d" />
+                    <stop offset="1" stop-color="#3b82f6" />
+                  </linearGradient>
+                </defs>
+                <rect width="400" height="300" fill="url(#hg1)" />
+                <rect x="60" y="30" width="280" height="200" rx="16" fill="#0f172a" opacity=".6" />
+                <rect x="68" y="38" width="264" height="184" rx="12" fill="#1e293b" />
+                <!-- Doctor silhouette -->
+                <circle cx="200" cy="110" r="32" fill="#60a5fa" opacity=".3" />
+                <circle cx="200" cy="100" r="22" fill="#93c5fd" />
+                <path d="M165 160C165 140 180 128 200 128C220 128 235 140 235 160V180H165V160Z" fill="#3b82f6" />
+                <rect x="180" y="155" width="40" height="8" rx="4" fill="#fff" opacity=".6" />
+                <!-- Stethoscope hint -->
+                <circle cx="200" cy="148" r="6" stroke="#60a5fa" stroke-width="2" fill="none" />
+                <!-- Video UI elements -->
+                <circle cx="90" cy="55" r="5" fill="#ef4444" />
+                <circle cx="106" cy="55" r="5" fill="#f59e0b" />
+                <circle cx="122" cy="55" r="5" fill="#10b981" />
+                <rect x="80" y="235" width="60" height="28" rx="8" fill="#10b981" opacity=".8" />
+                <rect x="93" y="244" width="34" height="10" rx="3" fill="#fff" opacity=".6" />
+                <rect x="260" y="235" width="60" height="28" rx="8" fill="#ef4444" opacity=".6" />
+                <!-- Waveform -->
+                <path d="M150 250L165 240L175 255L185 235L195 260L205 238L215 252L225 242L240 250" stroke="#60a5fa"
+                  stroke-width="2" fill="none" opacity=".4" />
+              </svg>
+            </div>
+            <div class="hv-float hvf-1">
+              <!-- Inline SVG: X-ray -->
+              <svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
+                <rect width="160" height="120" fill="#0f172a" />
+                <rect x="50" y="8" width="60" height="80" rx="6" fill="#1e3a5f" opacity=".8" />
+                <!-- Ribcage outline -->
+                <ellipse cx="80" cy="28" rx="18" ry="14" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity=".5" />
+                <line x1="62" y1="40" x2="98" y2="40" stroke="#60a5fa" stroke-width="1" opacity=".3" />
+                <line x1="64" y1="48" x2="96" y2="48" stroke="#60a5fa" stroke-width="1" opacity=".3" />
+                <line x1="66" y1="56" x2="94" y2="56" stroke="#60a5fa" stroke-width="1" opacity=".3" />
+                <line x1="68" y1="64" x2="92" y2="64" stroke="#60a5fa" stroke-width="1" opacity=".3" />
+                <path d="M73 70L80 82L87 70" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity=".4" />
+                <!-- Spine -->
+                <line x1="80" y1="24" x2="80" y2="78" stroke="#93c5fd" stroke-width="2" opacity=".3" />
+                <text x="80" y="104" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="sans-serif"
+                  opacity=".6">CHEST PA</text>
+              </svg>
+            </div>
+            <div class="hv-float hvf-2">
+              <!-- Inline SVG: Exercise/wellness -->
+              <svg viewBox="0 0 140 105" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="exg" x1="0" y1="0" x2="140" y2="105">
+                    <stop stop-color="#065f46" />
+                    <stop offset="1" stop-color="#10b981" />
+                  </linearGradient>
+                </defs>
+                <rect width="140" height="105" fill="url(#exg)" />
+                <!-- Runner silhouette -->
+                <circle cx="58" cy="30" r="9" fill="#fff" opacity=".7" />
+                <path d="M55 40L50 60L42 75" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"
+                  opacity=".6" />
+                <path d="M55 40L65 58L75 72" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"
+                  opacity=".6" />
+                <path d="M55 40L48 52" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"
+                  opacity=".5" />
+                <path d="M55 40L68 45" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"
+                  opacity=".5" />
+                <!-- Heart rate line -->
+                <path d="M85 50L92 50L96 38L100 62L104 44L108 55L120 55" stroke="#fff" stroke-width="2" fill="none"
+                  opacity=".5" />
+                <text x="102" y="80" text-anchor="middle" fill="#fff" font-size="9" font-family="sans-serif"
+                  opacity=".5">WELLNESS</text>
+              </svg>
+            </div>
+            <div class="hv-stat hvs-1">
+              <div class="hvs-v grad">4.9 ★</div>
+              <div class="hvs-l">Patient Rating</div>
+            </div>
+            <div class="hv-stat hvs-2">
+              <div class="hvs-v" style="color:var(--emerald)">&lt;24hr</div>
+              <div class="hvs-l">Avg. Response</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAFETY BANNER -->
+    <section class="safety-bar">
+      <div class="container">
+        <div class="safety-inner">
+          <div class="sb-item">
+            <div class="sb-icon bg1">✓</div>Evidence-Based Protocols
+          </div>
+          <div class="sb-item">
+            <div class="sb-icon bg2">✓</div>Automated Safety Screening
+          </div>
+          <div class="sb-item">
+            <div class="sb-icon bg3">✓</div>Contraindication Checks
+          </div>
+          <div class="sb-item">
+            <div class="sb-icon bg4">✓</div>Board-Certified Review
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <section class="marquee-section">
+      <div class="marquee-track">
+        <div class="marquee-item"><span>🩺</span>General Telehealth</div>
+        <div class="marquee-item"><span>💊</span>GLP-1 Weight Loss</div>
+        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        <div class="marquee-item"><span>⏱️</span>Premature Ejaculation</div>
+        <div class="marquee-item"><span>🧬</span>Testosterone / HRT</div>
+        <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
+        <div class="marquee-item"><span>🔬</span>AI-Powered Imaging</div>
+        <div class="marquee-item"><span>📱</span>Digital Health Platform</div>
+        <div class="marquee-item"><span>🌴</span>Available in Florida</div>
+        <div class="marquee-item"><span>🩺</span>General Telehealth</div>
+        <div class="marquee-item"><span>💊</span>GLP-1 Weight Loss</div>
+        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        <div class="marquee-item"><span>⏱️</span>Premature Ejaculation</div>
+        <div class="marquee-item"><span>🧬</span>Testosterone / HRT</div>
+        <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
+        <div class="marquee-item"><span>🔬</span>AI-Powered Imaging</div>
+        <div class="marquee-item"><span>📱</span>Digital Health Platform</div>
+        <div class="marquee-item"><span>🌴</span>Available in Florida</div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="services" id="services">
+      <div class="container">
+        <div class="sec-eye eye-blue">
+          <div class="eye-line"></div>Our Services
+        </div>
+        <h2 class="sec-title">Treatments designed<br>for real results.</h2>
+        <p class="sec-sub">Every treatment follows strict, evidence-based protocols with automated safety screening.
+          Currently available to Florida residents — expanding to Virginia soon.</p>
+        <div class="services-tabs">
+          <div class="tab active" onclick="filterSvc('all',this)">All</div>
+          <div class="tab" onclick="filterSvc('popular',this)">Popular</div>
+          <div class="tab" onclick="filterSvc('clinical',this)">Clinical Visits</div>
+          <div class="tab" onclick="filterSvc('mens',this)">Men's Health</div>
+          <div class="tab" onclick="filterSvc('ai',this)">AI & Digital</div>
+          <div class="tab" onclick="filterSvc('membership',this)">Memberships</div>
+        </div>
+        <div class="services-grid" id="svcGrid"></div>
+      </div>
+    </section>
+
+    <!-- PROTOCOL SECTION -->
+    <section class="protocol-section">
+      <div class="container">
+        <div class="proto-box">
+          <div class="proto-left">
+            <div class="sec-eye eye-em" style="margin-bottom:20px">
+              <div class="eye-line"></div>Our Approach
+            </div>
+            <h2>Protocol-driven care.<br>No exceptions.</h2>
+            <p>Every prescription, every consultation, every imaging read follows strict clinical protocols. Our
+              automated screening catches contraindications before they become problems.</p>
+            <div class="proto-pills">
+              <div class="pp">
+                <div class="pp-ic c1">🛡</div>Automated contraindication screening on every visit
+              </div>
+              <div class="pp">
+                <div class="pp-ic c2">📋</div>Evidence-based treatment protocols for all services
+              </div>
+              <div class="pp">
+                <div class="pp-ic c3">⚕️</div>Board-certified physician review required for every Rx
+              </div>
+              <div class="pp">
+                <div class="pp-ic c4">🔒</div>HIPAA-compliant platform with full audit logging
+              </div>
+            </div>
+          </div>
+          <div class="proto-right">
+            <div class="pr-card">
+              <div class="pr-num n1">100%</div>
+              <div class="pr-label">Protocol Adherence</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-num n2">9</div>
+              <div class="pr-label">Service Categories</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-num n3">&lt;24h</div>
+              <div class="pr-label">Provider Response</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-num n4">24/7</div>
+              <div class="pr-label">Platform Access</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHOTO BANNER (inline SVG illustrations) -->
+    <section class="photo-banner">
+      <div class="photo-row">
+        <div class="ph">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="200" fill="#1a365d" />
+            <circle cx="150" cy="70" r="28" fill="#93c5fd" opacity=".6" />
+            <path d="M115 120C115 100 130 90 150 90C170 90 185 100 185 120V155H115V120Z" fill="#3b82f6" opacity=".7" />
+            <rect x="130" y="115" width="40" height="6" rx="3" fill="#fff" opacity=".5" />
+            <circle cx="150" cy="108" r="5" stroke="#fff" stroke-width="1.5" fill="none" opacity=".4" />
+            <path d="M60 160L80 160L90 140L100 170L110 145L120 160L240 160" stroke="#60a5fa" stroke-width="1.5"
+              fill="none" opacity=".25" />
+          </svg>
+          <div class="ph-ov"><span>Expert Providers</span></div>
+        </div>
+        <div class="ph">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="pb2" x1="0" y1="0" x2="300" y2="200">
+                <stop stop-color="#065f46" />
+                <stop offset="1" stop-color="#10b981" />
+              </linearGradient>
+            </defs>
+            <rect width="300" height="200" fill="url(#pb2)" />
+            <circle cx="120" cy="55" r="16" fill="#fff" opacity=".5" />
+            <path d="M115 72L105 105L90 140" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"
+              opacity=".45" />
+            <path d="M115 72L130 100L150 130" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"
+              opacity=".45" />
+            <path d="M115 72L100 85" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".35" />
+            <path d="M115 72L135 78" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".35" />
+            <path d="M180 90L195 90L200 75L210 105L220 80L225 90L260 90" stroke="#fff" stroke-width="2" fill="none"
+              opacity=".35" />
+            <circle cx="235" cy="60" r="18" stroke="#fff" stroke-width="1.5" fill="none" opacity=".2" /><text x="235"
+              y="65" text-anchor="middle" fill="#fff" font-size="14" font-family="sans-serif" opacity=".3">♡</text>
+          </svg>
+          <div class="ph-ov"><span>Healthy Living</span></div>
+        </div>
+        <div class="ph">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="300" height="200" fill="#0f172a" />
+            <rect x="60" y="20" width="180" height="140" rx="12" fill="#1e293b" />
+            <!-- CT/scan imagery -->
+            <circle cx="150" cy="85" r="45" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity=".3" />
+            <circle cx="150" cy="85" r="30" stroke="#60a5fa" stroke-width="1" fill="none" opacity=".2" />
+            <circle cx="150" cy="85" r="15" fill="#60a5fa" opacity=".1" />
+            <line x1="105" y1="85" x2="195" y2="85" stroke="#3b82f6" stroke-width=".5" opacity=".3" />
+            <line x1="150" y1="40" x2="150" y2="130" stroke="#3b82f6" stroke-width=".5" opacity=".3" />
+            <path d="M80 170L100 170L110 160L118 178L126 155L132 170L260 170" stroke="#10b981" stroke-width="1.5"
+              fill="none" opacity=".3" />
+            <text x="150" y="185" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="sans-serif"
+              opacity=".4">AI ANALYSIS</text>
+          </svg>
+          <div class="ph-ov"><span>Advanced Imaging</span></div>
+        </div>
+        <div class="ph">
+          <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="pb4" x1="0" y1="0" x2="300" y2="200">
+                <stop stop-color="#7c2d12" />
+                <stop offset="1" stop-color="#f97316" />
+              </linearGradient>
+            </defs>
+            <rect width="300" height="200" fill="url(#pb4)" />
+            <!-- Wellness/meditation figure -->
+            <circle cx="150" cy="60" r="18" fill="#fff" opacity=".4" />
+            <path d="M130 85L150 78L170 85L170 120L130 120Z" fill="#fff" opacity=".3" />
+            <path d="M130 100L105 110" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".3" />
+            <path d="M170 100L195 110" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".3" />
+            <path d="M135 120L120 155" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".3" />
+            <path d="M165 120L180 155" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".3" />
+            <!-- Pulse/vitals circles -->
+            <circle cx="70" cy="150" r="20" stroke="#fff" stroke-width="1" fill="none" opacity=".15" />
+            <circle cx="230" cy="45" r="25" stroke="#fff" stroke-width="1" fill="none" opacity=".12" />
+            <text x="150" y="185" text-anchor="middle" fill="#fff" font-size="10" font-family="sans-serif"
+              opacity=".35">TOTAL WELLNESS</text>
+          </svg>
+          <div class="ph-ov"><span>Total Wellness</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-section" id="how-it-works">
+      <div class="container">
+        <div class="sec-eye eye-coral">
+          <div class="eye-line"></div>How It Works
+        </div>
+        <h2 class="sec-title">Care in four<br>simple steps.</h2>
+        <p class="sec-sub">From first click to treatment at your door — protocol-driven at every step.</p>
+        <div class="steps-grid">
+          <div class="step">
+            <div class="step-acc"></div>
+            <div class="step-num">01</div>
+            <h3>Pick Your Service</h3>
+            <p>Choose from clinical visits, AI tools, and membership plans — general telehealth, weight loss, sexual
+              health, hormone therapy, AI imaging, and more.</p>
+          </div>
+          <div class="step">
+            <div class="step-acc"></div>
+            <div class="step-num">02</div>
+            <h3>Safety Screening</h3>
+            <p>Complete a secure intake. Our system automatically screens for contraindications to ensure safe,
+              protocol-based treatment.</p>
+          </div>
+          <div class="step">
+            <div class="step-acc"></div>
+            <div class="step-num">03</div>
+            <h3>Provider Reviews</h3>
+            <p>A board-certified physician or radiologist reviews your case against clinical protocols and creates a
+              personalized plan.</p>
+          </div>
+          <div class="step">
+            <div class="step-acc"></div>
+            <div class="step-num">04</div>
+            <h3>Get Treated</h3>
+            <p>Prescriptions ship to your door. Radiology reports delivered digitally. Video consults from anywhere.
+              Ongoing support included.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RADIOLOGY & AI -->
+    <section class="radiology" id="radiology">
+      <div class="container">
+        <div class="sec-eye eye-em">
+          <div class="eye-line"></div>Radiology Education
+        </div>
+        <h2 class="sec-title">Expert imaging insights.<br>Clearer understanding.</h2>
+        <p class="sec-sub">Physician-supervised educational services to help you understand your medical imaging.
+          <span style="display:block;margin-top:8px;font-weight:600;color:var(--amber)">⚠️ For Educational Purposes
+            Only. Not a diagnostic service.</span>
+        </p>
+        <div class="rad-grid" style="grid-template-columns:repeat(2,1fr)">
+          <!-- 1. AI Analysis -->
+          <div class="rad-card">
+            <div class="rad-top">
+              <div class="rad-badge rb-b">Tier 1</div>
+              <h3>AI-Powered Analysis</h3>
+              <p class="rd">Physician-supervised AI interpretation of your radiology reports. We help explain complex
+                findings in plain English.</p>
+              <div class="rpt">$99 <span>/ analysis</span></div>
+            </div>
+          </div>
+          <!-- 2. Report Interpretation -->
+          <div class="rad-card">
+            <div class="rad-top">
+              <div class="rad-badge rb-n">Tier 2</div>
+              <h3>Report Interpretation</h3>
+              <p class="rd">Expert analysis of your existing radiology report. We translate medical jargon into clear,
+                understandable language.</p>
+              <div class="rpt">$149 <span>/ report</span></div>
+            </div>
+          </div>
+          <!-- 3. Standard Review -->
+          <div class="rad-card">
+            <div class="rad-top">
+              <div class="rad-badge rb-a">Tier 3</div>
+              <h3>Standard Imaging Review</h3>
+              <p class="rd">A complete educational over-read of your actual images (X-Ray, CT, MRI) by a board-certified
+                radiologist.</p>
+              <div class="rpt">$249 <span>/ study</span></div>
+            </div>
+          </div>
+          <!-- 4. Video Consult -->
+          <div class="rad-card">
+            <div class="rad-top">
+              <div class="rad-badge rb-n" style="background:var(--rose-soft);color:var(--rose)">Tier 4 · Premier</div>
+              <h3>Imaging + Video Consult</h3>
+              <p class="rd">Full educational image review plus a 15-minute secure video consultation to discuss findings
+                directly with Dr. Osunsade.</p>
+              <div class="rpt">$449 <span>/ consult</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-eye eye-em" style="margin-top: 80px; color: var(--navy);">
+          <div class="eye-line" style="background: var(--navy);"></div>Diagnostic Radiology
+        </div>
+        <h2 class="sec-title" style="color:var(--navy)">Clinical reads &<br>Facility solutions.</h2>
+        <p class="sec-sub" style="margin-bottom:40px">Official diagnostic reports and B2B teleradiology services for
+          urgent cares and clinics.</p>
+
+        <div class="rad-grid" style="grid-template-columns:repeat(3,1fr)">
+          <!-- 1. Single Read -->
+          <div class="rad-card">
+            <div class="rad-top">
+              <div class="rad-badge rb-b" style="background:var(--blue);color:white">Diagnostic</div>
+              <h3>Single Study Read</h3>
+              <p class="rd">Official diagnostic report for CT, X-Ray, or Ultrasound. Fast 24-48h turnaround time.</p>
+              <div class="rpt">$75 <span>/ read</span></div>
+            </div>
+          </div>
+          <!-- 2. Second Opinion -->
+          <div class="rad-card">
+            <div class="rad-top">
+              <div class="rad-badge rb-n" style="background:var(--indigo);color:white">Clinical Review</div>
+              <h3>Second Opinion</h3>
+              <p class="rd">Full diagnostic review, written opinion, and patient summary for CT, XR, or US.</p>
+              <div class="rpt">$250 <span>/ consult</span></div>
+            </div>
+          </div>
+          <!-- 3. Facility Contracts -->
+          <div class="rad-card">
+            <div class="rad-top">
+              <div class="rad-badge rb-a" style="background:var(--navy);color:white">For Facilities</div>
+              <h3>Urgent Care / Outpatient</h3>
+              <p class="rd">Unlimited reads, SLA guarantees, and dedicated upload link. Customized for your volume.</p>
+              <div class="rpt">$3,500+ <span>/ month</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="pricing" id="pricing">
+      <div class="container">
+        <div class="sec-eye eye-vi">
+          <div class="eye-line"></div>Plans & Pricing
+        </div>
+        <h2 class="sec-title">Choose your plan.</h2>
+        <p class="sec-sub">From AI-only access to full-service care. All plans available to Florida residents.</p>
+        <div class="pricing-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="pc">
+            <div class="pc-ic i1">🎯</div>
+            <h3>All Access Core</h3>
+            <p class="pcd">General telehealth + AI health assistant + AI imaging tools + scheduling. Great starter
+              membership.</p>
+            <div class="pcp"><span class="pca">$99</span><span class="pcper">/month</span></div>
+            <ul class="pcf">
+              <li>General telehealth visits</li>
+              <li>AI Health Assistant access</li>
+              <li>AI-powered imaging tools</li>
+              <li>Digital health platform</li>
+              <li>Standard scheduling</li>
+            </ul><button class="btn btn-outline" onclick="openModal('register')">Get Started</button>
+          </div>
+          <div class="pc pop">
+            <div class="pop-b">Most Popular</div>
+            <div class="pc-ic i2">⭐</div>
+            <h3>All Access Plus</h3>
+            <p class="pcd">Everything in Core plus expanded AI imaging, priority scheduling, and full telehealth access.
+            </p>
+            <div class="pcp"><span class="pca">$149</span><span class="pcper">/month</span></div>
+            <ul class="pcf">
+              <li>Everything in Core</li>
+              <li>Expanded AI imaging analysis</li>
+              <li>Priority scheduling</li>
+              <li>All specialty telehealth</li>
+              <li>Free prescription shipping</li>
+            </ul><button class="btn btn-primary" onclick="openModal('register')">Get Started</button>
+          </div>
+          <div class="pc">
+            <div class="pc-ic i3">🏆</div>
+            <h3>All Access Elite</h3>
+            <p class="pcd">The ultimate plan — unlimited telehealth, all AI tools, priority everything, and dedicated
+              support.</p>
+            <div class="pcp"><span class="pca">$199</span><span class="pcper">/month</span></div>
+            <ul class="pcf">
+              <li>Everything in Plus</li>
+              <li>Unlimited telehealth visits</li>
+              <li>Unlimited AI imaging</li>
+              <li>Priority provider access</li>
+              <li>Dedicated support line</li>
+            </ul><button class="btn btn-outline" onclick="openModal('register')">Get Started</button>
+          </div>
+        </div>
+        <div style="margin-top:32px;text-align:center">
+          <p style="font-size:14px;color:var(--g500);margin-bottom:12px">Also available: Telehealth-only memberships</p>
+          <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap">
+            <div style="background:var(--g50);padding:12px 20px;border-radius:10px;font-size:14px"><b>Basic</b> $29/mo
+              <span style="color:var(--g400)">· AI + limited visits</span>
+            </div>
+            <div style="background:var(--g50);padding:12px 20px;border-radius:10px;font-size:14px"><b>Standard</b>
+              $59/mo <span style="color:var(--g400)">· 1 visit/month</span></div>
+            <div style="background:var(--g50);padding:12px 20px;border-radius:10px;font-size:14px"><b>Premium</b> $99/mo
+              <span style="color:var(--g400)">· Unlimited/priority</span>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--g400);margin-top:16px">Or pay per visit: General $79 · ED $79 · PE $79 ·
+            GLP-1 $129 · HRT $149</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testimonials" id="testimonials">
+      <div class="container">
+        <div class="sec-eye eye-amber">
+          <div class="eye-line"></div>Reviews
+        </div>
+        <h2 class="sec-title">Real results,<br>real people.</h2>
+        <p class="sec-sub">Hear from Florida patients who transformed their health with Patriotic Virtual Telehealth.
+        </p>
+        <div class="test-grid">
+          <div class="tc">
+            <div class="tc-stars">★★★★★</div>
+            <blockquote>"Got my GLP-1 prescription in 24 hours. Down 35 lbs and counting. The safety screening made me
+              feel confident they actually care about doing this right."</blockquote>
+            <div class="tc-auth">
+              <div class="tc-av ta1">MR</div>
+              <div>
+                <div class="tc-name">Marcus R.</div>
+                <div class="tc-det">Weight Loss · Jacksonville, FL</div>
+              </div>
+            </div>
+          </div>
+          <div class="tc">
+            <div class="tc-stars">★★★★★</div>
+            <blockquote>"Having an actual radiologist explain my CT findings over video was incredible. Plain English,
+              no jargon. Worth every penny for peace of mind."</blockquote>
+            <div class="tc-auth">
+              <div class="tc-av ta2">SK</div>
+              <div>
+                <div class="tc-name">Sarah K.</div>
+                <div class="tc-det">Video Imaging Consult · Tampa, FL</div>
+              </div>
+            </div>
+          </div>
+          <div class="tc">
+            <div class="tc-stars">★★★★★</div>
+            <blockquote>"The AI flagged something on my chest X-ray, then the radiologist confirmed it and walked me
+              through next steps. Protocol-driven and professional."</blockquote>
+            <div class="tc-auth">
+              <div class="tc-av ta3">JD</div>
+              <div>
+                <div class="tc-name">James D.</div>
+                <div class="tc-det">AI + Radiologist · Orlando, FL</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+      <div class="container">
+        <div class="cta-box">
+          <h2>Your health, your schedule.</h2>
+          <p>Protocol-driven care from board-certified physicians and radiologists — entirely online, entirely safe. Now
+            available in Florida.</p>
+          <button class="btn btn-white btn-large" onclick="openModal('register')">Start Your Free Visit →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="container">
+        <div class="footer-grid">
+          <div><a href="#" class="nav-logo" onclick="showLanding()" style="margin-bottom:4px">
+              <div class="logo-mark"><svg>
+                  <use href="#pvtLogo" />
+                </svg></div>
+              <div class="nav-brand">
+                <div class="nav-brand-top" style="color:#fff">Patriotic <span class="bv"
+                    style="color:var(--blue-bright)">Virtual</span></div>
+                <div class="nav-brand-bottom" style="color:rgba(255,255,255,.3)">Telehealth</div>
+              </div>
+            </a>
+            <p class="footer-brand-text">Board-certified telehealth and radiology services. Protocol-driven care,
+              delivered to your door. Currently serving Florida. Expanding to Virginia.</p>
+          </div>
+          <div class="footer-col">
+            <h4>Telehealth</h4><a href="#services">General Visit</a><a href="#services">Weight Loss</a><a
+              href="#services">Sexual Health</a><a href="#services">Hormone Therapy</a>
+          </div>
+          <div class="footer-col">
+            <h4>AI & Imaging</h4><a href="#radiology">AI Health Assistant</a><a href="#radiology">AI Imaging
+              Analysis</a><a href="#radiology">Digital Platform</a><a href="#pricing">Memberships</a>
+          </div>
+          <div class="footer-col">
+            <h4>Company</h4><a href="javascript:void(0)" onclick="openAboutUs()">About Us</a><a
+              href="javascript:void(0)" onclick="toast('Careers page coming soon!')">Careers</a><a
+              href="javascript:void(0)" onclick="toast('Press page coming soon!')">Press</a>
+          </div>
+          <div class="footer-col">
+            <h4>Support</h4><a href="javascript:void(0)" onclick="toast('FAQ coming soon!')">FAQ</a><a
+              href="javascript:void(0)"
+              onclick="toast('Contact support: support@patriotictelehealth.com')">Contact</a><a
+              href="javascript:void(0)" onclick="openConsent()">Privacy Policy</a><a href="javascript:void(0)"
+              onclick="openConsent()">Terms</a>
+          </div>
+        </div>
+        <div class="footer-bottom"><span>© 2026 Patriotic Virtual Telehealth. All rights reserved.</span><span>HIPAA
+            Compliant · FL-Licensed · Protocol-Based · Encrypted</span></div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboardPage">
+    <div class="dash-header">
+      <div class="dhi">
+        <div class="dw">
+          <h1 id="dashWelcome">Welcome back</h1>
+          <p>Your account overview and recent activity.</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" onclick="document.getElementById('uploadModal').classList.add('active')"
+            style="background:white">☁️ Upload Images</button>
+          <button class="btn btn-primary" onclick="openConsultation()">+ New Visit</button>
+        </div>
+      </div>
+    </div>
+    <div class="db">
+      <div class="ds">
+        <div class="dsc">
+          <div class="dsc-l">Total Visits</div>
+          <div class="dsc-v">0</div>
+        </div>
+        <div class="dsc">
+          <div class="dsc-l">Active Rx</div>
+          <div class="dsc-v">0</div>
+        </div>
+        <div class="dsc">
+          <div class="dsc-l">Pending</div>
+          <div class="dsc-v">0</div>
+        </div>
+        <div class="dsc">
+          <div class="dsc-l">Approved</div>
+          <div class="dsc-v">0</div>
+        </div>
+      </div>
+      <div class="dg">
+        <div class="dc">
+          <div class="dc-h">
+            <h3>Recent Visits</h3><button class="btn btn-ghost" style="font-size:13px">View All</button>
+          </div>
+          <div id="cList">
+            <div style="padding:40px;text-align:center;color:var(--g400);font-size:14px">No visits yet. Start your first
+              consultation.</div>
+          </div>
+        </div>
+        <div class="dc">
+          <div class="dc-h">
+            <h3>Quick Actions</h3>
+          </div>
+          <div style="padding:12px">
+            <div class="cli" onclick="openConsultation()">
+              <div class="cli-ic" style="background:var(--blue-pale)">💊</div>
+              <div class="cli-info">
+                <h4>New Consultation</h4>
+                <p>Start a treatment visit</p>
+              </div>
+            </div>
+            <div class="cli">
+              <div class="cli-ic" style="background:var(--emerald-soft)">📋</div>
+              <div class="cli-info">
+                <h4>My Prescriptions</h4>
+                <p>View active meds</p>
+              </div>
+            </div>
+            <div class="cli">
+              <div class="cli-ic" style="background:var(--amber-soft)">🔬</div>
+              <div class="cli-info">
+                <h4>Radiology</h4>
+                <p>Second opinions & AI</p>
+              </div>
+            </div>
+            <div class="cli">
+              <div class="cli-ic" style="background:var(--rose-soft)">📹</div>
+              <div class="cli-info">
+                <h4>Video Consult</h4>
+                <p>Book imaging consultation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div class="mo" id="authModal" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div id="loginForm">
+        <h2>Welcome back</h2>
+        <p class="ms">Log in to Patriotic Virtual Telehealth.</p>
+        <div class="fg"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+        <div class="fg"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+        <button class="btn btn-primary btn-large" style="width:100%;margin-top:8px" onclick="handleLogin()">Log
+          In</button>
+        <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
+          <div style="flex:1;height:1px;background:var(--g200)"></div><span
+            style="font-size:12px;color:var(--g400);font-weight:500">OR</span>
+          <div style="flex:1;height:1px;background:var(--g200)"></div>
+        </div><button class="btn btn-outline btn-large" style="width:100%;gap:10px" onclick="handleGoogleLogin()"><svg
+            width="18" height="18" viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+              fill="#4285F4" />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853" />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05" />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335" />
+          </svg> Sign in with Google</button>
+        <p class="ff" style="margin-top:12px"><a onclick="handleForgotPassword()" style="font-size:13px">Forgot
+            password?</a></p>
+        <p class="ff" style="margin-top:8px">New here? <a onclick="switchAuth('register')">Create account</a></p>
+      </div>
+      <div id="registerForm" class="hidden">
+        <h2>Get started</h2>
+        <p class="ms">Currently available in Florida.</p>
+        <div class="fr">
+          <div class="fg"><label>First Name</label><input type="text" id="regFirst" placeholder="First"></div>
+          <div class="fg"><label>Last Name</label><input type="text" id="regLast" placeholder="Last"></div>
+        </div>
+        <div class="fg"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com"></div>
+        <div class="fg"><label>Password</label><input type="password" id="regPassword" placeholder="Min. 8 characters">
+        </div>
+        <div class="fr">
+          <div class="fg"><label>State</label><select id="regState">
+              <option value="">Select your state</option>
+              <option value="FL">Florida ✓</option>
+              <option value="IN" disabled style="color:#9ca3af">Indiana (Coming Soon)</option>
+              <option value="VA" disabled style="color:#9ca3af">Virginia (Coming Soon)</option>
+            </select></div>
+          <div class="fg"><label>Date of Birth</label><input type="date" id="regDob"></div>
+        </div><button class="btn btn-primary btn-large" style="width:100%;margin-top:8px"
+          onclick="handleRegister()">Create Account</button>
+        <div style="display:flex;align-items:center;gap:12px;margin:14px 0">
+          <div style="flex:1;height:1px;background:var(--g200)"></div><span
+            style="font-size:12px;color:var(--g400);font-weight:500">OR</span>
+          <div style="flex:1;height:1px;background:var(--g200)"></div>
+        </div><button class="btn btn-outline btn-large" style="width:100%;gap:10px" onclick="handleGoogleLogin()"><svg
+            width="18" height="18" viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+              fill="#4285F4" />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853" />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05" />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335" />
+          </svg> Sign up with Google</button>
+        <p class="ff" style="margin-top:12px">Have an account? <a onclick="switchAuth('login')">Log in</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSULT MODAL -->
+  <div class="mo" id="consultModal" onclick="closeConsult(event)">
+    <div class="modal cm" onclick="event.stopPropagation()">
+      <div id="cS1">
+        <h2>Start a Visit</h2>
+        <p class="ms">Choose your service. 100% confidential. Protocol-based care.</p>
+        <div class="ip">
+          <div class="ipb act"></div>
+          <div class="ipb"></div>
+          <div class="ipb"></div>
+        </div>
+        <div class="iq">
+          <h3>What brings you in?</h3>
+          <p>Select the service that fits your needs.</p>
+          <div class="rg" id="svcSel"></div>
+        </div>
+        <div class="ia"><button class="btn btn-ghost" onclick="closeConsult()">Cancel</button><button
+            class="btn btn-primary" onclick="cN(2)">Continue →</button></div>
+      </div>
+      <div id="cS2" class="hidden">
+        <h2>Safety Screening</h2>
+        <p class="ms">These questions follow our clinical safety protocols.</p>
+        <div class="ip">
+          <div class="ipb done"></div>
+          <div class="ipb act"></div>
+          <div class="ipb"></div>
+        </div>
+        <div id="iQs"></div>
+        <div class="ia"><button class="btn btn-ghost" onclick="cB(1)">← Back</button><button class="btn btn-primary"
+            onclick="cN(3)">Continue →</button></div>
+      </div>
+      <div id="cS3" class="hidden">
+        <h2>Review & Submit</h2>
+        <p class="ms">Confirm before sending to a provider.</p>
+        <div class="ip">
+          <div class="ipb done"></div>
+          <div class="ipb done"></div>
+          <div class="ipb act"></div>
+        </div>
+        <div id="rSum" style="background:var(--g50);border-radius:var(--r-sm);padding:20px;margin-bottom:20px"></div>
+        <p style="font-size:13px;color:var(--g500);line-height:1.6;margin-bottom:24px">By submitting you confirm the
+          information is accurate. A board-certified provider will review against our treatment protocols within 24
+          hours.</p>
+        <div class="ia"><button class="btn btn-ghost" onclick="cB(2)">← Back</button><button class="btn btn-primary"
+            onclick="subC()">Submit Visit →</button></div>
+      </div>
+      <div id="cS4" class="hidden" style="text-align:center;padding:24px 0">
+        <div
+          style="width:64px;height:64px;border-radius:50%;background:var(--emerald-soft);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px">
+          ✓</div>
+        <h2 style="margin-bottom:8px">Visit Submitted!</h2>
+        <p class="ms" style="max-width:340px;margin:0 auto 28px">A board-certified provider will review your case
+          against our clinical protocols within 24 hours.</p><button class="btn btn-primary"
+          onclick="closeConsult();showDashboard()">Go to Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE MODAL (Post-Payment) -->
+  <div class="mo" id="scheduleModal" onclick="closeModal(event)">
+    <div class="modal" style="text-align:center; max-width:500px" onclick="event.stopPropagation()">
+      <button class="modal-close"
+        onclick="document.getElementById('scheduleModal').classList.remove('active')">×</button>
+      <div style="font-size:48px; margin-bottom:10px">✅</div>
+      <h2>Payment Confirmed!</h2>
+      <p style="margin-bottom:20px; color:var(--slate)">Your transaction was successful. The final step is to schedule
+        your consultation with Dr. O.</p>
+      <a href="https://calendly.com/dr-o-patriotictelehealth/30min" target="_blank" class="cta-btn"
+        style="display:inline-block; text-decoration:none; margin-bottom:10px; width:100%; box-sizing:border-box">📅
+        Schedule Your Visit</a>
+      <button class="cta-btn" onclick="document.getElementById('scheduleModal').classList.remove('active')"
+        style="background:transparent; border:1px solid var(--slate); color:var(--slate); width:100%">I'll do it
+        later</button>
+    </div>
+  </div>
+
+  <!-- PACS UPLOAD MODAL -->
+  <div class="mo" id="uploadModal" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()" style="text-align:center">
+      <button class="modal-close" onclick="document.getElementById('uploadModal').classList.remove('active')">×</button>
+      <h2>Upload Medical Images</h2>
+      <p style="color:var(--g500);font-size:14px;margin-bottom:15px">Securely upload DICOM/Zip files to our PACS server.
+      </p>
+      <input type="file" id="pacsFile" accept=".dcm, .zip, application/zip, application/dicom"
+        style="margin:10px 0 20px; width:100%; padding:10px; border:1px solid var(--g200); border-radius:8px">
+      <button class="btn btn-primary" onclick="handlePacsUpload()" id="uploadBtn" style="width:100%">Upload
+        Securely</button>
+      <div id="uploadStatus" style="margin-top:15px; font-size:13px; text-align:center; min-height:20px"></div>
+    </div>
+  </div>
+
+  <div class="mo" id="aboutModal" onclick="closeAbout(event)">
+    <div class="modal cm" onclick="event.stopPropagation()" style="max-width:800px">
+      <div style="display:flex;gap:24px;flex-direction:column;align-items:center;text-align:center">
+        <div style="width:120px;height:120px;border-radius:50%;overflow:hidden;border:3px solid var(--blue)">
+          <img src="assets/dr_osunsade.jpg" style="width:100%;height:100%;object-fit:cover" alt="Dr. Osunsade">
+        </div>
+        <div>
+          <h2 style="margin-bottom:8px">Dr. Olalesi Osunsade</h2>
+          <div
+            style="font-size:14px;color:var(--g500);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px">
+            Dr. "O" · Diagnostic & Interventional Radiologist</div>
+          <p
+            style="font-size:15px;line-height:1.7;color:var(--g700);margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto">
+            Dual board-certified Diagnostic and Interventional Radiologist with extensive experience across academic
+            medical
+            centers, community hospitals, and teleradiology. Born in Washington, DC, Dr. Osunsade brings a unique
+            international perspective, having lived in the Philippines, Tanzania, Kenya, and Nigeria before returning to
+            the
+            U.S. for undergraduate/medical school and medical training.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;text-align:left;width:100%">
+            <div style="background:var(--g50);padding:20px;border-radius:12px">
+              <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                🎓 Education</h3>
+              <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6">
+                <li style="margin-bottom:6px"><b>MD:</b> George Washington Univ. SOM (2012)</li>
+                <li style="margin-bottom:6px"><b>Residency:</b> St. Vincent's Medical Center (Chief Resident)</li>
+                <li style="margin-bottom:6px"><b>Fellowship (IR):</b> Henry Ford Hospital</li>
+              </ul>
+            </div>
+            <div style="background:var(--g50);padding:20px;border-radius:12px">
+              <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                📜 Active Licenses</h3>
+              <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6">
+                <li style="margin-bottom:6px">FL · MD · CA · NY · MI · DC</li>
+                <li style="margin-bottom:6px">OH · WI · TX · VA</li>
+                <li style="margin-bottom:6px;color:var(--blue)">Enrolled in IMLC (Interstate Compact)</li>
+              </ul>
+            </div>
+          </div>
+          <div style="margin-top:24px;width:100%;text-align:left;background:var(--g50);padding:20px;border-radius:12px">
+            <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px">🌍
+              Personal & Bio</h3>
+            <p style="font-size:13px;color:var(--g600);line-height:1.6;margin-bottom:8px"><b>Languages:</b> English
+              (Native), French (Proficient), Yoruba & Swahili (Conversational)</p>
+            <p style="font-size:13px;color:var(--g600);line-height:1.6"><b>Recognition:</b> TOP DOCTOR Magazine (2017,
+              2022)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD (Native EMR) -->
+  <div id="adminDashboard" class="hidden" style="padding:100px 0;background:var(--g50);min-height:100vh">
+    <div class="container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px">
+        <div>
+          <h2 style="color:var(--navy);margin-bottom:8px">Provider Portal</h2>
+          <p style="color:var(--g600)">Manage patient consultations and imaging requests.</p>
+        </div>
+        <button class="btn btn-outline" onclick="loadAdminConsults()">↻ Refresh</button>
+      </div>
+
+      <div class="dash-grid" style="grid-template-columns:1fr">
+        <div class="dash-card">
+          <h3 style="margin-bottom:20px">Incoming Consultations</h3>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;text-align:left">
+              <thead>
+                <tr style="border-bottom:2px solid var(--g200);color:var(--g500)">
+                  <th style="padding:12px;font-weight:600">Date</th>
+                  <th style="padding:12px;font-weight:600">Patient</th>
+                  <th style="padding:12px;font-weight:600">Service</th>
+                  <th style="padding:12px;font-weight:600">Status</th>
+                  <th style="padding:12px;font-weight:600">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminTableBody">
+                <!-- Rows injected by JS -->
+                <tr>
+                  <td colspan="5" style="padding:20px;text-align:center;color:var(--g500)">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="consentModal" onclick="closeConsent(event)">
+    <div class="modal cm" onclick="event.stopPropagation()" style="max-width:700px">
+      <h2 style="margin-bottom:16px;color:var(--navy)">Privacy, Terms & Consents</h2>
+      <div
+        style="text-align:left;font-size:14px;line-height:1.6;color:var(--g600);max-height:60vh;overflow-y:auto;padding-right:12px">
+
+        <div
+          style="background:var(--red-soft);color:var(--red);padding:12px;border-radius:8px;margin-bottom:16px;border:1px solid var(--red)">
+          <b>🚨 NO EMERGENCY CARE:</b> We do NOT treat medical emergencies. If you have chest pain, shortage of breath,
+          severe bleeding, or any life-threatening emergency, call 911 or go to the nearest ER immediately.
+        </div>
+
+        <h4 style="color:var(--navy);margin-bottom:6px">1. Telehealth Consent</h4>
+        <p style="margin-bottom:12px">By using this service, you consent to receive medical care via electronic
+          information and communication technologies. You understand that telehealth has limitations compared to
+          in-person visits, including the inability to perform hands-on physical exams.</p>
+
+        <h4 style="color:var(--navy);margin-bottom:6px">2. Payment Policy (Cash-Pay Only)</h4>
+        <p style="margin-bottom:12px">Patriotic Virtual Telehealth is a <b>cash-pay only</b> practice. We do not accept
+          or bill commercial insurance, Medicare, or Medicaid. All fees are due at the time of service. You agree that
+          you will not submit claims to federal healthcare programs for these services.</p>
+
+        <h4 style="color:var(--navy);margin-bottom:6px">3. HIPAA & Privacy</h4>
+        <p style="margin-bottom:12px">We are committed to protecting your medical information. We utilize
+          HIPAA-compliant secure platforms for all video consults, messaging, and data storage. Your information will
+          only be shared for treatment, payment, or healthcare operations, or as required by law.</p>
+
+        <h4 style="color:var(--navy);margin-bottom:6px">4. GLP-1 & Weight Loss</h4>
+        <p style="margin-bottom:12px">For GLP-1 agonist prescriptions (e.g., Semaglutide/Tirzepatide), you acknowledge
+          potential side effects including nausea, vomiting, and risk of thyroid C-cell tumors. You confirm you do not
+          have a personal or family history of Medullary Thyroid Carcinoma (MTC) or MEN 2 syndrome.</p>
+
+        <h4 style="color:var(--navy);margin-bottom:6px">5. Radiology Services</h4>
+        <p style="margin-bottom:12px">
+          <b>Educational Use (Tiers 1, 3, 4):</b> Services labeled "Educational" are for informational purposes only and
+          do not constitute a formal diagnosis or replace your official medical records.<br>
+          <b>Diagnostic Services (Clinical):</b> Official diagnostic reports are provided only for services explicitly
+          labeled "Diagnostic" or "Clinical Consult".
+        </p>
+
+        <p>By clicking "I Understand" below, you acknowledge that you have read, understood, and agreed to these terms,
+          policies, and consents.</p>
+      </div>
+      <button class="btn btn-primary" onclick="closeConsent()" style="width:100%;margin-top:20px">I Understand &
+        Agree</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- AI NAVIGATOR FAB + CHAT -->
+  <button class="ai-fab" id="aiFab" onclick="toggleAI()">
+    <div class="ai-pulse"></div>
+    <span class="fab-icon">💬</span>
+    <span class="fab-close">✕</span>
+    <div class="ai-label">AI Health Navigator</div>
+  </button>
+
+  <div class="ai-chat" id="aiChat">
+    <div class="ai-chat-head">
+      <div class="ai-chat-dot">🤖</div>
+      <div>
+        <div class="ai-chat-title">AI Health Navigator</div>
+        <div class="ai-chat-sub">Check eligibility · Find services · Get started</div>
+      </div>
+    </div>
+    <div class="ai-chat-body" id="aiBody"></div>
+    <div class="ai-chat-input">
+      <input type="text" id="aiInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendAI()">
+      <button onclick="sendAI()">→</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script>
+    /* Firebase Config */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtW_7IUCMqbk5V1MzqdIJzgufZEhzjyP8",
+      authDomain: "patriotic-virtual-prod.firebaseapp.com",
+      projectId: "patriotic-virtual-prod",
+      storageBucket: "patriotic-virtual-prod.firebasestorage.app",
+      messagingSenderId: "189906910824",
+      appId: "1:189906910824:web:16d108f48445cb0e7d85dd",
+      measurementId: "G-FY48JCRQ4D"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const API = ''; // Relative path via Firebase Hosting Rewrite (Solves CORS & Org Policy)
+    const ACTIVE_STATES = ['FL'];
+    const COMING_STATES = ['IN', 'VA'];
+    let token = null, user = null, selSvc = null, intake = {}, fbUser = null;
+
+    const svcs = [
+      { id: 'general-visit', k: 'general_visit', name: 'General Visit', desc: 'Virtual visits for non-emergent health concerns — medication management, wellness checks, health advice. Convenient care from home.', icon: '🩺', ic: 'teal', c: 'teal', price: 79, cat: ['popular', 'clinical'], stripe: 'prod_Tsna4xzySPbKT0', priceId: 'PRICE_ID_GENERAL_VISIT' },
+      { id: 'weight-loss', k: 'weight_loss', name: 'GLP-1 & Weight Loss', desc: 'Comprehensive medical weight loss evaluation. GLP-1 eligibility screening, personalized titration, dietary guidance. Medication cost separate.', icon: '💊', ic: 'blue', c: 'blue', price: 129, cat: ['popular', 'clinical'], stripe: 'prod_TsnZ1goCbeavNz', priceId: 'PRICE_ID_WEIGHT_LOSS' },
+      { id: 'erectile-dysfunction', k: 'erectile_dysfunction', name: 'Erectile Dysfunction', desc: 'Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.', icon: '⚡', ic: 'blue', c: 'blue', price: 79, cat: ['popular', 'mens', 'clinical'], stripe: 'prod_TupASTZvm9MPDJ', priceId: 'PRICE_ID_ED' },
+      { id: 'premature-ejaculation', k: 'premature_ejaculation', name: 'Premature Ejaculation', desc: 'Sertraline (SSRI therapy), topical numbing agents & behavioral techniques. Evidence-based, shipped discreetly.', icon: '⏱️', ic: 'violet', c: 'violet', price: 79, cat: ['mens', 'clinical'], stripe: 'prod_TupBXVZaCU7fWJ', priceId: 'PRICE_ID_PE' },
+      { id: 'testosterone-hrt', k: 'testosterone_hrt', name: 'Testosterone / HRT', desc: 'Comprehensive hormone evaluation for men & women — testosterone, estrogen, progesterone, DHEA, thyroid support & peptides.', icon: '🧬', ic: 'emerald', c: 'emerald', price: 149, cat: ['popular', 'mens', 'clinical'], stripe: 'prod_TsnbTXR2n8ni2R', priceId: 'PRICE_ID_HRT' },
+
+      /* IMAGING & RADIOLOGY (Educational Only) */
+      { id: 'ai-imaging', k: 'ai_imaging', name: 'AI-Powered Imaging Analysis', desc: 'Physician-supervised AI interpretation of reports. Educational tools to help you understand findings.', icon: '🔬', ic: 'blue', c: 'blue', price: 99, cat: ['ai', 'radiology'], stripe: 'prod_TsnPLrOTNMh7xM', priceId: 'PRICE_ID_AI_IMAGING' },
+      { id: 'report-interpretation', k: 'report_interpretation', name: 'Report Interpretation', desc: 'Expert analysis of your existing radiology report. We translate complex medical jargon into plain English.', icon: '📄', ic: 'indigo', c: 'indigo', price: 149, cat: ['radiology'], stripe: 'prod_Tmu7Z6g8kmwvMd', priceId: 'PRICE_ID_REPORT_INT' },
+      { id: 'standard-imaging', k: 'standard_imaging', name: 'Standard Imaging Review', desc: 'Complete second-opinion over-read of your X-Ray, Ultrasound, CT, or MRI images by a board-certified radiologist.', icon: '🖥️', ic: 'violet', c: 'violet', price: 249, cat: ['radiology'], stripe: 'prod_Tmu9kplu78Fs2m', priceId: 'PRICE_ID_STD_REVIEW' },
+      { id: 'imaging-video', k: 'imaging_video', name: 'Imaging + Video Consult', desc: 'Full imaging review plus a 15-minute secure video consultation to discuss findings directly with a specialist.', icon: '📹', ic: 'rose', c: 'rose', price: 449, cat: ['radiology'], stripe: 'prod_TmuBq5Pwvt1rBc', priceId: 'PRICE_ID_VIDEO_CONSULT' },
+
+      /* DIAGNOSTIC RADIOLOGY (Clinical) */
+      { id: 'diagnostic-single', k: 'diagnostic_single', name: 'Single Study Read', desc: 'Official diagnostic report for a single study (CT, XR, US). <24-48h turnaround.', icon: '🖼️', ic: 'blue', c: 'blue', price: 75, priceSuffix: '/read', cat: ['radiology', 'diagnostic'], stripe: '', priceId: '' },
+      { id: 'diagnostic-second', k: 'diagnostic_second', name: 'Diagnostic Second Opinion', desc: 'Full diagnostic review + written opinion + patient summary for CT, XR, or US.', icon: '📊', ic: 'indigo', c: 'indigo', price: 250, priceSuffix: '/consult', cat: ['radiology', 'diagnostic'], stripe: '', priceId: '' },
+      { id: 'diagnostic-facility', k: 'diagnostic_facility', name: 'Facility Contracts', desc: 'Urgent Care & Outpatient contracts. Unlimited reads, SLA, dedicated upload link.', icon: '🏢', ic: 'navy', c: 'navy', price: 3500, priceSuffix: '/mo+', cat: ['radiology', 'diagnostic'], stripe: '', priceId: '' },
+
+      { id: 'ai-assistant', k: 'ai_assistant', name: 'AI Health Assistant', desc: 'AI-powered health education, symptom guidance & care navigation. Not a substitute for professional medical advice.', icon: '🤖', ic: 'emerald', c: 'emerald', price: 29, cat: ['ai'], stripe: 'prod_TsnOx9T2J8z8Bz', priceId: 'PRICE_ID_AI_ASSISTANT' },
+      { id: 'digital-platform', k: 'digital_platform', name: 'Digital Health Platform', desc: 'Monthly access to digital health tools, educational content & AI-powered navigation features. No clinical services.', icon: '📱', ic: 'violet', c: 'violet', price: 19, priceSuffix: '/mo', cat: ['ai', 'membership'], stripe: 'prod_TsnTYEU145UpKl', priceId: 'PRICE_ID_DIGITAL' },
+      { id: 'membership-elite', k: 'membership_elite', name: 'All Access — Elite', desc: 'Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.', icon: '🏆', ic: 'amber', c: 'amber', price: 199, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnS735VNACb3g', priceId: 'PRICE_ID_ELITE' },
+      { id: 'membership-plus', k: 'membership_plus', name: 'All Access — Plus', desc: 'Telehealth visits, AI health assistant, AI imaging tools, and priority scheduling in one subscription.', icon: '⭐', ic: 'blue', c: 'blue', price: 149, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnRLsuI61fxnt', priceId: 'PRICE_ID_PLUS' },
+      { id: 'membership-core', k: 'membership_core', name: 'All Access — Core', desc: 'General telehealth, AI health assistant, AI imaging tools & scheduling. Great starter membership.', icon: '🎯', ic: 'teal', c: 'teal', price: 99, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnR5LpCR65XOv', priceId: 'PRICE_ID_CORE' },
+      { id: 'telehealth-premium', k: 'telehealth_premium', name: 'Telehealth Premium', desc: 'Unlimited/priority access to general telehealth for non-emergency concerns, clinician visits & digital support.', icon: '⚕️', ic: 'emerald', c: 'emerald', price: 99, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnNYdVBqlNpxO', priceId: 'PRICE_ID_TH_PREMIUM' },
+      { id: 'telehealth-standard', k: 'telehealth_standard', name: 'Telehealth Standard', desc: '1 visit/month to general telehealth for non-emergency medical concerns, plus clinician visits & digital support.', icon: '📋', ic: 'blue', c: 'blue', price: 59, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnM0Eu3XY9ckD', priceId: 'PRICE_ID_TH_STANDARD' },
+      { id: 'telehealth-basic', k: 'telehealth_basic', name: 'Telehealth Basic', desc: 'AI + limited visits for general telehealth. Digital support & care navigation for non-emergency concerns.', icon: '💡', ic: 'violet', c: 'violet', price: 29, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnLdFSY23zwtS', priceId: 'PRICE_ID_TH_BASIC' },
+    ];
+
+    const iQs = {
+      general_visit: [{ k: 'chiefComplaint', l: 'What brings you in today?', t: 'i', p: 'Describe your concerns' }, { k: 'symptomDuration', l: 'How long have you had these concerns?', t: 'i', p: 'e.g. 3 days, 2 weeks' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }, { k: 'allergies', l: 'Drug allergies?', t: 'i', p: 'List allergies or "None"' }],
+      weight_loss: [{ k: 'currentWeight', l: 'Current weight (lbs)?', t: 'i', p: 'e.g. 210' }, { k: 'height', l: 'Height (inches)?', t: 'i', p: 'e.g. 68' }, { k: 'previousWeightLoss', l: 'Prior weight loss attempts?', t: 'i', p: 'Describe past efforts' }, { k: 'hasMedullaryThyroidCancer', l: 'History of medullary thyroid carcinoma?', t: 'yn' }, { k: 'hasMEN2', l: 'History of MEN2 syndrome?', t: 'yn' }, { k: 'hasPancreatitis', l: 'History of pancreatitis?', t: 'yn' }, { k: 'isPregnant', l: 'Pregnant or planning pregnancy?', t: 'yn' }],
+      erectile_dysfunction: [{ k: 'symptomDuration', l: 'How long have you experienced ED?', t: 'i', p: 'e.g. 6 months' }, { k: 'takesNitrates', l: 'Take nitrate medications (nitroglycerin, isosorbide)?', t: 'yn' }, { k: 'recentStroke', l: 'Stroke in past 6 months?', t: 'yn' }, { k: 'recentMI', l: 'Heart attack in past 6 months?', t: 'yn' }, { k: 'hasCardiovascularDisease', l: 'Cardiovascular disease?', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }],
+      premature_ejaculation: [{ k: 'symptomDuration', l: 'How long have you experienced PE?', t: 'i', p: 'e.g. 1 year' }, { k: 'hasSeizureDisorder', l: 'Seizure disorder?', t: 'yn' }, { k: 'onMAOIs', l: 'Take MAOI medications?', t: 'yn' }, { k: 'hasBipolar', l: 'Bipolar disorder?', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }],
+      testosterone_hrt: [{ k: 'symptoms', l: 'What symptoms are you experiencing?', t: 'i', p: 'Fatigue, low libido, weight gain, hot flashes, brain fog...' }, { k: 'gender', l: 'Biological sex?', t: 'i', p: 'Male or Female' }, { k: 'hasRecentLabs', l: 'Had hormone labs in the last 6 months?', t: 'yn' }, { k: 'hasProstateCancer', l: 'History of prostate cancer? (Men)', t: 'yn' }, { k: 'hasBreastCancer', l: 'History of breast cancer?', t: 'yn' }, { k: 'hasBloodClottingDisorder', l: 'Blood clotting disorder or history of DVT/PE?', t: 'yn' }, { k: 'hasLiverDisease', l: 'Liver disease?', t: 'yn' }, { k: 'isPregnant', l: 'Pregnant or nursing? (Women)', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }],
+      /* RADIOLOGY & AI SERVICES */
+      ai_imaging: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
+      report_interpretation: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
+      standard_imaging: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
+      imaging_video: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
+      diagnostic_single: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
+      diagnostic_second: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
+      diagnostic_facility: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }]
+    };
+
+    /* === AI NAVIGATOR ENGINE === */
+    let aiState = 'start', aiCtx = {};
+    function toggleAI() {
+      const fab = document.getElementById('aiFab'), chat = document.getElementById('aiChat');
+      fab.classList.toggle('open'); chat.classList.toggle('open');
+      if (chat.classList.contains('open') && !document.getElementById('aiBody').children.length) aiStart();
+    }
+    function aiStart() {
+      aiState = 'start'; aiCtx = {};
+      const b = document.getElementById('aiBody'); b.innerHTML = '';
+      aiBot(`Hi! I'm your AI Health Navigator. I can help you find the right service, check if you qualify for treatments, or answer questions about our platform.\n\nWhat can I help you with?`,
+        ['🔍 Check treatment eligibility', '💊 Find a service for me', '📋 How does it work?', '💰 Pricing & plans']);
+    }
+    function aiBot(txt, opts) {
+      const b = document.getElementById('aiBody');
+      const d = document.createElement('div'); d.className = 'ai-msg bot';
+      let h = txt.replace(/\n/g, '<br>');
+      if (opts && opts.length) { h += `<div class="ai-opts">${opts.map(o => `<button class="ai-opt" onclick="aiPick('${o.replace(/'/g, "\\'")}')">${o}</button>`).join('')}</div>` }
+      d.innerHTML = h; b.appendChild(d); b.scrollTop = b.scrollHeight;
+    }
+    function aiUser(txt) {
+      const b = document.getElementById('aiBody');
+      const d = document.createElement('div'); d.className = 'ai-msg user'; d.textContent = txt;
+      b.appendChild(d); b.scrollTop = b.scrollHeight;
+    }
+    function sendAI() {
+      const inp = document.getElementById('aiInput'), v = inp.value.trim(); if (!v) return;
+      inp.value = ''; aiPick(v);
+    }
+    function aiPick(v) {
+      aiUser(v);
+      setTimeout(() => {
+        if (v.includes('eligibility') || v.includes('qualify') || v.includes('Check treatment')) {
+          aiState = 'elig_svc';
+          aiBot("Let's check your eligibility. Which treatment are you interested in?",
+            ['💊 GLP-1 Weight Loss', '⚡ Erectile Dysfunction', '⏱️ Premature Ejaculation', '🧬 Testosterone / HRT', '🩺 General Visit']);
+        } else if (v.includes('Find a service') || v.includes('recommend')) {
+          aiState = 'find';
+          aiBot("I can help with that! What's your main concern?",
+            ['Lose weight', 'Hormone issues', 'Sexual health', 'General health question', 'AI health tools']);
+        } else if (v.includes('How does it work')) {
+          aiBot("It's simple! 1️⃣ Pick a service, 2️⃣ Complete our safety screening (we check for contraindications automatically), 3️⃣ A board-certified provider reviews your case, 4️⃣ Prescriptions ship to your door in Florida.\n\nEvery treatment follows strict clinical protocols. Would you like to get started?",
+            ['✅ Start a visit', '🔍 Check my eligibility first', '💰 See pricing']);
+        } else if (v.includes('Pricing') || v.includes('plans') || v.includes('cost')) {
+          aiBot("Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>GLP-1 Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n🧬 <b>Testosterone / HRT</b> — $149\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
+            ['🔍 Check eligibility', '💰 Membership details', '✅ Start a visit']);
+        } else if (v.includes('Membership details')) {
+          aiBot("Our membership tiers:\n\n💡 <b>Telehealth Basic</b> — $29/mo (AI + limited visits)\n📋 <b>Telehealth Standard</b> — $59/mo (1 visit/month)\n⚕️ <b>Telehealth Premium</b> — $99/mo (unlimited/priority)\n🎯 <b>All Access Core</b> — $99/mo (telehealth + AI tools)\n⭐ <b>All Access Plus</b> — $149/mo (+ AI imaging)\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
+            ['✅ Sign up', '🔍 Check eligibility', '📋 More details']);
+        } else if (v.includes('Start a visit') || v.includes('sign up') || v.includes('register') || v.includes('Sign up')) {
+          aiBot("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana & Virginia coming soon.");
+          setTimeout(() => openModal('register'), 1200);
+        } else if (aiState === 'elig_svc') {
+          aiState = 'elig_state';
+          aiCtx.svc = v;
+          aiBot("Great choice. First — are you a <b>Florida resident</b>? We're currently only licensed in FL.", ['Yes, I\'m in Florida', 'No, I\'m in another state']);
+        } else if (aiState === 'elig_state') {
+          if (v.includes('Florida') || v.toLowerCase().includes('yes')) {
+            aiCtx.state = 'FL';
+            aiState = 'elig_q'; aiCtx.qi = 0;
+            const svcKey = matchSvc(aiCtx.svc); aiCtx.svcKey = svcKey;
+            const qs = iQs[svcKey];
+            if (qs && qs.length) { aiCtx.qs = qs; aiCtx.answers = {}; askNext(); }
+            else { showElig(true, "You're eligible! This service has no specific contraindications to screen for. A provider will do a full review after you submit your visit.") }
+          } else {
+            aiBot(`We're not available in your state yet — but <b>Virginia</b> is launching soon! Want to be notified when we expand?`,
+              ['Yes, notify me', 'Check another treatment']);
+            aiState = 'start';
+          }
+        } else if (aiState === 'elig_q') {
+          const q = aiCtx.qs[aiCtx.qi];
+          if (q.t === 'yn') { aiCtx.answers[q.k] = v.toLowerCase().includes('yes'); }
+          else { aiCtx.answers[q.k] = v; }
+          aiCtx.qi++;
+          if (aiCtx.qi < aiCtx.qs.length) { askNext(); }
+          else { evalElig(); }
+        } else if (v.includes('Lose weight') || v.toLowerCase().includes('weight')) {
+          aiBot("For weight loss, we offer <b>GLP-1 medication consultations</b> at $129/visit. Your provider screens eligibility, creates a titration schedule, and prescribes if appropriate. Medication cost is separate.\n\nWant to check if you qualify?",
+            ['🔍 Check my eligibility', '✅ Start a weight loss visit', '💰 Pricing']);
+        } else if (v.includes('Hormone') || v.includes('testosterone') || v.includes('HRT') || v.includes('fatigue')) {
+          aiBot("We offer <b>Testosterone / HRT consultations</b> at $149/visit for men & women. Your provider evaluates symptoms, reviews labs, and builds a personalized hormone protocol.\n\nOptions include testosterone, estrogen, progesterone, DHEA, thyroid support & peptides.",
+            ['🔍 Check eligibility', '✅ Start a visit']);
+        } else if (v.includes('Sexual') || v.includes('Erectile') || v.includes('ED') || v.includes('erect')) {
+          aiBot("We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n⏱️ <b>Premature Ejaculation</b> — $79 (SSRI therapy, topical agents)\n\nAll medications shipped discreetly after safety screening.",
+            ['🔍 Check eligibility', '✅ Start a visit']);
+        } else if (v.includes('General') || v.includes('sick') || v.includes('cold') || v.includes('flu') || v.includes('health question')) {
+          aiBot("Our <b>General Visit</b> ($79) covers non-emergent health concerns — medication management, wellness checks, health advice. A board-certified provider reviews your case.\n\nWant to start a visit?",
+            ['✅ Start a visit', '🔍 Check eligibility']);
+        } else if (v.includes('AI') || v.includes('imaging') || v.includes('digital') || v.includes('tools')) {
+          aiBot("Our AI & digital tools:\n\n🤖 <b>AI Health Assistant</b> — $29 (health education & care navigation)\n🔬 <b>AI Imaging Analysis</b> — $99 (physician-supervised report interpretation)\n📱 <b>Digital Health Platform</b> — $19/mo (tools, content & AI features)\n\nThese are available to everyone, no state restriction!",
+            ['✅ Sign up', '💰 Membership plans', '🔍 Check treatment eligibility']);
+        } else if (v.includes('notify')) {
+          aiBot("We'll let you know as soon as we launch in your state! Our AI tools and digital platform are available nationwide in the meantime.\n\nAnything else I can help with?",
+            ['💊 Find a service', '📋 How does it work?']);
+        } else {
+          aiBot("I can help you with finding the right treatment, checking eligibility, understanding pricing, or getting started with a visit. What would you like to do?",
+            ['🔍 Check treatment eligibility', '💊 Find a service', '💰 Pricing & plans', '✅ Start a visit']);
+        }
+      }, 600);
+    }
+    function matchSvc(txt) {
+      const t = txt.toLowerCase();
+      if (t.includes('weight') || t.includes('glp')) return 'weight_loss';
+      if (t.includes('erectile') || t.includes('ed')) return 'erectile_dysfunction';
+      if (t.includes('premature') || t.includes('ejaculation')) return 'premature_ejaculation';
+      if (t.includes('testosterone') || t.includes('hrt') || t.includes('hormone')) return 'testosterone_hrt';
+      if (t.includes('general')) return 'general_visit';
+      return 'general_visit';
+    }
+    function askNext() {
+      const q = aiCtx.qs[aiCtx.qi];
+      if (q.t === 'yn') { aiBot(q.l, ['Yes', 'No']); }
+      else { aiBot(q.l); }
+    }
+    function evalElig() {
+      const k = aiCtx.svcKey, a = aiCtx.answers;
+      let block = [];
+      if (k === 'weight_loss') {
+        if (a.hasMedullaryThyroidCancer) block.push('history of medullary thyroid carcinoma');
+        if (a.hasMEN2) block.push('MEN2 syndrome');
+        if (a.hasPancreatitis) block.push('pancreatitis');
+        if (a.isPregnant) block.push('pregnancy or planning pregnancy');
+      } else if (k === 'erectile_dysfunction') {
+        if (a.takesNitrates) block.push('nitrate medication use (dangerous interaction)');
+        if (a.recentStroke) block.push('recent stroke (within 6 months)');
+        if (a.recentMI) block.push('recent heart attack (within 6 months)');
+      } else if (k === 'premature_ejaculation') {
+        if (a.onMAOIs) block.push('MAOI medication use');
+        if (a.hasSeizureDisorder) block.push('seizure disorder');
+      } else if (k === 'testosterone_hrt') {
+        if (a.hasProstateCancer) block.push('prostate cancer history');
+        if (a.hasBreastCancer) block.push('breast cancer history');
+        if (a.hasBloodClottingDisorder) block.push('blood clotting disorder / DVT/PE history');
+        if (a.isPregnant) block.push('pregnancy or nursing');
+      }
+      if (block.length) {
+        showElig(false, `Based on your answers, you may have contraindications: <b>${block.join(', ')}</b>. Our protocols flag these for safety.\n\nA provider can still review your case — some conditions can be managed. Want to proceed with a full evaluation?`);
+      } else {
+        showElig(true, "Great news — based on your screening, you appear to be a good candidate! A board-certified provider will do a full review to confirm.\n\nReady to start your visit?");
+      }
+    }
+    function showElig(pass, msg) {
+      aiState = 'start';
+      const b = document.getElementById('aiBody');
+      const d = document.createElement('div'); d.className = 'ai-msg bot';
+      const cls = pass ? '' : 'warn';
+      d.innerHTML = `<div class="ai-elig ${cls}"><h4>${pass ? '✅ Likely Eligible' : '⚠️ Review Needed'}</h4><p>${msg}</p></div><div class="ai-opts" style="margin-top:10px"><button class="ai-opt" onclick="aiPick('Start a visit')">✅ Start a visit</button><button class="ai-opt" onclick="aiPick('Check another treatment')">🔍 Check another treatment</button></div>`;
+      b.appendChild(d); b.scrollTop = b.scrollHeight;
+    }
+
+    /* === MAIN APP === */
+    function renderSvc(f = 'all') { const g = document.getElementById('svcGrid'); const list = f === 'all' ? svcs : svcs.filter(s => s.cat.includes(f)); g.innerHTML = list.map(s => `<div class="svc" data-c="${s.c}" onclick="startSvc('${s.k}')"><div class="svc-arr">→</div><div class="svc-ic ${s.ic}">${s.icon}</div><h3>${s.name}</h3><p>${s.desc}</p><div class="svc-bot"><div class="svc-pr">$${s.price} <span>${s.priceSuffix || '/ visit'}</span></div></div></div>`).join('') }
+    function filterSvc(c, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderSvc(c) }
+    function openModal(t) { document.getElementById('authModal').classList.add('active'); switchAuth(t) }
+    function closeModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('authModal').classList.remove('active') }
+    function switchAuth(t) { document.getElementById('loginForm').classList.toggle('hidden', t !== 'login'); document.getElementById('registerForm').classList.toggle('hidden', t !== 'register') }
+    async function handleLogin() { const e = document.getElementById('loginEmail').value, p = document.getElementById('loginPassword').value; if (!e || !p) return toast('Please fill in all fields.'); try { const cred = await auth.signInWithEmailAndPassword(e, p); fbUser = cred.user; token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }); if (r.ok) { user = await r.json(); } else { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome back, ' + (user.firstName || user.email) + '!') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/wrong-password' ? 'Incorrect password.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' : err.code === 'auth/invalid-credential' ? 'Invalid email or password.' : err.message || 'Login failed.'; toast(msg) } }
+    async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value; if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida. Virginia coming soon!'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
+    async function handleGoogleLogin() { try { const provider = new firebase.auth.GoogleAuthProvider(); const cred = await auth.signInWithPopup(provider); fbUser = cred.user; token = await fbUser.getIdToken(); const names = fbUser.displayName ? fbUser.displayName.split(' ') : ['User']; try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, firebaseUid: fbUser.uid, role: 'patient' }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: names[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome, ' + (user.firstName || fbUser.email) + '!') } catch (err) { if (err.code !== 'auth/popup-closed-by-user') toast(err.message || 'Google sign-in failed.') } }
+    async function handleForgotPassword() { const e = document.getElementById('loginEmail').value; if (!e) return toast('Enter your email above, then click Forgot password.'); try { await auth.sendPasswordResetEmail(e); toast('Password reset email sent! Check your inbox.') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message; toast(msg) } }
+    function logout() { auth.signOut().then(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }).catch(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }) }
+    /* Firebase Auth State Listener — auto-restores sessions */
+    auth.onAuthStateChanged(async (u) => { if (u) { fbUser = u; token = await u.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }); if (r.ok) { user = await r.json(); } else { user = { firstName: u.displayName ? u.displayName.split(' ')[0] : u.email.split('@')[0], email: u.email, role: 'patient', uid: u.uid }; } } catch (e) { user = { firstName: u.displayName ? u.displayName.split(' ')[0] : u.email.split('@')[0], email: u.email, role: 'patient', uid: u.uid }; } updateNav(); } else { token = null; user = null; fbUser = null; updateNav(); } });
+    function updateNav() { const li = !!user; document.getElementById('loginBtn').classList.toggle('hidden', li); document.getElementById('signupBtn').classList.toggle('hidden', li); document.getElementById('dashBtn').classList.toggle('hidden', !li); document.getElementById('logoutBtn').classList.toggle('hidden', !li) }
+    function showLanding() { document.getElementById('landingPage').style.display = 'block'; document.getElementById('dashboardPage').style.display = 'none' }
+    async function showDashboard() {
+      document.getElementById('landingPage').style.display = 'none';
+      document.getElementById('dashboardPage').style.display = 'block';
+      if (user) document.getElementById('dashWelcome').textContent = 'Welcome back, ' + user.firstName;
+      await fetchConsultations();
+    }
+
+    async function fetchConsultations() {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API}/api/v1/consultations/mine`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list = document.getElementById('cList');
+          if (data.consultations && data.consultations.length > 0) {
+            list.innerHTML = data.consultations.map(c =>
+              `<div style="padding:16px;border-bottom:1px solid var(--g100);display:flex;justify-content:space-between;align-items:center">
+                  <div>
+                      <div style="font-weight:600;color:var(--navy)">${c.serviceKey.replace(/_/g, ' ')}</div>
+                      <div style="font-size:12px;color:var(--g500)">${new Date(c.createdAt._seconds * 1000).toLocaleDateString()}</div>
+                  </div>
+                  <div style="font-size:13px;font-weight:600;color:${c.status === 'pending' ? 'var(--amber)' : c.status === 'approved' ? 'var(--emerald)' : 'var(--g500)'}">
+                      ${c.status.toUpperCase()}
+                  </div>
+              </div>`
+            ).join('');
+          } else {
+            list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--g400);font-size:14px">No visits yet. Start your first consultation.</div>';
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch visits', e);
+      }
+    }
+
+    function startSvc(k) { if (!user) return openModal('register'); selSvc = k; openConsultation(); setTimeout(() => { document.querySelectorAll('#svcSel .ro').forEach(el => { el.classList.toggle('sel', el.dataset.v === k) }) }, 50) }
+    function openConsultation() { if (!user) return openModal('register'); intake = {}; selSvc = selSvc || null;['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS1').classList.remove('hidden'); const availableSvcs = svcs.filter(s => !s.cat.includes('membership')); document.getElementById('svcSel').innerHTML = availableSvcs.map(s => `<div class="ro ${selSvc === s.k ? 'sel' : ''}" data-v="${s.k}" onclick="pickSvc(this,'${s.k}')"><div class="rd2"></div><span>${s.icon} ${s.name} — $${s.price}</span></div>`).join(''); document.getElementById('consultModal').classList.add('active') }
+    function pickSvc(el, k) { document.querySelectorAll('#svcSel .ro').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); selSvc = k }
+    function cN(s) { if (s === 2 && !selSvc) return toast('Select a service.'); if (s === 2) { const qs = iQs[selSvc] || []; document.getElementById('iQs').innerHTML = qs.map(q => q.t === 'yn' ? `<div class="iq"><h3>${q.l}</h3><div class="rg" style="flex-direction:row;gap:10px"><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',true)"><div class="rd2"></div><span>Yes</span></div><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',false)"><div class="rd2"></div><span>No</span></div></div></div>` : `<div class="iq"><h3>${q.l}</h3><div class="fg" style="margin:0"><input placeholder="${q.p || ''}" oninput="intake['${q.k}']=this.value"></div></div>`).join('') } if (s === 3) { const sv = svcs.find(x => x.k === selSvc); document.getElementById('rSum').innerHTML = `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Service</div><div style="font-size:16px;font-weight:700;color:var(--navy)">${sv.icon} ${sv.name}</div></div><div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Price</div><div style="font-size:16px;font-weight:700;color:var(--navy)">$${sv.price}</div></div><div><div style="font-size:12px;color:var(--g400);margin-bottom:8px">Responses</div>${Object.entries(intake).map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--g200);font-size:14px"><span style="color:var(--g600)">${k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</span><span style="font-weight:600;color:var(--navy)">${typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</span></div>`).join('')}</div>` } ['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS' + s).classList.remove('hidden') }
+    function cB(s) { ['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS' + s).classList.remove('hidden') }
+    function sI(el, k, v) { el.parentElement.querySelectorAll('.ro').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); intake[k] = v }
+    async function subC() {
+      try {
+        const btn = document.querySelector('#cS3 .btn-primary');
+        if (btn) { btn.disabled = true; btn.innerText = 'Processing...'; }
+
+        const sv = svcs.find(x => x.k === selSvc);
+
+        // 1. Create Consultation
+        console.log('Creating consultation for:', sv.name);
+        const tok = await auth.currentUser.getIdToken();
+        const consRes = await fetch(`${API}/api/v1/consultations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+          body: JSON.stringify({
+            serviceKey: sv.k,
+            intake: intake,
+            stripeProductId: sv.priceId
+          })
+        });
+
+        if (!consRes.ok) throw new Error('Failed to create consultation');
+        const consData = await consRes.json();
+        const consultationId = consData.id;
+
+        // 2. Create Payment Session
+        console.log('Initiating Stripe Checkout...');
+        const payRes = await fetch(`${API}/api/v1/payments/create-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+          body: JSON.stringify({
+            priceId: sv.priceId,
+            serviceKey: sv.k,
+            consultationId: consultationId,
+            mode: sv.cat.includes('membership') ? 'subscription' : 'payment'
+          })
+        });
+
+        if (!payRes.ok) {
+          const err = await payRes.json();
+          throw new Error(err.error || 'Payment initialization failed');
+        }
+
+        const payData = await payRes.json();
+
+        // 3. Redirect to Stripe
+        window.location.href = payData.url;
+
+      } catch (e) {
+        console.error(e);
+        const btn = document.querySelector('#cS3 .btn-primary');
+        if (btn) { btn.disabled = false; btn.innerText = 'Submit Visit →'; }
+        toast('Error: ' + e.message);
+      }
+    }
+    function closeConsult(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('consultModal').classList.remove('active'); selSvc = null }
+    // --- ADMIN DASHBOARD LOGIC ---
+    // --- ADMIN DASHBOARD LOGIC ---
+    async function loadAdminConsults() {
+      console.log('Loading Admin Consults...', API); // DEBUG
+      if (!auth.currentUser) { console.log('No auth user'); return; }
+      document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center">Loading...</td></tr>';
+      try {
+        const token = await auth.currentUser.getIdToken();
+        console.log('Token obtained, fetching:', `${API}/api/v1/admin/consultations`);
+        const res = await fetch(`${API}/api/v1/admin/consultations`, {
+          headers: { Authorization: `Bearer ${token}` },
+          mode: 'cors' // Explicitly request CORS
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Status ${res.status}: ${txt}`);
+        }
+        const data = await res.json();
+        renderAdminTable(data.consultations);
+      } catch (e) {
+        console.error('Fetch Error:', e);
+        document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="5" style="padding:20px;text-align:center;color:red">Error: ${e.message} <br> (Check Console for details)</td></tr>`;
+      }
+    }
+
+    function renderAdminTable(consults) {
+      const tbody = document.getElementById('adminTableBody');
+      if (!consults || consults.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center">No consultations found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = consults.map(c => {
+        const date = c.createdAt ? new Date(c.createdAt._seconds * 1000).toLocaleDateString() : 'N/A';
+        const patient = c.intake?.personal ? `${c.intake.personal.firstName} ${c.intake.personal.lastName}` : 'Unknown';
+        const svc = c.serviceKey || 'General';
+        const statusColor = c.status === 'reviewed' ? 'green' : (c.status === 'completed' ? 'blue' : 'orange');
+
+        // Viewer Link (Mocked for now until PACS fully integrated with StudyUIDs)
+        const viewerLink = `http://136.111.99.153/viewer?StudyInstanceUID=${c.studyUid || ''}`; // Replace IP with Domain if set
+
+        return `
+          <tr style="border-bottom:1px solid var(--g100)">
+            <td style="padding:12px">${date}</td>
+            <td style="padding:12px"><b>${patient}</b><br><span style="font-size:12px;color:var(--g500)">${c.intake?.personal?.email || ''}</span></td>
+            <td style="padding:12px">${svc}</td>
+            <td style="padding:12px"><span style="color:${statusColor};font-weight:600;text-transform:capitalize">${c.status}</span></td>
+            <td style="padding:12px;display:flex;gap:8px">
+              <button class="btn btn-outline" style="padding:6px 12px;font-size:12px" onclick="viewIntake('${c.id}')">View Intake</button>
+              <a href="${viewerLink}" target="_blank" class="btn btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none">View PACS</a>
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="markReviewed('${c.id}')">Start Review</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function markReviewed(id) {
+      if (!confirm('Mark this consultation as "In Review"?')) return;
+      try {
+        const token = await auth.currentUser.getIdToken();
+        await fetch(`${API}/api/v1/admin/consultations/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ status: 'reviewed' })
+        });
+        toast('Status updated');
+        loadAdminConsults();
+      } catch (e) { toast('Error updating status'); }
+    }
+
+    function viewIntake(id) {
+      alert("Intake View Feature coming in next update! (Data is safely stored in database)");
+    }
+
+    async function handlePacsUpload() {
+      const f = document.getElementById('pacsFile').files[0];
+      if (!f) return toast('Please select a file');
+
+      const btn = document.getElementById('uploadBtn');
+      const stat = document.getElementById('uploadStatus');
+      btn.disabled = true; btn.textContent = 'Uploading...';
+      stat.textContent = 'Encrypting and sending to PACS...';
+      stat.style.color = 'var(--slate)';
+
+      try {
+        const fd = new FormData();
+        fd.append('dicom', f);
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`${API}/api/v1/radiology/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }, // FormData handled automatically
+          body: fd
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Upload failed');
+        }
+
+        const data = await res.json();
+        stat.textContent = '✅ Upload Complete! Study ID: ' + (data.orthancId || 'Received');
+        stat.style.color = 'green';
+        toast('Image uploaded successfully');
+        setTimeout(() => {
+          document.getElementById('uploadModal').classList.remove('active');
+          btn.disabled = false; btn.textContent = 'Upload Securely';
+          stat.textContent = '';
+          document.getElementById('pacsFile').value = '';
+        }, 3000);
+      } catch (e) {
+        console.error(e);
+        stat.textContent = '❌ Error: ' + e.message;
+        stat.style.color = 'red';
+        btn.disabled = false; btn.textContent = 'Try Again';
+      }
+    }
+
+    // --- NAVIGATION HELPERS ---
+    window.openProviderPortal = function () {
+      // alert('Opening Portal...'); // Debugging
+      console.log('Opening Provider Portal');
+      document.getElementById('landingPage').classList.add('hidden');
+      document.getElementById('dashboardPage').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.remove('hidden');
+      window.scrollTo(0, 0);
+      loadAdminConsults();
+    }
+
+    // Auth Listener Update
+    auth.onAuthStateChanged(async u => {
+      if (u) {
+        user = u; // Fix: Set global user var so checks pass
+        try { token = await u.getIdToken(); } catch (e) { }
+
+        document.getElementById('loginBtn').classList.add('hidden');
+        document.getElementById('signupBtn').classList.add('hidden');
+        document.getElementById('logoutBtn').classList.remove('hidden');
+
+        // Show Admin Button
+        const nav = document.querySelector('.nav-links');
+        if (!document.getElementById('adminLink')) {
+          const adminLink = document.createElement('a');
+          adminLink.id = 'adminLink';
+          adminLink.href = 'javascript:void(0)';
+          adminLink.textContent = 'Provider Portal';
+          adminLink.setAttribute('onclick', 'openProviderPortal()'); // Use Attribute for reliability
+          adminLink.style.fontWeight = 'bold';
+          adminLink.style.color = 'var(--navy)';
+          nav.insertBefore(adminLink, nav.firstChild);
+        }
+      } else {
+        document.getElementById('loginBtn').classList.remove('hidden');
+        document.getElementById('signupBtn').classList.remove('hidden');
+        document.getElementById('logoutBtn').classList.add('hidden');
+        const al = document.getElementById('adminLink');
+        if (al) al.remove();
+        document.getElementById('adminDashboard').classList.add('hidden');
+        showLanding();
+      }
+    });
+
+    function openAboutUs() { document.getElementById('aboutModal').classList.add('active') }
+    function closeAbout(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('aboutModal').classList.remove('active') }
+    function openConsent() { console.log('OpenConsent Triggered'); document.getElementById('consentModal').classList.add('active') }
+    function closeConsent(e) { if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return; document.getElementById('consentModal').classList.remove('active') }
+    function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500) }
+    window.addEventListener('scroll', () => { document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 20) });
+    // --- INITIALIZATION ---
+    window.addEventListener('load', () => {
+      // 1. Check Auth
+      // (Handled by onAuthStateChanged)
+
+      // 2. Check Payment Status
+      checkPaymentStatus();
+    });
+
+    function checkPaymentStatus() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment') === 'success') {
+        // Show Success Modal
+        document.getElementById('scheduleModal').classList.add('active');
+
+        // Clean URL
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+
+        // Optional: show toast
+        toast('Payment successful! Please schedule your visit.');
+      } else if (params.get('payment') === 'cancelled') {
+        toast('Payment was cancelled.');
+      }
+    }
+    renderSvc(); updateNav();
+  </script>
+</body>
+
+</html>

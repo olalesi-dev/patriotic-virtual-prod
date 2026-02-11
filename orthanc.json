@@ -1,0 +1,51 @@
+{
+  "Name": "Patriotic Virtual PACS",
+  "Plugins": [
+    "/usr/share/orthanc/plugins"
+  ],
+  "DicomWeb": {
+    "Enable": true,
+    "Root": "/dicom-web/",
+    "EnableWado": true,
+    "WadoRoot": "/wado",
+    "Ssl": false
+  },
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false,
+  "RegisteredUsers": {
+    "admin": "CHANGE_ME_STRONG_PASSWORD",
+    "retool": "CHANGE_ME_RETOOL_PASSWORD",
+    "radiologist": "CHANGE_ME_RAD_PASSWORD"
+  },
+  "DicomServerEnabled": true,
+  "DicomPort": 4242,
+  "DicomAet": "PVTPACS",
+  "HttpPort": 8042,
+  "HttpServerEnabled": true,
+  "AllowOrigins": [
+    "*"
+  ],
+  "PostgreSQL": {
+    "EnableIndex": true,
+    "EnableStorage": false,
+    "Host": "postgres",
+    "Port": 5432,
+    "Database": "orthanc",
+    "Username": "orthanc",
+    "Password": "FROM_ENV"
+  },
+  "DicomModalities": {
+    "URGENT_CARE_1": [
+      "UCPACS1",
+      "192.168.1.100",
+      4242
+    ],
+    "CLINIC_IMAGING": [
+      "CLINICPACS",
+      "10.0.0.50",
+      4242
+    ]
+  },
+  "StableAge": 60,
+  "StorageCompression": true
+}
