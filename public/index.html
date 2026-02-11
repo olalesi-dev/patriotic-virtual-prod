@@ -2503,10 +2503,9 @@
           stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55" />
         <defs>
           <linearGradient id="logoGrad" x1="11.5" y1="9" x2="32.5" y2="34.5">
-            <stop stop-color="#3B82F6" />
-            <stop offset=".35" stop-color="#6366F1" />
-            <stop offset=".7" stop-color="#8B5CF6" />
-            <stop offset="1" stop-color="#EC4899" />
+            <stop stop-color="#F59E0B" />
+            <stop offset=".5" stop-color="#F97316" />
+            <stop offset="1" stop-color="#EA580C" />
           </linearGradient>
         </defs>
       </symbol>
@@ -2526,7 +2525,8 @@
       </a>
       <div class="nav-links"><a href="#" onclick="openAboutUs()">About Us</a><a href="#"
           onclick="openConsent()">Privacy/Terms</a><a href="#services">Services</a><a href="#how-it-works">How It
-          Works</a><a href="#radiology">Radiology</a><a href="#pricing">Plans</a><a href="#testimonials">Reviews</a>
+          Works</a><a href="#radiology">Radiology Education</a><a href="#clinicians">For Clinicians and Facilities</a><a
+          href="#testimonials">Reviews</a>
       </div>
       <div class="nav-actions"><button class="btn btn-ghost" id="loginBtn" onclick="openModal('login')">Log
           In</button><button class="btn btn-primary" id="signupBtn" onclick="openModal('register')">Get
@@ -2714,12 +2714,13 @@
         <p class="sec-sub">Every treatment follows strict, evidence-based protocols with automated safety screening.
           Currently available to Florida residents — expanding to Virginia soon.</p>
         <div class="services-tabs">
-          <div class="tab active" onclick="filterSvc('all',this)">All</div>
-          <div class="tab" onclick="filterSvc('popular',this)">Popular</div>
+          <div class="tab active" onclick="filterSvc('popular',this)">Popular</div>
           <div class="tab" onclick="filterSvc('clinical',this)">Clinical Visits</div>
           <div class="tab" onclick="filterSvc('mens',this)">Men's Health</div>
+          <div class="tab" onclick="filterSvc('radiology',this)">Imaging</div>
           <div class="tab" onclick="filterSvc('ai',this)">AI & Digital</div>
           <div class="tab" onclick="filterSvc('membership',this)">Memberships</div>
+          <div class="tab" onclick="filterSvc('all',this)">All</div>
         </div>
         <div class="services-grid" id="svcGrid"></div>
       </div>
@@ -2942,15 +2943,19 @@
           <div class="rad-card">
             <div class="rad-top">
               <div class="rad-badge rb-n" style="background:var(--rose-soft);color:var(--rose)">Tier 4 · Premier</div>
-              <h3>Imaging + Video Consult</h3>
-              <p class="rd">Full educational image review plus a 15-minute secure video consultation to discuss findings
+              <h3>Imaging + Video Consult <span
+                  style="font-size:11px;background:var(--amber-soft);color:var(--amber);padding:4px 10px;border-radius:100px;vertical-align:middle;margin-left:6px;text-transform:uppercase;letter-spacing:0.5px">Popular</span>
+              </h3>
+              <p class="rd">Full educational image review plus a 30 - 60 minute secure video consultation to discuss
+                findings
                 directly with Dr. Osunsade.</p>
               <div class="rpt">$449 <span>/ consult</span></div>
             </div>
           </div>
         </div>
 
-        <div class="sec-eye eye-em" style="margin-top: 80px; color: var(--navy);">
+        <div id="clinicians" class="sec-eye eye-em"
+          style="margin-top: 80px; color: var(--navy); scroll-margin-top: 100px;">
           <div class="eye-line" style="background: var(--navy);"></div>Diagnostic Radiology
         </div>
         <h2 class="sec-title" style="color:var(--navy)">Clinical reads &<br>Facility solutions.</h2>
@@ -2989,76 +2994,7 @@
       </div>
     </section>
 
-    <!-- PRICING -->
-    <section class="pricing" id="pricing">
-      <div class="container">
-        <div class="sec-eye eye-vi">
-          <div class="eye-line"></div>Plans & Pricing
-        </div>
-        <h2 class="sec-title">Choose your plan.</h2>
-        <p class="sec-sub">From AI-only access to full-service care. All plans available to Florida residents.</p>
-        <div class="pricing-grid" style="grid-template-columns:repeat(3,1fr)">
-          <div class="pc">
-            <div class="pc-ic i1">🎯</div>
-            <h3>All Access Core</h3>
-            <p class="pcd">General telehealth + AI health assistant + AI imaging tools + scheduling. Great starter
-              membership.</p>
-            <div class="pcp"><span class="pca">$99</span><span class="pcper">/month</span></div>
-            <ul class="pcf">
-              <li>General telehealth visits</li>
-              <li>AI Health Assistant access</li>
-              <li>AI-powered imaging tools</li>
-              <li>Digital health platform</li>
-              <li>Standard scheduling</li>
-            </ul><button class="btn btn-outline" onclick="openModal('register')">Get Started</button>
-          </div>
-          <div class="pc pop">
-            <div class="pop-b">Most Popular</div>
-            <div class="pc-ic i2">⭐</div>
-            <h3>All Access Plus</h3>
-            <p class="pcd">Everything in Core plus expanded AI imaging, priority scheduling, and full telehealth access.
-            </p>
-            <div class="pcp"><span class="pca">$149</span><span class="pcper">/month</span></div>
-            <ul class="pcf">
-              <li>Everything in Core</li>
-              <li>Expanded AI imaging analysis</li>
-              <li>Priority scheduling</li>
-              <li>All specialty telehealth</li>
-              <li>Free prescription shipping</li>
-            </ul><button class="btn btn-primary" onclick="openModal('register')">Get Started</button>
-          </div>
-          <div class="pc">
-            <div class="pc-ic i3">🏆</div>
-            <h3>All Access Elite</h3>
-            <p class="pcd">The ultimate plan — unlimited telehealth, all AI tools, priority everything, and dedicated
-              support.</p>
-            <div class="pcp"><span class="pca">$199</span><span class="pcper">/month</span></div>
-            <ul class="pcf">
-              <li>Everything in Plus</li>
-              <li>Unlimited telehealth visits</li>
-              <li>Unlimited AI imaging</li>
-              <li>Priority provider access</li>
-              <li>Dedicated support line</li>
-            </ul><button class="btn btn-outline" onclick="openModal('register')">Get Started</button>
-          </div>
-        </div>
-        <div style="margin-top:32px;text-align:center">
-          <p style="font-size:14px;color:var(--g500);margin-bottom:12px">Also available: Telehealth-only memberships</p>
-          <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap">
-            <div style="background:var(--g50);padding:12px 20px;border-radius:10px;font-size:14px"><b>Basic</b> $29/mo
-              <span style="color:var(--g400)">· AI + limited visits</span>
-            </div>
-            <div style="background:var(--g50);padding:12px 20px;border-radius:10px;font-size:14px"><b>Standard</b>
-              $59/mo <span style="color:var(--g400)">· 1 visit/month</span></div>
-            <div style="background:var(--g50);padding:12px 20px;border-radius:10px;font-size:14px"><b>Premium</b> $99/mo
-              <span style="color:var(--g400)">· Unlimited/priority</span>
-            </div>
-          </div>
-          <p style="font-size:13px;color:var(--g400);margin-top:16px">Or pay per visit: General $79 · ED $79 · PE $79 ·
-            GLP-1 $129 · HRT $149</p>
-        </div>
-      </div>
-    </section>
+
 
     <!-- TESTIMONIALS -->
     <section class="testimonials" id="testimonials">
@@ -3613,7 +3549,7 @@
       { id: 'ai-imaging', k: 'ai_imaging', name: 'AI-Powered Imaging Analysis', desc: 'Physician-supervised AI interpretation of reports. Educational tools to help you understand findings.', icon: '🔬', ic: 'blue', c: 'blue', price: 99, cat: ['ai', 'radiology'], stripe: 'prod_TsnPLrOTNMh7xM', priceId: 'PRICE_ID_AI_IMAGING' },
       { id: 'report-interpretation', k: 'report_interpretation', name: 'Report Interpretation', desc: 'Expert analysis of your existing radiology report. We translate complex medical jargon into plain English.', icon: '📄', ic: 'indigo', c: 'indigo', price: 149, cat: ['radiology'], stripe: 'prod_Tmu7Z6g8kmwvMd', priceId: 'PRICE_ID_REPORT_INT' },
       { id: 'standard-imaging', k: 'standard_imaging', name: 'Standard Imaging Review', desc: 'Complete second-opinion over-read of your X-Ray, Ultrasound, CT, or MRI images by a board-certified radiologist.', icon: '🖥️', ic: 'violet', c: 'violet', price: 249, cat: ['radiology'], stripe: 'prod_Tmu9kplu78Fs2m', priceId: 'PRICE_ID_STD_REVIEW' },
-      { id: 'imaging-video', k: 'imaging_video', name: 'Imaging + Video Consult', desc: 'Full imaging review plus a 15-minute secure video consultation to discuss findings directly with a specialist.', icon: '📹', ic: 'rose', c: 'rose', price: 449, cat: ['radiology'], stripe: 'prod_TmuBq5Pwvt1rBc', priceId: 'PRICE_ID_VIDEO_CONSULT' },
+      { id: 'imaging-video', k: 'imaging_video', name: 'Imaging + Video Consult', desc: 'Full imaging review plus a 30 - 60 minute secure video consultation to discuss findings directly with a specialist.', icon: '📹', ic: 'rose', c: 'rose', price: 449, cat: ['radiology'], stripe: 'prod_TmuBq5Pwvt1rBc', priceId: 'PRICE_ID_VIDEO_CONSULT' },
 
       /* DIAGNOSTIC RADIOLOGY (Clinical) */
       { id: 'diagnostic-single', k: 'diagnostic_single', name: 'Single Study Read', desc: 'Official diagnostic report for a single study (CT, XR, US). <24-48h turnaround.', icon: '🖼️', ic: 'blue', c: 'blue', price: 75, priceSuffix: '/read', cat: ['radiology', 'diagnostic'], stripe: '', priceId: '' },
@@ -3622,7 +3558,7 @@
 
       { id: 'ai-assistant', k: 'ai_assistant', name: 'AI Health Assistant', desc: 'AI-powered health education, symptom guidance & care navigation. Not a substitute for professional medical advice.', icon: '🤖', ic: 'emerald', c: 'emerald', price: 29, cat: ['ai'], stripe: 'prod_TsnOx9T2J8z8Bz', priceId: 'PRICE_ID_AI_ASSISTANT' },
       { id: 'digital-platform', k: 'digital_platform', name: 'Digital Health Platform', desc: 'Monthly access to digital health tools, educational content & AI-powered navigation features. No clinical services.', icon: '📱', ic: 'violet', c: 'violet', price: 19, priceSuffix: '/mo', cat: ['ai', 'membership'], stripe: 'prod_TsnTYEU145UpKl', priceId: 'PRICE_ID_DIGITAL' },
-      { id: 'membership-elite', k: 'membership_elite', name: 'All Access — Elite', desc: 'Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.', icon: '🏆', ic: 'amber', c: 'amber', price: 199, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnS735VNACb3g', priceId: 'PRICE_ID_ELITE' },
+      { id: 'membership-elite', k: 'membership_elite', name: 'All Access — Elite', desc: 'Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.', icon: '🏆', ic: 'amber', c: 'amber', price: 199, priceSuffix: '/mo', cat: ['popular', 'membership'], stripe: 'prod_TsnS735VNACb3g', priceId: 'PRICE_ID_ELITE' },
       { id: 'membership-plus', k: 'membership_plus', name: 'All Access — Plus', desc: 'Telehealth visits, AI health assistant, AI imaging tools, and priority scheduling in one subscription.', icon: '⭐', ic: 'blue', c: 'blue', price: 149, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnRLsuI61fxnt', priceId: 'PRICE_ID_PLUS' },
       { id: 'membership-core', k: 'membership_core', name: 'All Access — Core', desc: 'General telehealth, AI health assistant, AI imaging tools & scheduling. Great starter membership.', icon: '🎯', ic: 'teal', c: 'teal', price: 99, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnR5LpCR65XOv', priceId: 'PRICE_ID_CORE' },
       { id: 'telehealth-premium', k: 'telehealth_premium', name: 'Telehealth Premium', desc: 'Unlimited/priority access to general telehealth for non-emergency concerns, clinician visits & digital support.', icon: '⚕️', ic: 'emerald', c: 'emerald', price: 99, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnNYdVBqlNpxO', priceId: 'PRICE_ID_TH_PREMIUM' },
@@ -3630,21 +3566,7 @@
       { id: 'telehealth-basic', k: 'telehealth_basic', name: 'Telehealth Basic', desc: 'AI + limited visits for general telehealth. Digital support & care navigation for non-emergency concerns.', icon: '💡', ic: 'violet', c: 'violet', price: 29, priceSuffix: '/mo', cat: ['membership'], stripe: 'prod_TsnLdFSY23zwtS', priceId: 'PRICE_ID_TH_BASIC' },
     ];
 
-    const iQs = {
-      general_visit: [{ k: 'chiefComplaint', l: 'What brings you in today?', t: 'i', p: 'Describe your concerns' }, { k: 'symptomDuration', l: 'How long have you had these concerns?', t: 'i', p: 'e.g. 3 days, 2 weeks' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }, { k: 'allergies', l: 'Drug allergies?', t: 'i', p: 'List allergies or "None"' }],
-      weight_loss: [{ k: 'currentWeight', l: 'Current weight (lbs)?', t: 'i', p: 'e.g. 210' }, { k: 'height', l: 'Height (inches)?', t: 'i', p: 'e.g. 68' }, { k: 'previousWeightLoss', l: 'Prior weight loss attempts?', t: 'i', p: 'Describe past efforts' }, { k: 'hasMedullaryThyroidCancer', l: 'History of medullary thyroid carcinoma?', t: 'yn' }, { k: 'hasMEN2', l: 'History of MEN2 syndrome?', t: 'yn' }, { k: 'hasPancreatitis', l: 'History of pancreatitis?', t: 'yn' }, { k: 'isPregnant', l: 'Pregnant or planning pregnancy?', t: 'yn' }],
-      erectile_dysfunction: [{ k: 'symptomDuration', l: 'How long have you experienced ED?', t: 'i', p: 'e.g. 6 months' }, { k: 'takesNitrates', l: 'Take nitrate medications (nitroglycerin, isosorbide)?', t: 'yn' }, { k: 'recentStroke', l: 'Stroke in past 6 months?', t: 'yn' }, { k: 'recentMI', l: 'Heart attack in past 6 months?', t: 'yn' }, { k: 'hasCardiovascularDisease', l: 'Cardiovascular disease?', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }],
-      premature_ejaculation: [{ k: 'symptomDuration', l: 'How long have you experienced PE?', t: 'i', p: 'e.g. 1 year' }, { k: 'hasSeizureDisorder', l: 'Seizure disorder?', t: 'yn' }, { k: 'onMAOIs', l: 'Take MAOI medications?', t: 'yn' }, { k: 'hasBipolar', l: 'Bipolar disorder?', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }],
-      testosterone_hrt: [{ k: 'symptoms', l: 'What symptoms are you experiencing?', t: 'i', p: 'Fatigue, low libido, weight gain, hot flashes, brain fog...' }, { k: 'gender', l: 'Biological sex?', t: 'i', p: 'Male or Female' }, { k: 'hasRecentLabs', l: 'Had hormone labs in the last 6 months?', t: 'yn' }, { k: 'hasProstateCancer', l: 'History of prostate cancer? (Men)', t: 'yn' }, { k: 'hasBreastCancer', l: 'History of breast cancer?', t: 'yn' }, { k: 'hasBloodClottingDisorder', l: 'Blood clotting disorder or history of DVT/PE?', t: 'yn' }, { k: 'hasLiverDisease', l: 'Liver disease?', t: 'yn' }, { k: 'isPregnant', l: 'Pregnant or nursing? (Women)', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }],
-      /* RADIOLOGY & AI SERVICES */
-      ai_imaging: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
-      report_interpretation: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
-      standard_imaging: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
-      imaging_video: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
-      diagnostic_single: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
-      diagnostic_second: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }],
-      diagnostic_facility: [{ k: 'history', l: 'Brief imaging and medical history?', t: 'i', p: 'Describe the study and your history' }]
-    };
+    const iQs = { general_visit: [{ k: 'chiefComplaint', l: 'What brings you in today?', t: 'i', p: 'Describe your concerns' }, { k: 'symptomDuration', l: 'How long have you had these concerns?', t: 'i', p: 'e.g. 3 days, 2 weeks' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }, { k: 'allergies', l: 'Drug allergies?', t: 'i', p: 'List allergies or "None"' }], weight_loss: [{ k: 'currentWeight', l: 'Current weight (lbs)?', t: 'i', p: 'e.g. 210' }, { k: 'height', l: 'Height (inches)?', t: 'i', p: 'e.g. 68' }, { k: 'previousWeightLoss', l: 'Prior weight loss attempts?', t: 'i', p: 'Describe past efforts' }, { k: 'hasMedullaryThyroidCancer', l: 'History of medullary thyroid carcinoma?', t: 'yn' }, { k: 'hasMEN2', l: 'History of MEN2 syndrome?', t: 'yn' }, { k: 'hasPancreatitis', l: 'History of pancreatitis?', t: 'yn' }, { k: 'isPregnant', l: 'Pregnant or planning pregnancy?', t: 'yn' }], erectile_dysfunction: [{ k: 'symptomDuration', l: 'How long have you experienced ED?', t: 'i', p: 'e.g. 6 months' }, { k: 'takesNitrates', l: 'Take nitrate medications (nitroglycerin, isosorbide)?', t: 'yn' }, { k: 'recentStroke', l: 'Stroke in past 6 months?', t: 'yn' }, { k: 'recentMI', l: 'Heart attack in past 6 months?', t: 'yn' }, { k: 'hasCardiovascularDisease', l: 'Cardiovascular disease?', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }], premature_ejaculation: [{ k: 'symptomDuration', l: 'How long have you experienced PE?', t: 'i', p: 'e.g. 1 year' }, { k: 'hasSeizureDisorder', l: 'Seizure disorder?', t: 'yn' }, { k: 'onMAOIs', l: 'Take MAOI medications?', t: 'yn' }, { k: 'hasBipolar', l: 'Bipolar disorder?', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }], testosterone_hrt: [{ k: 'symptoms', l: 'What symptoms are you experiencing?', t: 'i', p: 'Fatigue, low libido, weight gain, hot flashes, brain fog...' }, { k: 'gender', l: 'Biological sex?', t: 'i', p: 'Male or Female' }, { k: 'hasRecentLabs', l: 'Had hormone labs in the last 6 months?', t: 'yn' }, { k: 'hasProstateCancer', l: 'History of prostate cancer? (Men)', t: 'yn' }, { k: 'hasBreastCancer', l: 'History of breast cancer?', t: 'yn' }, { k: 'hasBloodClottingDisorder', l: 'Blood clotting disorder or history of DVT/PE?', t: 'yn' }, { k: 'hasLiverDisease', l: 'Liver disease?', t: 'yn' }, { k: 'isPregnant', l: 'Pregnant or nursing? (Women)', t: 'yn' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }] };
 
     /* === AI NAVIGATOR ENGINE === */
     let aiState = 'start', aiCtx = {};
@@ -3849,7 +3771,7 @@
     }
 
     function startSvc(k) { if (!user) return openModal('register'); selSvc = k; openConsultation(); setTimeout(() => { document.querySelectorAll('#svcSel .ro').forEach(el => { el.classList.toggle('sel', el.dataset.v === k) }) }, 50) }
-    function openConsultation() { if (!user) return openModal('register'); intake = {}; selSvc = selSvc || null;['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS1').classList.remove('hidden'); const availableSvcs = svcs.filter(s => !s.cat.includes('membership')); document.getElementById('svcSel').innerHTML = availableSvcs.map(s => `<div class="ro ${selSvc === s.k ? 'sel' : ''}" data-v="${s.k}" onclick="pickSvc(this,'${s.k}')"><div class="rd2"></div><span>${s.icon} ${s.name} — $${s.price}</span></div>`).join(''); document.getElementById('consultModal').classList.add('active') }
+    function openConsultation() { if (!user) return openModal('register'); intake = {}; selSvc = selSvc || null;['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS1').classList.remove('hidden'); const clinicalSvcs = svcs.filter(s => s.cat.includes('clinical')); document.getElementById('svcSel').innerHTML = clinicalSvcs.map(s => `<div class="ro ${selSvc === s.k ? 'sel' : ''}" data-v="${s.k}" onclick="pickSvc(this,'${s.k}')"><div class="rd2"></div><span>${s.icon} ${s.name} — $${s.price}</span></div>`).join(''); document.getElementById('consultModal').classList.add('active') }
     function pickSvc(el, k) { document.querySelectorAll('#svcSel .ro').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); selSvc = k }
     function cN(s) { if (s === 2 && !selSvc) return toast('Select a service.'); if (s === 2) { const qs = iQs[selSvc] || []; document.getElementById('iQs').innerHTML = qs.map(q => q.t === 'yn' ? `<div class="iq"><h3>${q.l}</h3><div class="rg" style="flex-direction:row;gap:10px"><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',true)"><div class="rd2"></div><span>Yes</span></div><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',false)"><div class="rd2"></div><span>No</span></div></div></div>` : `<div class="iq"><h3>${q.l}</h3><div class="fg" style="margin:0"><input placeholder="${q.p || ''}" oninput="intake['${q.k}']=this.value"></div></div>`).join('') } if (s === 3) { const sv = svcs.find(x => x.k === selSvc); document.getElementById('rSum').innerHTML = `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Service</div><div style="font-size:16px;font-weight:700;color:var(--navy)">${sv.icon} ${sv.name}</div></div><div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Price</div><div style="font-size:16px;font-weight:700;color:var(--navy)">$${sv.price}</div></div><div><div style="font-size:12px;color:var(--g400);margin-bottom:8px">Responses</div>${Object.entries(intake).map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--g200);font-size:14px"><span style="color:var(--g600)">${k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</span><span style="font-weight:600;color:var(--navy)">${typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</span></div>`).join('')}</div>` } ['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS' + s).classList.remove('hidden') }
     function cB(s) { ['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS' + s).classList.remove('hidden') }
@@ -3942,7 +3864,7 @@
       }
       tbody.innerHTML = consults.map(c => {
         const date = c.createdAt ? new Date(c.createdAt._seconds * 1000).toLocaleDateString() : 'N/A';
-        const patient = c.intake?.personal ? `${c.intake.personal.firstName} ${c.intake.personal.lastName}` : 'Unknown';
+        const patient = c.patientName || 'Unknown';
         const svc = c.serviceKey || 'General';
         const statusColor = c.status === 'reviewed' ? 'green' : (c.status === 'completed' ? 'blue' : 'orange');
 
@@ -3952,7 +3874,7 @@
         return `
           <tr style="border-bottom:1px solid var(--g100)">
             <td style="padding:12px">${date}</td>
-            <td style="padding:12px"><b>${patient}</b><br><span style="font-size:12px;color:var(--g500)">${c.intake?.personal?.email || ''}</span></td>
+            <td style="padding:12px"><b>${patient}</b><br><span style="font-size:12px;color:var(--g500)">${c.patientEmail || ''}</span></td>
             <td style="padding:12px">${svc}</td>
             <td style="padding:12px"><span style="color:${statusColor};font-weight:600;text-transform:capitalize">${c.status}</span></td>
             <td style="padding:12px;display:flex;gap:8px">
@@ -4100,7 +4022,7 @@
         toast('Payment was cancelled.');
       }
     }
-    renderSvc(); updateNav();
+    renderSvc('popular'); updateNav();
   </script>
 </body>
 
