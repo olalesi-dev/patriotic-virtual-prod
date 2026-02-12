@@ -3006,6 +3006,21 @@
           </div>
         </div>
       </div>
+      <div style="margin-top:40px;padding-top:40px;border-top:1px solid var(--g200)">
+        <h3 style="font-size:20px;color:var(--navy);margin-bottom:20px;font-weight:700">Provider Tools</h3>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <button class="btn btn-outline" onclick="openPacs()">
+            🖥️ Launch PACS Viewer
+          </button>
+          <button class="btn btn-outline" onclick="toast('EMR Access Restricted via VPN')">
+            📋 Launch EMR
+          </button>
+        </div>
+        <p style="font-size:13px;color:var(--g500);margin-top:12px;display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;background:var(--red);border-radius:50%"></span>
+          Strictly authorized personnel only. VPN required.
+        </p>
+      </div>
     </section>
 
 
@@ -3228,9 +3243,18 @@
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               fill="#EA4335" />
           </svg> Sign in with Google</button>
-        <p class="ff" style="margin-top:12px"><a onclick="handleForgotPassword()" style="font-size:13px">Forgot
+        <p class="ff" style="margin-top:12px"><a onclick="switchAuth('forgot')" style="font-size:13px">Forgot
             password?</a></p>
         <p class="ff" style="margin-top:8px">New here? <a onclick="switchAuth('register')">Create account</a></p>
+      </div>
+      <div id="forgotForm" class="hidden">
+        <h2>Reset Password</h2>
+        <p class="ms">Enter your email to receive a reset link.</p>
+        <div class="fg"><label>Email</label><input type="email" id="forgotEmail" placeholder="you@example.com"></div>
+        <button class="btn btn-primary btn-large" style="width:100%;margin-top:8px"
+          onclick="handleForgotPassword()">Send Reset Link</button>
+        <p class="ff" style="margin-top:12px"><a onclick="switchAuth('login')" style="font-size:13px">Back to Login</a>
+        </p>
       </div>
       <div id="registerForm" class="hidden">
         <h2>Get started</h2>
@@ -3779,11 +3803,37 @@
     function filterSvc(c, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderSvc(c) }
     function openModal(t) { document.getElementById('authModal').classList.add('active'); switchAuth(t) }
     function closeModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('authModal').classList.remove('active') }
-    function switchAuth(t) { document.getElementById('loginForm').classList.toggle('hidden', t !== 'login'); document.getElementById('registerForm').classList.toggle('hidden', t !== 'register') }
+    function switchAuth(t) {
+      document.getElementById('loginForm').classList.toggle('hidden', t !== 'login');
+      document.getElementById('registerForm').classList.toggle('hidden', t !== 'register');
+      document.getElementById('forgotForm').classList.toggle('hidden', t !== 'forgot');
+    }
+
     async function handleLogin() { const e = document.getElementById('loginEmail').value, p = document.getElementById('loginPassword').value; if (!e || !p) return toast('Please fill in all fields.'); try { const cred = await auth.signInWithEmailAndPassword(e, p); fbUser = cred.user; token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }); if (r.ok) { user = await r.json(); } else { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome back, ' + (user.firstName || user.email) + '!') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/wrong-password' ? 'Incorrect password.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' : err.code === 'auth/invalid-credential' ? 'Invalid email or password.' : err.message || 'Login failed.'; toast(msg) } }
     async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value, consent = document.getElementById('regConsent').checked; if (!consent) return toast('Please agree to the consents and policies.'); if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida. Virginia coming soon!'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
     async function handleGoogleLogin() { try { const provider = new firebase.auth.GoogleAuthProvider(); const cred = await auth.signInWithPopup(provider); fbUser = cred.user; token = await fbUser.getIdToken(); const names = fbUser.displayName ? fbUser.displayName.split(' ') : ['User']; try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, firebaseUid: fbUser.uid, role: 'patient' }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: names[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome, ' + (user.firstName || fbUser.email) + '!') } catch (err) { if (err.code !== 'auth/popup-closed-by-user') toast(err.message || 'Google sign-in failed.') } }
-    async function handleForgotPassword() { const e = document.getElementById('loginEmail').value; if (!e) return toast('Enter your email above, then click Forgot password.'); try { await auth.sendPasswordResetEmail(e); toast('Password reset email sent! Check your inbox.') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message; toast(msg) } }
+
+    async function handleForgotPassword() {
+      const e = document.getElementById('forgotEmail').value;
+      if (!e) return toast('Please enter your email address.');
+      try {
+        await auth.sendPasswordResetEmail(e);
+        toast('Password reset email sent check your inbox!');
+        setTimeout(() => switchAuth('login'), 3000);
+      } catch (err) {
+        toast(err.message);
+      }
+    }
+
+    function openPacs() {
+      const p = prompt('Restricted Access. Enter Provider Passcode:');
+      if (p && p.trim() === 'patriotic') {
+        window.open('http://136.111.99.153/content/app/study-list', '_blank');
+      } else if (p) {
+        toast('Incorrect passcode.');
+      }
+    }
+
     function logout() { auth.signOut().then(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }).catch(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }) }
     /* Firebase Auth State Listener — auto-restores sessions */
     auth.onAuthStateChanged(async (u) => { if (u) { fbUser = u; token = await u.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }); if (r.ok) { user = await r.json(); } else { user = { firstName: u.displayName ? u.displayName.split(' ')[0] : u.email.split('@')[0], email: u.email, role: 'patient', uid: u.uid }; } } catch (e) { user = { firstName: u.displayName ? u.displayName.split(' ')[0] : u.email.split('@')[0], email: u.email, role: 'patient', uid: u.uid }; } updateNav(); } else { token = null; user = null; fbUser = null; updateNav(); } });
