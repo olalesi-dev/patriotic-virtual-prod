@@ -2918,6 +2918,8 @@
                 findings in plain English.</p>
               <div class="rpt">$99 <span>/ analysis</span></div>
             </div>
+            <button class="btn btn-outline" style="width:100%"
+              onclick="document.getElementById('uploadModal').classList.add('active')">Get Started →</button>
           </div>
           <!-- 2. Report Interpretation -->
           <div class="rad-card">
@@ -2928,6 +2930,8 @@
                 understandable language.</p>
               <div class="rpt">$149 <span>/ report</span></div>
             </div>
+            <button class="btn btn-outline" style="width:100%"
+              onclick="document.getElementById('uploadModal').classList.add('active')">Get Started →</button>
           </div>
           <!-- 3. Standard Review -->
           <div class="rad-card">
@@ -2938,6 +2942,8 @@
                 radiologist.</p>
               <div class="rpt">$249 <span>/ study</span></div>
             </div>
+            <button class="btn btn-outline" style="width:100%"
+              onclick="document.getElementById('uploadModal').classList.add('active')">Get Started →</button>
           </div>
           <!-- 4. Video Consult -->
           <div class="rad-card">
@@ -2951,6 +2957,8 @@
                 directly with Dr. Osunsade.</p>
               <div class="rpt">$449 <span>/ consult</span></div>
             </div>
+            <button class="btn btn-primary" style="width:100%" onclick="startSvc('imaging_video')">Book Consult
+              →</button>
           </div>
         </div>
 
@@ -2971,6 +2979,8 @@
               <p class="rd">Official diagnostic report for CT, X-Ray, or Ultrasound. Fast 24-48h turnaround time.</p>
               <div class="rpt">$75 <span>/ read</span></div>
             </div>
+            <button class="btn btn-outline" style="width:100%" onclick="startSvc('diagnostic_single')">Request Read
+              →</button>
           </div>
           <!-- 2. Second Opinion -->
           <div class="rad-card">
@@ -2980,6 +2990,8 @@
               <p class="rd">Full diagnostic review, written opinion, and patient summary for CT, XR, or US.</p>
               <div class="rpt">$250 <span>/ consult</span></div>
             </div>
+            <button class="btn btn-outline" style="width:100%" onclick="startSvc('diagnostic_second')">Get Opinion
+              →</button>
           </div>
           <!-- 3. Facility Contracts -->
           <div class="rad-card">
@@ -2989,6 +3001,8 @@
               <p class="rd">Unlimited reads, SLA guarantees, and dedicated upload link. Customized for your volume.</p>
               <div class="rpt">$3,500+ <span>/ month</span></div>
             </div>
+            <button class="btn btn-primary" style="width:100%" onclick="startSvc('diagnostic_facility')">Contact Us
+              →</button>
           </div>
         </div>
       </div>
@@ -3172,11 +3186,11 @@
                 <p>Second opinions & AI</p>
               </div>
             </div>
-            <div class="cli">
-              <div class="cli-ic" style="background:var(--rose-soft)">📹</div>
+            <div class="cli" onclick="window.open('http://136.111.99.153/content/app/study-list', '_blank')">
+              <div class="cli-ic" style="background:var(--navy);color:white">🖥️</div>
               <div class="cli-info">
-                <h4>Video Consult</h4>
-                <p>Book imaging consultation</p>
+                <h4>PACS Viewer</h4>
+                <p>Secure Image Access</p>
               </div>
             </div>
           </div>
@@ -3236,8 +3250,16 @@
               <option value="VA" disabled style="color:#9ca3af">Virginia (Coming Soon)</option>
             </select></div>
           <div class="fg"><label>Date of Birth</label><input type="date" id="regDob"></div>
-        </div><button class="btn btn-primary btn-large" style="width:100%;margin-top:8px"
-          onclick="handleRegister()">Create Account</button>
+        </div>
+        <div class="fg" style="flex-direction:row;align-items:flex-start;gap:10px;margin-top:16px;margin-bottom:16px;">
+          <input type="checkbox" id="regConsent" style="width:20px;height:20px;margin-top:2px">
+          <label for="regConsent" style="font-size:12px;line-height:1.4;color:var(--g600);cursor:pointer">
+            I agree to the <a href="#" onclick="openConsent()">Telehealth Consents</a>, Terms of Service, and Privacy
+            Policy. I understand that my records will be stored in a secure EMR.
+          </label>
+        </div>
+        <button class="btn btn-primary btn-large" style="width:100%;margin-top:8px" onclick="handleRegister()">Create
+          Account</button>
         <div style="display:flex;align-items:center;gap:12px;margin:14px 0">
           <div style="flex:1;height:1px;background:var(--g200)"></div><span
             style="font-size:12px;color:var(--g400);font-weight:500">OR</span>
@@ -3759,7 +3781,7 @@
     function closeModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('authModal').classList.remove('active') }
     function switchAuth(t) { document.getElementById('loginForm').classList.toggle('hidden', t !== 'login'); document.getElementById('registerForm').classList.toggle('hidden', t !== 'register') }
     async function handleLogin() { const e = document.getElementById('loginEmail').value, p = document.getElementById('loginPassword').value; if (!e || !p) return toast('Please fill in all fields.'); try { const cred = await auth.signInWithEmailAndPassword(e, p); fbUser = cred.user; token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }); if (r.ok) { user = await r.json(); } else { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome back, ' + (user.firstName || user.email) + '!') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/wrong-password' ? 'Incorrect password.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' : err.code === 'auth/invalid-credential' ? 'Invalid email or password.' : err.message || 'Login failed.'; toast(msg) } }
-    async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value; if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida. Virginia coming soon!'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
+    async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value, consent = document.getElementById('regConsent').checked; if (!consent) return toast('Please agree to the consents and policies.'); if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida. Virginia coming soon!'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
     async function handleGoogleLogin() { try { const provider = new firebase.auth.GoogleAuthProvider(); const cred = await auth.signInWithPopup(provider); fbUser = cred.user; token = await fbUser.getIdToken(); const names = fbUser.displayName ? fbUser.displayName.split(' ') : ['User']; try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, firebaseUid: fbUser.uid, role: 'patient' }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: names[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome, ' + (user.firstName || fbUser.email) + '!') } catch (err) { if (err.code !== 'auth/popup-closed-by-user') toast(err.message || 'Google sign-in failed.') } }
     async function handleForgotPassword() { const e = document.getElementById('loginEmail').value; if (!e) return toast('Enter your email above, then click Forgot password.'); try { await auth.sendPasswordResetEmail(e); toast('Password reset email sent! Check your inbox.') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message; toast(msg) } }
     function logout() { auth.signOut().then(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }).catch(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }) }
