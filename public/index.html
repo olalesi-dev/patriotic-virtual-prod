@@ -1701,6 +1701,10 @@
       transform: translateY(0) scale(1)
     }
 
+    .modal.wide {
+      max-width: 900px;
+    }
+
     .modal h2 {
       font-family: 'Fraunces', serif;
       font-size: 28px;
@@ -1876,6 +1880,42 @@
       gap: 12px;
       justify-content: flex-end;
       margin-top: 28px
+    }
+
+    /* TABS */
+    .chart-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--g200);
+      margin-bottom: 20px;
+    }
+
+    .chart-tab {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--g500);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s ease;
+    }
+
+    .chart-tab:hover {
+      color: var(--navy);
+    }
+
+    .chart-tab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
+
+    .chart-content {
+      display: none;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .chart-content.active {
+      display: block;
     }
 
     /* DASHBOARD */
@@ -3111,6 +3151,8 @@
           <p>Your account overview and recent activity.</p>
         </div>
         <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" onclick="openPatientMessage()" style="background:white">💬 Message
+            Provider</button>
           <button class="btn btn-outline" onclick="document.getElementById('uploadModal').classList.add('active')"
             style="background:white">☁️ Upload Images</button>
           <button class="btn btn-primary" onclick="openConsultation()">+ New Visit</button>
@@ -3410,36 +3452,6 @@
   <div id="adminDashboard" class="hidden" style="padding:100px 0;background:var(--g50);min-height:100vh">
     <div class="container">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px">
-        <div>
-          <h2 style="color:var(--navy);margin-bottom:8px">Provider Portal</h2>
-          <p style="color:var(--g600)">Manage patient consultations and imaging requests.</p>
-        </div>
-        <button class="btn btn-outline" onclick="loadAdminConsults()">↻ Refresh</button>
-      </div>
-
-      <div class="dash-grid" style="grid-template-columns:1fr">
-        <div class="dash-card">
-          <h3 style="margin-bottom:20px">Incoming Consultations</h3>
-          <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:14px;text-align:left">
-              <thead>
-                <tr style="border-bottom:2px solid var(--g200);color:var(--g500)">
-                  <th style="padding:12px;font-weight:600">Date</th>
-                  <th style="padding:12px;font-weight:600">Patient</th>
-                  <th style="padding:12px;font-weight:600">Service</th>
-                  <th style="padding:12px;font-weight:600">Status</th>
-                  <th style="padding:12px;font-weight:600">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="adminTableBody">
-                <!-- Rows injected by JS -->
-                <tr>
-                  <td colspan="5" style="padding:20px;text-align:center;color:var(--g500)">Loading...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -3552,6 +3564,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     const API = ''; // Relative path via Firebase Hosting Rewrite (Solves CORS & Org Policy)
     const ACTIVE_STATES = ['FL'];
@@ -3853,8 +3866,165 @@
     function closeConsult(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('consultModal').classList.remove('active'); selSvc = null }
     // --- ADMIN DASHBOARD LOGIC ---
     // --- ADMIN DASHBOARD LOGIC ---
-    // --- ADMIN DASHBOARD LOGIC ---
-    let adminConsults = [];
+    /* --- ADMIN MESSAGING --- */
+    let currentConversationId = null;
+    let msgUnsubscribe = null;
+
+    function switchAdminTab(tab) {
+      document.getElementById('view-admin-consults').style.display = tab === 'consults' ? 'block' : 'none';
+
+      // Fix: Use flex for messages view to maintain layout
+      const msgView = document.getElementById('view-admin-messages');
+      if (tab === 'messages') {
+        msgView.style.display = 'flex';
+        loadAdminThreads();
+      } else {
+        msgView.style.display = 'none';
+      }
+
+      document.getElementById('tab-admin-consults').classList.toggle('active', tab === 'consults');
+      document.getElementById('tab-admin-messages').classList.toggle('active', tab === 'messages');
+    }
+
+    async function loadAdminThreads() {
+      if (!auth.currentUser) return;
+      const list = document.getElementById('msgThreadList');
+      list.innerHTML = '<div style="padding:20px;text-align:center">Loading...</div>';
+
+      try {
+        // Real-time listener for conversations
+        db.collection('conversations')
+          .orderBy('lastMessage.createdAt', 'desc')
+          .onSnapshot(snap => {
+            if (snap.empty) {
+              list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--g500)">No messages yet.</div>';
+              return;
+            }
+
+            // Sort by unread locally if needed, but ordering by lastMessage is usually enough
+            const threads = [];
+            snap.forEach(doc => threads.push({ id: doc.id, ...doc.data() }));
+            renderThreadList(threads);
+          });
+      } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div style="color:red;padding:20px">Error loading threads.</div>';
+      }
+    }
+
+    function renderThreadList(threads) {
+      const list = document.getElementById('msgThreadList');
+      list.innerHTML = threads.map(t => {
+        const pName = t.patientName || 'Patient'; // Ideally stored on conversation doc
+        const last = t.lastMessage ? (t.lastMessage.text || 'Attachment') : 'No messages';
+        const date = t.lastMessage && t.lastMessage.createdAt ? new Date(t.lastMessage.createdAt.toDate()).toLocaleDateString() : '';
+        const unread = t.unreadCounts && t.unreadCounts[auth.currentUser.uid] > 0; // Check provider unread
+
+        return `
+                <div class="msg-thread ${unread ? 'unread' : ''} ${currentConversationId === t.id ? 'active' : ''}" 
+                     onclick="openAdminChat('${t.id}', '${pName}')"
+                     style="padding:15px;border-bottom:1px solid var(--g200);cursor:pointer;background:${currentConversationId === t.id ? '#f0f9ff' : 'white'}">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <div style="font-weight:${unread ? '800' : '600'};color:var(--navy)">${pName}</div>
+                        <div style="font-size:11px;color:var(--g500)">${date}</div>
+                    </div>
+                    <div style="font-size:13px;color:${unread ? 'black' : 'var(--g500)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                        ${unread ? '🔵 ' : ''}${last}
+                    </div>
+                </div>
+            `;
+      }).join('');
+    }
+
+    async function openAdminChat(convId, pName) {
+      if (msgUnsubscribe) msgUnsubscribe(); // Unsub previous
+      currentConversationId = convId;
+
+      document.getElementById('chatHeader').innerHTML = `
+            <div style="font-weight:700;color:var(--navy)">${pName}</div>
+            <div style="font-size:12px;color:var(--g500)">Secure Thread</div>
+        `;
+      document.getElementById('chatInputArea').style.display = 'flex';
+      renderThreadList([]); // Re-render to update active highlight (quick hack, ideally separated)
+
+      // Reset Unread Count for Provider
+      db.collection('conversations').doc(convId).set({
+        unreadCounts: { [auth.currentUser.uid]: 0 }
+      }, { merge: true });
+
+      // Listen for Messages
+      msgUnsubscribe = db.collection('conversations').doc(convId).collection('messages')
+        .orderBy('createdAt', 'asc')
+        .onSnapshot(snap => {
+          const msgs = [];
+          snap.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
+          renderMessages(msgs);
+        });
+    }
+
+    function renderMessages(msgs) {
+      const div = document.getElementById('chatMessages');
+      if (msgs.length === 0) {
+        div.innerHTML = '<div style="text-align:center;color:var(--g400);margin-top:20px">Start the conversation...</div>';
+        return;
+      }
+
+      div.innerHTML = msgs.map(m => {
+        const isMe = m.senderId === auth.currentUser.uid;
+        const time = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
+
+        return `
+                <div style="align-self:${isMe ? 'flex-end' : 'flex-start'};max-width:70%;margin-bottom:10px">
+                    <div style="background:${isMe ? 'var(--blue)' : 'white'};color:${isMe ? 'white' : 'var(--navy)'};padding:10px 14px;border-radius:12px;border:${isMe ? 'none' : '1px solid var(--g200)'};box-shadow:var(--sh-sm)">
+                        ${m.text}
+                        ${m.attachments ? m.attachments.map(a => `<div style="margin-top:5px;padding:5px;background:rgba(0,0,0,0.1);border-radius:4px"><a href="${a.url}" target="_blank" style="color:inherit;text-decoration:none">📎 ${a.name}</a></div>`).join('') : ''}
+                    </div>
+                    <div style="font-size:10px;color:var(--g400);margin-top:2px;text-align:${isMe ? 'right' : 'left'}">${time}</div>
+                </div>
+            `;
+      }).join('');
+      div.scrollTop = div.scrollHeight;
+    }
+
+    async function sendAdminMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text && !currentAttachment) return;
+
+      const convId = currentConversationId;
+      const senderId = auth.currentUser.uid;
+
+      input.value = ''; // Optimistic clear
+
+      try {
+        await db.collection('conversations').doc(convId).collection('messages').add({
+          text,
+          senderId,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          // attachments: currentAttachment ? [currentAttachment] : [] // TODO: Implement handleChatAttach
+        });
+
+        // Update Parent Last Message & Unread for Patient
+        // Note: We need the PatientID to key the unread count map. 
+        // In a real app, we'd read the doc first or store patientId in a known variable.
+        // For now, assume single patient per thread logic or update all 'non-sender' counts.
+        // Simplified: Update 'lastMessage'
+        await db.collection('conversations').doc(convId).update({
+          lastMessage: {
+            text,
+            senderId,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }
+          // unreadCounts logic needs Cloud Function or known patient ID
+        });
+
+      } catch (e) {
+        console.error('Send failed', e);
+        toast('Failed to send message');
+      }
+    }
+
+    // --- OLD ADMIN CONSULT LOGIC ---
 
     async function loadAdminConsults() {
       console.log('Loading Admin Consults...', API); // DEBUG
@@ -3898,7 +4068,10 @@
         return `
           <tr style="border-bottom:1px solid var(--g100)">
             <td style="padding:12px">${date}</td>
-            <td style="padding:12px"><b>${patient}</b><br><span style="font-size:12px;color:var(--g500)">${c.patientEmail || ''}</span></td>
+            <td style="padding:12px">
+                <span class="patient-link" data-uid="${c.uid}" style="font-weight:700;color:var(--navy);text-decoration:underline;cursor:pointer">${patient}</span>
+                <br><span style="font-size:12px;color:var(--g500)">${c.patientEmail || ''}</span>
+            </td>
             <td style="padding:12px">${svc}</td>
             <td style="padding:12px"><span style="color:${statusColor};font-weight:600;text-transform:capitalize">${c.status}</span></td>
             <td style="padding:12px;display:flex;gap:8px">
@@ -3943,6 +4116,362 @@
     function closeIntake(e) {
       if (e && e.target !== e.currentTarget) return;
       document.getElementById('intakeModal').classList.remove('active');
+      document.querySelector('#intakeModal .modal').classList.remove('wide');
+    }
+
+    // --- PATIENT CHART (EMR PHASE 1) ---
+    window.openPatientChart = async function (uid) {
+      if (!uid || uid === 'undefined') return toast('No patient record found.');
+      window.activePatientId = uid; // Set global for refresh actions
+
+      // Use the existing intake modal shell but clear it first
+      const container = document.getElementById('intakeContent');
+      const modalTitle = document.querySelector('#intakeModal h3');
+      container.innerHTML = '<div style="padding:40px;text-align:center">Loading Chart...</div>';
+      modalTitle.innerText = 'Patient Chart';
+      document.querySelector('#intakeModal .modal').classList.add('wide');
+      document.getElementById('intakeModal').classList.add('active');
+
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`${API}/api/v1/doctor/patients/${uid}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Status ${res.status}: ${txt}`);
+        }
+
+        const { profile, history, notes, labs } = await res.json();
+        renderChartUI(container, profile, history, notes, labs);
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div style="color:red;padding:20px;text-align:center">Error loading chart:<br><b>${e.message}</b></div>`;
+      }
+    }
+
+    function renderChartUI(container, p, history, notes = [], labs = []) {
+      // Safe accessors
+      const name = `${p.firstName || ''} ${p.lastName || ''}`.trim() || p.name || 'Unknown';
+      const dob = p.dob || 'N/A';
+      const state = p.state || 'N/A';
+      const email = p.email || 'N/A';
+
+      container.innerHTML = `
+            <div style="display:flex;gap:20px;height:100%">
+                <!-- LEFT SIDEBAR: DEMOGRAPHICS -->
+                <div style="width:250px;flex-shrink:0;border-right:1px solid var(--g200);padding-right:20px">
+                    <div style="width:60px;height:60px;background:var(--g200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:10px">
+                        ${name.charAt(0)}
+                    </div>
+                    <h2 style="margin:0;font-size:18px;color:var(--navy)">${name}</h2>
+                    <div style="color:var(--g500);font-size:12px;margin-bottom:20px">${email}</div>
+
+                    <div style="display:grid;gap:10px;font-size:13px">
+                        <div><div style="color:var(--g500)">DOB</div><div>${dob}</div></div>
+                        <div><div style="color:var(--g500)">State</div><div>${state}</div></div>
+                        <div><div style="color:var(--g500)">Visits</div><div>${history.length}</div></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT CONTENT -->
+                <div style="flex:1;overflow-y:auto;padding-right:10px">
+                    
+                    <!-- TABS -->
+                    <div class="chart-tabs">
+                        <div class="chart-tab active" onclick="switchTab('tab-notes', this)">Clinical Notes</div>
+                        <div class="chart-tab" onclick="switchTab('tab-labs', this)">Labs & Results</div>
+                        <div class="chart-tab" onclick="switchTab('tab-history', this)">History</div>
+                    </div>
+
+                    <!-- TAB: NOTES -->
+                    <div id="tab-notes" class="chart-content active">
+                        <button class="btn btn-primary" style="width:100%;margin-bottom:20px" onclick="toggleSoapForm()">+ Add SOAP Note</button>
+                        
+                        <!-- SOAP FORM (Hidden by default) -->
+                        <div id="soapForm" style="display:none;background:var(--g50);padding:15px;border-radius:8px;margin-bottom:20px;border:1px solid var(--g200)">
+                             <h4 style="margin-top:0;color:var(--navy)">New SOAP Note</h4>
+                             <textarea id="soapS" placeholder="Subjective" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid var(--g200);border-radius:4px;min-height:60px"></textarea>
+                             <textarea id="soapO" placeholder="Objective" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid var(--g200);border-radius:4px;min-height:60px"></textarea>
+                             <textarea id="soapA" placeholder="Assessment" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid var(--g200);border-radius:4px;min-height:60px"></textarea>
+                             
+                             <div style="margin-bottom:12px;padding:10px;background:white;border:1px solid var(--g200);border-radius:4px">
+                                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--navy)">Official Diagnosis (ICD-10)</label>
+                                <input id="soapDiagnosis" type="text" placeholder="e.g. E29.1 Hypogonadism" style="width:100%;padding:6px;border:1px solid var(--g200);border-radius:4px;font-size:13px">
+                            </div>
+
+                            <div style="margin-bottom:12px;padding:10px;background:white;border:1px solid var(--g200);border-radius:4px">
+                                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--navy)">Prescription Order</label>
+                                <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px">
+                                    <input id="rxName" type="text" placeholder="Medication Name" style="padding:6px;border:1px solid var(--g200);border-radius:4px;font-size:13px">
+                                    <input id="rxDosage" type="text" placeholder="Dosage" style="padding:6px;border:1px solid var(--g200);border-radius:4px;font-size:13px">
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                                    <input id="rxFreq" type="text" placeholder="Frequency" style="padding:6px;border:1px solid var(--g200);border-radius:4px;font-size:13px">
+                                    <input id="rxQty" type="text" placeholder="Qty" style="padding:6px;border:1px solid var(--g200);border-radius:4px;font-size:13px">
+                                </div>
+                            </div>
+                             
+                             <textarea id="soapP" placeholder="Plan" style="width:100%;padding:8px;margin-bottom:15px;border:1px solid var(--g200);border-radius:4px;min-height:60px"></textarea>
+                             <div style="display:flex;gap:10px;justify-content:flex-end">
+                                 <button class="btn btn-ghost" onclick="toggleSoapForm()">Cancel</button>
+                                 <button class="btn btn-primary" onclick="saveSoapNote('${p.uid}')">Save Note</button>
+                             </div>
+                        </div>
+
+                        <div style="display:grid;gap:10px;margin-bottom:30px">
+                             ${notes.length === 0 ? '<div style="color:var(--g500);font-style:italic">No notes recorded.</div>' : notes.map(n => {
+        const d = n.createdAt ? new Date(n.createdAt._seconds * 1000).toLocaleDateString() : 'Just now';
+        return `
+                                     <div style="border:1px solid var(--g200);border-left:3px solid var(--blue);border-radius:4px;padding:12px;background:white">
+                                         <div style="font-size:11px;color:var(--g500);margin-bottom:5px;display:flex;justify-content:space-between">
+                                             <b>${d}</b> <span>Provider: API</span>
+                                         </div>
+                                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+                                             <div><b style="color:var(--navy)">S:</b> ${n.subjective || '-'}</div>
+                                             <div><b style="color:var(--navy)">O:</b> ${n.objective || '-'}</div>
+                                             <div><b style="color:var(--navy)">A:</b> ${n.assessment || '-'}</div>
+                                             <div><b style="color:var(--navy)">P:</b> ${n.plan || '-'}</div>
+                                         </div>
+                                         ${n.diagnosis ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--g200);font-size:13px"><b style="color:var(--navy)">Dx:</b> ${n.diagnosis}</div>` : ''}
+                                         ${n.prescription ? `<div style="margin-top:4px;font-size:13px;color:var(--blue);font-weight:600">Rx: ${n.prescription.name} ${n.prescription.dosage} - ${n.prescription.frequency} (#${n.prescription.quantity})</div>` : ''}
+                                     </div>
+                                 `;
+      }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- TAB: LABS -->
+                    <div id="tab-labs" class="chart-content">
+                        <button class="btn btn-primary" style="width:100%;margin-bottom:20px" onclick="toggleLabForm()">+ New Lab Order</button>
+                        
+                        <!-- LAB FORM -->
+                        <div id="labForm" style="display:none;background:var(--g50);padding:15px;border-radius:8px;margin-bottom:20px;border:1px solid var(--g200)">
+                            <h4 style="margin-top:0;color:var(--navy)">Order Labs</h4>
+                            <div style="margin-bottom:12px">
+                                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--navy)">Select Panels</label>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                                    <label class="ro"><input type="checkbox" class="lab-panel" value="CBC"> CBC</label>
+                                    <label class="ro"><input type="checkbox" class="lab-panel" value="CMP"> CMP</label>
+                                    <label class="ro"><input type="checkbox" class="lab-panel" value="Lipid Panel"> Lipid Panel</label>
+                                    <label class="ro"><input type="checkbox" class="lab-panel" value="Testosterone Free/Total"> Testosterone</label>
+                                    <label class="ro"><input type="checkbox" class="lab-panel" value="PSA"> PSA</label>
+                                    <label class="ro"><input type="checkbox" class="lab-panel" value="Estradiol"> Estradiol</label>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px">
+                                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--navy)">Diagnosis Code</label>
+                                <input id="labDiagnosis" type="text" placeholder="e.g. E29.1" style="width:100%;padding:8px;border:1px solid var(--g200);border-radius:4px">
+                            </div>
+                            <div style="display:flex;gap:10px;justify-content:flex-end">
+                                <button class="btn btn-ghost" onclick="toggleLabForm()">Cancel</button>
+                                <button class="btn btn-primary" onclick="createLabOrder('${p.uid}')">Create Order & Req</button>
+                            </div>
+                        </div>
+
+                        <!-- LAB LIST -->
+                        <div id="labList" style="display:grid;gap:10px">
+                           <!-- Populated by renderLabs -->
+                        </div>
+                    </div>
+
+                    <!-- TAB: HISTORY -->
+                    <div id="tab-history" class="chart-content">
+                        <div style="display:grid;gap:10px">
+                            ${history.map(h => {
+        const d = h.createdAt ? new Date(h.createdAt._seconds * 1000).toLocaleDateString() : 'Unknown';
+        const svc = (h.serviceKey || 'General').replace(/_/g, ' ');
+        const stat = h.status.toUpperCase();
+        return `
+                                    <div style="border:1px solid var(--g200);border-radius:8px;padding:12px">
+                                        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                                            <b style="color:var(--navy)">${svc}</b>
+                                            <span style="font-size:12px">${d}</span>
+                                        </div>
+                                        <div style="display:flex;justify-content:space-between;align-items:center">
+                                            <div style="font-size:12px;color:var(--g500)">${h.id}</div>
+                                            <span style="font-size:11px;font-weight:700;background:#f0f0f0;padding:2px 6px;border-radius:4px">${stat}</span>
+                                        </div>
+                                        <div style="margin-top:10px">
+                                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="viewIntake('${h.id}')">View Intake</button>
+                                        </div>
+                                    </div>
+                                `;
+      }).join('')}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        `;
+      // Render Labs List
+      const labList = document.getElementById('labList');
+      if (labs.length === 0) {
+        labList.innerHTML = '<div style="color:var(--g500);font-style:italic">No labs ordered.</div>';
+      } else {
+        labList.innerHTML = labs.map(l => {
+          const d = l.createdAt ? new Date(l.createdAt._seconds * 1000).toLocaleDateString() : 'Just now';
+          const statusColor = l.status === 'ordered' ? 'orange' : (l.status === 'needs_review' ? 'red' : 'green');
+          const showUpload = l.status === 'ordered';
+          const showReview = l.status === 'needs_review';
+          const showView = l.status === 'reviewed';
+
+          return `
+                    <div style="border:1px solid var(--g200);border-radius:4px;padding:12px;background:white">
+                         <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                             <div style="font-weight:700;color:var(--navy);font-size:14px">Lab Order #${l.id.slice(0, 5)}</div>
+                             <div style="font-size:11px;font-weight:700;color:${statusColor};text-transform:uppercase">${l.status.replace('_', ' ')}</div>
+                         </div>
+                         <div style="font-size:13px;margin-bottom:4px"><b>Panels:</b> ${l.panels.join(', ')}</div>
+                         <div style="font-size:13px;margin-bottom:8px"><b>Date:</b> ${d}</div>
+                         
+                         <div style="display:flex;gap:8px;flex-wrap:wrap">
+                             <a href="${l.requisitionUrl}" target="_blank" class="btn btn-outline" style="padding:4px 10px;font-size:11px">📄 Req</a>
+                             
+                             ${showUpload ? `
+                                <label class="btn btn-primary" style="padding:4px 10px;font-size:11px;cursor:pointer">
+                                    ⬆ Upload Result
+                                    <input type="file" style="display:none" onchange="uploadLabResult('${l.id}', this)">
+                                </label>
+                             ` : ''}
+
+                             ${showReview ? `
+                                <button class="btn btn-primary" style="padding:4px 10px;font-size:11px;background:var(--red);border-color:var(--red)" onclick="reviewLabResult('${l.id}')">Review Needed</button>
+                                <a href="${l.resultUrl}" target="_blank" class="btn btn-outline" style="padding:4px 10px;font-size:11px">View Result</a>
+                             ` : ''}
+
+                             ${showView ? `
+                                <a href="${l.resultUrl}" target="_blank" class="btn btn-outline" style="padding:4px 10px;font-size:11px">✅ View Result</a>
+                             ` : ''}
+                         </div>
+                    </div>
+                `;
+        }).join('');
+      }
+    }
+
+    // --- TABS & LAB FUNCTIONS ---
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.chart-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function toggleLabForm() {
+      const f = document.getElementById('labForm');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function createLabOrder(patientId) {
+      const panels = Array.from(document.querySelectorAll('.lab-panel:checked')).map(c => c.value);
+      const diagnosisCode = document.getElementById('labDiagnosis').value;
+      const btn = document.querySelector('#labForm .btn-primary:last-child');
+
+      if (panels.length === 0) return toast('Select at least one panel');
+
+      btn.disabled = true; btn.innerText = 'Converting...';
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`${API}/api/v1/doctor/labs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ patientId, panels, diagnosisCode })
+        });
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        toast('Order Created');
+        window.open(data.pdfUrl, '_blank');
+        openPatientChart(patientId);
+      } catch (e) { toast('Error creating order'); btn.disabled = false; btn.innerText = 'Create Order & Req'; }
+    }
+
+    async function uploadLabResult(orderId, input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      try {
+        toast('Uploading result...');
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('orderId', orderId);
+
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`${API}/api/v1/doctor/labs/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd
+        });
+        if (!res.ok) throw new Error('Upload failed');
+        toast('Result uploaded!');
+        openPatientChart(activePatientId); // Requires global var or re-fetch
+      } catch (e) { toast('Upload failed'); }
+    }
+
+    async function reviewLabResult(orderId) {
+      if (!confirm('Mark this result as Reviewed?')) return;
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`${API}/api/v1/doctor/labs/${orderId}/review`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed');
+        toast('Marked Reviewed');
+        openPatientChart(activePatientId);
+      } catch (e) { toast('Error'); }
+    }
+    function toggleSoapForm() {
+      const f = document.getElementById('soapForm');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function saveSoapNote(patientId) {
+      const btn = document.querySelector('#soapForm .btn-primary');
+      const originalText = btn.innerText;
+      btn.disabled = true; btn.innerText = 'Saving...';
+
+      // Construct Prescription Object if populated
+      let prescription = null;
+      const rxName = document.getElementById('rxName').value.trim();
+      if (rxName) {
+        prescription = {
+          name: rxName,
+          dosage: document.getElementById('rxDosage').value.trim(),
+          frequency: document.getElementById('rxFreq').value.trim(),
+          quantity: document.getElementById('rxQty').value.trim()
+        };
+      }
+
+      const data = {
+        patientId,
+        subjective: document.getElementById('soapS').value,
+        objective: document.getElementById('soapO').value,
+        assessment: document.getElementById('soapA').value,
+        plan: document.getElementById('soapP').value,
+        diagnosis: document.getElementById('soapDiagnosis').value,
+        prescription
+      };
+
+
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`${API}/api/v1/doctor/soap`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) throw new Error('Failed to save note');
+
+        toast('SOAP Note Saved');
+        openPatientChart(patientId); // Refresh UI
+      } catch (e) {
+        console.error(e);
+        toast('Error saving note');
+        btn.disabled = false; btn.innerText = originalText;
+      }
     }
 
     async function handlePacsUpload() {
@@ -4033,6 +4562,115 @@
 
     function openAboutUs() { document.getElementById('aboutModal').classList.add('active') }
     function closeAbout(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('aboutModal').classList.remove('active') }
+    /* --- PATIENT MESSAGING --- */
+    async function openPatientMessage() {
+      console.log('openPatientMessage called');
+      if (!user || !user.uid) {
+        console.error('User not logged in or missing UID', user);
+        return toast('Please log in to message your provider.');
+      }
+
+      try {
+        console.log('Checking for existing conversation for user:', user.uid);
+        // Check for existing conversation
+        const snaps = await db.collection('conversations')
+          .where('participants', 'array-contains', user.uid)
+          .limit(1)
+          .get();
+
+        console.log('Conversation query result empty?', snaps.empty);
+
+        let convId;
+        if (!snaps.empty) {
+          convId = snaps.docs[0].id;
+          console.log('Found existing conversation:', convId);
+        } else {
+          console.log('Creating new conversation...');
+          // Create new conversation
+          const ref = await db.collection('conversations').add({
+            participants: [user.uid, 'test-provider-001'],
+            patientName: `${user.firstName} ${user.lastName}`,
+            startedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            unreadCounts: { [user.uid]: 0, 'test-provider-001': 1 }
+          });
+          convId = ref.id;
+          console.log('Created new conversation:', convId);
+        }
+
+        renderPatientChatModal(convId);
+      } catch (e) {
+        console.error('Error in openPatientMessage:', e);
+        alert('Error opening chat: ' + e.message);
+      }
+    }
+
+    let patientMsgUnsub = null;
+    function renderPatientChatModal(convId) {
+      console.log('Rendering Patient Chat Modal for:', convId);
+      // Create modal on fly if not exists
+      let m = document.getElementById('ptChatModal');
+      if (!m) {
+        m = document.createElement('div'); m.id = 'ptChatModal'; m.className = 'mo active';
+        m.innerHTML = `
+                <div class="modal wide" style="height:80vh;display:flex;flex-direction:column">
+                    <div class="modal-header"><h3>Message Provider</h3><button class="modal-close" onclick="closePtChat()">×</button></div>
+                    <div id="ptChatMsgs" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--g50)">Loading...</div>
+                    <div style="padding:15px;background:white;border-top:1px solid var(--g200);display:flex;gap:10px">
+                        <input type="text" id="ptChatIn" placeholder="Type a message..." style="flex:1;padding:10px;border:1px solid var(--g200);border-radius:4px">
+                        <button class="btn btn-primary" onclick="sendPtMessage('${convId}')">Send</button>
+                    </div>
+                </div>
+            `;
+        document.body.appendChild(m);
+        m.onclick = (e) => { if (e.target === m) closePtChat() };
+      } else {
+        m.classList.add('active');
+      }
+
+      // Subscribe
+      if (patientMsgUnsub) patientMsgUnsub();
+      patientMsgUnsub = db.collection('conversations').doc(convId).collection('messages')
+        .orderBy('createdAt', 'asc')
+        .onSnapshot(snap => {
+          const msgs = [];
+          snap.forEach(doc => msgs.push(doc.data()));
+
+          const div = document.getElementById('ptChatMsgs');
+          div.innerHTML = msgs.map(m => {
+            const isMe = m.senderId === user.uid;
+            return `
+                        <div style="align-self:${isMe ? 'flex-end' : 'flex-start'};max-width:75%">
+                            <div style="background:${isMe ? 'var(--blue)' : 'white'};color:${isMe ? 'white' : 'var(--navy)'};padding:8px 12px;border-radius:12px;border:${isMe ? 'none' : '1px solid var(--g200)'}">${m.text}</div>
+                        </div>
+                    `;
+          }).join('');
+          div.scrollTop = div.scrollHeight;
+        });
+    }
+
+    function closePtChat() {
+      document.getElementById('ptChatModal').classList.remove('active');
+      if (patientMsgUnsub) patientMsgUnsub();
+    }
+
+    async function sendPtMessage(convId) {
+      const inp = document.getElementById('ptChatIn');
+      const text = inp.value.trim();
+      if (!text) return;
+      inp.value = '';
+
+      await db.collection('conversations').doc(convId).collection('messages').add({
+        text,
+        senderId: user.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      await db.collection('conversations').doc(convId).update({
+        lastMessage: { text, senderId: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() },
+        // Increment provider unread
+      });
+    }
+
     function openConsent() { console.log('OpenConsent Triggered'); document.getElementById('consentModal').classList.add('active') }
     function closeConsent(e) { if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return; document.getElementById('consentModal').classList.remove('active') }
     function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500) }
@@ -4044,6 +4682,16 @@
 
       // 2. Check Payment Status
       checkPaymentStatus();
+
+      // 3. Event Delegation for Patient Links
+      document.body.addEventListener('click', (e) => {
+        if (e.target.classList.contains('patient-link')) {
+          const uid = e.target.getAttribute('data-uid');
+          if (uid && uid !== 'undefined') {
+            openPatientChart(uid);
+          }
+        }
+      });
     });
 
     function checkPaymentStatus() {

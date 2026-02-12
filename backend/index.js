@@ -63,6 +63,19 @@ app.post('/api/v1/consultations', async (req, res) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
+        // EMR PHASE 1: Create/Update Patient Record
+        const patientRef = db.collection('patients').doc(uid);
+        await patientRef.set({
+            uid,
+            firstName: intake.firstName || 'Unknown',
+            lastName: intake.lastName || '',
+            email: intake.email || '',
+            dob: intake.dateOfBirth || '',
+            state: intake.state || '',
+            lastVisit: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
         res.json({ id: consultRef.id, message: 'Consultation created' });
     } catch (error) {
         console.error('Error creating consultation:', error);
@@ -141,6 +154,273 @@ app.get('/api/v1/admin/consultations', async (req, res) => {
         res.json({ consultations: enrichedConsultations });
     } catch (error) {
         console.error('Error fetching admin consultations:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.6.5 EMR: Get Single Patient Chart
+app.get('/api/v1/doctor/patients/:uid', async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        // Verify token
+        const idToken = authHeader.split('Bearer ')[1];
+        await admin.auth().verifyIdToken(idToken);
+        // (Add role check here in Phase 5)
+
+        // 1. Fetch Profile
+        const profileSnap = await db.collection('patients').doc(uid).get();
+        let profile = profileSnap.exists ? profileSnap.data() : { uid, name: 'Unknown' };
+
+        // 2. Fetch Consultations History
+        const consultsSnap = await db.collection('consultations')
+            .where('uid', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const history = [];
+        consultsSnap.forEach(doc => {
+            history.push({ id: doc.id, ...doc.data() });
+        });
+
+        // 3. Fallback: If no profile exists yet (legacy user), try to build one from Auth or first consult
+        if (!profileSnap.exists && history.length > 0) {
+            const last = history[0].intake || {};
+            profile = {
+                uid,
+                firstName: last.firstName || 'Unknown',
+                lastName: last.lastName || '',
+                dob: last.dateOfBirth || '',
+                state: last.state || '',
+                email: last.email || ''
+            };
+        }
+
+        // 4. Fetch SOAP Notes (New in Phase 2)
+        const notesSnap = await db.collection('soap_notes')
+            .where('patientId', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .limit(5)
+            .get();
+
+        const notes = [];
+        notesSnap.forEach(doc => notes.push({ id: doc.id, ...doc.data() }));
+
+        // 5. Fetch Lab Orders (New in Phase 4)
+        const labsSnap = await db.collection('lab_orders')
+            .where('patientId', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const labs = [];
+        labsSnap.forEach(doc => labs.push({ id: doc.id, ...doc.data() }));
+
+        res.json({ profile, history, notes, labs });
+    } catch (error) {
+        console.error('Error fetching patient chart:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.6.6 EMR: Save SOAP Note
+app.post('/api/v1/doctor/soap', async (req, res) => {
+    try {
+        const {
+            patientId,
+            consultationId,
+            subjective,
+            objective,
+            assessment,
+            plan,
+            diagnosis,      // New in Phase 3
+            prescription    // New in Phase 3 (Object: { name, dosage, frequency, quantity })
+        } = req.body;
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const idToken = authHeader.split('Bearer ')[1];
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const providerId = decoded.uid;
+
+        const noteRef = await db.collection('soap_notes').add({
+            patientId,
+            consultationId: consultationId || null,
+            providerId,
+            subjective: subjective || '',
+            objective: objective || '',
+            assessment: assessment || '',
+            plan: plan || '',
+            diagnosis: diagnosis || '',
+            prescription: prescription || null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true, id: noteRef.id, message: 'SOAP note saved' });
+    } catch (error) {
+        console.error('Error saving SOAP note:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.8 Lab Orders
+const PDFDocument = require('pdfkit');
+
+// Helper to generate Lab Requisition PDF
+const generateLabReq = async (patient, panels, diagnosis, orderId) => {
+    return new Promise((resolve, reject) => {
+        try {
+            const doc = new PDFDocument();
+            let buffers = [];
+            doc.on('data', buffers.push.bind(buffers));
+            doc.on('end', () => resolve(Buffer.concat(buffers)));
+
+            // Header
+            doc.fontSize(20).text('Patriotic Health - Lab Requisition', { align: 'center' });
+            doc.moveDown();
+            doc.fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`);
+            doc.text(`Order ID: ${orderId}`);
+            doc.moveDown();
+
+            // Patient Info
+            doc.text(`Patient: ${patient.firstName} ${patient.lastName}`);
+            doc.text(`DOB: ${patient.dob || 'N/A'}`);
+            doc.text(`Gender: ${patient.gender || 'N/A'}`);
+            doc.moveDown();
+
+            // Diagnosis
+            doc.text(`Diagnosis (ICD-10): ${diagnosis || 'None'}`);
+            doc.moveDown();
+
+            // Panels
+            doc.text('Requested Panels:', { underline: true });
+            panels.forEach(p => doc.text(`- ${p}`));
+
+            doc.moveDown(2);
+            doc.text('Provider Signature: __________________________');
+
+            doc.end();
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+app.post('/api/v1/doctor/labs', async (req, res) => {
+    try {
+        const { patientId, panels, diagnosisCode } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const idToken = authHeader.split('Bearer ')[1];
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const providerId = decoded.uid;
+
+        // 1. Create Order Doc
+        const orderRef = await db.collection('lab_orders').add({
+            patientId,
+            providerId,
+            panels,
+            diagnosisCode,
+            status: 'ordered',
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 2. Fetch Patient for PDF
+        const pSnap = await db.collection('patients').doc(patientId).get();
+        const patient = pSnap.exists ? pSnap.data() : { firstName: 'Unknown', lastName: '', dob: 'N/A' };
+
+        // 3. Generate PDF
+        const pdfBuffer = await generateLabReq(patient, panels, diagnosisCode, orderRef.id);
+
+        // 4. Upload to Storage
+        const bucket = admin.storage().bucket(); // Default bucket
+        const file = bucket.file(`labs/${patientId}/${orderRef.id}_req.pdf`);
+
+        await file.save(pdfBuffer, {
+            metadata: { contentType: 'application/pdf' }
+        });
+
+        // 5. Get Signed URL (valid for 7 days)
+        const [url] = await file.getSignedUrl({
+            action: 'read',
+            expires: Date.now() + 7 * 24 * 60 * 60 * 1000
+        });
+
+        // 6. Update Order with PDF URL
+        await orderRef.update({ requisitionUrl: url });
+
+        res.json({ success: true, orderId: orderRef.id, pdfUrl: url });
+
+    } catch (error) {
+        console.error('Error creating lab order:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.9 Lab Results Upload
+const labUpload = require('multer')({ storage: require('multer').memoryStorage() });
+
+app.post('/api/v1/doctor/labs/upload', labUpload.single('file'), async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        const file = req.file;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        if (!file || !orderId) return res.status(400).send('Missing file or orderId');
+
+        // 1. Validate Order
+        const orderRef = db.collection('lab_orders').doc(orderId);
+        const orderSnap = await orderRef.get();
+        if (!orderSnap.exists) return res.status(404).send('Order not found');
+
+        // 2. Upload Result PDF
+        const bucket = admin.storage().bucket();
+        const blob = bucket.file(`labs/results/${orderId}_${file.originalname}`);
+
+        await blob.save(file.buffer, {
+            metadata: { contentType: file.mimetype }
+        });
+
+        // 3. Get URL
+        const [url] = await blob.getSignedUrl({
+            action: 'read',
+            expires: Date.now() + 365 * 24 * 60 * 60 * 1000 // 1 year
+        });
+
+        // 4. Update Order Status
+        await orderRef.update({
+            resultUrl: url,
+            status: 'needs_review',
+            resultUploadedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true, message: 'Result uploaded', url });
+
+    } catch (error) {
+        console.error('Error uploading lab result:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.10 Review Lab Result
+app.patch('/api/v1/doctor/labs/:orderId/review', async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        await db.collection('lab_orders').doc(orderId).update({
+            status: 'reviewed',
+            reviewedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true, message: 'Lab result marked as reviewed' });
+    } catch (error) {
+        console.error('Error reviewing lab result:', error);
         res.status(500).json({ error: error.message });
     }
 });
