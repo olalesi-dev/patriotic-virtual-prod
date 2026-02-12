@@ -2519,6 +2519,27 @@
         max-height: 70vh
       }
     }
+
+    /* Provider Note Styles */
+    .pro-note {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
+      border: 1px solid var(--g200);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      background: #fff;
+      margin-top: 6px;
+      color: #000;
+    }
+
+    .pro-note:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-pale);
+    }
   </style>
 </head>
 
@@ -2602,7 +2623,7 @@
                 <div class="ti p">📋</div>Protocol-Based
               </div>
             </div>
-            <div class="fl-badge">🌴 Now serving Florida — Virginia coming soon</div>
+            <div class="fl-badge">🌴 Now serving Florida</div>
           </div>
           <div class="hero-vis">
             <div class="hv-main">
@@ -2668,7 +2689,7 @@
         </div>
         <h2 class="sec-title">Treatments designed<br>for real results.</h2>
         <p class="sec-sub">Every treatment follows strict, evidence-based protocols with automated safety screening.
-          Currently available to Florida residents — expanding to Virginia soon.</p>
+          Currently available to Florida residents.</p>
         <div class="services-tabs">
           <div class="tab active" onclick="filterSvc('popular',this)">Popular</div>
           <div class="tab" onclick="filterSvc('clinical',this)">Clinical Visits</div>
@@ -2981,7 +3002,7 @@
               </div>
             </a>
             <p class="footer-brand-text">Board-certified telehealth and radiology services. Protocol-driven care,
-              delivered to your door. Currently serving Florida. Expanding to Virginia.</p>
+              delivered to your door. Currently serving Florida.</p>
           </div>
           <div class="footer-col">
             <h4>Support</h4><a href="javascript:void(0)" onclick="toast('FAQ coming soon!')">FAQ</a><a
@@ -3136,7 +3157,7 @@
               <option value="">Select your state</option>
               <option value="FL">Florida ✓</option>
               <option value="IN" disabled style="color:#9ca3af">Indiana (Coming Soon)</option>
-              <option value="VA" disabled style="color:#9ca3af">Virginia (Coming Soon)</option>
+
             </select></div>
           <div class="fg"><label>Date of Birth</label><input type="date" id="regDob"></div>
         </div>
@@ -3470,7 +3491,7 @@
 
     const API = ''; // Relative path via Firebase Hosting Rewrite (Solves CORS & Org Policy)
     const ACTIVE_STATES = ['FL'];
-    const COMING_STATES = ['IN', 'VA'];
+    const COMING_STATES = ['IN'];
     let token = null, user = null, selSvc = null, intake = {}, fbUser = null;
 
     const svcs = [
@@ -3567,7 +3588,7 @@
           aiBot("Our membership tiers:\n\n💡 <b>Telehealth Basic</b> — $29/mo (AI + limited visits)\n📋 <b>Telehealth Standard</b> — $59/mo (1 visit/month)\n⚕️ <b>Telehealth Premium</b> — $99/mo (unlimited/priority)\n🎯 <b>All Access Core</b> — $99/mo (telehealth + AI tools)\n⭐ <b>All Access Plus</b> — $149/mo (+ AI imaging)\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
             ['✅ Sign up', '🔍 Check eligibility', '📋 More details']);
         } else if (v.includes('Start a visit') || v.includes('sign up') || v.includes('register') || v.includes('Sign up')) {
-          aiBot("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana & Virginia coming soon.");
+          aiBot("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>.");
           setTimeout(() => openModal('register'), 1200);
         } else if (aiState === 'elig_svc') {
           aiState = 'elig_state';
@@ -3582,7 +3603,7 @@
             if (qs && qs.length) { aiCtx.qs = qs; aiCtx.answers = {}; askNext(); }
             else { showElig(true, "You're eligible! This service has no specific contraindications to screen for. A provider will do a full review after you submit your visit.") }
           } else {
-            aiBot(`We're not available in your state yet — but <b>Virginia</b> is launching soon! Want to be notified when we expand?`,
+            aiBot(`We're not available in your state yet. Want to be notified when we expand?`,
               ['Yes, notify me', 'Check another treatment']);
             aiState = 'start';
           }
@@ -3679,7 +3700,7 @@
     }
 
     async function handleLogin() { const e = document.getElementById('loginEmail').value, p = document.getElementById('loginPassword').value; if (!e || !p) return toast('Please fill in all fields.'); try { const cred = await auth.signInWithEmailAndPassword(e, p); fbUser = cred.user; token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }); if (r.ok) { user = await r.json(); } else { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome back, ' + (user.firstName || user.email) + '!') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/wrong-password' ? 'Incorrect password.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' : err.code === 'auth/invalid-credential' ? 'Invalid email or password.' : err.message || 'Login failed.'; toast(msg) } }
-    async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value, consent = document.getElementById('regConsent').checked; if (!consent) return toast('Please agree to the consents and policies.'); if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida. Virginia coming soon!'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
+    async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value, consent = document.getElementById('regConsent').checked; if (!consent) return toast('Please agree to the consents and policies.'); if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida.'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
     async function handleGoogleLogin() { try { const provider = new firebase.auth.GoogleAuthProvider(); const cred = await auth.signInWithPopup(provider); fbUser = cred.user; token = await fbUser.getIdToken(); const names = fbUser.displayName ? fbUser.displayName.split(' ') : ['User']; try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, firebaseUid: fbUser.uid, role: 'patient' }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: names[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome, ' + (user.firstName || fbUser.email) + '!') } catch (err) { if (err.code !== 'auth/popup-closed-by-user') toast(err.message || 'Google sign-in failed.') } }
 
     async function handleForgotPassword() {
@@ -3866,37 +3887,103 @@
       }).join('');
     }
 
-    async function markReviewed(id) {
-      if (!confirm('Mark this consultation as "In Review"?')) return;
-      try {
-        const token = await auth.currentUser.getIdToken();
-        await fetch(`${API}/api/v1/admin/consultations/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ status: 'reviewed' })
-        });
-        toast('Status updated');
-        loadAdminConsults();
-      } catch (e) { toast('Error updating status'); }
-    }
+
+
+    let currentConsultId = null;
 
     function viewIntake(id) {
       if (!adminConsults) return;
       const consult = adminConsults.find(c => c.id === id);
-      if (!consult || !consult.intake) return toast('No intake data available');
+      if (!consult) return toast('Consultation not found');
 
-      const intakeHtml = Object.entries(consult.intake).map(([k, v]) => {
+      currentConsultId = id;
+
+      // 1. Populate Demographics
+      const pd = document.getElementById('ptDemographics');
+      pd.innerHTML = `
+        <div style="margin-bottom:12px">
+            <div style="font-size:12px;color:var(--g500)">Name</div>
+            <div style="font-weight:600;font-size:16px">${consult.patientName || 'Unknown'}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+             <div><div style="font-size:12px;color:var(--g500)">DOB</div><div style="font-weight:500">${consult.patientDob || 'N/A'}</div></div>
+             <div><div style="font-size:12px;color:var(--g500)">State</div><div style="font-weight:500">${consult.patientState || 'FL'}</div></div>
+        </div>
+        <div>
+            <div style="font-size:12px;color:var(--g500)">Service</div>
+            <div style="font-weight:500;color:var(--blue)">${consult.serviceKey || 'General'}</div>
+        </div>
+      `;
+
+      // 2. Populate Intake
+      const intakeHtml = consult.intake ? Object.entries(consult.intake).map(([k, v]) => {
         const label = k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
         const val = typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v;
-        return `<div style="margin-bottom:8px"><div style="font-size:12px;color:var(--g500)">${label}</div><div style="font-weight:500">${val}</div></div>`;
-      }).join('');
+        return `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--g200)"><div style="font-size:12px;color:var(--g500);margin-bottom:4px">${label}</div><div style="font-weight:500;line-height:1.4">${val}</div></div>`;
+      }).join('') : '<p>No intake data.</p>';
+      document.getElementById('intakeContent').innerHTML = intakeHtml;
 
-      document.getElementById('intakeContent').innerHTML = intakeHtml || '<p>No intake data provided.</p>';
+      // 3. Populate Notes (if any)
+      const n = consult.notes || {};
+      document.getElementById('noteSubj').value = n.subjective || '';
+      document.getElementById('noteObj').value = n.objective || '';
+      document.getElementById('noteAss').value = n.assessment || '';
+      document.getElementById('notePlan').value = n.plan || '';
+
       document.getElementById('intakeModal').classList.add('active');
     }
 
+    async function saveNotes() {
+      if (!currentConsultId) return;
+      const notes = {
+        subjective: document.getElementById('noteSubj').value,
+        objective: document.getElementById('noteObj').value,
+        assessment: document.getElementById('noteAss').value,
+        plan: document.getElementById('notePlan').value
+      };
+
+      try {
+        const token = await auth.currentUser.getIdToken();
+        await fetch(`${API}/api/v1/admin/consultations/${currentConsultId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ notes }) // Just update notes
+        });
+        toast('Notes saved.');
+        // Update local state
+        const c = adminConsults.find(x => x.id === currentConsultId);
+        if (c) c.notes = notes;
+      } catch (e) { toast('Error saving notes'); console.error(e); }
+    }
+
+    async function markReviewed(id, sign) {
+      if (sign && !confirm('Sign and Approve this consultation? This will finalize the treatment plan.')) return;
+
+      // If signing, save notes first ideally, but we can do parallel or simple check
+      const notes = {
+        subjective: document.getElementById('noteSubj').value,
+        objective: document.getElementById('noteObj').value,
+        assessment: document.getElementById('noteAss').value,
+        plan: document.getElementById('notePlan').value
+      };
+
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const payload = { status: sign ? 'approved' : 'reviewed', notes }; // Update both
+
+        await fetch(`${API}/api/v1/admin/consultations/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        toast(sign ? 'Consultation Approved & Signed' : 'Status updated to Reviewed');
+        closeIntake();
+        loadAdminConsults();
+      } catch (e) { toast('Error updating consultation'); }
+    }
+
     function closeIntake(e) {
-      if (e && e.target !== e.currentTarget) return;
+      if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return;
       document.getElementById('intakeModal').classList.remove('active');
     }
 
