@@ -103,8 +103,42 @@ app.get('/api/v1/admin/consultations', async (req, res) => {
 
         const snapshot = await db.collection('consultations').orderBy('createdAt', 'desc').limit(50).get();
         const consultations = [];
-        snapshot.forEach(doc => consultations.push({ id: doc.id, ...doc.data() }));
-        res.json({ consultations });
+        const uids = new Set();
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            consultations.push({ id: doc.id, ...data });
+            if (data.uid) uids.add(data.uid);
+        });
+
+        // Fetch user details from Firebase Auth
+        let userMap = {};
+        if (uids.size > 0) {
+            try {
+                const uidList = [...uids].map(uid => ({ uid }));
+                const userRecords = await admin.auth().getUsers(uidList);
+                userRecords.users.forEach(user => {
+                    userMap[user.uid] = {
+                        name: user.displayName || 'Unknown',
+                        email: user.email || ''
+                    };
+                });
+            } catch (authError) {
+                console.error('Error fetching auth users:', authError);
+            }
+        }
+
+        // Attach user details to consultations
+        const enrichedConsultations = consultations.map(c => {
+            const user = userMap[c.uid] || {};
+            return {
+                ...c,
+                patientName: user.name || user.email || 'Unknown',
+                patientEmail: user.email || c.patientEmail || ''
+            };
+        });
+
+        res.json({ consultations: enrichedConsultations });
     } catch (error) {
         console.error('Error fetching admin consultations:', error);
         res.status(500).json({ error: error.message });

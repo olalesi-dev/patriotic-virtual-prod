@@ -10,7 +10,7 @@
       {
         "source": "/api/v1/**",
         "run": {
-          "serviceId": "telehealth-api",
+          "serviceId": "patriotic-virtual-backend",
           "region": "us-central1"
         }
       },

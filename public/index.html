@@ -3516,6 +3516,26 @@
     </div>
   </div>
 
+
+
+
+
+  <!-- INTAKE MODAL -->
+  <div class="mo" id="intakeModal" onclick="closeIntake(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Patient Intake</h3>
+        <button class="modal-close" onclick="closeIntake()">×</button>
+      </div>
+      <div class="modal-body" id="intakeContent" style="max-height:60vh;overflow-y:auto">
+        <!-- populated by js -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="closeIntake()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -3833,6 +3853,9 @@
     function closeConsult(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('consultModal').classList.remove('active'); selSvc = null }
     // --- ADMIN DASHBOARD LOGIC ---
     // --- ADMIN DASHBOARD LOGIC ---
+    // --- ADMIN DASHBOARD LOGIC ---
+    let adminConsults = [];
+
     async function loadAdminConsults() {
       console.log('Loading Admin Consults...', API); // DEBUG
       if (!auth.currentUser) { console.log('No auth user'); return; }
@@ -3849,6 +3872,7 @@
           throw new Error(`Status ${res.status}: ${txt}`);
         }
         const data = await res.json();
+        adminConsults = data.consultations;
         renderAdminTable(data.consultations);
       } catch (e) {
         console.error('Fetch Error:', e);
@@ -3902,7 +3926,23 @@
     }
 
     function viewIntake(id) {
-      alert("Intake View Feature coming in next update! (Data is safely stored in database)");
+      if (!adminConsults) return;
+      const consult = adminConsults.find(c => c.id === id);
+      if (!consult || !consult.intake) return toast('No intake data available');
+
+      const intakeHtml = Object.entries(consult.intake).map(([k, v]) => {
+        const label = k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+        const val = typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v;
+        return `<div style="margin-bottom:8px"><div style="font-size:12px;color:var(--g500)">${label}</div><div style="font-weight:500">${val}</div></div>`;
+      }).join('');
+
+      document.getElementById('intakeContent').innerHTML = intakeHtml || '<p>No intake data provided.</p>';
+      document.getElementById('intakeModal').classList.add('active');
+    }
+
+    function closeIntake(e) {
+      if (e && e.target !== e.currentTarget) return;
+      document.getElementById('intakeModal').classList.remove('active');
     }
 
     async function handlePacsUpload() {
