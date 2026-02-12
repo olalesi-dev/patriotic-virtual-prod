@@ -11,44 +11,71 @@
     rel="stylesheet">
   <style>
     :root {
+      /* Dark & Edgy Theme Palette */
       --navy: #0A1628;
-      --navy-mid: #111D35;
-      --navy-light: #1A2A4A;
+      --text-heading: #e0f2fe;
+      /* New variable for headings */
+
       --blue: #3B82F6;
       --blue-bright: #60A5FA;
       --blue-electric: #2563EB;
-      --blue-pale: #EFF6FF;
+      --blue-pale: rgba(59, 130, 246, 0.15);
+
       --indigo: #6366F1;
       --violet: #8B5CF6;
+
       --red: #EF4444;
-      --red-soft: #FEE2E2;
+      --red-soft: rgba(239, 68, 68, 0.15);
+
       --coral: #F97316;
-      --coral-soft: #FFF7ED;
+      --coral-soft: rgba(249, 115, 22, 0.15);
+
       --amber: #F59E0B;
-      --amber-soft: #FFFBEB;
+      --amber-soft: rgba(245, 158, 11, 0.15);
+
       --emerald: #10B981;
-      --emerald-soft: #ECFDF5;
+      --emerald-soft: rgba(16, 185, 129, 0.15);
+
       --teal: #14B8A6;
       --rose: #F43F5E;
-      --rose-soft: #FFF1F2;
+      --rose-soft: rgba(244, 63, 94, 0.15);
+
       --white: #FFF;
-      --g50: #F9FAFB;
-      --g100: #F3F4F6;
-      --g200: #E5E7EB;
-      --g300: #D1D5DB;
-      --g400: #9CA3AF;
-      --g500: #6B7280;
-      --g600: #4B5563;
-      --g700: #374151;
-      --g800: #1F2937;
-      --r-sm: 10px;
-      --r-md: 14px;
-      --r-lg: 22px;
+
+      /* Dark Theme Tokens */
+      --bg-root: #050505;
+      /* Pitch black base */
+      --bg-card: #111111;
+      /* Dark gray cards */
+      --bg-card-hover: #1a1a1a;
+
+      --border-subtle: #222;
+      --border-light: #333;
+
+      --text-main: #ededed;
+      --text-muted: #a1a1a1;
+
+      /* Remap grays for dark mode logic */
+      --g50: #0a0a0a;
+      --g100: #161616;
+      --g200: #262626;
+      --g300: #404040;
+      --g400: #737373;
+      --g500: #a3a3a3;
+      --g600: #d4d4d4;
+      --g700: #e5e5e5;
+      --g800: #f5f5f5;
+
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 20px;
       --r-xl: 30px;
-      --sh-sm: 0 1px 3px rgba(0, 0, 0, .04);
-      --sh-md: 0 4px 20px rgba(0, 0, 0, .06);
-      --sh-lg: 0 12px 40px rgba(0, 0, 0, .1);
-      --sh-xl: 0 24px 60px rgba(0, 0, 0, .14);
+
+      --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+      --sh-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+      --sh-lg: 0 12px 24px rgba(0, 0, 0, 0.7);
+      --sh-xl: 0 24px 48px rgba(0, 0, 0, 0.8);
+
       --ease: cubic-bezier(.4, 0, .2, 1);
       --ease-b: cubic-bezier(.34, 1.56, .64, 1);
     }
@@ -65,8 +92,8 @@
 
     body {
       font-family: 'Outfit', sans-serif;
-      color: var(--g800);
-      background: var(--white);
+      color: var(--text-main);
+      background: var(--bg-root);
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased
     }
@@ -106,16 +133,16 @@
       left: 0;
       right: 0;
       z-index: 1000;
-      background: rgba(255, 255, 255, .85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-bottom: 1px solid rgba(0, 0, 0, .04);
+      background: rgba(5, 5, 5, .8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
       transition: all .3s var(--ease)
     }
 
     nav.scrolled {
-      box-shadow: var(--sh-sm);
-      background: rgba(255, 255, 255, .95)
+      box-shadow: var(--sh-md);
+      background: rgba(5, 5, 5, .95)
     }
 
     .nav-inner {
@@ -156,7 +183,7 @@
       font-family: 'Fraunces', serif;
       font-weight: 800;
       font-size: 17px;
-      color: var(--navy);
+      color: var(--text-heading);
       letter-spacing: -.3px
     }
 
@@ -188,7 +215,7 @@
     }
 
     .nav-links a:hover {
-      color: var(--navy);
+      color: var(--text-heading);
       background: var(--g50)
     }
 
@@ -221,7 +248,7 @@
     }
 
     .btn-ghost:hover {
-      color: var(--navy);
+      color: var(--text-heading);
       background: var(--g100)
     }
 
@@ -237,9 +264,9 @@
     }
 
     .btn-outline {
-      background: #fff;
-      color: var(--navy);
-      border: 1.5px solid var(--g200)
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle)
     }
 
     .btn-outline:hover {
@@ -255,7 +282,7 @@
 
     .btn-white {
       background: #fff;
-      color: var(--navy)
+      color: var(--text-heading)
     }
 
     .btn-white:hover {
@@ -269,7 +296,7 @@
       background: none;
       border: none;
       font-size: 24px;
-      color: var(--navy);
+      color: var(--text-heading);
       cursor: pointer
     }
 
@@ -352,7 +379,7 @@
       font-size: 58px;
       line-height: 1.08;
       font-weight: 800;
-      color: var(--navy);
+      color: var(--text-heading);
       letter-spacing: -2px;
       margin-bottom: 22px;
       animation: fadeUp .6s var(--ease) .1s both
@@ -527,7 +554,7 @@
     .hvs-v {
       font-size: 20px;
       font-weight: 800;
-      color: var(--navy)
+      color: var(--text-heading)
     }
 
     .hvs-v.grad {
@@ -695,7 +722,7 @@
       font-family: 'Fraunces', serif;
       font-size: 46px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--text-heading);
       letter-spacing: -1.5px;
       margin-bottom: 14px;
       line-height: 1.12
@@ -734,7 +761,7 @@
     }
 
     .tab:hover {
-      color: var(--navy);
+      color: var(--text-heading);
       background: var(--g100)
     }
 
@@ -852,7 +879,7 @@
     .svc h3 {
       font-size: 17px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--text-heading);
       margin-bottom: 7px
     }
 
@@ -872,7 +899,7 @@
     .svc-pr {
       font-size: 14px;
       font-weight: 700;
-      color: var(--navy)
+      color: var(--text-heading)
     }
 
     .svc-pr span {
@@ -1243,7 +1270,7 @@
       font-family: 'Fraunces', serif;
       font-size: 24px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--text-heading);
       margin-bottom: 8px;
       letter-spacing: -.5px
     }
@@ -1264,7 +1291,7 @@
       border-radius: 100px;
       font-size: 14px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--text-heading);
       margin-bottom: 16px
     }
 
@@ -1401,7 +1428,7 @@
       font-family: 'Fraunces', serif;
       font-size: 22px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--text-heading);
       margin-bottom: 6px
     }
 
@@ -1419,7 +1446,7 @@
     .pca {
       font-size: 42px;
       font-weight: 800;
-      color: var(--navy);
+      color: var(--text-heading);
       letter-spacing: -1px
     }
 
@@ -1478,8 +1505,8 @@
     .tc {
       padding: 28px;
       border-radius: var(--r-md);
-      border: 1.5px solid var(--g100);
-      background: #fff;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
       transition: all .3s var(--ease)
     }
 
@@ -1510,16 +1537,23 @@
     }
 
     .tc-av {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-card-hover);
+      color: var(--blue-bright);
       display: flex;
+      /* keep flex for fallback initials */
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 13px;
-      color: #fff
+      font-size: 16px;
+      overflow: hidden;
+      /* Key for images */
+      padding: 0;
     }
+
+
 
     .ta1 {
       background: linear-gradient(135deg, var(--blue), var(--indigo))
@@ -1536,7 +1570,7 @@
     .tc-name {
       font-size: 14px;
       font-weight: 600;
-      color: var(--navy)
+      color: var(--text-heading)
     }
 
     .tc-det {
@@ -1704,7 +1738,7 @@
     .modal h2 {
       font-family: 'Fraunces', serif;
       font-size: 28px;
-      color: var(--navy);
+      color: var(--text-heading);
       margin-bottom: 6px;
       letter-spacing: -.5px
     }
@@ -1805,7 +1839,7 @@
     .iq h3 {
       font-size: 17px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--text-heading);
       margin-bottom: 5px
     }
 
@@ -1904,7 +1938,7 @@
     .dw h1 {
       font-family: 'Fraunces', serif;
       font-size: 28px;
-      color: var(--navy);
+      color: var(--text-heading);
       margin-bottom: 4px;
       letter-spacing: -.5px
     }
@@ -1943,7 +1977,7 @@
     .dsc-v {
       font-size: 30px;
       font-weight: 800;
-      color: var(--navy)
+      color: var(--text-heading)
     }
 
     .dg {
@@ -1970,7 +2004,7 @@
     .dc-h h3 {
       font-size: 15px;
       font-weight: 700;
-      color: var(--navy)
+      color: var(--text-heading)
     }
 
     .cli {
@@ -2130,7 +2164,7 @@
       top: 50%;
       transform: translateY(-50%);
       border: 6px solid transparent;
-      border-left-color: var(--navy)
+      border-left-color: var(--text-heading)
     }
 
     .ai-chat {
@@ -2183,7 +2217,7 @@
     .ai-chat-title {
       font-weight: 700;
       font-size: 15px;
-      color: var(--navy)
+      color: var(--text-heading)
     }
 
     .ai-chat-sub {
@@ -2240,7 +2274,7 @@
       padding: 10px 14px;
       font-size: 13px;
       font-weight: 500;
-      color: var(--navy);
+      color: var(--text-heading);
       cursor: pointer;
       transition: all .2s var(--ease);
       text-align: left;
@@ -2572,92 +2606,14 @@
           </div>
           <div class="hero-vis">
             <div class="hv-main">
-              <!-- Inline SVG: Doctor on video call -->
-              <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="hg1" x1="0" y1="0" x2="400" y2="300" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#1a365d" />
-                    <stop offset="1" stop-color="#3b82f6" />
-                  </linearGradient>
-                </defs>
-                <rect width="400" height="300" fill="url(#hg1)" />
-                <rect x="60" y="30" width="280" height="200" rx="16" fill="#0f172a" opacity=".6" />
-                <rect x="68" y="38" width="264" height="184" rx="12" fill="#1e293b" />
-                <!-- Doctor silhouette -->
-                <circle cx="200" cy="110" r="32" fill="#60a5fa" opacity=".3" />
-                <circle cx="200" cy="100" r="22" fill="#93c5fd" />
-                <path d="M165 160C165 140 180 128 200 128C220 128 235 140 235 160V180H165V160Z" fill="#3b82f6" />
-                <rect x="180" y="155" width="40" height="8" rx="4" fill="#fff" opacity=".6" />
-                <!-- Stethoscope hint -->
-                <circle cx="200" cy="148" r="6" stroke="#60a5fa" stroke-width="2" fill="none" />
-                <!-- Video UI elements -->
-                <circle cx="90" cy="55" r="5" fill="#ef4444" />
-                <circle cx="106" cy="55" r="5" fill="#f59e0b" />
-                <circle cx="122" cy="55" r="5" fill="#10b981" />
-                <rect x="80" y="235" width="60" height="28" rx="8" fill="#10b981" opacity=".8" />
-                <rect x="93" y="244" width="34" height="10" rx="3" fill="#fff" opacity=".6" />
-                <rect x="260" y="235" width="60" height="28" rx="8" fill="#ef4444" opacity=".6" />
-                <!-- Waveform -->
-                <path d="M150 250L165 240L175 255L185 235L195 260L205 238L215 252L225 242L240 250" stroke="#60a5fa"
-                  stroke-width="2" fill="none" opacity=".4" />
-              </svg>
-            </div>
-            <div class="hv-float hvf-1">
-              <!-- Inline SVG: X-ray -->
-              <svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
-                <rect width="160" height="120" fill="#0f172a" />
-                <rect x="50" y="8" width="60" height="80" rx="6" fill="#1e3a5f" opacity=".8" />
-                <!-- Ribcage outline -->
-                <ellipse cx="80" cy="28" rx="18" ry="14" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity=".5" />
-                <line x1="62" y1="40" x2="98" y2="40" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <line x1="64" y1="48" x2="96" y2="48" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <line x1="66" y1="56" x2="94" y2="56" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <line x1="68" y1="64" x2="92" y2="64" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <path d="M73 70L80 82L87 70" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity=".4" />
-                <!-- Spine -->
-                <line x1="80" y1="24" x2="80" y2="78" stroke="#93c5fd" stroke-width="2" opacity=".3" />
-                <text x="80" y="104" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="sans-serif"
-                  opacity=".6">CHEST PA</text>
-              </svg>
-            </div>
-            <div class="hv-float hvf-2">
-              <!-- Inline SVG: Exercise/wellness -->
-              <svg viewBox="0 0 140 105" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="exg" x1="0" y1="0" x2="140" y2="105">
-                    <stop stop-color="#065f46" />
-                    <stop offset="1" stop-color="#10b981" />
-                  </linearGradient>
-                </defs>
-                <rect width="140" height="105" fill="url(#exg)" />
-                <!-- Runner silhouette -->
-                <circle cx="58" cy="30" r="9" fill="#fff" opacity=".7" />
-                <path d="M55 40L50 60L42 75" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"
-                  opacity=".6" />
-                <path d="M55 40L65 58L75 72" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"
-                  opacity=".6" />
-                <path d="M55 40L48 52" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"
-                  opacity=".5" />
-                <path d="M55 40L68 45" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"
-                  opacity=".5" />
-                <!-- Heart rate line -->
-                <path d="M85 50L92 50L96 38L100 62L104 44L108 55L120 55" stroke="#fff" stroke-width="2" fill="none"
-                  opacity=".5" />
-                <text x="102" y="80" text-anchor="middle" fill="#fff" font-size="9" font-family="sans-serif"
-                  opacity=".5">WELLNESS</text>
-              </svg>
-            </div>
-            <div class="hv-stat hvs-1">
-              <div class="hvs-v grad">4.9 ★</div>
-              <div class="hvs-l">Patient Rating</div>
-            </div>
-            <div class="hv-stat hvs-2">
-              <div class="hvs-v" style="color:var(--emerald)">&lt;24hr</div>
-              <div class="hvs-l">Avg. Response</div>
+              <div class="hero-vis">
+                <div class="hv-main" style="border: 1px solid var(--border-subtle);">
+                  <img src="assets/hero_dark.png" alt="Dr. Osunsade - Patriotic Virtual Telehealth"
+                    style="width:100%;height:100%;object-fit:cover;">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
     </section>
 
     <!-- SAFETY BANNER -->
@@ -2963,10 +2919,10 @@
         </div>
 
         <div id="clinicians" class="sec-eye eye-em"
-          style="margin-top: 80px; color: var(--navy); scroll-margin-top: 100px;">
+          style="margin-top: 80px; color: var(--text-heading); scroll-margin-top: 100px;">
           <div class="eye-line" style="background: var(--navy);"></div>Diagnostic Radiology
         </div>
-        <h2 class="sec-title" style="color:var(--navy)">Clinical reads &<br>Facility solutions.</h2>
+        <h2 class="sec-title" style="color:var(--text-heading)">Clinical reads &<br>Facility solutions.</h2>
         <p class="sec-sub" style="margin-bottom:40px">Official diagnostic reports and B2B teleradiology services for
           urgent cares and clinics.</p>
 
@@ -3007,7 +2963,7 @@
         </div>
       </div>
       <div style="margin-top:40px;padding-top:40px;border-top:1px solid var(--g200)">
-        <h3 style="font-size:20px;color:var(--navy);margin-bottom:20px;font-weight:700">Provider Tools</h3>
+        <h3 style="font-size:20px;color:var(--text-heading);margin-bottom:20px;font-weight:700">Provider Tools</h3>
         <div style="display:flex;gap:16px;flex-wrap:wrap">
           <button class="btn btn-outline" onclick="openPacs()">
             🖥️ Launch PACS Viewer
@@ -3040,7 +2996,8 @@
             <blockquote>"Got my GLP-1 prescription in 24 hours. Down 35 lbs and counting. The safety screening made me
               feel confident they actually care about doing this right."</blockquote>
             <div class="tc-auth">
-              <div class="tc-av ta1">MR</div>
+              <div class="tc-av ta1"><img src="assets/patient1.png" alt="Marcus"
+                  style="width:100%;height:100%;object-fit:cover;"></div>
               <div>
                 <div class="tc-name">Marcus R.</div>
                 <div class="tc-det">Weight Loss · Jacksonville, FL</div>
@@ -3052,7 +3009,8 @@
             <blockquote>"Having an actual radiologist explain my CT findings over video was incredible. Plain English,
               no jargon. Worth every penny for peace of mind."</blockquote>
             <div class="tc-auth">
-              <div class="tc-av ta2">SK</div>
+              <div class="tc-av ta2"><img src="assets/patient2.png" alt="Sarah"
+                  style="width:100%;height:100%;object-fit:cover;"></div>
               <div>
                 <div class="tc-name">Sarah K.</div>
                 <div class="tc-det">Video Imaging Consult · Tampa, FL</div>
@@ -3064,7 +3022,8 @@
             <blockquote>"The AI flagged something on my chest X-ray, then the radiologist confirmed it and walked me
               through next steps. Protocol-driven and professional."</blockquote>
             <div class="tc-auth">
-              <div class="tc-av ta3">JD</div>
+              <div class="tc-av ta3"><img src="assets/patient3.png" alt="James"
+                  style="width:100%;height:100%;object-fit:cover;"></div>
               <div>
                 <div class="tc-name">James D.</div>
                 <div class="tc-det">AI + Radiologist · Orlando, FL</div>
@@ -3421,7 +3380,8 @@
           </p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;text-align:left;width:100%">
             <div style="background:var(--g50);padding:20px;border-radius:12px">
-              <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+              <h3
+                style="font-size:15px;color:var(--text-heading);margin-bottom:12px;display:flex;align-items:center;gap:8px">
                 🎓 Education</h3>
               <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6">
                 <li style="margin-bottom:6px"><b>MD:</b> George Washington Univ. SOM (2012)</li>
@@ -3430,7 +3390,8 @@
               </ul>
             </div>
             <div style="background:var(--g50);padding:20px;border-radius:12px">
-              <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+              <h3
+                style="font-size:15px;color:var(--text-heading);margin-bottom:12px;display:flex;align-items:center;gap:8px">
                 📜 Active Licenses</h3>
               <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6">
                 <li style="margin-bottom:6px">FL · MD · CA · NY · MI · DC</li>
@@ -3440,7 +3401,9 @@
             </div>
           </div>
           <div style="margin-top:24px;width:100%;text-align:left;background:var(--g50);padding:20px;border-radius:12px">
-            <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px">🌍
+            <h3
+              style="font-size:15px;color:var(--text-heading);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+              🌍
               Personal & Bio</h3>
             <p style="font-size:13px;color:var(--g600);line-height:1.6;margin-bottom:8px"><b>Languages:</b> English
               (Native), French (Proficient), Yoruba & Swahili (Conversational)</p>
@@ -3457,7 +3420,7 @@
     <div class="container">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px">
         <div>
-          <h2 style="color:var(--navy);margin-bottom:8px">Provider Portal</h2>
+          <h2 style="color:var(--text-heading);margin-bottom:8px">Provider Portal</h2>
           <p style="color:var(--g600)">Manage patient consultations and imaging requests.</p>
         </div>
         <button class="btn btn-outline" onclick="loadAdminConsults()">↻ Refresh</button>
@@ -3491,7 +3454,7 @@
   </div>
   <div class="mo" id="consentModal" onclick="closeConsent(event)">
     <div class="modal cm" onclick="event.stopPropagation()" style="max-width:700px">
-      <h2 style="margin-bottom:16px;color:var(--navy)">Privacy, Terms & Consents</h2>
+      <h2 style="margin-bottom:16px;color:var(--text-heading)">Privacy, Terms & Consents</h2>
       <div
         style="text-align:left;font-size:14px;line-height:1.6;color:var(--g600);max-height:60vh;overflow-y:auto;padding-right:12px">
 
@@ -3501,27 +3464,27 @@
           severe bleeding, or any life-threatening emergency, call 911 or go to the nearest ER immediately.
         </div>
 
-        <h4 style="color:var(--navy);margin-bottom:6px">1. Telehealth Consent</h4>
+        <h4 style="color:var(--text-heading);margin-bottom:6px">1. Telehealth Consent</h4>
         <p style="margin-bottom:12px">By using this service, you consent to receive medical care via electronic
           information and communication technologies. You understand that telehealth has limitations compared to
           in-person visits, including the inability to perform hands-on physical exams.</p>
 
-        <h4 style="color:var(--navy);margin-bottom:6px">2. Payment Policy (Cash-Pay Only)</h4>
+        <h4 style="color:var(--text-heading);margin-bottom:6px">2. Payment Policy (Cash-Pay Only)</h4>
         <p style="margin-bottom:12px">Patriotic Virtual Telehealth is a <b>cash-pay only</b> practice. We do not accept
           or bill commercial insurance, Medicare, or Medicaid. All fees are due at the time of service. You agree that
           you will not submit claims to federal healthcare programs for these services.</p>
 
-        <h4 style="color:var(--navy);margin-bottom:6px">3. HIPAA & Privacy</h4>
+        <h4 style="color:var(--text-heading);margin-bottom:6px">3. HIPAA & Privacy</h4>
         <p style="margin-bottom:12px">We are committed to protecting your medical information. We utilize
           HIPAA-compliant secure platforms for all video consults, messaging, and data storage. Your information will
           only be shared for treatment, payment, or healthcare operations, or as required by law.</p>
 
-        <h4 style="color:var(--navy);margin-bottom:6px">4. GLP-1 & Weight Loss</h4>
+        <h4 style="color:var(--text-heading);margin-bottom:6px">4. GLP-1 & Weight Loss</h4>
         <p style="margin-bottom:12px">For GLP-1 agonist prescriptions (e.g., Semaglutide/Tirzepatide), you acknowledge
           potential side effects including nausea, vomiting, and risk of thyroid C-cell tumors. You confirm you do not
           have a personal or family history of Medullary Thyroid Carcinoma (MTC) or MEN 2 syndrome.</p>
 
-        <h4 style="color:var(--navy);margin-bottom:6px">5. Radiology Services</h4>
+        <h4 style="color:var(--text-heading);margin-bottom:6px">5. Radiology Services</h4>
         <p style="margin-bottom:12px">
           <b>Educational Use (Tiers 1, 3, 4):</b> Services labeled "Educational" are for informational purposes only and
           do not constitute a formal diagnosis or replace your official medical records.<br>
@@ -3859,7 +3822,7 @@
             list.innerHTML = data.consultations.map(c =>
               `<div style="padding:16px;border-bottom:1px solid var(--g100);display:flex;justify-content:space-between;align-items:center">
                   <div>
-                      <div style="font-weight:600;color:var(--navy)">${c.serviceKey.replace(/_/g, ' ')}</div>
+                      <div style="font-weight:600;color:var(--text-heading)">${c.serviceKey.replace(/_/g, ' ')}</div>
                       <div style="font-size:12px;color:var(--g500)">${new Date(c.createdAt._seconds * 1000).toLocaleDateString()}</div>
                   </div>
                   <div style="font-size:13px;font-weight:600;color:${c.status === 'pending' ? 'var(--amber)' : c.status === 'approved' ? 'var(--emerald)' : 'var(--g500)'}">
@@ -3879,7 +3842,7 @@
     function startSvc(k) { if (!user) return openModal('register'); selSvc = k; openConsultation(); setTimeout(() => { document.querySelectorAll('#svcSel .ro').forEach(el => { el.classList.toggle('sel', el.dataset.v === k) }) }, 50) }
     function openConsultation() { if (!user) return openModal('register'); intake = {}; selSvc = selSvc || null;['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS1').classList.remove('hidden'); const clinicalSvcs = svcs.filter(s => s.cat.includes('clinical')); document.getElementById('svcSel').innerHTML = clinicalSvcs.map(s => `<div class="ro ${selSvc === s.k ? 'sel' : ''}" data-v="${s.k}" onclick="pickSvc(this,'${s.k}')"><div class="rd2"></div><span>${s.icon} ${s.name} — $${s.price}</span></div>`).join(''); document.getElementById('consultModal').classList.add('active') }
     function pickSvc(el, k) { document.querySelectorAll('#svcSel .ro').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); selSvc = k }
-    function cN(s) { if (s === 2 && !selSvc) return toast('Select a service.'); if (s === 2) { const qs = iQs[selSvc] || []; document.getElementById('iQs').innerHTML = qs.map(q => q.t === 'yn' ? `<div class="iq"><h3>${q.l}</h3><div class="rg" style="flex-direction:row;gap:10px"><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',true)"><div class="rd2"></div><span>Yes</span></div><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',false)"><div class="rd2"></div><span>No</span></div></div></div>` : `<div class="iq"><h3>${q.l}</h3><div class="fg" style="margin:0"><input placeholder="${q.p || ''}" oninput="intake['${q.k}']=this.value"></div></div>`).join('') } if (s === 3) { const sv = svcs.find(x => x.k === selSvc); document.getElementById('rSum').innerHTML = `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Service</div><div style="font-size:16px;font-weight:700;color:var(--navy)">${sv.icon} ${sv.name}</div></div><div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Price</div><div style="font-size:16px;font-weight:700;color:var(--navy)">$${sv.price}</div></div><div><div style="font-size:12px;color:var(--g400);margin-bottom:8px">Responses</div>${Object.entries(intake).map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--g200);font-size:14px"><span style="color:var(--g600)">${k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</span><span style="font-weight:600;color:var(--navy)">${typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</span></div>`).join('')}</div>` } ['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS' + s).classList.remove('hidden') }
+    function cN(s) { if (s === 2 && !selSvc) return toast('Select a service.'); if (s === 2) { const qs = iQs[selSvc] || []; document.getElementById('iQs').innerHTML = qs.map(q => q.t === 'yn' ? `<div class="iq"><h3>${q.l}</h3><div class="rg" style="flex-direction:row;gap:10px"><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',true)"><div class="rd2"></div><span>Yes</span></div><div class="ro" style="flex:1" onclick="sI(this,'${q.k}',false)"><div class="rd2"></div><span>No</span></div></div></div>` : `<div class="iq"><h3>${q.l}</h3><div class="fg" style="margin:0"><input placeholder="${q.p || ''}" oninput="intake['${q.k}']=this.value"></div></div>`).join('') } if (s === 3) { const sv = svcs.find(x => x.k === selSvc); document.getElementById('rSum').innerHTML = `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Service</div><div style="font-size:16px;font-weight:700;color:var(--text-heading)">${sv.icon} ${sv.name}</div></div><div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Price</div><div style="font-size:16px;font-weight:700;color:var(--text-heading)">$${sv.price}</div></div><div><div style="font-size:12px;color:var(--g400);margin-bottom:8px">Responses</div>${Object.entries(intake).map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--g200);font-size:14px"><span style="color:var(--g600)">${k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</span><span style="font-weight:600;color:var(--text-heading)">${typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</span></div>`).join('')}</div>` } ['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS' + s).classList.remove('hidden') }
     function cB(s) { ['cS1', 'cS2', 'cS3', 'cS4'].forEach(id => document.getElementById(id).classList.add('hidden')); document.getElementById('cS' + s).classList.remove('hidden') }
     function sI(el, k, v) { el.parentElement.querySelectorAll('.ro').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); intake[k] = v }
     async function subC() {
