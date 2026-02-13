@@ -40,27 +40,46 @@ async function seed() {
         // 2. Set Custom Claim (Optional, if needed for RBAC)
         await auth.setCustomUserClaims(user.uid, { role: 'doctor' });
 
-        // 3. Create/Get Patient
+        // 3. Create/Get Patient Auth User
+        const patientEmail = 'patient@test.com';
+        const patientPassword = 'Password123!';
+        let patientUser;
+        try {
+            patientUser = await auth.getUserByEmail(patientEmail);
+            console.log('Test patient exists:', patientUser.uid);
+        } catch (e) {
+            patientUser = await auth.createUser({
+                uid: 'test-patient-001',
+                email: patientEmail,
+                password: patientPassword,
+                displayName: 'Test Patient',
+                emailVerified: true
+            });
+            console.log('Created test patient:', patientUser.uid);
+        }
+
+        // 4. Create/Get Patient Document
         const patientRef = db.collection('patients').doc('test-patient-001');
         await patientRef.set({
             uid: 'test-patient-001',
             firstName: 'Test',
             lastName: 'Patient',
             dob: '1980-01-01',
-            email: 'patient@test.com',
+            email: patientEmail,
             state: 'TX',
             gender: 'Male',
+            allergies: ['Penicillin', 'Sulfa'], // Added mock allergies for safety check
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
-        console.log('Created/Updated test patient: test-patient-001');
+        console.log('Created/Updated test patient doc: test-patient-001');
 
-        // 4. Create Consultation (Required for Dashboard visibility)
+        // 5. Create Consultation (Required for Dashboard visibility)
         const consultRef = db.collection('consultations').doc('test-consult-001');
         await consultRef.set({
             consultationId: 'test-consult-001',
             uid: 'test-patient-001', // REQUIRED: Matches auth/patient UID
             patientId: 'test-patient-001',
-            providerId: 'test-provider-001', // Or null if unassigned
+            providerId: 'test-provider-001',
             serviceKey: 'testosterone_hrt',
             status: 'pending_review',
             paymentStatus: 'paid',
