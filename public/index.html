@@ -4590,7 +4590,11 @@
     }
 
     async function confirmBooking() {
-      if (!selectedDate || !selectedTime) return;
+      if (!selectedDate || !selectedTime) {
+        console.error('Booking validation failed:', { selectedDate, selectedTime });
+        return toast('Please select both a date and time');
+      }
+
       const btn = document.getElementById('btnConfirmBook');
       btn.disabled = true; btn.innerText = 'Booking...';
 
@@ -4601,6 +4605,12 @@
         startTime.setHours(parseInt(h), parseInt(m), 0, 0);
 
         const consultId = document.getElementById('bookingConsultId').value;
+        console.log('Booking attempt:', { consultId, startTime: startTime.toISOString(), selectedDate, selectedTime });
+
+        if (!consultId) {
+          throw new Error('No consultation ID found. Please try submitting your visit again.');
+        }
+
         const token = await auth.currentUser.getIdToken();
 
         const res = await fetch(`${API}/api/v1/appointments/book`, {
@@ -4612,14 +4622,19 @@
           })
         });
 
-        if (!res.ok) throw new Error('Slot taken');
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('Booking failed:', res.status, errorText);
+          throw new Error(errorText || 'Slot taken');
+        }
 
         // Success
         document.getElementById('bookingModal').classList.remove('active');
         showBookingSuccess(startTime);
 
       } catch (e) {
-        toast('Booking Failed: Slot unavailable');
+        console.error('Booking error:', e);
+        toast('Booking Failed: ' + e.message);
         btn.disabled = false; btn.innerText = 'Confirm Appointment';
       }
     }
