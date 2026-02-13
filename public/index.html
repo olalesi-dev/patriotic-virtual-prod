@@ -2525,6 +2525,158 @@
         max-height: 70vh
       }
     }
+
+    .modal.wide {
+      max-width: 95vw !important;
+      width: 1400px;
+      padding: 0 !important;
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      overflow: hidden;
+    }
+
+    /* Premium Specific Header for Patient Chart */
+    .modal.wide .modal-header {
+      background: var(--g50);
+      /* Match sidebar background for seamless look, or white? Sidebar is g50 on my recent edit... actually sidebar is inside body. Header is top. */
+      /* Let's keep white or match body. Default modal header is likely white. */
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-direction: row-reverse;
+      /* Move Title to Right, Close to Left */
+    }
+
+    .modal.wide .modal-header h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 32px;
+      font-style: italic;
+      color: var(--navy);
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .modal.wide .modal-close {
+      position: static;
+      /* Override absolute positioning if any */
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid var(--g200);
+      cursor: pointer;
+      color: var(--g500);
+      transition: all 0.2s;
+    }
+
+    .modal.wide .modal-close:hover {
+      background: var(--red-soft);
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    /* Force Chart Content to Fill Available Height */
+    .modal.wide #intakeContent {
+      flex: 1;
+      max-height: none !important;
+      /* Override inline style */
+      padding: 0 !important;
+      overflow: hidden !important;
+      /* Internal grid handles scrolling */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ensure Footer is at Bottom */
+    .modal.wide .modal-footer {
+      padding: 20px 30px;
+      background: white;
+      border-top: 1px solid var(--g200);
+      margin-top: auto;
+      /* Push to bottom if content is short */
+      flex-shrink: 0;
+    }
+
+    .chart-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--g200);
+      background: white;
+      padding: 0 20px;
+    }
+
+    .chart-tabs .tab,
+    .chart-tabs .chart-tab {
+      padding: 15px 20px;
+      font-weight: 500;
+      color: var(--g500);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .chart-tabs .tab.active,
+    .chart-tabs .chart-tab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
+
+    .chart-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--g50);
+      display: none;
+    }
+
+    .chart-content.active {
+      display: block;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--g300);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    /* Message Styling for Provider Chat */
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 75%;
+      font-size: 14px;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .msg-bubble.me {
+      background: var(--blue);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg-bubble.them {
+      background: white;
+      border: 1px solid var(--g200);
+      color: var(--navy);
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+
+    .msg-time {
+      font-size: 10px;
+      color: var(--g400);
+      margin-top: 4px;
+      text-align: right;
+    }
   </style>
 </head>
 
@@ -3449,9 +3601,148 @@
   </div>
 
   <!-- ADMIN DASHBOARD (Native EMR) -->
-  <div id="adminDashboard" class="hidden" style="padding:100px 0;background:var(--g50);min-height:100vh">
+  <div id="adminDashboard" class="hidden" style="padding:80px 0;background:var(--g50);min-height:100vh">
     <div class="container">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px">
+        <h1 style="font-size:28px;color:var(--navy)">Provider Portal</h1>
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-outline" onclick="showDashboard()">Exit to Patient View</button>
+          <button class="btn btn-ghost" onclick="logout()">Log Out</button>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:12px;box-shadow:var(--sh-md);overflow:hidden">
+        <div style="padding:20px;border-bottom:1px solid var(--g100);display:flex;gap:20px">
+          <div style="font-weight:600;color:var(--blue);border-bottom:2px solid var(--blue);padding-bottom:4px">Active
+            Consults</div>
+          <div style="color:var(--g500);cursor:pointer">Archived</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:var(--g50);text-align:left;font-size:13px;color:var(--g500)">
+              <th style="padding:15px 20px">Patient</th>
+              <th style="padding:15px">Service</th>
+              <th style="padding:15px">Status</th>
+              <th style="padding:15px">Date</th>
+              <th style="padding:15px">Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATIENT CHART MODAL -->
+  <div class="mo" id="patientChart" onclick="closePatientChart(event)">
+    <div class="modal cm wide" onclick="event.stopPropagation()">
+      <div
+        style="padding:20px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center;background:var(--g50)">
+        <div>
+          <h2 id="chartName" style="margin:0;font-size:20px">Patient Name</h2>
+          <p style="margin:4px 0 0;font-size:13px;color:var(--g500)">DOB: <span id="chartDob">--</span> | Sex: <span
+              id="chartSex">--</span></p>
+        </div>
+        <button class="modal-close" onclick="closePatientChart()" style="position:static">×</button>
+      </div>
+
+      <div class="chart-tabs">
+        <div class="tab active" onclick="switchChartTab('history')">History & Intake</div>
+        <div class="tab" onclick="switchChartTab('soap')">SOAP Note</div>
+        <div class="tab" onclick="switchChartTab('labs')">Labs</div>
+        <div class="tab" onclick="switchChartTab('messages')">Messages</div>
+      </div>
+
+      <div class="chart-content">
+
+        <!-- HISTORY TAB -->
+        <div id="tab-history">
+          <div style="background:white;padding:20px;border-radius:8px;box-shadow:var(--sh-sm);margin-bottom:20px">
+            <h3 style="font-size:16px;margin-bottom:12px">Intake Form</h3>
+            <div id="chartIntake" style="font-size:14px;color:var(--g700);line-height:1.6">Loading...</div>
+          </div>
+        </div>
+
+        <!-- SOAP TAB -->
+        <div id="tab-soap" class="hidden">
+          <div style="background:white;padding:20px;border-radius:8px;box-shadow:var(--sh-sm)">
+            <div style="display:flex;justify-content:space-between;margin-bottom:15px">
+              <h3 style="font-size:16px">Clinical Note</h3>
+              <span id="soapLastSaved" style="font-size:12px;color:var(--g400)"></span>
+            </div>
+            <div class="fg"><label>Subjective</label><textarea id="soapS" rows="3" class="form-control"></textarea>
+            </div>
+            <div class="fg"><label>Objective</label><textarea id="soapO" rows="3" class="form-control"></textarea></div>
+            <div class="fg"><label>Assessment</label><textarea id="soapA" rows="2" class="form-control"></textarea>
+            </div>
+            <div class="fg"><label>Plan</label><textarea id="soapP" rows="3" class="form-control"></textarea></div>
+
+            <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--g100)">
+              <h4 style="font-size:14px;margin-bottom:10px">Diagnosis & Rx</h4>
+              <div class="fg"><label>ICD-10 / Diagnosis</label><input type="text" id="soapDx" class="form-control">
+              </div>
+              <div class="fg"><label>Prescription</label><textarea id="soapRx" rows="2" class="form-control"
+                  placeholder="Medication, Sig, Dispense"></textarea></div>
+            </div>
+
+            <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px">
+              <button class="btn btn-primary" onclick="saveSoapNote()">Save Note</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LABS TAB -->
+        <div id="tab-labs" class="hidden">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <!-- Order Lab -->
+            <div style="background:white;padding:20px;border-radius:8px;box-shadow:var(--sh-sm)">
+              <h3 style="font-size:16px;margin-bottom:15px">Order Labs</h3>
+              <div class="fg">
+                <label>Select Panel</label>
+                <select id="labPanelSelect" class="form-control">
+                  <option value="CMP">CMP (Comp. Metabolic Panel)</option>
+                  <option value="CBC">CBC (Complete Blood Count)</option>
+                  <option value="Lipid">Lipid Panel</option>
+                  <option value="Testosterone_Total_Free">Testosterone (Total & Free)</option>
+                  <option value="PSA">PSA (Prostate Specific Antigen)</option>
+                  <option value="TSH">TSH (Thyroid)</option>
+                  <option value="Custom">Custom / Other</option>
+                </select>
+              </div>
+              <div class="fg"><label>Notes / Diagnosis Code</label><input type="text" id="labOrderDx"
+                  class="form-control" placeholder="e.g. E29.1"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="createLabOrder()">Generate
+                Requisition</button>
+            </div>
+
+            <!-- Lab Results -->
+            <div style="background:white;padding:20px;border-radius:8px;box-shadow:var(--sh-sm)">
+              <h3 style="font-size:16px;margin-bottom:15px">Results & Files</h3>
+              <div id="labResultsList" style="min-height:100px;font-size:13px;color:var(--g500)">No results yet.</div>
+              <button class="btn btn-outline" style="width:100%;margin-top:15px"
+                onclick="document.getElementById('labUploadInput').click()">Upload Result PDF</button>
+              <input type="file" id="labUploadInput" hidden accept="application/pdf" onchange="handleLabUpload(this)">
+            </div>
+          </div>
+        </div>
+
+        <!-- MESSAGES TAB -->
+        <div id="tab-messages" class="hidden">
+          <div class="chat-interface"
+            style="height:100%;display:flex;flex-direction:column;border:1px solid var(--g200);border-radius:8px;background:white;overflow:hidden">
+            <div id="providerChatHistory"
+              style="flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px;background:var(--g50)">
+            </div>
+            <div style="padding:10px;border-top:1px solid var(--g200);display:flex;gap:10px;background:white">
+              <input type="text" id="providerChatInput" placeholder="Type a message..."
+                style="flex:1;padding:10px;border:1px solid var(--g300);border-radius:6px">
+              <button class="btn btn-primary" onclick="sendProviderMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -3551,6 +3842,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script>
     /* Firebase Config */
     const firebaseConfig = {
@@ -3757,7 +4049,60 @@
     function openModal(t) { document.getElementById('authModal').classList.add('active'); switchAuth(t) }
     function closeModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('authModal').classList.remove('active') }
     function switchAuth(t) { document.getElementById('loginForm').classList.toggle('hidden', t !== 'login'); document.getElementById('registerForm').classList.toggle('hidden', t !== 'register') }
-    async function handleLogin() { const e = document.getElementById('loginEmail').value, p = document.getElementById('loginPassword').value; if (!e || !p) return toast('Please fill in all fields.'); try { const cred = await auth.signInWithEmailAndPassword(e, p); fbUser = cred.user; token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }); if (r.ok) { user = await r.json(); } else { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fbUser.displayName || fbUser.email.split('@')[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome back, ' + (user.firstName || user.email) + '!') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/wrong-password' ? 'Incorrect password.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' : err.code === 'auth/invalid-credential' ? 'Invalid email or password.' : err.message || 'Login failed.'; toast(msg) } }
+    async function handleLogin() {
+      const e = document.getElementById('loginEmail').value;
+      const p = document.getElementById('loginPassword').value;
+      if (!e || !p) return toast('Please fill in all fields.');
+
+      try {
+        console.log('Attempting login with:', e);
+        const cred = await auth.signInWithEmailAndPassword(e, p);
+        console.log('Firebase Login Success. User:', cred.user);
+
+        fbUser = cred.user; // Global assignment
+        token = await fbUser.getIdToken();
+
+        try {
+          const r = await fetch(`${API}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+          if (r.ok) {
+            user = await r.json();
+          } else {
+            // Fallback
+            user = {
+              firstName: fbUser.displayName || fbUser.email.split('@')[0],
+              email: fbUser.email,
+              role: 'patient',
+              uid: fbUser.uid
+            };
+          }
+        } catch (apiErr) {
+          console.error('API fetch error, using fallback:', apiErr);
+          user = {
+            firstName: fbUser.displayName || fbUser.email.split('@')[0],
+            email: fbUser.email,
+            role: 'patient',
+            uid: fbUser.uid
+          };
+        }
+
+        document.getElementById('authModal').classList.remove('active');
+        updateNav();
+        showDashboard();
+        toast('Welcome back, ' + (user.firstName || user.email) + '!');
+
+      } catch (err) {
+        console.error('Login Error Object:', err);
+        let msg = 'Login failed.';
+        if (err.code === 'auth/user-not-found') msg = 'No account found with that email.';
+        else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+        else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+        else msg = err.message;
+
+        toast(msg);
+      }
+    }
     async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value; if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida. Virginia coming soon!'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
     async function handleGoogleLogin() { try { const provider = new firebase.auth.GoogleAuthProvider(); const cred = await auth.signInWithPopup(provider); fbUser = cred.user; token = await fbUser.getIdToken(); const names = fbUser.displayName ? fbUser.displayName.split(' ') : ['User']; try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, firebaseUid: fbUser.uid, role: 'patient' }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: names[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome, ' + (user.firstName || fbUser.email) + '!') } catch (err) { if (err.code !== 'auth/popup-closed-by-user') toast(err.message || 'Google sign-in failed.') } }
     async function handleForgotPassword() { const e = document.getElementById('loginEmail').value; if (!e) return toast('Enter your email above, then click Forgot password.'); try { await auth.sendPasswordResetEmail(e); toast('Password reset email sent! Check your inbox.') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message; toast(msg) } }
@@ -4159,20 +4504,55 @@
       const email = p.email || 'N/A';
 
       container.innerHTML = `
-            <div style="display:flex;gap:20px;height:100%">
+            <div style="display:grid;grid-template-columns:1fr 1fr;height:100%;overflow:hidden">
                 <!-- LEFT SIDEBAR: DEMOGRAPHICS -->
-                <div style="width:250px;flex-shrink:0;border-right:1px solid var(--g200);padding-right:20px">
-                    <div style="width:60px;height:60px;background:var(--g200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:10px">
-                        ${name.charAt(0)}
+                <div style="border-right:1px solid var(--g200);background:var(--g50);padding:40px;display:flex;flex-direction:column;gap:32px;overflow-y:auto">
+                    
+                    <!-- Profile Header -->
+                    <div style="text-align:center">
+                        <div style="width:100px;height:100px;background:white;border:2px solid var(--g200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 20px;color:var(--blue);font-weight:700;box-shadow:var(--sh-md)">
+                            ${name.charAt(0)}
+                        </div>
+                        <h2 style="margin:0;font-size:26px;color:var(--navy);font-weight:800;letter-spacing:-0.5px">${name}</h2>
+                        <div style="color:var(--g500);font-size:15px;margin-top:6px;font-weight:500">${email}</div>
+                         <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
+                            <button class="btn btn-outline" style="font-size:13px;padding:8px 16px;border-radius:20px;height:36px">Message</button>
+                            <button class="btn btn-outline" style="font-size:13px;padding:8px 16px;border-radius:20px;height:36px">Calls</button>
+                        </div>
                     </div>
-                    <h2 style="margin:0;font-size:18px;color:var(--navy)">${name}</h2>
-                    <div style="color:var(--g500);font-size:12px;margin-bottom:20px">${email}</div>
 
-                    <div style="display:grid;gap:10px;font-size:13px">
-                        <div><div style="color:var(--g500)">DOB</div><div>${dob}</div></div>
-                        <div><div style="color:var(--g500)">State</div><div>${state}</div></div>
-                        <div><div style="color:var(--g500)">Visits</div><div>${history.length}</div></div>
+                    <!-- Details Card -->
+                    <div style="background:white;border:1px solid var(--g200);border-radius:16px;padding:24px;box-shadow:var(--sh-sm)">
+                        <h4 style="margin:0 0 20px 0;font-size:14px;text-transform:uppercase;color:var(--g400);letter-spacing:1px;font-weight:700">Patient Details</h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px 16px">
+                            
+                            <div>
+                                <div style="font-size:12px;color:var(--g500);font-weight:600;margin-bottom:4px">Date of Birth</div>
+                                <div style="font-size:16px;color:var(--navy);font-weight:600">${dob}</div>
+                            </div>
+
+                            <div>
+                                <div style="font-size:12px;color:var(--g500);font-weight:600;margin-bottom:4px">State</div>
+                                <div style="font-size:16px;color:var(--navy);font-weight:600">${state}</div>
+                            </div>
+
+                            <div>
+                                <div style="font-size:12px;color:var(--g500);font-weight:600;margin-bottom:4px">Status</div>
+                                <div style="font-size:16px;color:var(--emerald);font-weight:700">Active</div>
+                            </div>
+
+                             <div>
+                                <div style="font-size:12px;color:var(--g500);font-weight:600;margin-bottom:4px">Visits</div>
+                                <div style="font-size:16px;color:var(--navy);font-weight:600">${history.length}</div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Quick Notes / Alerts -->
+                     <div style="background:var(--blue-pale);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:20px">
+                        <div style="font-size:14px;font-weight:700;color:var(--blue-electric);margin-bottom:8px;display:flex;align-items:center;gap:8px">ℹ️ Patient Note</div>
+                        <div style="font-size:14px;color:var(--navy);line-height:1.6">Patient prefers video calls for follow-ups. No known allergies.</div>
+                     </div>
                 </div>
 
                 <!-- RIGHT CONTENT -->
@@ -4685,10 +5065,15 @@
 
       // 3. Event Delegation for Patient Links
       document.body.addEventListener('click', (e) => {
+        // console.log('Body clicked:', e.target); // Too noisy
         if (e.target.classList.contains('patient-link')) {
           const uid = e.target.getAttribute('data-uid');
+          console.log('Patient Link Clicked. UID:', uid);
           if (uid && uid !== 'undefined') {
             openPatientChart(uid);
+          } else {
+            alert('Error: Patient ID is missing on this element.');
+            console.error('Missing UID on element:', e.target);
           }
         }
       });
@@ -4710,6 +5095,10 @@
         toast('Payment was cancelled.');
       }
     }
+
+    // Ensure adminConsults is global
+    window.adminConsults = [];
+
     renderSvc('popular'); updateNav();
   </script>
 </body>
