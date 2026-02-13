@@ -4645,6 +4645,7 @@
                     <div class="chart-tabs">
                         <div class="chart-tab active" onclick="switchTab('tab-notes', this)">Clinical Notes</div>
                         <div class="chart-tab" onclick="switchTab('tab-labs', this)">Labs & Results</div>
+                        <div class="chart-tab" onclick="switchTab('tab-vitals', this)">Vitals</div>
                         <div class="chart-tab" onclick="switchTab('tab-history', this)">History</div>
                     </div>
 
@@ -4736,6 +4737,52 @@
                         <!-- LAB LIST -->
                         <div id="labList" style="display:grid;gap:10px">
                            <!-- Populated by renderLabs -->
+                        </div>
+                    </div>
+
+                    <!-- TAB: HISTORY -->
+                    <div id="tab-vitals" class="chart-content">
+                        <div style="background:white;border:1px solid var(--g200);border-radius:12px;padding:20px;margin-bottom:20px">
+                            <h3 style="margin-top:0;color:var(--navy);font-size:16px">Weight (lbs)</h3>
+                            <div style="height:200px;display:flex;align-items:flex-end;gap:10px;padding-top:20px;border-bottom:1px solid var(--g200);position:relative">
+                                ${[185, 184, 182, 181, 180, 178].map((w, i) => `
+                                    <div style="flex:1;background:var(--blue-pale);border-radius:4px 4px 0 0;height:${(w - 150) * 3}px;position:relative;transition:all 0.2s" title="${w} lbs">
+                                        <div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;color:var(--blue)">${w}</div>
+                                    </div>
+                                `).join('')}
+                                <div style="position:absolute;bottom:-25px;left:0;right:0;display:flex;justify-content:space-around;font-size:11px;color:var(--g500)">
+                                    <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background:white;border:1px solid var(--g200);border-radius:12px;padding:20px">
+                             <h3 style="margin-top:0;color:var(--navy);font-size:16px">Blood Pressure</h3>
+                             <div style="height:150px;border-left:1px solid var(--g200);border-bottom:1px solid var(--g200);position:relative;margin-top:20px">
+                                <!-- Mock Line Chart -->
+                                <svg style="width:100%;height:100%;overflow:visible">
+                                    <polyline points="0,80 50,75 100,78 150,72 200,70 250,68" fill="none" stroke="var(--blush)" stroke-width="2" />
+                                    <polyline points="0,120 50,118 100,115 150,112 200,110 250,108" fill="none" stroke="var(--blue)" stroke-width="2" />
+                                    
+                                    <circle cx="0" cy="80" r="3" fill="var(--blush)" />
+                                    <circle cx="50" cy="75" r="3" fill="var(--blush)" />
+                                    <circle cx="100" cy="78" r="3" fill="var(--blush)" />
+                                    <circle cx="150" cy="72" r="3" fill="var(--blush)" />
+                                    <circle cx="200" cy="70" r="3" fill="var(--blush)" />
+                                    <circle cx="250" cy="68" r="3" fill="var(--blush)" />
+
+                                    <circle cx="0" cy="120" r="3" fill="var(--blue)" />
+                                    <circle cx="50" cy="118" r="3" fill="var(--blue)" />
+                                    <circle cx="100" cy="115" r="3" fill="var(--blue)" />
+                                    <circle cx="150" cy="112" r="3" fill="var(--blue)" />
+                                    <circle cx="200" cy="110" r="3" fill="var(--blue)" />
+                                    <circle cx="250" cy="108" r="3" fill="var(--blue)" />
+                                </svg>
+                                 <div style="display:flex;gap:15px;margin-top:10px;font-size:11px">
+                                    <span style="color:var(--blue)">● Systolic</span>
+                                    <span style="color:var(--blush)">● Diastolic</span>
+                                </div>
+                             </div>
                         </div>
                     </div>
 
@@ -4890,6 +4937,30 @@
       f.style.display = f.style.display === 'none' ? 'block' : 'none';
     }
 
+    function showSafetyModal(allergy, drug) {
+      // Create or get safety modal
+      let m = document.getElementById('safetyModal');
+      if (!m) {
+        m = document.createElement('div'); m.id = 'safetyModal'; m.className = 'mo active';
+        m.innerHTML = `
+                <div class="modal" style="border:2px solid var(--red);max-width:400px">
+                    <div style="text-align:center;color:var(--red);font-size:48px;margin-bottom:10px">⚠️</div>
+                    <div class="modal-header" style="justify-content:center;color:var(--red)"><h3>Safety Alert</h3></div>
+                    <div style="padding:20px;text-align:center">
+                        <p style="font-size:16px;margin-bottom:10px"><strong>ALLERGY DETECTED</strong></p>
+                        <p id="safetyMsg"></p>
+                    </div>
+                    <div style="padding:20px;background:var(--g50);display:flex;justify-content:center">
+                        <button class="btn btn-primary" onclick="document.getElementById('safetyModal').classList.remove('active')" style="background:var(--red);border-color:var(--red)">Acknowledge & Edit</button>
+                    </div>
+                </div>
+            `;
+        document.body.appendChild(m);
+      } else { m.classList.add('active'); }
+
+      document.getElementById('safetyMsg').innerHTML = `Patient is allergic to <b style="color:var(--red)">${allergy}</b>.<br>Interaction with <b>${drug}</b> blocked.`;
+    }
+
     async function saveSoapNote(patientId) {
       const btn = document.querySelector('#soapForm .btn-primary');
       const originalText = btn.innerText;
@@ -4905,6 +4976,23 @@
           frequency: document.getElementById('rxFreq').value.trim(),
           quantity: document.getElementById('rxQty').value.trim()
         };
+
+        // --- SAFETY CHECK (Phase 6) ---
+        // Fetch patient allergies before saving
+        try {
+          const patRef = await db.collection('patients').doc(patientId).get();
+          if (patRef.exists) {
+            const allergies = patRef.data().allergies || [];
+            // Check if rxName contains any allergy (case-insensitive)
+            const conflict = allergies.find(al => rxName.toLowerCase().includes(al.toLowerCase()));
+            if (conflict) {
+              showSafetyModal(conflict, rxName);
+              // Reset Button
+              btn.disabled = false; btn.innerText = originalText;
+              return; // STOP EXECUTION
+            }
+          }
+        } catch (e) { console.error('Safety Check Failed', e); }
       }
 
       const data = {
