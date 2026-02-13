@@ -4324,6 +4324,15 @@
             const threads = [];
             snap.forEach(doc => threads.push({ id: doc.id, ...doc.data() }));
             renderThreadList(threads);
+          }, error => {
+            console.error("Snapshot error:", error);
+            // If index is missing, the error message often contains a link
+            let msg = 'Error loading threads.';
+            if (error.message.includes('index')) {
+              msg = 'Missing Index. Check console for link.';
+              // Attempt to extract link if possible, or just log it
+            }
+            list.innerHTML = `<div style="color:red;padding:20px;font-size:13px">${msg}<br><br><span style="color:var(--g400)">${error.message}</span></div>`;
           });
       } catch (e) {
         console.error(e);
