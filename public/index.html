@@ -4364,6 +4364,20 @@
       document.getElementById('dashboardPage').style.display = 'block';
       if (user) document.getElementById('dashWelcome').textContent = 'Welcome back, ' + user.firstName;
       await fetchConsultations();
+
+      // Check for Payment Success Return
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment') === 'success') {
+        // Show "Payment Confirmed" modal first, which then leads to Booking
+        document.getElementById('paymentSuccessModal').classList.add('active');
+        // Store consult ID for the buttons in that modal
+        // We assume backend metadata passed it back, but stripe session ID is key here.
+        // For now, we rely on the user clicking "Select Time" to open booking modal with correct ID.
+        // In a real app, we'd fetch the consult ID linked to session_id via API.
+
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
 
     async function fetchConsultations() {
@@ -4611,10 +4625,24 @@
     }
 
     function showBookingSuccess(dateObj) {
-      // Show success modal or toast with Calendar links
-      // Simplified for prompt
+      // Appointment Confirmed!
       toast('Appointment Confirmed!');
-      // Ideally open a "Success" modal with "Add to GCal" buttons
+      // Ideally prompt to add to GCal here
+      // showDashboard(); // Refresh
+    }
+
+    // New Function specifically for Payment Return
+    function handlePaymentSuccess(consultationId) {
+      // 1. Show the "Payment Confirmed" Modal (interstitial)
+      // Ensure we set the global ID so the button works
+      window.currentConsultId = consultationId; // Make global for the onclick handler
+
+      // Show the modal
+      const modal = document.getElementById('scheduleModal'); // Use correct ID
+      if (modal) modal.classList.add('active');
+
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     function switchAdminTab(tab) {
