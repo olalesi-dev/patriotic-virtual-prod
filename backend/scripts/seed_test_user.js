@@ -92,6 +92,25 @@ async function seed() {
         }, { merge: true });
         console.log('Created/Updated test consultation: test-consult-001');
 
+        // 6. Create Test Appointment (for calendar)
+        const aptRef = db.collection('appointments').doc('test-apt-001');
+        // Set time for "tomorrow" at 10 AM UTC
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(10, 0, 0, 0);
+
+        await aptRef.set({
+            appointmentId: 'test-apt-001',
+            consultationId: 'test-consult-001',
+            patientId: 'test-patient-001',
+            providerId: 'test-provider-001',
+            startTime: admin.firestore.Timestamp.fromDate(tomorrow),
+            durationMinutes: 30,
+            status: 'confirmed',
+            serviceName: 'Testosterone Consult'
+        }, { merge: true });
+        console.log('Created test appointment for tomorrow 10am');
+
         console.log('Seeding Complete! Login with:', email, password);
         process.exit(0);
     } catch (error) {

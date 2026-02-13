@@ -9,6 +9,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&display=swap"
     rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <style>
     :root {
       --navy: #0A1628;
@@ -2693,6 +2694,133 @@
       position: relative;
     }
 
+    /* FULLCALENDAR OVERRIDES (Premium Theme) */
+    .fc {
+      font-family: 'Inter', sans-serif !important;
+      --fc-border-color: var(--g200);
+      --fc-button-text-color: var(--navy);
+      --fc-button-bg-color: white;
+      --fc-button-border-color: var(--g200);
+      --fc-button-hover-bg-color: var(--g50);
+      --fc-button-hover-border-color: var(--g300);
+      --fc-button-active-bg-color: var(--blue-pale);
+      --fc-button-active-border-color: var(--blue);
+      --fc-today-bg-color: rgba(59, 130, 246, 0.05) !important;
+      --fc-event-bg-color: var(--blue);
+      --fc-event-border-color: var(--blue);
+    }
+
+    .fc-toolbar-title {
+      font-family: 'Fraunces', serif;
+      font-size: 20px !important;
+    }
+
+    .fc-col-header-cell-cushion {
+      color: var(--g500);
+      font-weight: 500;
+      font-size: 13px;
+      text-transform: uppercase;
+      padding: 10px 0 !important;
+    }
+
+    .fc-daygrid-day-number {
+      color: var(--g600);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px !important;
+    }
+
+    .fc .fc-button-primary {
+      color: var(--navy) !important;
+      border: 1px solid var(--g200) !important;
+      background: white !important;
+      box-shadow: var(--sh-sm);
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: capitalize;
+      padding: 6px 16px !important;
+      border-radius: 8px !important;
+    }
+
+    .fc .fc-button-primary:hover {
+      background: var(--g50) !important;
+    }
+
+    .fc .fc-button-primary:not(:disabled).fc-button-active {
+      background: var(--blue) !important;
+      color: white !important;
+      border-color: var(--blue) !important;
+    }
+
+    /* BOOKING WIZARD STYLES */
+    .date-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .date-cell {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--g200);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .date-cell:hover:not(.disabled) {
+      border-color: var(--blue);
+      background: var(--blue-pale);
+    }
+
+    .date-cell.selected {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+      box-shadow: var(--sh-md);
+    }
+
+    .date-cell.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: var(--g50);
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .time-slot {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--g200);
+      text-align: center;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--navy);
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .time-slot:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-pale);
+      transform: translateY(-2px);
+    }
+
+    .time-slot.selected {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+      box-shadow: var(--sh-md);
+    }
+
     .msg-bubble.me {
       background: var(--blue);
       color: white;
@@ -3558,14 +3686,49 @@
         onclick="document.getElementById('scheduleModal').classList.remove('active')">×</button>
       <div style="font-size:48px; margin-bottom:10px">✅</div>
       <h2>Payment Confirmed!</h2>
-      <p style="margin-bottom:20px; color:var(--slate)">Your transaction was successful. The final step is to schedule
-        your consultation with Dr. O.</p>
-      <a href="https://calendly.com/dr-o-patriotictelehealth/30min" target="_blank" class="cta-btn"
-        style="display:inline-block; text-decoration:none; margin-bottom:10px; width:100%; box-sizing:border-box">📅
-        Schedule Your Visit</a>
+      <p style="margin-bottom:20px; color:var(--slate)">Your transaction was successful. You can now schedule your
+        consultation securely.</p>
+
+      <!-- Integrated Booking Trigger -->
+      <button class="btn btn-primary" onclick="openBookingModal(currentConsultId)"
+        style="width:100%;margin-bottom:10px">
+        📅 Select Appointment Time
+      </button>
+
       <button class="cta-btn" onclick="document.getElementById('scheduleModal').classList.remove('active')"
         style="background:transparent; border:1px solid var(--slate); color:var(--slate); width:100%">I'll do it
         later</button>
+    </div>
+  </div>
+
+  <!-- BOOKING WIZARD MODAL (Phase 7) -->
+  <div class="mo" id="bookingModal">
+    <div class="modal cm" style="max-width:600px; display:flex; flex-direction:column; max-height:85vh">
+      <div class="modal-header">
+        <h3>Schedule Appointment</h3>
+        <button class="modal-close"
+          onclick="document.getElementById('bookingModal').classList.remove('active')">×</button>
+      </div>
+      <div class="modal-body" style="overflow-y:auto; padding:20px">
+        <input type="hidden" id="bookingConsultId">
+
+        <h4 style="margin-top:0;color:var(--navy)">1. Select Date</h4>
+        <div id="bookingDateGrid" class="date-grid">
+          <!-- Populated by JS -->
+        </div>
+
+        <h4 style="color:var(--navy);margin-top:20px">2. Select Time (EST)</h4>
+        <div id="bookingTimeGrid" class="time-grid">
+          <div
+            style="grid-column:1/-1;text-align:center;color:var(--g500);padding:20px;background:var(--g50);border-radius:8px">
+            Select a date first</div>
+        </div>
+      </div>
+      <div class="modal-footer"
+        style="padding:15px;border-top:1px solid var(--g200);display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" id="btnConfirmBook" disabled onclick="confirmBooking()">Confirm
+          Appointment</button>
+      </div>
     </div>
   </div>
 
@@ -3657,7 +3820,7 @@
               id="msgBadge"
               style="background:var(--red);color:white;font-size:10px;padding:2px 6px;border-radius:10px;display:none">0</span>
           </div>
-          <div class="admin-tab">Archived</div>
+          <div id="tab-admin-schedule" class="admin-tab" onclick="switchAdminTab('schedule')">Schedule</div>
         </div>
 
         <div id="view-admin-consults" style="flex:1;overflow-y:auto">
@@ -3705,6 +3868,16 @@
                 style="padding:0 20px;height:46px;border-radius:8px">Send</button>
             </div>
           </div>
+        </div>
+
+        <!-- SCHEDULE VIEW -->
+        <div id="view-admin-schedule" style="display:none;flex:1;overflow:hidden;position:relative">
+          <div
+            style="padding:15px 20px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center;background:white">
+            <h3 style="margin:0;font-size:16px;color:var(--navy)">My Schedule</h3>
+            <div style="font-size:13px;color:var(--g500)" id="todaysAgenda"></div>
+          </div>
+          <div id="providerCalendar" style="height:calc(100% - 60px);padding:20px;background:white"></div>
         </div>
       </div>
     </div>
@@ -4284,26 +4457,192 @@
       }
     }
     function closeConsult(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('consultModal').classList.remove('active'); selSvc = null }
-    // --- ADMIN DASHBOARD LOGIC ---
-    // --- ADMIN DASHBOARD LOGIC ---
-    /* --- ADMIN MESSAGING --- */
-    let currentConversationId = null;
-    let msgUnsubscribe = null;
+    /* --- SCHEDULING & CALENDAR SYSTEM (Phase 7) --- */
+    let calendar;
+    let selectedDate = null;
+    let selectedTime = null;
+
+    function initProviderCalendar() {
+      const calendarEl = document.getElementById('providerCalendar');
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'timeGridWeek,dayGridMonth'
+        },
+        height: '100%',
+        slotMinTime: '08:00:00',
+        slotMaxTime: '18:00:00',
+        allDaySlot: false,
+        selectable: true,
+        selectMirror: true,
+        events: async function (info, successCallback, failureCallback) {
+          const token = await auth.currentUser.getIdToken();
+          const res = await fetch(`${API}/api/v1/doctor/appointments?start=${info.startStr}&end=${info.endStr}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          // Map Firestore appointments to FC events
+          const events = data.map(apt => ({
+            id: apt.id,
+            title: apt.patientName || 'Patient Visit',
+            start: apt.startTime, // ISO string
+            end: new Date(new Date(apt.startTime).getTime() + (apt.durationMinutes * 60000)).toISOString(),
+            backgroundColor: 'var(--blue)',
+            borderColor: 'var(--blue)'
+          }));
+          successCallback(events);
+        },
+        dateClick: function (info) {
+          // Provider blocking logic here (Phase 7b)
+          if (confirm('Block this time slot?')) {
+            // createBlock(info.dateStr); 
+          }
+        }
+      });
+      calendar.render();
+
+      // Also load "Today's Agenda"
+      loadTodaysAgenda();
+    }
+
+    async function loadTodaysAgenda() {
+      const ag = document.getElementById('todaysAgenda');
+      // Mock data for now, replace with API call
+      ag.innerHTML = `<div style="padding:20px;text-align:center;color:var(--g500)">No appointments today.</div>`;
+    }
+
+    // --- PATIENT BOOKING WIZARD ---
+    function openBookingModal(consultId) {
+      document.getElementById('bookingModal').classList.add('active');
+      document.getElementById('bookingConsultId').value = consultId;
+      renderBookingDates();
+    }
+
+    function renderBookingDates() {
+      const grid = document.getElementById('bookingDateGrid');
+      grid.innerHTML = '';
+      const today = new Date();
+
+      // Show next 14 days
+      for (let i = 1; i <= 14; i++) { // Start tomorrow
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+        const div = document.createElement('div');
+        div.className = `date-cell ${isWeekend ? 'disabled' : ''}`;
+        div.innerHTML = `
+                <div style="font-size:11px;text-transform:uppercase;color:var(--g500)">${d.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                <div style="font-size:16px;font-weight:700;color:var(--navy)">${d.getDate()}</div>
+            `;
+        if (!isWeekend) {
+          div.onclick = () => selectBookingDate(div, d);
+        }
+        grid.appendChild(div);
+      }
+    }
+
+    function selectBookingDate(el, dateObj) {
+      document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedDate = dateObj;
+      renderBookingTimes(dateObj);
+    }
+
+    function renderBookingTimes(date) {
+      const grid = document.getElementById('bookingTimeGrid');
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--g500)">Loading slots...</div>';
+
+      // Mock slots - in production fetch from API /api/v1/availability?date=...
+      const slots = ['09:00', '09:30', '10:00', '11:00', '13:00', '14:30', '15:00', '16:00'];
+
+      grid.innerHTML = slots.map(t => `
+            <div class="time-slot" onclick="selectBookingTime(this, '${t}')">${formatTime(t)}</div>
+        `).join('');
+    }
+
+    function selectBookingTime(el, timeStr) {
+      document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedTime = timeStr;
+      document.getElementById('btnConfirmBook').disabled = false;
+    }
+
+    function formatTime(timeStr) { // "09:00" -> "9:00 AM"
+      const [h, m] = timeStr.split(':');
+      return new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    async function confirmBooking() {
+      if (!selectedDate || !selectedTime) return;
+      const btn = document.getElementById('btnConfirmBook');
+      btn.disabled = true; btn.innerText = 'Booking...';
+
+      try {
+        // Combine date & time
+        const [h, m] = selectedTime.split(':');
+        const startTime = new Date(selectedDate);
+        startTime.setHours(parseInt(h), parseInt(m), 0, 0);
+
+        const consultId = document.getElementById('bookingConsultId').value;
+        const token = await auth.currentUser.getIdToken();
+
+        const res = await fetch(`${API}/api/v1/appointments/book`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            consultationId: consultId,
+            startTime: startTime.toISOString()
+          })
+        });
+
+        if (!res.ok) throw new Error('Slot taken');
+
+        // Success
+        document.getElementById('bookingModal').classList.remove('active');
+        showBookingSuccess(startTime);
+
+      } catch (e) {
+        toast('Booking Failed: Slot unavailable');
+        btn.disabled = false; btn.innerText = 'Confirm Appointment';
+      }
+    }
+
+    function showBookingSuccess(dateObj) {
+      // Show success modal or toast with Calendar links
+      // Simplified for prompt
+      toast('Appointment Confirmed!');
+      // Ideally open a "Success" modal with "Add to GCal" buttons
+    }
 
     function switchAdminTab(tab) {
-      document.getElementById('view-admin-consults').style.display = tab === 'consults' ? 'block' : 'none';
+      document.getElementById('view-admin-consults').style.display = 'none';
+      document.getElementById('view-admin-messages').style.display = 'none';
+      const scheduleView = document.getElementById('view-admin-schedule');
+      if (scheduleView) scheduleView.style.display = 'none';
 
-      // Fix: Use flex for messages view to maintain layout
-      const msgView = document.getElementById('view-admin-messages');
-      if (tab === 'messages') {
-        msgView.style.display = 'flex';
+      if (tab === 'consults') {
+        document.getElementById('view-admin-consults').style.display = 'block';
+      } else if (tab === 'messages') {
+        document.getElementById('view-admin-messages').style.display = 'flex';
         loadAdminThreads();
-      } else {
-        msgView.style.display = 'none';
+      } else if (tab === 'schedule') {
+        if (!scheduleView) return;
+        scheduleView.style.display = 'block';
+        setTimeout(() => { if (calendar) calendar.updateSize(); else initProviderCalendar(); }, 100);
       }
 
       document.getElementById('tab-admin-consults').classList.toggle('active', tab === 'consults');
       document.getElementById('tab-admin-messages').classList.toggle('active', tab === 'messages');
+      const tabSched = document.getElementById('tab-admin-schedule');
+      if (tabSched) tabSched.classList.toggle('active', tab === 'schedule');
+    }
+
+    function showAdminSchedule() {
+      // Helper specifically for schedule tab
+      switchAdminTab('schedule');
     }
 
     async function loadAdminThreads() {
