@@ -4368,15 +4368,14 @@
       // Check for Payment Success Return
       const params = new URLSearchParams(window.location.search);
       if (params.get('payment') === 'success') {
-        // Show "Payment Confirmed" modal first, which then leads to Booking
-        document.getElementById('paymentSuccessModal').classList.add('active');
-        // Store consult ID for the buttons in that modal
-        // We assume backend metadata passed it back, but stripe session ID is key here.
-        // For now, we rely on the user clicking "Select Time" to open booking modal with correct ID.
-        // In a real app, we'd fetch the consult ID linked to session_id via API.
+        const consultationId = params.get('consultationId');
+        console.log('Payment success detected, consultationId:', consultationId);
 
-        // Clean URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+        if (consultationId) {
+          handlePaymentSuccess(consultationId);
+        } else {
+          toast('Payment received! Please check your dashboard.');
+        }
       }
     }
 
