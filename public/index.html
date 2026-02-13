@@ -2647,6 +2647,43 @@
     }
 
     /* Message Styling for Provider Chat */
+    .admin-tab {
+      padding: 20px 0;
+      font-weight: 500;
+      color: var(--g500);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .admin-tab:hover {
+      color: var(--navy);
+    }
+
+    .admin-tab.active {
+      font-weight: 600;
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
+
+    .msg-thread {
+      transition: background 0.2s;
+    }
+
+    .msg-thread:hover {
+      background: var(--g50);
+    }
+
+    .msg-thread.active {
+      background: #f0f9ff;
+    }
+
+    .msg-thread.unread {
+      background: #fee2e2;
+    }
+
+    /* Light red for unread attention */
+
     .msg-bubble {
       padding: 10px 14px;
       border-radius: 12px;
@@ -3611,26 +3648,64 @@
         </div>
       </div>
 
-      <div style="background:white;border-radius:12px;box-shadow:var(--sh-md);overflow:hidden">
-        <div style="padding:20px;border-bottom:1px solid var(--g100);display:flex;gap:20px">
-          <div style="font-weight:600;color:var(--blue);border-bottom:2px solid var(--blue);padding-bottom:4px">Active
-            Consults</div>
-          <div style="color:var(--g500);cursor:pointer">Archived</div>
+      <div
+        style="background:white;border-radius:12px;box-shadow:var(--sh-md);overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 180px)">
+        <div style="padding:0 20px;border-bottom:1px solid var(--g100);display:flex;gap:20px;background:white">
+          <div id="tab-admin-consults" class="admin-tab active" onclick="switchAdminTab('consults')">Active Consults
+          </div>
+          <div id="tab-admin-messages" class="admin-tab" onclick="switchAdminTab('messages')">Messages <span
+              id="msgBadge"
+              style="background:var(--red);color:white;font-size:10px;padding:2px 6px;border-radius:10px;display:none">0</span>
+          </div>
+          <div class="admin-tab">Archived</div>
         </div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead>
-            <tr style="background:var(--g50);text-align:left;font-size:13px;color:var(--g500)">
-              <th style="padding:15px 20px">Patient</th>
-              <th style="padding:15px">Service</th>
-              <th style="padding:15px">Status</th>
-              <th style="padding:15px">Date</th>
-              <th style="padding:15px">Action</th>
-            </tr>
-          </thead>
-          <tbody id="adminTableBody">
-            <!-- Populated by JS -->
-          </tbody>
-        </table>
+
+        <div id="view-admin-consults" style="flex:1;overflow-y:auto">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="background:var(--g50);text-align:left;font-size:13px;color:var(--g500);position:sticky;top:0">
+                <th style="padding:15px 20px">Patient</th>
+                <th style="padding:15px">Service</th>
+                <th style="padding:15px">Status</th>
+                <th style="padding:15px">Date</th>
+                <th style="padding:15px">Action</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="view-admin-messages" style="display:none;flex:1;overflow:hidden">
+          <!-- Threads List -->
+          <div style="width:320px;border-right:1px solid var(--g200);overflow-y:auto;background:var(--g50)"
+            id="msgThreadList">
+            <div style="padding:20px;text-align:center;color:var(--g500)">Loading...</div>
+          </div>
+
+          <!-- Chat Area -->
+          <div style="flex:1;display:flex;flex-direction:column;background:white">
+            <div id="chatHeader"
+              style="padding:15px 20px;border-bottom:1px solid var(--g200);height:60px;display:flex;align-items:center;justify-content:space-between">
+              <div style="color:var(--g400)">Select a conversation</div>
+            </div>
+
+            <div id="chatMessages"
+              style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;background:var(--bg-root)">
+              <!-- Messages go here -->
+            </div>
+
+            <div id="chatInputArea"
+              style="padding:20px;border-top:1px solid var(--g200);display:none;gap:10px;background:white">
+              <textarea id="chatInput" rows="1" placeholder="Type a secure message..."
+                style="flex:1;padding:12px;border:1px solid var(--g300);border-radius:8px;font-family:inherit;font-size:14px;resize:none"
+                onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendAdminMessage()}"></textarea>
+              <button class="btn btn-primary" onclick="sendAdminMessage()"
+                style="padding:0 20px;height:46px;border-radius:8px">Send</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4237,16 +4312,15 @@
       list.innerHTML = '<div style="padding:20px;text-align:center">Loading...</div>';
 
       try {
-        // Real-time listener for conversations
+        // Updated to match security rule: must filter by participants
         db.collection('conversations')
+          .where('participants', 'array-contains', auth.currentUser.uid)
           .orderBy('lastMessage.createdAt', 'desc')
           .onSnapshot(snap => {
             if (snap.empty) {
               list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--g500)">No messages yet.</div>';
               return;
             }
-
-            // Sort by unread locally if needed, but ordering by lastMessage is usually enough
             const threads = [];
             snap.forEach(doc => threads.push({ id: doc.id, ...doc.data() }));
             renderThreadList(threads);
