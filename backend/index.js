@@ -452,9 +452,11 @@ app.patch('/api/v1/admin/consultations/:id', async (req, res) => {
 
 
 // 2. Stripe Checkout
-const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripeKey = process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.trim() : null;
 let stripe;
 if (stripeKey) {
+    // Log masked key for debugging
+    console.log(`Stripe Key Configured: ${stripeKey.substring(0, 8)}...${stripeKey.substring(stripeKey.length - 4)}`);
     stripe = require('stripe')(stripeKey);
 } else {
     console.warn("WARNING: STRIPE_SECRET_KEY is missing. Stripe functionality will be disabled.");
@@ -525,7 +527,7 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: item.interval ? 'subscription' : 'payment',
-            success_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-prod.web.app'}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-prod.web.app'}?payment=success&session_id={CHECKOUT_SESSION_ID}&consultationId=${consultationId}`,
             cancel_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-prod.web.app'}?payment=cancelled`,
             metadata: {
                 serviceKey,
@@ -623,6 +625,80 @@ app.post('/api/v1/radiology/upload', upload.single('dicom'), async (req, res) =>
     }
 });
 
+// 3. APPOINTMENTS (New)
+app.post('/api/v1/appointments/book', async (req, res) => {
+    try {
+        const { consultationId, startTime } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const token = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const uid = decodedToken.uid;
+
+        if (!consultationId || !startTime) {
+            console.error('Booking failed: Missing fields', req.body);
+            return res.status(400).send('Missing fields');
+        }
+
+        const requestedTime = new Date(startTime);
+        console.log(`Attempting to book for: ${requestedTime.toISOString()} (${startTime})`);
+
+        // Collision Check: Range query (Start time match)
+        // Note: In Firestore, exact Date object equality can be tricky if ms differ.
+        // We'll query for appointments starting at the exact same minute.
+        const snap = await db.collection('appointments')
+            .where('startTime', '==', admin.firestore.Timestamp.fromDate(requestedTime))
+            .get();
+
+        if (!snap.empty) {
+            return res.status(409).send('Slot taken');
+        }
+
+        const aptRef = db.collection('appointments').doc();
+        await aptRef.set({
+            id: aptRef.id,
+            consultationId,
+            patientId: uid,
+            providerId: 'test-provider-001', // Assigned to Dr. Test for now
+            startTime: admin.firestore.Timestamp.fromDate(new Date(startTime)),
+            durationMinutes: 30,
+            status: 'confirmed',
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true, id: aptRef.id });
+    } catch (error) {
+        console.error('Booking error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/v1/doctor/appointments', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        // Return all appointments for demo (or filter by provider in real app)
+        const snap = await db.collection('appointments').get();
+        const appointments = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            appointments.push({
+                id: doc.id,
+                ...d,
+                startTime: d.startTime.toDate().toISOString()
+            });
+        });
+
+        res.json(appointments);
+    } catch (error) {
+        console.error('Fetch appointments error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Local testing & Cloud Run
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+});
