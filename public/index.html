@@ -466,6 +466,25 @@
       aspect-ratio: 4/3
     }
 
+
+    .hero-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      animation: heroGlow 3s ease-in-out infinite alternate
+    }
+
+    @keyframes heroGlow {
+      0% {
+        filter: brightness(1) saturate(1)
+      }
+
+      100% {
+        filter: brightness(1.05) saturate(1.1)
+      }
+    }
+
     .hv-float {
       position: absolute;
       border-radius: var(--r-md);
@@ -2931,81 +2950,9 @@
           </div>
           <div class="hero-vis">
             <div class="hv-main">
-              <!-- Inline SVG: Doctor on video call -->
-              <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="hg1" x1="0" y1="0" x2="400" y2="300" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#1a365d" />
-                    <stop offset="1" stop-color="#3b82f6" />
-                  </linearGradient>
-                </defs>
-                <rect width="400" height="300" fill="url(#hg1)" />
-                <rect x="60" y="30" width="280" height="200" rx="16" fill="#0f172a" opacity=".6" />
-                <rect x="68" y="38" width="264" height="184" rx="12" fill="#1e293b" />
-                <!-- Doctor silhouette -->
-                <circle cx="200" cy="110" r="32" fill="#60a5fa" opacity=".3" />
-                <circle cx="200" cy="100" r="22" fill="#93c5fd" />
-                <path d="M165 160C165 140 180 128 200 128C220 128 235 140 235 160V180H165V160Z" fill="#3b82f6" />
-                <rect x="180" y="155" width="40" height="8" rx="4" fill="#fff" opacity=".6" />
-                <!-- Stethoscope hint -->
-                <circle cx="200" cy="148" r="6" stroke="#60a5fa" stroke-width="2" fill="none" />
-                <!-- Video UI elements -->
-                <circle cx="90" cy="55" r="5" fill="#ef4444" />
-                <circle cx="106" cy="55" r="5" fill="#f59e0b" />
-                <circle cx="122" cy="55" r="5" fill="#10b981" />
-                <rect x="80" y="235" width="60" height="28" rx="8" fill="#10b981" opacity=".8" />
-                <rect x="93" y="244" width="34" height="10" rx="3" fill="#fff" opacity=".6" />
-                <rect x="260" y="235" width="60" height="28" rx="8" fill="#ef4444" opacity=".6" />
-                <!-- Waveform -->
-                <path d="M150 250L165 240L175 255L185 235L195 260L205 238L215 252L225 242L240 250" stroke="#60a5fa"
-                  stroke-width="2" fill="none" opacity=".4" />
-              </svg>
+              <img src="hero-doctor.png" alt="Futuristic Healthcare Professional" class="hero-image" />
             </div>
-            <div class="hv-float hvf-1">
-              <!-- Inline SVG: X-ray -->
-              <svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
-                <rect width="160" height="120" fill="#0f172a" />
-                <rect x="50" y="8" width="60" height="80" rx="6" fill="#1e3a5f" opacity=".8" />
-                <!-- Ribcage outline -->
-                <ellipse cx="80" cy="28" rx="18" ry="14" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity=".5" />
-                <line x1="62" y1="40" x2="98" y2="40" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <line x1="64" y1="48" x2="96" y2="48" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <line x1="66" y1="56" x2="94" y2="56" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <line x1="68" y1="64" x2="92" y2="64" stroke="#60a5fa" stroke-width="1" opacity=".3" />
-                <path d="M73 70L80 82L87 70" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity=".4" />
-                <!-- Spine -->
-                <line x1="80" y1="24" x2="80" y2="78" stroke="#93c5fd" stroke-width="2" opacity=".3" />
-                <text x="80" y="104" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="sans-serif"
-                  opacity=".6">CHEST PA</text>
-              </svg>
-            </div>
-            <div class="hv-float hvf-2">
-              <!-- Inline SVG: Exercise/wellness -->
-              <svg viewBox="0 0 140 105" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="exg" x1="0" y1="0" x2="140" y2="105">
-                    <stop stop-color="#065f46" />
-                    <stop offset="1" stop-color="#10b981" />
-                  </linearGradient>
-                </defs>
-                <rect width="140" height="105" fill="url(#exg)" />
-                <!-- Runner silhouette -->
-                <circle cx="58" cy="30" r="9" fill="#fff" opacity=".7" />
-                <path d="M55 40L50 60L42 75" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"
-                  opacity=".6" />
-                <path d="M55 40L65 58L75 72" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"
-                  opacity=".6" />
-                <path d="M55 40L48 52" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"
-                  opacity=".5" />
-                <path d="M55 40L68 45" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"
-                  opacity=".5" />
-                <!-- Heart rate line -->
-                <path d="M85 50L92 50L96 38L100 62L104 44L108 55L120 55" stroke="#fff" stroke-width="2" fill="none"
-                  opacity=".5" />
-                <text x="102" y="80" text-anchor="middle" fill="#fff" font-size="9" font-family="sans-serif"
-                  opacity=".5">WELLNESS</text>
-              </svg>
-            </div>
+
             <div class="hv-stat hvs-1">
               <div class="hvs-v grad">4.9 ★</div>
               <div class="hvs-l">Patient Rating</div>
