@@ -107,16 +107,16 @@
       left: 0;
       right: 0;
       z-index: 1000;
-      background: rgba(255, 255, 255, .85);
+      background: rgba(0, 0, 0, .95);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border-bottom: 1px solid rgba(0, 0, 0, .04);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
       transition: all .3s var(--ease)
     }
 
     nav.scrolled {
       box-shadow: var(--sh-sm);
-      background: rgba(255, 255, 255, .95)
+      background: rgba(0, 0, 0, .98)
     }
 
     .nav-inner {
@@ -157,7 +157,7 @@
       font-family: 'Fraunces', serif;
       font-weight: 800;
       font-size: 17px;
-      color: var(--navy);
+      color: #FFFFFF;
       letter-spacing: -.3px
     }
 
@@ -170,7 +170,7 @@
       font-weight: 600;
       letter-spacing: 2.8px;
       text-transform: uppercase;
-      color: var(--g400)
+      color: rgba(255, 255, 255, .4)
     }
 
     .nav-links {
@@ -180,7 +180,7 @@
 
     .nav-links a {
       text-decoration: none;
-      color: var(--g600);
+      color: rgba(255, 255, 255, .7);
       font-size: 14px;
       font-weight: 500;
       padding: 8px 14px;
@@ -189,8 +189,8 @@
     }
 
     .nav-links a:hover {
-      color: var(--navy);
-      background: var(--g50)
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, .1)
     }
 
     .nav-actions {
