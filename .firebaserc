@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "patriotic-virtual-prod"
+  },
+  "targets": {
+    "patriotic-virtual-prod": {
+      "hosting": {
+        "landing": [
+          "patriotic-virtual-prod"
+        ],
+        "emr": [
+          "patriotic-virtual-emr"
+        ]
+      }
+    }
   }
 }
