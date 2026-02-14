@@ -2845,6 +2845,92 @@
       margin-top: 4px;
       text-align: right;
     }
+
+    /* NEW SECTIONS CSS */
+    .safety-bar {
+      position: relative;
+      padding: 16px 0;
+      background: #020617;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .safety-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 25%, transparent 75%, rgba(245, 158, 11, 0.15) 100%);
+      pointer-events: none;
+    }
+
+    .sb-inner {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .sb-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: white;
+    }
+
+    .marquee-section {
+      background: #0B1221;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 18px 0;
+      overflow: hidden;
+    }
+
+    .marquee-track {
+      display: flex;
+      gap: 48px;
+      animation: scroll 40s linear infinite;
+      white-space: nowrap;
+      min-width: 100%;
+    }
+
+    .marquee-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .marquee-item span {
+      font-size: 18px;
+    }
+
+    @keyframes scroll {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-50%);
+      }
+    }
   </style>
 </head>
 
@@ -2995,19 +3081,20 @@
 
     <!-- SAFETY BANNER -->
     <section class="safety-bar">
+      <div class="safety-bg"></div>
       <div class="container">
-        <div class="safety-inner">
+        <div class="sb-inner">
           <div class="sb-item">
-            <div class="sb-icon bg1">✓</div>Evidence-Based Protocols
+            <div class="sb-icon" style="background:var(--emerald)">✓</div>Evidence-Based Protocols
           </div>
           <div class="sb-item">
-            <div class="sb-icon bg2">✓</div>Automated Safety Screening
+            <div class="sb-icon" style="background:var(--blue)">✓</div>Automated Safety Screening
           </div>
           <div class="sb-item">
-            <div class="sb-icon bg3">✓</div>Contraindication Checks
+            <div class="sb-icon" style="background:var(--amber)">✓</div>Contraindication Checks
           </div>
           <div class="sb-item">
-            <div class="sb-icon bg4">✓</div>Board-Certified Review
+            <div class="sb-icon" style="background:var(--violet)">✓</div>Board-Certified Review
           </div>
         </div>
       </div>
@@ -3016,11 +3103,6 @@
     <!-- MARQUEE -->
     <section class="marquee-section">
       <div class="marquee-track">
-        <div class="marquee-item"><span>🩺</span>General Telehealth</div>
-        <div class="marquee-item"><span>💊</span>GLP-1 Weight Loss</div>
-        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
-        <div class="marquee-item"><span>⏱️</span>Premature Ejaculation</div>
-        <div class="marquee-item"><span>🧬</span>Testosterone / HRT</div>
         <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
         <div class="marquee-item"><span>🔬</span>AI-Powered Imaging</div>
         <div class="marquee-item"><span>📱</span>Digital Health Platform</div>
@@ -3028,12 +3110,23 @@
         <div class="marquee-item"><span>🩺</span>General Telehealth</div>
         <div class="marquee-item"><span>💊</span>GLP-1 Weight Loss</div>
         <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
-        <div class="marquee-item"><span>⏱️</span>Premature Ejaculation</div>
-        <div class="marquee-item"><span>🧬</span>Testosterone / HRT</div>
+
+        <!-- Duplicates for uninterrupted scrolling -->
         <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
         <div class="marquee-item"><span>🔬</span>AI-Powered Imaging</div>
         <div class="marquee-item"><span>📱</span>Digital Health Platform</div>
         <div class="marquee-item"><span>🌴</span>Available in Florida</div>
+        <div class="marquee-item"><span>🩺</span>General Telehealth</div>
+        <div class="marquee-item"><span>💊</span>GLP-1 Weight Loss</div>
+        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+
+        <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
+        <div class="marquee-item"><span>🔬</span>AI-Powered Imaging</div>
+        <div class="marquee-item"><span>📱</span>Digital Health Platform</div>
+        <div class="marquee-item"><span>🌴</span>Available in Florida</div>
+        <div class="marquee-item"><span>🩺</span>General Telehealth</div>
+        <div class="marquee-item"><span>💊</span>GLP-1 Weight Loss</div>
+        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
       </div>
     </section>
 
