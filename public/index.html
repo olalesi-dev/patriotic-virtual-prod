@@ -5490,11 +5490,12 @@
       if (!confirm('Mark this consultation as "In Review"?')) return;
       try {
         const token = await auth.currentUser.getIdToken();
-        await fetch(`${API}/api/v1/admin/consultations/${id}`, {
+        const res = await fetch(`${API}/api/v1/admin/consultations/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ status: 'reviewed' })
         });
+        if (!res.ok) throw new Error('Update failed');
         toast('Status updated');
         loadAdminConsults();
       } catch (e) { toast('Error updating status'); }
