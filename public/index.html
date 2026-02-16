@@ -3865,7 +3865,7 @@
 
         <div class="rad-grid" style="grid-template-columns:repeat(3,1fr)">
           <!-- 1. Single Read -->
-          <div class="rad-card">
+          <div class="rad-card" onclick="startSvc('diagnostic_single')" style="cursor:pointer">
             <div class="rad-top">
               <div class="rad-badge rb-b" style="background:var(--blue);color:white">Diagnostic</div>
               <h3>Single Study Read</h3>
@@ -3874,7 +3874,7 @@
             </div>
           </div>
           <!-- 2. Second Opinion -->
-          <div class="rad-card">
+          <div class="rad-card" onclick="startSvc('diagnostic_second')" style="cursor:pointer">
             <div class="rad-top">
               <div class="rad-badge rb-n" style="background:var(--indigo);color:white">Clinical Review</div>
               <h3>Second Opinion</h3>
@@ -3883,7 +3883,7 @@
             </div>
           </div>
           <!-- 3. Facility Contracts -->
-          <div class="rad-card">
+          <div class="rad-card" onclick="startSvc('diagnostic_facility')" style="cursor:pointer">
             <div class="rad-top">
               <div class="rad-badge rb-a" style="background:var(--navy);color:white">For Facilities</div>
               <h3>Urgent Care / Outpatient</h3>
