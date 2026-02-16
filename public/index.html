@@ -4069,11 +4069,11 @@
                 <p>Second opinions & AI</p>
               </div>
             </div>
-            <div class="cli">
+            <div class="cli" onclick="openVideoConsult()">
               <div class="cli-ic" style="background:var(--rose-soft)">📹</div>
               <div class="cli-info">
                 <h4>Video Consult</h4>
-                <p>Book imaging consultation</p>
+                <p>Start video visit</p>
               </div>
             </div>
           </div>
@@ -4284,6 +4284,34 @@
       <div id="uploadStatus" style="margin-top:15px; font-size:13px; text-align:center; min-height:20px"></div>
     </div>
   </div>
+
+  <!-- VIDEO CONSULT MODAL (Doxy.me) -->
+  <div class="mo" id="videoModal">
+    <div class="modal cm wide"
+      style="height:90vh;max-width:1100px;display:flex;flex-direction:column;padding:0;overflow:hidden">
+      <div
+        style="padding:15px 20px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center;background:white">
+        <h3 style="margin:0;font-size:18px">Video Consultation</h3>
+        <button class="btn btn-outline" onclick="closeVideoConsult()" style="padding:6px 12px;font-size:13px">End Call /
+          Close</button>
+      </div>
+      <div style="flex:1;background:var(--g50);position:relative">
+        <iframe src="https://doxy.me/patrioticvirtualtelehealth" allow="camera; microphone; display-capture"
+          style="width:100%;height:100%;border:none" id="doxyFrame"></iframe>
+      </div>
+    </div>
+  </div>
+  <script>
+    function openVideoConsult() {
+      document.getElementById('videoModal').classList.add('active');
+    }
+    function closeVideoConsult() {
+      document.getElementById('videoModal').classList.remove('active');
+      // Reset iframe to stop camera/mic
+      const f = document.getElementById('doxyFrame');
+      f.src = f.src;
+    }
+  </script>
 
   <div class="mo" id="aboutModal" onclick="closeAbout(event)">
     <div class="modal cm" onclick="event.stopPropagation()" style="max-width:800px">
