@@ -437,6 +437,7 @@ app.patch('/api/v1/admin/consultations/:id', async (req, res) => {
         const idToken = authHeader.split('Bearer ')[1];
         await admin.auth().verifyIdToken(idToken);
 
+        console.log('PATCH body:', req.body);
         const updateData = {
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
@@ -448,7 +449,7 @@ app.patch('/api/v1/admin/consultations/:id', async (req, res) => {
         res.json({ message: 'Consultation updated' });
     } catch (error) {
         console.error('Error updating consultation:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 });
 
