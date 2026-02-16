@@ -5014,6 +5014,8 @@
         if (!consRes.ok) throw new Error('Failed to create consultation');
         const consData = await consRes.json();
         const consultationId = consData.id;
+        sessionStorage.setItem('pendingConsultationId', consultationId);
+        currentConsultId = consultationId;
 
         // 2. Create Payment Session
         console.log('Initiating Stripe Checkout...');
@@ -5104,6 +5106,19 @@
 
     // --- PATIENT BOOKING WIZARD ---
     function openBookingModal(consultId) {
+      // Robust Fallback Logic for Consultation ID
+      if (!consultId) consultId = currentConsultId;
+      if (!consultId) {
+        const params = new URLSearchParams(window.location.search);
+        consultId = params.get('consultationId');
+      }
+      if (!consultId) consultId = sessionStorage.getItem('pendingConsultationId');
+
+      if (!consultId) {
+        console.error('No consultation ID available for booking.');
+        return toast('Error: Unable to find consultation details. Please start over or contact support.');
+      }
+
       document.getElementById('bookingModal').classList.add('active');
       document.getElementById('bookingConsultId').value = consultId;
       renderBookingDates();
