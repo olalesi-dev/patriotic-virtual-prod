@@ -684,16 +684,52 @@ app.get('/api/v1/doctor/appointments', async (req, res) => {
         // Return all appointments for demo (or filter by provider in real app)
         const snap = await db.collection('appointments').get();
         const appointments = [];
+        const uids = new Set();
+        const consultIds = new Set();
+
         snap.forEach(doc => {
-            const d = doc.data();
+            const data = doc.data();
             appointments.push({
                 id: doc.id,
-                ...d,
-                startTime: d.startTime.toDate().toISOString()
+                ...data,
+                startTime: data.startTime.toDate().toISOString()
             });
+            if (data.patientId) uids.add(data.patientId);
+            if (data.consultationId) consultIds.add(data.consultationId);
         });
 
-        res.json(appointments);
+        // Fetch Patient Details
+        const userMap = {};
+        if (uids.size > 0) {
+            await Promise.all([...uids].map(async uid => {
+                const pSnap = await db.collection('patients').doc(uid).get();
+                if (pSnap.exists) userMap[uid] = pSnap.data();
+            }));
+        }
+
+        // Fetch Consultation Details
+        const consultMap = {};
+        if (consultIds.size > 0) {
+            await Promise.all([...consultIds].map(async cid => {
+                const cSnap = await db.collection('consultations').doc(cid).get();
+                if (cSnap.exists) consultMap[cid] = cSnap.data();
+            }));
+        }
+
+        // Enrich Data
+        const enriched = appointments.map(apt => {
+            const p = userMap[apt.patientId] || {};
+            const c = consultMap[apt.consultationId] || {};
+            return {
+                ...apt,
+                patientName: `${p.firstName || 'Unknown'} ${p.lastName || ''}`.trim(),
+                patientEmail: p.email || '',
+                serviceName: c.serviceKey ? c.serviceKey.replace(/_/g, ' ') : 'General Visit',
+                consultationStatus: c.status || 'pending'
+            };
+        });
+
+        res.json(enriched);
     } catch (error) {
         console.error('Fetch appointments error:', error);
         res.status(500).json({ error: error.message });
