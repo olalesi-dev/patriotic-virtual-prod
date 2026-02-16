@@ -505,7 +505,7 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
             }
 
             // Return success URL immediately
-            const mockUrl = `${process.env.FRONTEND_URL || 'https://patriotic-virtual-prod.web.app'}?payment=success&session_id=mock_session_${Date.now()}`;
+            const mockUrl = `${process.env.FRONTEND_URL || 'https://patriotic-virtual-prod.web.app'}?payment=success&session_id=mock_session_${Date.now()}&consultationId=${consultationId}`;
             return res.json({ sessionId: 'mock_session_' + Date.now(), url: mockUrl });
         }
 
