@@ -3397,6 +3397,81 @@
     #aboutModal b {
       color: #FFFFFF !important;
     }
+
+    /* DARK MODE PATIENT CHART OVERRIDE */
+    #patientChart .modal {
+      background: #000000 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #E5E7EB !important;
+    }
+
+    #patientChart .modal>div:first-child {
+      /* Header */
+      background: #0A0F1C !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    #patientChart h2,
+    #patientChart h3,
+    #patientChart h4 {
+      color: #FFFFFF !important;
+    }
+
+    #patientChart p,
+    #patientChart span,
+    #patientChart label {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    #patientChart .chart-tabs .tab {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    #patientChart .chart-tabs .tab.active {
+      color: #FFFFFF !important;
+      border-bottom-color: var(--blue) !important;
+    }
+
+    #patientChart .chart-tabs .tab:hover {
+      color: #FFFFFF !important;
+    }
+
+    /* Content Cards (History, SOAP, Labs) */
+    #patientChart .chart-content>div>div {
+      /* The white cards */
+      background: #0A0F1C !important;
+      box-shadow: none !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Inputs */
+    #patientChart input,
+    #patientChart textarea,
+    #patientChart select {
+      background: #1F2937 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #FFFFFF !important;
+    }
+
+    #patientChart .form-control {
+      background: #1F2937 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #FFFFFF !important;
+    }
+
+    /* Chat/Messages in Chart */
+    #patientChart .chat-interface {
+      background: #0A0F1C !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    #patientChart #providerChatHistory {
+      background: #000000 !important;
+    }
+
+    #patientChart .modal-close {
+      color: #FFFFFF !important;
+    }
   </style>
 </head>
 
