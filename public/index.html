@@ -3621,7 +3621,7 @@
                 <div class="ti p">📋</div>Protocol-Based
               </div>
             </div>
-            <div class="fl-badge">🌴 Now serving Florida — Virginia coming soon</div>
+            <div class="fl-badge">🌴 Now serving Florida</div>
           </div>
           <div class="hero-vis">
             <div class="hv-main"><img src="hero-image.png?v=cyberpunk"
@@ -3693,7 +3693,7 @@
         </div>
         <h2 class="sec-title" style="color: #FFFFFF;">Treatments designed<br>for real results.</h2>
         <p class="sec-sub">Every treatment follows strict, evidence-based protocols with automated safety screening.
-          Currently available to Florida residents — expanding to Virginia soon.</p>
+          Currently available to Florida residents.</p>
         <div class="services-tabs">
           <div class="tab active" onclick="filterSvc('popular',this)">Popular</div>
           <div class="tab" onclick="filterSvc('clinical',this)">Clinical Visits</div>
@@ -3974,7 +3974,7 @@
               </div>
             </a>
             <p class="footer-brand-text">Board-certified telehealth and radiology services. Protocol-driven care,
-              delivered to your door. Currently serving Florida. Expanding to Virginia.</p>
+              delivered to your door. Currently serving Florida.</p>
           </div>
           <div class="footer-col">
             <h4>Telehealth</h4><a href="#services">General Visit</a><a href="#services">Weight Loss</a><a
@@ -4132,7 +4132,7 @@
               <option value="">Select your state</option>
               <option value="FL">Florida ✓</option>
               <option value="IN" disabled style="color:#9ca3af">Indiana (Coming Soon)</option>
-              <option value="VA" disabled style="color:#9ca3af">Virginia (Coming Soon)</option>
+
             </select></div>
           <div class="fg"><label>Date of Birth</label><input type="date" id="regDob"></div>
         </div><button class="btn btn-primary btn-large" style="width:100%;margin-top:8px"
@@ -4322,7 +4322,7 @@
                 📜 Active Licenses</h3>
               <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6">
                 <li style="margin-bottom:6px">FL · MD · CA · NY · MI · DC</li>
-                <li style="margin-bottom:6px">OH · WI · TX · VA</li>
+                <li style="margin-bottom:6px">OH · WI · TX</li>
                 <li style="margin-bottom:6px;color:var(--blue)">Enrolled in IMLC (Interstate Compact)</li>
               </ul>
             </div>
@@ -4783,7 +4783,7 @@
           aiBot("Our membership tiers:\n\n💡 <b>Telehealth Basic</b> — $29/mo (AI + limited visits)\n📋 <b>Telehealth Standard</b> — $59/mo (1 visit/month)\n⚕️ <b>Telehealth Premium</b> — $99/mo (unlimited/priority)\n🎯 <b>All Access Core</b> — $99/mo (telehealth + AI tools)\n⭐ <b>All Access Plus</b> — $149/mo (+ AI imaging)\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
             ['✅ Sign up', '🔍 Check eligibility', '📋 More details']);
         } else if (v.includes('Start a visit') || v.includes('sign up') || v.includes('register') || v.includes('Sign up')) {
-          aiBot("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana & Virginia coming soon.");
+          aiBot("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana coming soon.");
           setTimeout(() => openModal('register'), 1200);
         } else if (aiState === 'elig_svc') {
           aiState = 'elig_state';
@@ -4798,7 +4798,7 @@
             if (qs && qs.length) { aiCtx.qs = qs; aiCtx.answers = {}; askNext(); }
             else { showElig(true, "You're eligible! This service has no specific contraindications to screen for. A provider will do a full review after you submit your visit.") }
           } else {
-            aiBot(`We're not available in your state yet — but <b>Virginia</b> is launching soon! Want to be notified when we expand?`,
+            aiBot(`We're not available in your state yet. Want to be notified when we expand?`,
               ['Yes, notify me', 'Check another treatment']);
             aiState = 'start';
           }
@@ -4943,7 +4943,7 @@
         toast(msg);
       }
     }
-    async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value; if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida. Virginia coming soon!'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
+    async function handleRegister() { const fn = document.getElementById('regFirst').value, ln = document.getElementById('regLast').value, e = document.getElementById('regEmail').value, p = document.getElementById('regPassword').value, st = document.getElementById('regState').value, dob = document.getElementById('regDob').value; if (!fn || !ln || !e || !p) return toast('Please fill required fields.'); if (p.length < 6) return toast('Password must be at least 6 characters.'); if (!ACTIVE_STATES.includes(st)) { return toast('We\'re currently only available in Florida.'); } try { const cred = await auth.createUserWithEmailAndPassword(e, p); fbUser = cred.user; await fbUser.updateProfile({ displayName: fn + ' ' + ln }); token = await fbUser.getIdToken(); try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: fn, lastName: ln, state: st, dateOfBirth: dob, role: 'patient', firebaseUid: fbUser.uid, email: e }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: fn, lastName: ln, email: e, state: st, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome to Patriotic Virtual Telehealth!') } catch (err) { const msg = err.code === 'auth/email-already-in-use' ? 'An account with that email already exists. Try logging in.' : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message || 'Registration failed.'; toast(msg) } }
     async function handleGoogleLogin() { try { const provider = new firebase.auth.GoogleAuthProvider(); const cred = await auth.signInWithPopup(provider); fbUser = cred.user; token = await fbUser.getIdToken(); const names = fbUser.displayName ? fbUser.displayName.split(' ') : ['User']; try { const r = await fetch(`${API}/api/v1/auth/firebase-register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, firebaseUid: fbUser.uid, role: 'patient' }) }); if (r.ok) { user = await r.json(); } else { user = { firstName: names[0], lastName: names.slice(1).join(' ') || '', email: fbUser.email, role: 'patient', uid: fbUser.uid }; } } catch (apiErr) { user = { firstName: names[0], email: fbUser.email, role: 'patient', uid: fbUser.uid }; } document.getElementById('authModal').classList.remove('active'); updateNav(); showDashboard(); toast('Welcome, ' + (user.firstName || fbUser.email) + '!') } catch (err) { if (err.code !== 'auth/popup-closed-by-user') toast(err.message || 'Google sign-in failed.') } }
     async function handleForgotPassword() { const e = document.getElementById('loginEmail').value; if (!e) return toast('Enter your email above, then click Forgot password.'); try { await auth.sendPasswordResetEmail(e); toast('Password reset email sent! Check your inbox.') } catch (err) { const msg = err.code === 'auth/user-not-found' ? 'No account found with that email.' : err.code === 'auth/invalid-email' ? 'Invalid email address.' : err.message; toast(msg) } }
     function logout() { auth.signOut().then(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }).catch(() => { token = null; user = null; fbUser = null; updateNav(); showLanding(); toast('Logged out.') }) }
