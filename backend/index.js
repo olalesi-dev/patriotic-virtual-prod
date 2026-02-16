@@ -437,11 +437,13 @@ app.patch('/api/v1/admin/consultations/:id', async (req, res) => {
         const idToken = authHeader.split('Bearer ')[1];
         await admin.auth().verifyIdToken(idToken);
 
-        await db.collection('consultations').doc(id).update({
-            status,
-            doctorNotes,
+        const updateData = {
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        if (status) updateData.status = status;
+        if (doctorNotes !== undefined) updateData.doctorNotes = doctorNotes;
+
+        await db.collection('consultations').doc(id).update(updateData);
 
         res.json({ message: 'Consultation updated' });
     } catch (error) {
