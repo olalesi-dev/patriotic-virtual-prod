@@ -17,6 +17,10 @@
           }
         },
         {
+          "source": "/emr/**",
+          "destination": "/emr/index.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
