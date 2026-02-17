@@ -7,6 +7,7 @@ import {
     Search, Calendar, Video, User, Bell, LayoutDashboard, FileText, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -46,7 +47,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
+        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
 
             {/* SIDEBAR */}
             <aside
@@ -138,9 +139,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-64'} flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out`}>
 
                 {/* Header */}
-                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90">
+                <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90 dark:bg-slate-800/90">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-slate-800 capitalize">
+                        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 capitalize">
                             {pathname === '/' ? 'Dashboard' : pathname.replace('/', '')}
                         </h1>
                     </div>
@@ -152,13 +153,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <input
                                 type="text"
                                 placeholder="Search everything..."
-                                className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all hover:bg-white"
+                                className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all hover:bg-white dark:hover:bg-slate-600 dark:text-slate-200"
                             />
                         </div>
 
-                        <div className="h-8 w-px bg-slate-200 mx-2"></div>
+                        <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
-                        <button className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors relative hover:text-brand">
+                        <ThemeToggle />
+
+                        <button className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors relative hover:text-brand">
                             <Bell className="w-5 h-5" />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                         </button>
