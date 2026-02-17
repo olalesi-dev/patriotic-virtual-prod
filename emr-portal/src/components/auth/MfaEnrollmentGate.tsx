@@ -15,15 +15,21 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
     const router = useRouter();
 
     useEffect(() => {
+        console.log('MfaEnrollmentGate: Effect running');
         const checkMfaStatus = async () => {
             const user = auth.currentUser;
+            console.log('MfaEnrollmentGate: Current User:', user ? user.uid : 'null');
+
             if (!user) {
+                console.log('MfaEnrollmentGate: No user found, stopping loading');
                 setLoading(false);
                 return;
             }
 
             try {
+                console.log('MfaEnrollmentGate: Getting ID token...');
                 const token = await user.getIdToken();
+                console.log('MfaEnrollmentGate: Token acquired');
                 // In production, fetch from actual backend
                 // For now, assume un-enrolled provider for demo
                 // const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
@@ -33,15 +39,28 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
                 // In real app, remove this mock and use fetch
                 const mockProfile = { role: 'Provider', mfa_enrolled_at: null };
                 setProfile(mockProfile);
+                console.log('MfaEnrollmentGate: Profile set');
 
             } catch (error) {
                 console.error('Failed to check MFA status', error);
             } finally {
+                console.log('MfaEnrollmentGate: Finally block, stopping loading');
                 setLoading(false);
             }
         };
 
-        checkMfaStatus();
+        // Use onAuthStateChanged to ensure we catch the initial load correctly
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            console.log('MfaEnrollmentGate: Auth State Changed:', user ? user.uid : 'null');
+            // If we have a user, check MFA. If not, stop loading.
+            if (user) {
+                checkMfaStatus();
+            } else {
+                setLoading(false);
+            }
+        });
+
+        return () => unsubscribe();
     }, []);
 
     if (loading) return <div className="flex h-screen items-center justify-center">Loading Security Context...</div>;
