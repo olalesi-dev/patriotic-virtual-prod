@@ -3539,6 +3539,123 @@
     #consultModal input::placeholder {
       color: rgba(255, 255, 255, 0.4) !important;
     }
+
+    /* LIGHT THEME */
+    body.light-theme {
+      background: #FFFFFF;
+      color: #1F2937;
+    }
+
+    .light-theme nav {
+      background: rgba(255, 255, 255, .9);
+      border-bottom-color: rgba(0, 0, 0, .05);
+    }
+
+    .light-theme .nav-brand-top {
+      color: #111827;
+    }
+
+    .light-theme .nav-brand-bottom {
+      color: #6B7280;
+    }
+
+    .light-theme .nav-links a {
+      color: #4B5563;
+    }
+
+    .light-theme .nav-links a:hover {
+      color: #111827;
+      background: #F3F4F6;
+    }
+
+    .light-theme .mobile-toggle {
+      color: #111827;
+    }
+
+    .light-theme .hero h1 {
+      color: #111827 !important;
+    }
+
+    .light-theme .hero-sub {
+      color: #4B5563;
+    }
+
+    .light-theme .hero::after {
+      background-image: radial-gradient(circle, #E5E7EB 1px, transparent 1px);
+    }
+
+    .light-theme .btn-ghost {
+      color: #4B5563;
+    }
+
+    .light-theme .btn-ghost:hover {
+      color: #111827;
+      background: #F3F4F6;
+    }
+
+    .light-theme .btn-white {
+      background: #1F2937;
+      color: #FFF;
+    }
+
+    .light-theme .btn-white:hover {
+      background: #000;
+    }
+
+    .light-theme .btn-outline {
+      color: #1F2937;
+      border-color: #E5E7EB;
+      background: transparent;
+    }
+
+    .light-theme .btn-outline:hover {
+      background: #F3F4F6;
+      border-color: #D1D5DB;
+    }
+
+    /* Sections background overrides */
+    .light-theme .radiology,
+    .light-theme .protocol-section,
+    .light-theme .services {
+      background-color: #FFFFFF !important;
+      color: #1F2937 !important;
+    }
+
+    .light-theme .rad-card,
+    .light-theme .proto-box,
+    .light-theme .svc,
+    .light-theme #svcGrid .svc {
+      background-color: #F9FAFB !important;
+      border-color: #E5E7EB !important;
+    }
+
+    .light-theme .rad-card h3,
+    .light-theme .sec-title,
+    .light-theme .services .sec-title {
+      color: #111827 !important;
+    }
+
+    .light-theme .rad-card .rd,
+    .light-theme .services .sec-sub,
+    .light-theme .sec-sub {
+      color: #6B7280 !important;
+    }
+
+    .light-theme .tab {
+      color: #6B7280 !important;
+      border-color: #E5E7EB !important;
+    }
+
+    .light-theme .tab:hover {
+      color: #111827 !important;
+      border-color: #9CA3AF !important;
+    }
+
+    .light-theme .tab.active {
+      background: #1F2937 !important;
+      color: #FFF !important;
+      border-color: #1F2937 !important;
+    }
   </style>
 </head>
 
@@ -3583,6 +3700,8 @@
           Clinicians and Facilities</a><a href="#testimonials">Reviews</a>
       </div>
       <div class="nav-actions">
+        <button class="btn btn-ghost" id="themeBtn" onclick="toggleTheme()"
+          style="font-size:18px;padding:6px 12px;border-radius:12px">☀️</button>
         <a href="/emr/" class="btn btn-ghost" style="text-decoration:none">EMR Portal</a>
         <button class="btn btn-ghost" id="loginBtn" onclick="openModal('login')">Log In</button>
         <button class="btn btn-primary" id="signupBtn" onclick="openModal('register')">Get Started</button>
@@ -6385,6 +6504,28 @@
     window.adminConsults = [];
 
     renderSvc('popular'); updateNav();
+
+    // Theme Logic
+    window.toggleTheme = function () {
+      const isLight = document.body.classList.toggle('light-theme');
+      document.documentElement.classList.toggle('light-theme');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      updateThemeIcon(isLight);
+    };
+    function updateThemeIcon(isLight) {
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.innerHTML = isLight ? '🌙' : '☀️';
+    }
+    // Init Theme
+    (function () {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'light') {
+        document.body.classList.add('light-theme');
+        document.documentElement.classList.add('light-theme');
+        // Use setTimeout to ensure button exists if needed, though script is at bottom
+        setTimeout(() => updateThemeIcon(true), 0);
+      }
+    })();
   </script>
 </body>
 
