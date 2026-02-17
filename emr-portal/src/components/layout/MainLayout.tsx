@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
     Search, Calendar, Video, User, Bell, LayoutDashboard, FileText, Settings,
-    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu
+    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu, LogOut
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 
@@ -157,6 +157,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             />
                         </div>
 
+                        <a
+                            href="https://patriotictelehealth.com/"
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 hover:text-brand hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-indigo-400 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            <span className="hidden lg:inline">Exit to Patient Portal</span>
+                        </a>
+
                         <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
                         <ThemeToggle />
@@ -184,100 +192,102 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </main>
 
             {/* BOOKING MODAL OVERLAY */}
-            {isBookingModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
-                        <div className="bg-indigo-600 p-6 text-white flex justify-between items-start">
-                            <div>
-                                <h3 className="text-xl font-bold">New Telehealth Visit</h3>
-                                <p className="text-indigo-200 text-sm mt-1">Schedule a video call with a patient.</p>
+            {
+                isBookingModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                        <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
+                            <div className="bg-indigo-600 p-6 text-white flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-xl font-bold">New Telehealth Visit</h3>
+                                    <p className="text-indigo-200 text-sm mt-1">Schedule a video call with a patient.</p>
+                                </div>
+                                <button onClick={() => setIsBookingModalOpen(false)} className="text-white/70 hover:text-white p-1 hover:bg-white/10 rounded-full transition-colors">
+                                    <Plus className="w-6 h-6 rotate-45" />
+                                </button>
                             </div>
-                            <button onClick={() => setIsBookingModalOpen(false)} className="text-white/70 hover:text-white p-1 hover:bg-white/10 rounded-full transition-colors">
-                                <Plus className="w-6 h-6 rotate-45" />
-                            </button>
-                        </div>
 
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Patient</label>
-                                <select
-                                    value={patient}
-                                    onChange={(e) => setPatient(e.target.value)}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Patient</label>
+                                    <select
+                                        value={patient}
+                                        onChange={(e) => setPatient(e.target.value)}
+                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                                    >
+                                        <option value="John Doe">John Doe</option>
+                                        <option value="Sarah Connor">Sarah Connor</option>
+                                        <option value="Michael Brown">Michael Brown</option>
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">Date</label>
+                                        <input
+                                            type="date"
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">Time</label>
+                                        <input
+                                            type="time"
+                                            value={time}
+                                            onChange={(e) => setTime(e.target.value)}
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Visit Type</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setType('video')}
+                                            className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'video'
+                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            <Video className="w-4 h-4" /> Video Call
+                                        </button>
+                                        <button
+                                            onClick={() => setType('person')}
+                                            className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'person'
+                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            <User className="w-4 h-4" /> In-Person
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Notes</label>
+                                    <textarea className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
+                                </div>
+                            </div>
+
+                            <div className="p-6 pt-0 flex gap-3">
+                                <button onClick={() => setIsBookingModalOpen(false)} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors">
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSchedule}
+                                    className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all active:scale-95"
                                 >
-                                    <option value="John Doe">John Doe</option>
-                                    <option value="Sarah Connor">Sarah Connor</option>
-                                    <option value="Michael Brown">Michael Brown</option>
-                                </select>
+                                    Schedule Visit
+                                </button>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Date</label>
-                                    <input
-                                        type="date"
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Time</label>
-                                    <input
-                                        type="time"
-                                        value={time}
-                                        onChange={(e) => setTime(e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Visit Type</label>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setType('video')}
-                                        className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'video'
-                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
-                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        <Video className="w-4 h-4" /> Video Call
-                                    </button>
-                                    <button
-                                        onClick={() => setType('person')}
-                                        className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'person'
-                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
-                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        <User className="w-4 h-4" /> In-Person
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Notes</label>
-                                <textarea className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
-                            </div>
-                        </div>
-
-                        <div className="p-6 pt-0 flex gap-3">
-                            <button onClick={() => setIsBookingModalOpen(false)} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors">
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSchedule}
-                                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all active:scale-95"
-                            >
-                                Schedule Visit
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-        </div>
+        </div >
     );
 }
 
