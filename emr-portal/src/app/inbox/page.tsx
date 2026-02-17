@@ -80,6 +80,7 @@ export default function InboxPage() {
 
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
     const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
+    const [connectedInboxes, setConnectedInboxes] = useState<{ id: string, name: string, type: 'google' | 'microsoft' | string }[]>([]);
 
     // --- DERIVED STATE ---
     const filteredThreads = threads.filter(t => {
@@ -173,6 +174,12 @@ export default function InboxPage() {
             setConnectingProvider(null);
             setIsConnectModalOpen(false);
             // In a real app, this would add the inbox to the list
+            const newInbox = {
+                id: `inbox-${Date.now()}`,
+                name: `${provider} Inbox`,
+                type: provider.toLowerCase()
+            };
+            setConnectedInboxes([...connectedInboxes, newInbox]);
             alert(`Successfully connected ${provider} account!`);
         }, 1500);
     };
@@ -213,6 +220,21 @@ export default function InboxPage() {
                             <Plus className="w-3 h-3" /> New
                         </button>
                     </div>
+                    {/* Connected Inboxes List */}
+                    <div className="space-y-1 mt-1 pl-2">
+                        {connectedInboxes.map(inbox => (
+                            <div
+                                key={inbox.id}
+                                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                            >
+                                <div className={`w-2 h-2 rounded-full ${inbox.type === 'google' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                                <span>{inbox.name}</span>
+                            </div>
+                        ))}
+                        {connectedInboxes.length === 0 && (
+                            <div className="text-xs text-slate-400 italic px-3">No connected accounts</div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="px-4 mb-6">
@@ -227,7 +249,7 @@ export default function InboxPage() {
 
                 {/* Client Section */}
                 <div className="px-4 py-2 flex-1 overflow-y-auto">
-                    <CollapsibleSection icon={User} label="Client" defaultOpen>
+                    <CollapsibleSection icon={User} label="Patient" defaultOpen>
                         <div className="space-y-1 mt-1 pl-2">
                             <div
                                 onClick={() => handleClientClick('Wendy Smith')}
@@ -456,9 +478,9 @@ export default function InboxPage() {
                                 <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">To</label>
                                 <select className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium">
                                     <option>Select Recipient...</option>
-                                    <option>Wendy Smith (Client)</option>
-                                    <option>Michael Brown (Client)</option>
-                                    <option>Sarah Connor (Client)</option>
+                                    <option>Wendy Smith (Patient)</option>
+                                    <option>Michael Brown (Patient)</option>
+                                    <option>Sarah Connor (Patient)</option>
                                 </select>
                             </div>
                             <div>
