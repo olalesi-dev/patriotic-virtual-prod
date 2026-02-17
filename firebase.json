@@ -70,6 +70,18 @@
         "**/.*",
         "**/node_modules/**"
       ],
+      "redirects": [
+        {
+          "source": "/emr",
+          "destination": "/",
+          "type": 301
+        },
+        {
+          "source": "/emr/:path*",
+          "destination": "/:path*",
+          "type": 301
+        }
+      ],
       "rewrites": [
         {
           "source": "/api/v1/**",
