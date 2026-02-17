@@ -60,7 +60,7 @@
     },
     {
       "target": "emr",
-      "public": "emr-portal",
+      "public": "emr-portal/out",
       "ignore": [
         "firebase.json",
         "**/.*",

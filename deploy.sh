@@ -36,14 +36,14 @@ if ! firebase projects:list --limit 1 &> /dev/null; then
   exit 1
 fi
 
-# Deploy
-echo "🚀 Deploying to Firebase Hosting..."
+# Deploy to EMR target only
+echo "🚀 Deploying to Firebase Hosting (EMR Target)..."
 echo ""
-firebase deploy --only hosting --project patriotic-virtual-prod
+firebase deploy --only hosting:emr --project patriotic-virtual-prod
 
 echo ""
 echo "═══════════════════════════════════════════════════════"
 echo "  ✅  Deployed successfully!"
-echo "  🌐  https://patriotic-virtual-prod.web.app"
-echo "  🌐  https://patriotic-virtual-prod.firebaseapp.com"
+echo "  🌐  https://patriotic-virtual-emr.web.app"
+echo "  🌐  https://patriotic-virtual-emr.firebaseapp.com"
 echo "═══════════════════════════════════════════════════════"

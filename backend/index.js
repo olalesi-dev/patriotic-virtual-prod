@@ -736,7 +736,81 @@ app.get('/api/v1/doctor/appointments', async (req, res) => {
     }
 });
 
-// Local testing & Cloud Run
+// --- BILLING ROUTES ---
+
+// Get Invoices
+app.get('/api/v1/billing/invoices', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const snapshot = await db.collection('invoices').orderBy('createdAt', 'desc').get();
+        const invoices = [];
+        snapshot.forEach(doc => invoices.push({ id: doc.id, ...doc.data() }));
+        res.json(invoices);
+    } catch (error) {
+        console.error('Error fetching invoices:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create Invoice
+app.post('/api/v1/billing/invoices', async (req, res) => {
+    try {
+        const { client, amount, service, dueDate } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const newInvoice = {
+            client,
+            billTo: client,
+            services: service,
+            price: parseFloat(amount),
+            issueDate: new Date().toISOString().split('T')[0],
+            dueDate: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            team: 'OO', // Default
+            status: 'Unpaid',
+            isOverdue: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        const docRef = await db.collection('invoices').add(newInvoice);
+        res.json({ id: docRef.id, ...newInvoice });
+    } catch (error) {
+        console.error('Error creating invoice:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get Payments
+app.get('/api/v1/billing/payments', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const snapshot = await db.collection('payments').orderBy('date', 'desc').get();
+        const payments = [];
+        snapshot.forEach(doc => payments.push({ id: doc.id, ...doc.data() }));
+        res.json(payments);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get Claims
+app.get('/api/v1/billing/claims', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const snapshot = await db.collection('claims').orderBy('date', 'desc').get();
+        const claims = [];
+        snapshot.forEach(doc => claims.push({ id: doc.id, ...doc.data() }));
+        res.json(claims);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
