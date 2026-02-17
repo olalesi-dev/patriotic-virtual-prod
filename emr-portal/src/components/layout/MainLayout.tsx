@@ -85,7 +85,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <NavItem href="/" icon={LayoutDashboard} label="Dashboard" active={pathname === '/'} collapsed={isSidebarCollapsed} />
                     <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname === '/calendar'} collapsed={isSidebarCollapsed} />
                     <NavItem href="/inbox" icon={MessageSquare} label="Inbox" badge="3" active={pathname === '/inbox'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/clients" icon={User} label="Clients" active={pathname === '/clients'} collapsed={isSidebarCollapsed} />
+                    <NavItem href="/patients" icon={User} label="Patients" active={pathname === '/patients'} collapsed={isSidebarCollapsed} />
                     <NavItem href="/services" icon={Briefcase} label="Services" active={pathname === '/services'} collapsed={isSidebarCollapsed} />
                     <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
                     <NavItem href="/contacts" icon={Users} label="Contacts" active={pathname === '/contacts'} collapsed={isSidebarCollapsed} />
