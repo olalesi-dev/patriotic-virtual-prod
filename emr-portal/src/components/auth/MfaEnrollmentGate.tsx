@@ -37,7 +37,8 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
 
                 // MOCK PROFILE FOR DEMO (Simulating a Provider who hasn't enrolled)
                 // In real app, remove this mock and use fetch
-                const mockProfile = { role: 'Provider', mfa_enrolled_at: null };
+                const isEnrolled = localStorage.getItem('mfa_completed') === 'true';
+                const mockProfile = { role: 'Provider', mfa_enrolled_at: isEnrolled ? new Date().toISOString() : null };
                 setProfile(mockProfile);
                 console.log('MfaEnrollmentGate: Profile set');
 
@@ -81,7 +82,12 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
 
                     <button
                         className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-                        onClick={() => alert('Starting MFA Enrollment Flow (SMS/TOTP)...')}
+                        onClick={() => {
+                            if (window.confirm('Simulate MFA Enrollment (Demo)?')) {
+                                localStorage.setItem('mfa_completed', 'true');
+                                setProfile(prev => prev ? { ...prev, mfa_enrolled_at: new Date().toISOString() } : null);
+                            }
+                        }}
                     >
                         Enroll Now
                     </button>
