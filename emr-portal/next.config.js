@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    basePath: '/emr',
+    // basePath: '/emr',
     reactStrictMode: true,
     output: 'export',
     images: {
