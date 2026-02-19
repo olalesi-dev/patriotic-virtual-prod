@@ -16,22 +16,18 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install and Build EMR
+      - name: Install Dependencies
         run: |
-          cd emr-portal
           npm ci
-          npm run build
+          cd emr-portal && npm ci
 
-      # Integrate EMR into Public
-      - name: Copy EMR to Public
-        run: |
-          mkdir -p public/emr
-          cp -r emr-portal/out/* public/emr/
-
-      # Deploy
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      # Deploy to Firebase Hosting
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATRIOTIC_VIRTUAL_PROD }}'
           channelId: live
           projectId: patriotic-virtual-prod
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks

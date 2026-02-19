@@ -17,10 +17,6 @@
           }
         },
         {
-          "source": "/emr/**",
-          "destination": "/emr/index.html"
-        },
-        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -64,37 +60,15 @@
     },
     {
       "target": "emr",
-      "public": "emr-portal/out",
+      "source": "emr-portal",
       "ignore": [
         "firebase.json",
         "**/.*",
         "**/node_modules/**"
       ],
-      "redirects": [
-        {
-          "source": "/emr",
-          "destination": "/",
-          "type": 301
-        },
-        {
-          "source": "/emr/:path*",
-          "destination": "/:path*",
-          "type": 301
-        }
-      ],
-      "rewrites": [
-        {
-          "source": "/api/v1/**",
-          "run": {
-            "serviceId": "patriotic-virtual-backend",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ]
+      "frameworksBackend": {
+        "region": "us-central1"
+      }
     }
   ],
   "firestore": {
