@@ -5,6 +5,7 @@ import '@/lib/firebase'; // Initialize Firebase
 import { MfaEnrollmentGate } from '@/components/auth/MfaEnrollmentGate';
 import { Inter } from 'next/font/google';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { SecurityShell } from '@/components/auth/SecurityShell';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,9 +19,11 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${inter.className} bg-slate-50 text-navy antialiased min-h-screen`}>
                 <MfaEnrollmentGate>
-                    <MainLayout>
-                        {children}
-                    </MainLayout>
+                    <SecurityShell>
+                        <MainLayout>
+                            {children}
+                        </MainLayout>
+                    </SecurityShell>
                 </MfaEnrollmentGate>
             </body>
         </html>
