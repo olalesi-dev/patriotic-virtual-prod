@@ -188,10 +188,10 @@ const SERVICES = [
 ];
 
 const TABS = [
-    { id: 'all', label: 'All Services', icon: <Grid className="w-4 h-4" /> },
     { id: 'medical', label: 'Medical Board', icon: <HeartPulse className="w-4 h-4" /> },
     { id: 'imaging', label: 'Imaging & AI', icon: <Scan className="w-4 h-4" /> },
     { id: 'plans', label: 'Memberships', icon: <CreditCard className="w-4 h-4" /> },
+    { id: 'all', label: 'All Services', icon: <Grid className="w-4 h-4" /> },
 ];
 
 export default function ServicesPage() {
