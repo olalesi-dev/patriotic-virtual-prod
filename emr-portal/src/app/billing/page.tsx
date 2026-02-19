@@ -11,7 +11,7 @@ import {
 interface Invoice {
     id: string;
     issueDate: string;
-    client: string;
+    patient: string;
     billTo: string;
     services: string;
     price: number;
@@ -23,7 +23,7 @@ interface Invoice {
 interface Payment {
     id: string;
     date: string;
-    client: string;
+    patient: string;
     amount: number;
     method: 'Credit Card' | 'Bank Transfer' | 'Cash';
     status: 'Completed' | 'Refunded';
@@ -32,7 +32,7 @@ interface Payment {
 interface Claim {
     id: string;
     date: string;
-    client: string;
+    patient: string;
     insurance: string;
     amount: number;
     status: 'Submitted' | 'Processing' | 'Paid' | 'Denied';
@@ -40,20 +40,20 @@ interface Claim {
 
 // --- Mock Data ---
 const INITIAL_INVOICES: Invoice[] = [
-    { id: '000003', issueDate: '2025-12-23', client: 'John Doe', billTo: 'John Doe', services: 'Level 5 new patient office visit', price: 100.00, dueDate: '2025-12-31', team: 'OO', status: 'Unpaid' },
-    { id: '000002', issueDate: '2025-12-23', client: 'Sarah Doe', billTo: 'Sarah Doe', services: 'Level 4 new patient office visit', price: 150.00, dueDate: '2025-12-31', team: 'OO', status: 'Overdue' },
-    { id: '000001', issueDate: '2025-12-20', client: 'Bobby Doe', billTo: 'Bobby Doe', services: 'Psychiatric service', price: 200.00, dueDate: '2025-12-28', team: 'JD', status: 'Paid' },
-    { id: '000004', issueDate: '2025-12-24', client: 'Emily White', billTo: 'Emily White', services: 'Therapy Session', price: 120.00, dueDate: '2026-01-07', team: 'JD', status: 'Draft' },
+    { id: '000003', issueDate: '2025-12-23', patient: 'John Doe', billTo: 'John Doe', services: 'Level 5 new patient office visit', price: 100.00, dueDate: '2025-12-31', team: 'OO', status: 'Unpaid' },
+    { id: '000002', issueDate: '2025-12-23', patient: 'Sarah Doe', billTo: 'Sarah Doe', services: 'Level 4 new patient office visit', price: 150.00, dueDate: '2025-12-31', team: 'OO', status: 'Overdue' },
+    { id: '000001', issueDate: '2025-12-20', patient: 'Bobby Doe', billTo: 'Bobby Doe', services: 'Psychiatric service', price: 200.00, dueDate: '2025-12-28', team: 'JD', status: 'Paid' },
+    { id: '000004', issueDate: '2025-12-24', patient: 'Emily White', billTo: 'Emily White', services: 'Therapy Session', price: 120.00, dueDate: '2026-01-07', team: 'JD', status: 'Draft' },
 ];
 
 const INITIAL_PAYMENTS: Payment[] = [
-    { id: 'PAY-001', date: '2025-12-20', client: 'Bobby Doe', amount: 200.00, method: 'Credit Card', status: 'Completed' },
-    { id: 'PAY-002', date: '2025-12-18', client: 'John Smith', amount: 50.00, method: 'Bank Transfer', status: 'Completed' },
+    { id: 'PAY-001', date: '2025-12-20', patient: 'Bobby Doe', amount: 200.00, method: 'Credit Card', status: 'Completed' },
+    { id: 'PAY-002', date: '2025-12-18', patient: 'John Smith', amount: 50.00, method: 'Bank Transfer', status: 'Completed' },
 ];
 
 const INITIAL_CLAIMS: Claim[] = [
-    { id: 'CLM-001', date: '2025-12-22', client: 'John Doe', insurance: 'Blue Cross', amount: 100.00, status: 'Submitted' },
-    { id: 'CLM-002', date: '2025-12-15', client: 'Sarah Doe', insurance: 'Aetna', amount: 150.00, status: 'Denied' },
+    { id: 'CLM-001', date: '2025-12-22', patient: 'John Doe', insurance: 'Blue Cross', amount: 100.00, status: 'Submitted' },
+    { id: 'CLM-002', date: '2025-12-15', patient: 'Sarah Doe', insurance: 'Aetna', amount: 150.00, status: 'Denied' },
 ];
 
 export default function BillingPage() {
@@ -135,13 +135,13 @@ export default function BillingPage() {
 
         if (activeTab === 'Invoices') {
             return invoices.filter(inv =>
-                ((inv.client && inv.client.toLowerCase().includes(lowerSearch)) || (inv.id && inv.id.includes(lowerSearch))) &&
+                ((inv.patient && inv.patient.toLowerCase().includes(lowerSearch)) || (inv.id && inv.id.includes(lowerSearch))) &&
                 (statusFilter.length === 0 || statusFilter.includes(inv.status))
             );
         } else if (activeTab === 'Payments') {
-            return payments.filter(p => p.client && p.client.toLowerCase().includes(lowerSearch));
+            return payments.filter(p => p.patient && p.patient.toLowerCase().includes(lowerSearch));
         } else {
-            return claims.filter(c => c.client && c.client.toLowerCase().includes(lowerSearch));
+            return claims.filter(c => c.patient && c.patient.toLowerCase().includes(lowerSearch));
         }
     }, [activeTab, invoices, payments, claims, searchQuery, statusFilter]);
 
@@ -160,8 +160,8 @@ export default function BillingPage() {
             id: tempId,
             issueDate: new Date().toISOString().split('T')[0],
             dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            client: data.client,
-            billTo: data.client, // Simplified
+            patient: data.patient,
+            billTo: data.patient, // Simplified
             services: data.service,
             price: parseFloat(data.amount),
             team: 'Me',
@@ -185,7 +185,7 @@ export default function BillingPage() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    client: data.client,
+                    patient: data.patient,
                     amount: data.amount,
                     service: data.service,
                     dueDate: newInvoice.dueDate
@@ -328,7 +328,7 @@ export default function BillingPage() {
                                 <tr>
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">ID</th>
-                                    <th className="px-6 py-4">Client</th>
+                                    <th className="px-6 py-4">Patient</th>
                                     {activeTab === 'Invoices' && <th className="px-6 py-4">Status</th>}
                                     {activeTab === 'Invoices' && <th className="px-6 py-4">Services</th>}
                                     {activeTab !== 'Invoices' && <th className="px-6 py-4">Details</th>}
@@ -343,7 +343,7 @@ export default function BillingPage() {
                                             {item.issueDate || item.date}
                                         </td>
                                         <td className="px-6 py-4 font-bold text-brand hover:underline cursor-pointer">{item.id}</td>
-                                        <td className="px-6 py-4 text-slate-700">{item.client}</td>
+                                        <td className="px-6 py-4 text-slate-700">{item.patient}</td>
 
                                         {activeTab === 'Invoices' && (
                                             <td className="px-6 py-4">
@@ -475,13 +475,13 @@ function FloatingButton({ icon: Icon, onClick }: any) {
 }
 
 function NewInvoiceModal({ onClose, onSave }: any) {
-    const [client, setClient] = useState('');
+    const [patient, setPatient] = useState('');
     const [amount, setAmount] = useState('');
     const [service, setService] = useState('');
 
     const handleSubmit = () => {
-        if (!client || !amount) return;
-        onSave({ client, amount, service });
+        if (!patient || !amount) return;
+        onSave({ patient, amount, service });
     };
 
     return (
@@ -493,8 +493,8 @@ function NewInvoiceModal({ onClose, onSave }: any) {
                 </div>
                 <div className="p-6 space-y-4">
                     <div className="space-y-1.5">
-                        <label className="text-sm font-bold text-slate-500">Client</label>
-                        <input type="text" value={client} onChange={e => setClient(e.target.value)} placeholder="Client Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand" />
+                        <label className="text-sm font-bold text-slate-500">Patient</label>
+                        <input type="text" value={patient} onChange={e => setPatient(e.target.value)} placeholder="Patient Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand" />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-sm font-bold text-slate-500">Amount ($)</label>

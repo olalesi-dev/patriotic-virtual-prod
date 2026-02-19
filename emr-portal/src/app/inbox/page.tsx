@@ -10,7 +10,7 @@ import {
 type Message = {
     id: string;
     sender: string;
-    senderType: 'client' | 'provider' | 'system';
+    senderType: 'patient' | 'provider' | 'system';
     content: string;
     timestamp: Date;
     read: boolean;
@@ -37,7 +37,7 @@ const INITIAL_THREADS: Thread[] = [
         status: 'open',
         lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
         messages: [
-            { id: 'm1', sender: 'Wendy Smith', senderType: 'client', content: 'Hi Dr. Dayo, I received my results. Can we discuss them?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), read: true },
+            { id: 'm1', sender: 'Wendy Smith', senderType: 'patient', content: 'Hi Dr. Dayo, I received my results. Can we discuss them?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), read: true },
             { id: 'm2', sender: 'Dr. Dayo', senderType: 'provider', content: 'Certainly Wendy. Everything looks stable, but I have a few notes.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), read: true }
         ]
     },
@@ -49,7 +49,7 @@ const INITIAL_THREADS: Thread[] = [
         status: 'open',
         lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 5),
         messages: [
-            { id: 'm3', sender: 'Michael Brown', senderType: 'client', content: 'I am running low on my medication. Can I get a refill?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), read: false }
+            { id: 'm3', sender: 'Michael Brown', senderType: 'patient', content: 'I am running low on my medication. Can I get a refill?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), read: false }
         ]
     },
     {
@@ -155,9 +155,9 @@ export default function InboxPage() {
         setReplyText('');
     };
 
-    // Auto-select 'open' client thread when clicking sidebar
-    const handleClientClick = (clientName: string) => {
-        const thread = threads.find(t => t.participants.includes(clientName));
+    // Auto-select 'open' patient thread when clicking sidebar
+    const handlePatientClick = (patientName: string) => {
+        const thread = threads.find(t => t.participants.includes(patientName));
         if (thread) {
             setSelectedThreadId(thread.id);
             setActiveFolder('all'); // Ensure it's visible
@@ -247,12 +247,12 @@ export default function InboxPage() {
                     </button>
                 </div>
 
-                {/* Client Section */}
+                {/* Patient Section */}
                 <div className="px-4 py-2 flex-1 overflow-y-auto">
                     <CollapsibleSection icon={User} label="Patient" defaultOpen>
                         <div className="space-y-1 mt-1 pl-2">
                             <div
-                                onClick={() => handleClientClick('Wendy Smith')}
+                                onClick={() => handlePatientClick('Wendy Smith')}
                                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors"
                             >
                                 <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">W</div>
@@ -304,7 +304,7 @@ export default function InboxPage() {
                             </div>
                             <div className="relative z-10 text-center">
                                 <h3 className="text-2xl font-bold text-brand mb-2">Secure messaging</h3>
-                                <p className="text-slate-600 font-medium mb-6">Establish a secure line of communication with your team and clients</p>
+                                <p className="text-slate-600 font-medium mb-6">Establish a secure line of communication with your team and patients</p>
                                 <button
                                     onClick={() => setIsComposeOpen(true)}
                                     className="bg-brand hover:bg-brand-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center gap-2 mx-auto"
