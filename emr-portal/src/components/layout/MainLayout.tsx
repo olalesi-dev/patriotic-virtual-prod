@@ -9,6 +9,7 @@ import {
     Pill, Microscope, Scan, Bot, BarChart, TrendingUp, ShieldCheck, ClipboardList, Activity
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { GlobalSearch } from './GlobalSearch';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -165,14 +166,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Search */}
-                        <div className="relative hidden md:block group">
-                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 group-focus-within:text-brand transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search everything..."
-                                className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all hover:bg-white dark:hover:bg-slate-600 dark:text-slate-200"
-                            />
+                        <div className="hidden md:block">
+                            <GlobalSearch />
                         </div>
 
                         <a
