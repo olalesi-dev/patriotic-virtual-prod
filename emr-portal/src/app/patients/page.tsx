@@ -1,70 +1,33 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
     Search, Plus, Filter, Save, Eye, MoreHorizontal, ChevronDown,
     Calendar, X, Users, Tag, ChevronRight, Settings, DollarSign, Activity, BookOpen,
     CreditCard, FileText, Zap, Layout
 } from 'lucide-react';
-
-const PATIENTS = [
-    {
-        id: 1,
-        name: 'Bobby Doe',
-        isDemo: true,
-        phone: '+1 (800) 555-0100',
-        email: 'bobby@example.com',
-        tags: [
-            { label: 'Referral', color: 'bg-amber-100 text-amber-800' },
-            { label: 'Telehealth', color: 'bg-emerald-100 text-emerald-800' },
-            { label: 'Intake', color: 'bg-cyan-100 text-cyan-800' },
-            { label: 'Couple', color: 'bg-pink-100 text-pink-800' }
-        ],
-        status: 'Active',
-        statusColor: 'bg-emerald-100 text-emerald-700',
-        team: ['OO'],
-        notes: []
-    },
-    {
-        id: 2,
-        name: 'John Doe',
-        isDemo: true,
-        phone: '+1 (800) 555-0100',
-        email: 'john@example.com',
-        tags: [
-            { label: 'Discount', color: 'bg-orange-100 text-orange-800' },
-            { label: 'Assessment', color: 'bg-amber-100 text-amber-800' },
-            { label: 'Group', color: 'bg-blue-100 text-blue-800' }
-        ],
-        status: 'Wait List',
-        statusColor: 'bg-orange-100 text-orange-700',
-        team: ['OO', 'DO', 'img'],
-        notes: []
-    },
-    {
-        id: 3,
-        name: 'Sarah Doe',
-        isDemo: true,
-        phone: '+1 (800) 555-0100',
-        email: 'sarah@example.com',
-        tags: [
-            { label: 'Elevated Risk', color: 'bg-red-100 text-red-800' },
-            { label: 'Insurance', color: 'bg-purple-100 text-purple-800' }
-        ],
-        status: 'Lead',
-        statusColor: 'bg-purple-100 text-purple-700',
-        team: ['img'],
-        notes: []
-    }
-];
+import { PATIENTS as INITIAL_PATIENTS } from '@/lib/data';
 
 export default function PatientsPage() {
-    const [patients, setPatients] = useState<any[]>(PATIENTS);
-    const [filteredPatients, setFilteredPatients] = useState<any[]>(PATIENTS);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const patientIdParam = searchParams.get('id');
+
+    const [patients, setPatients] = useState<any[]>(INITIAL_PATIENTS);
+    const [filteredPatients, setFilteredPatients] = useState<any[]>(INITIAL_PATIENTS);
     const [filters, setFilters] = useState({ tags: [] as string[], team: [] as string[], status: [] as string[] });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [selectedPatientIds, setSelectedPatientIds] = useState<number[]>([]);
     const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
+
+    // Auto-select patient from URL
+    React.useEffect(() => {
+        if (patientIdParam) {
+            const p = patients.find(p => p.id === parseInt(patientIdParam));
+            if (p) setSelectedPatient(p);
+        }
+    }, [patientIdParam, patients]);
 
     // Filter Logic
     React.useEffect(() => {

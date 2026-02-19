@@ -61,7 +61,16 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
             }
         });
 
-        return () => unsubscribe();
+        // Safety timeout to prevent infinite loading state
+        const timer = setTimeout(() => {
+            console.log('MfaEnrollmentGate: Safety timeout reached');
+            setLoading(false);
+        }, 3000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(timer);
+        };
     }, []);
 
     if (loading) return <div className="flex h-screen items-center justify-center">Loading Security Context...</div>;
