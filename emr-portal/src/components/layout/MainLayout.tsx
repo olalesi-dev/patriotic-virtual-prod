@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
     Search, Calendar, Video, User, Bell, LayoutDashboard, FileText, Settings,
-    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu, LogOut
+    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu, LogOut,
+    Pill, Microscope, Scan, Bot, BarChart, TrendingUp, ShieldCheck, ClipboardList, Activity
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 
@@ -20,7 +21,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [time, setTime] = useState('10:00');
     const [type, setType] = useState('video');
 
-    const router = useRouter(); // Need to import useRouter from next/navigation
+    const router = useRouter();
 
     const handleSchedule = () => {
         const newAppointment = {
@@ -32,17 +33,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             status: 'Scheduled'
         };
 
-        // Save to Local Storage (Simple persistence)
         const existing = JSON.parse(localStorage.getItem('emr_appointments') || '[]');
         localStorage.setItem('emr_appointments', JSON.stringify([...existing, newAppointment]));
 
-        // Close and Notify
         setIsBookingModalOpen(false);
-        // Force navigate to calendar to see changes (triggering a refresh essentially if handling state well, or just let calendar mount read it)
         if (pathname !== '/calendar') {
             router.push('/calendar');
         } else {
-            window.location.reload(); // Simple way to refresh calendar view
+            window.location.reload();
         }
     };
 
@@ -62,43 +60,63 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <span className="font-bold text-lg tracking-tight ml-3 whitespace-nowrap overflow-hidden transition-opacity duration-300">Patriotic EMR</span>
                     )}
 
-                    {/* Collapse Toggle */}
                     <button
                         onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                         className={`absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:text-brand hover:border-brand transition-colors z-50 ${isSidebarCollapsed ? 'rotate-180 translate-x-8' : ''}`}
                     >
                         <ChevronLeft className="w-3 h-3" />
                     </button>
-
-                    {/* Fallback button internally if the floating one is weird */}
-                    {isSidebarCollapsed && (
-                        <button
-                            onClick={() => setIsSidebarCollapsed(false)}
-                            className="absolute inset-0 z-40 bg-transparent w-full h-full cursor-pointer"
-                            title="Expand Sidebar"
-                        />
-                    )}
                 </div>
 
                 {/* Navigation */}
-                <nav className={`flex-1 py-6 ${isSidebarCollapsed ? 'px-2' : 'px-3'} space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide`}>
-                    <NavItem href="/" icon={LayoutDashboard} label="Dashboard" active={pathname === '/'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname === '/calendar'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/inbox" icon={MessageSquare} label="Inbox" badge="3" active={pathname === '/inbox'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/patients" icon={User} label="Patients" active={pathname === '/patients'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/services" icon={Briefcase} label="Services" active={pathname === '/services'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/contacts" icon={Users} label="Contacts" active={pathname === '/contacts'} collapsed={isSidebarCollapsed} />
+                <nav className={`flex-1 py-6 ${isSidebarCollapsed ? 'px-2' : 'px-3'} space-y-4 overflow-y-auto overflow-x-hidden scrollbar-hide`}>
 
-                    <div className={`pt-4 pb-2 ${isSidebarCollapsed ? 'px-0 text-center' : 'px-3'}`}>
-                        {isSidebarCollapsed ? (
-                            <div className="w-full h-px bg-slate-700/50 my-2"></div>
-                        ) : (
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tools</span>
-                        )}
+                    {/* CLINICAL */}
+                    <div className="space-y-1">
+                        <NavSection label="Clinical" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/" icon={LayoutDashboard} label="Dashboard" active={pathname === '/'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname === '/calendar'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/patient-search" icon={Search} label="Patient Search" active={pathname === '/patient-search'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname === '/inbox'} collapsed={isSidebarCollapsed} />
                     </div>
-                    <NavItem href="/templates" icon={FileText} label="Templates" active={pathname === '/templates'} collapsed={isSidebarCollapsed} />
-                    <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
+
+                    {/* ORDERS & Rx */}
+                    <div className="space-y-1">
+                        <NavSection label="Orders & Rx" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/orders/erx" icon={Pill} label="eRx / Prescriptions" active={pathname === '/orders/erx'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/orders/labs" icon={Microscope} label="Lab Orders" active={pathname === '/orders/labs'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/orders/imaging" icon={Scan} label="Imaging Orders" active={pathname === '/orders/imaging'} collapsed={isSidebarCollapsed} />
+                    </div>
+
+                    {/* SERVICES */}
+                    <div className="space-y-1">
+                        <NavSection label="Services" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/services" icon={Briefcase} label="Services Catalog" active={pathname === '/services'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
+                    </div>
+
+                    {/* AI TOOLS */}
+                    <div className="space-y-1">
+                        <NavSection label="AI Tools" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/ai/queue" icon={Bot} label="AI Action Queue" active={pathname === '/ai/queue'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/protocols" icon={ClipboardList} label="Protocols" active={pathname === '/protocols'} collapsed={isSidebarCollapsed} />
+                    </div>
+
+                    {/* ANALYTICS */}
+                    <div className="space-y-1">
+                        <NavSection label="Analytics" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/analytics/clinical" icon={Activity} label="Clinical Dashboard" active={pathname === '/analytics/clinical'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/analytics/business" icon={BarChart} label="Business Dashboard" active={pathname === '/analytics/business'} collapsed={isSidebarCollapsed} />
+                    </div>
+
+                    {/* ADMIN */}
+                    <div className="space-y-1">
+                        <NavSection label="Admin" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
+                    </div>
+
                 </nav>
 
                 {/* Bottom Action */}
@@ -321,4 +339,17 @@ function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {
             )}
         </Link>
     )
+}
+
+function NavSection({ label, collapsed }: { label: string, collapsed: boolean }) {
+    if (collapsed) {
+        return <div className="h-px bg-slate-700/50 my-2 mx-2"></div>;
+    }
+    return (
+        <div className="px-3 pt-4 pb-1">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                {label}
+            </span>
+        </div>
+    );
 }
