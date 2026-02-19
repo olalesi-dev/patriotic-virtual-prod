@@ -1,0 +1,26 @@
+(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[543],{3945:function(e,t,s){Promise.resolve().then(s.bind(s,96))},7461:function(e,t,s){"use strict";s.d(t,{Z:function(){return l}});var r=s(4090),a={xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"};/**
+ * @license lucide-react v0.344.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */let n=e=>e.replace(/([a-z0-9])([A-Z])/g,"$1-$2").toLowerCase().trim(),l=(e,t)=>{let s=(0,r.forwardRef)((s,l)=>{let{color:i="currentColor",size:c=24,strokeWidth:o=2,absoluteStrokeWidth:d,className:u="",children:h,...x}=s;return(0,r.createElement)("svg",{ref:l,...a,width:c,height:c,stroke:i,strokeWidth:d?24*Number(o)/Number(c):o,className:["lucide","lucide-".concat(n(e)),u].join(" "),...x},[...t.map(e=>{let[t,s]=e;return(0,r.createElement)(t,s)}),...Array.isArray(h)?h:[h]])});return s.displayName="".concat(e),s}},5561:function(e,t,s){"use strict";s.d(t,{Z:function(){return r}});/**
+ * @license lucide-react v0.344.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */let r=(0,s(7461).Z)("Image",[["rect",{width:"18",height:"18",x:"3",y:"3",rx:"2",ry:"2",key:"1m3agn"}],["circle",{cx:"9",cy:"9",r:"2",key:"af1f0g"}],["path",{d:"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21",key:"1xmnt7"}]])},3013:function(e,t,s){"use strict";s.d(t,{Z:function(){return r}});/**
+ * @license lucide-react v0.344.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */let r=(0,s(7461).Z)("Monitor",[["rect",{width:"20",height:"14",x:"2",y:"3",rx:"2",key:"48i651"}],["line",{x1:"8",x2:"16",y1:"21",y2:"21",key:"1svkeh"}],["line",{x1:"12",x2:"12",y1:"17",y2:"21",key:"vw1qmm"}]])},94:function(e,t,s){"use strict";s.d(t,{Z:function(){return r}});/**
+ * @license lucide-react v0.344.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */let r=(0,s(7461).Z)("Plus",[["path",{d:"M5 12h14",key:"1ays0h"}],["path",{d:"M12 5v14",key:"s699le"}]])},4799:function(e,t,s){"use strict";s.d(t,{Z:function(){return r}});/**
+ * @license lucide-react v0.344.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */let r=(0,s(7461).Z)("Scan",[["path",{d:"M3 7V5a2 2 0 0 1 2-2h2",key:"aa7l1z"}],["path",{d:"M17 3h2a2 2 0 0 1 2 2v2",key:"4qcy5o"}],["path",{d:"M21 17v2a2 2 0 0 1-2 2h-2",key:"6vwrx8"}],["path",{d:"M7 21H5a2 2 0 0 1-2-2v-2",key:"ioqczr"}]])},96:function(e,t,s){"use strict";s.r(t),s.d(t,{default:function(){return c}});var r=s(3827);s(4090);var a=s(4799),n=s(94),l=s(3013),i=s(5561);function c(){return(0,r.jsxs)("div",{className:"flex flex-col gap-6",children:[(0,r.jsxs)("div",{className:"flex justify-between items-center",children:[(0,r.jsxs)("div",{className:"flex items-center gap-3",children:[(0,r.jsx)("div",{className:"bg-blue-100 p-2 rounded-lg text-blue-600",children:(0,r.jsx)(a.Z,{className:"w-6 h-6"})}),(0,r.jsx)("h1",{className:"text-2xl font-bold text-slate-800",children:"Imaging Orders"})]}),(0,r.jsxs)("button",{className:"bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm flex items-center gap-2 transition-colors",children:[(0,r.jsx)(n.Z,{className:"w-5 h-5"})," Request Scan"]})]}),(0,r.jsxs)("div",{className:"bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden",children:[(0,r.jsxs)("div",{className:"p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2",children:[(0,r.jsx)(l.Z,{className:"w-5 h-5 text-slate-400"}),(0,r.jsx)("h2",{className:"font-bold text-slate-800 uppercase text-xs tracking-wider",children:"PACS Integration / Orosun"})]}),(0,r.jsxs)("div",{className:"p-20 text-center",children:[(0,r.jsx)("div",{className:"w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-200",children:(0,r.jsx)(i.Z,{className:"w-10 h-10"})}),(0,r.jsx)("h3",{className:"text-xl font-bold text-slate-800 mb-2",children:"Radiology & Imaging"}),(0,r.jsx)("p",{className:"text-slate-500 max-w-md mx-auto",children:"Access high-resolution scans and AI-assisted radiology reports via PACS integration."})]}),(0,r.jsx)("div",{className:"p-6 bg-slate-50 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4",children:["X-Ray","MRI","CT Scan"].map(e=>(0,r.jsxs)("div",{className:"bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group",children:[(0,r.jsx)("div",{className:"text-xs font-black text-slate-400 uppercase mb-1",children:e}),(0,r.jsx)("div",{className:"font-bold text-slate-700 group-hover:text-blue-600 transition-colors",children:"View Samples"})]},e))})]})]})}}},function(e){e.O(0,[971,69,744],function(){return e(e.s=3945)}),_N_E=e.O()}]);
