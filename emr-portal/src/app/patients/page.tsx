@@ -7,7 +7,7 @@ import {
     CreditCard, FileText, Zap, Layout
 } from 'lucide-react';
 
-const CLIENTS = [
+const PATIENTS = [
     {
         id: 1,
         name: 'Bobby Doe',
@@ -59,23 +59,23 @@ const CLIENTS = [
 ];
 
 export default function PatientsPage() {
-    const [clients, setClients] = useState<any[]>(CLIENTS);
-    const [filteredClients, setFilteredClients] = useState<any[]>(CLIENTS);
+    const [patients, setPatients] = useState<any[]>(PATIENTS);
+    const [filteredPatients, setFilteredPatients] = useState<any[]>(PATIENTS);
     const [filters, setFilters] = useState({ tags: [] as string[], team: [] as string[], status: [] as string[] });
-    const [selectedClient, setSelectedClient] = useState<any>(null);
-    const [selectedClientIds, setSelectedClientIds] = useState<number[]>([]);
-    const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const [selectedPatientIds, setSelectedPatientIds] = useState<number[]>([]);
+    const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
 
     // Filter Logic
     React.useEffect(() => {
-        const results = clients.filter(client => {
-            if (filters.tags.length > 0 && !client.tags?.some((t: any) => filters.tags.includes(t.label))) return false;
-            if (filters.team.length > 0 && !client.team?.some((t: string) => filters.team.includes(t))) return false;
-            if (filters.status.length > 0 && !filters.status.includes(client.status)) return false;
+        const results = patients.filter(patient => {
+            if (filters.tags.length > 0 && !patient.tags?.some((t: any) => filters.tags.includes(t.label))) return false;
+            if (filters.team.length > 0 && !patient.team?.some((t: string) => filters.team.includes(t))) return false;
+            if (filters.status.length > 0 && !filters.status.includes(patient.status)) return false;
             return true;
         });
-        setFilteredClients(results);
-    }, [clients, filters]);
+        setFilteredPatients(results);
+    }, [patients, filters]);
 
     const toggleFilter = (type: 'tags' | 'team' | 'status', value: string) => {
         setFilters(prev => {
@@ -87,9 +87,9 @@ export default function PatientsPage() {
         });
     };
 
-    const handleCreateClient = (data: any) => {
-        const newClient = {
-            id: Math.max(...clients.map(c => c.id), 0) + 1,
+    const handleCreatePatient = (data: any) => {
+        const newPatient = {
+            id: Math.max(...patients.map(c => c.id), 0) + 1,
             name: `${data.firstName} ${data.lastName}`,
             phone: data.phone,
             email: data.email,
@@ -100,13 +100,13 @@ export default function PatientsPage() {
             tags: [],
             notes: []
         };
-        setClients([newClient, ...clients]);
-        setIsNewClientOpen(false);
+        setPatients([newPatient, ...patients]);
+        setIsNewPatientOpen(false);
     };
 
-    const updateClientStatus = (clientId: number, newStatus: string) => {
-        setClients(clients.map(c => {
-            if (c.id === clientId) {
+    const updatePatientStatus = (patientId: number, newStatus: string) => {
+        setPatients(patients.map(c => {
+            if (c.id === patientId) {
                 let newColor = 'bg-slate-100 text-slate-700';
                 if (newStatus === 'Active') newColor = 'bg-emerald-100 text-emerald-700';
                 if (newStatus === 'Lead') newColor = 'bg-purple-100 text-purple-700';
@@ -119,29 +119,29 @@ export default function PatientsPage() {
     };
 
     const toggleSelect = (id: number) => {
-        if (selectedClientIds.includes(id)) {
-            setSelectedClientIds(selectedClientIds.filter(cid => cid !== id));
+        if (selectedPatientIds.includes(id)) {
+            setSelectedPatientIds(selectedPatientIds.filter(cid => cid !== id));
         } else {
-            setSelectedClientIds([...selectedClientIds, id]);
+            setSelectedPatientIds([...selectedPatientIds, id]);
         }
     };
 
-    const updateClientNotes = (clientId: number, newNote: any) => {
-        setClients(prevClients => prevClients.map(c => {
-            if (c.id === clientId) {
+    const updatePatientNotes = (patientId: number, newNote: any) => {
+        setPatients(prevPatients => prevPatients.map(c => {
+            if (c.id === patientId) {
                 return { ...c, notes: [newNote, ...(c.notes || [])] };
             }
             return c;
         }));
 
-        if (selectedClient && selectedClient.id === clientId) {
-            setSelectedClient((prev: any) => ({ ...prev, notes: [newNote, ...(prev.notes || [])] }));
+        if (selectedPatient && selectedPatient.id === patientId) {
+            setSelectedPatient((prev: any) => ({ ...prev, notes: [newNote, ...(prev.notes || [])] }));
         }
     };
 
-    // If a client is selected, show the detail view
-    if (selectedClient) {
-        return <ClientDetailView client={selectedClient} onBack={() => setSelectedClient(null)} onAddNote={(note: any) => updateClientNotes(selectedClient.id, note)} />;
+    // If a patient is selected, show the detail view
+    if (selectedPatient) {
+        return <PatientDetailView patient={selectedPatient} onBack={() => setSelectedPatient(null)} onAddNote={(note: any) => updatePatientNotes(selectedPatient.id, note)} />;
     }
 
     // Otherwise show the list view
@@ -157,7 +157,7 @@ export default function PatientsPage() {
                     <h1 className="text-2xl font-bold text-slate-800">Patients</h1>
                 </div>
                 <button
-                    onClick={() => setIsNewClientOpen(true)}
+                    onClick={() => setIsNewPatientOpen(true)}
                     className="bg-brand hover:bg-brand-600 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm flex items-center gap-2 transition-colors"
                 >
                     <Plus className="w-5 h-5" /> New patient
@@ -166,7 +166,7 @@ export default function PatientsPage() {
 
             {/* FILTER BAR */}
             <div className="px-8 py-4 flex items-center flex-wrap gap-4 border-b border-slate-100">
-                <span className="font-bold text-slate-900 whitespace-nowrap">{filteredClients.length} Patients</span>
+                <span className="font-bold text-slate-900 whitespace-nowrap">{filteredPatients.length} Patients</span>
 
                 {/* Search */}
                 <div className="relative flex-1 min-w-[300px] max-w-xl">
@@ -182,13 +182,13 @@ export default function PatientsPage() {
                 <div className="flex items-center gap-2">
                     <FilterDropdown
                         label="Tags" icon={Tag}
-                        options={Array.from(new Set(clients.flatMap(c => c.tags?.map((t: any) => t.label) || [])))}
+                        options={Array.from(new Set(patients.flatMap(c => c.tags?.map((t: any) => t.label) || [])))}
                         selected={filters.tags}
                         onChange={(val: string) => toggleFilter('tags', val)}
                     />
                     <FilterDropdown
                         label="Team" icon={Users}
-                        options={Array.from(new Set(clients.flatMap(c => c.team || [])))}
+                        options={Array.from(new Set(patients.flatMap(c => c.team || [])))}
                         selected={filters.team}
                         onChange={(val: string) => toggleFilter('team', val)}
                     />
@@ -247,36 +247,36 @@ export default function PatientsPage() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white">
-                        {filteredClients.map((client) => (
-                            <tr key={client.id} className="hover:bg-slate-50 transition-colors group">
+                        {filteredPatients.map((patient) => (
+                            <tr key={patient.id} className="hover:bg-slate-50 transition-colors group">
                                 <td className="px-6 py-4 text-center">
                                     <input
                                         type="checkbox"
-                                        checked={selectedClientIds.includes(client.id)}
-                                        onChange={() => toggleSelect(client.id)}
+                                        checked={selectedPatientIds.includes(patient.id)}
+                                        onChange={() => toggleSelect(patient.id)}
                                         className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
                                     />
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
                                         <button
-                                            onClick={() => setSelectedClient(client)}
+                                            onClick={() => setSelectedPatient(patient)}
                                             className="font-bold text-brand hover:underline"
                                         >
-                                            {client.name}
+                                            {patient.name}
                                         </button>
-                                        {client.isDemo && (
+                                        {patient.isDemo && (
                                             <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] uppercase font-bold rounded border border-slate-200">
                                                 Demo
                                             </span>
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 font-medium text-slate-700">{client.phone}</td>
-                                <td className="px-6 py-4 text-slate-600">{client.email}</td>
+                                <td className="px-6 py-4 font-medium text-slate-700">{patient.phone}</td>
+                                <td className="px-6 py-4 text-slate-600">{patient.email}</td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-wrap gap-2">
-                                        {client.tags?.map((tag: any) => (
+                                        {patient.tags?.map((tag: any) => (
                                             <span key={tag.label} className={`px-2 py-0.5 text-xs font-bold rounded-full border border-black/5 ${tag.color}`}>
                                                 {tag.label}
                                             </span>
@@ -285,16 +285,16 @@ export default function PatientsPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <StatusCell
-                                        status={client.status}
-                                        color={client.statusColor}
-                                        onUpdate={(newStatus: string) => updateClientStatus(client.id, newStatus)}
+                                        status={patient.status}
+                                        color={patient.statusColor}
+                                        onUpdate={(newStatus: string) => updatePatientStatus(patient.id, newStatus)}
                                     />
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex -space-x-2">
-                                        {client.team?.map((member: any, i: number) => (
+                                        {patient.team?.map((member: any, i: number) => (
                                             member === 'img' ? (
-                                                <img key={i} src={`https://i.pravatar.cc/150?u=${client.id}`} alt="User" className="w-7 h-7 rounded-full border-2 border-white" />
+                                                <img key={i} src={`https://i.pravatar.cc/150?u=${patient.id}`} alt="User" className="w-7 h-7 rounded-full border-2 border-white" />
                                             ) : (
                                                 <div key={i} className="w-7 h-7 rounded-full bg-cyan-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-cyan-700">
                                                     {member}
@@ -316,14 +316,14 @@ export default function PatientsPage() {
                 </div>
             </div>
 
-            {/* NEW CLIENT MODAL */}
-            {isNewClientOpen && <NewClientModal onClose={() => setIsNewClientOpen(false)} onSave={handleCreateClient} />}
+            {/* NEW PATIENT MODAL */}
+            {isNewPatientOpen && <NewPatientModal onClose={() => setIsNewPatientOpen(false)} onSave={handleCreatePatient} />}
         </div>
     );
 }
 
-// --- CLIENT DETAIL COMPONENT ---
-function ClientDetailView({ client, onBack, onAddNote }: any) {
+// --- PATIENT DETAIL COMPONENT ---
+function PatientDetailView({ patient, onBack, onAddNote }: any) {
     const [activeTab, setActiveTab] = useState('Overview');
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
 
@@ -338,11 +338,11 @@ function ClientDetailView({ client, onBack, onAddNote }: any) {
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm border border-slate-300">
-                            {client.name.split(' ').map((n: string) => n[0]).join('')}
+                            {patient.name.split(' ').map((n: string) => n[0]).join('')}
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900">{client.name}</h1>
+                        <h1 className="text-2xl font-bold text-slate-900">{patient.name}</h1>
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 flex items-center gap-1">
-                            {client.status} <ChevronDown className="w-3 h-3" />
+                            {patient.status} <ChevronDown className="w-3 h-3" />
                         </span>
                     </div>
 
@@ -383,8 +383,8 @@ function ClientDetailView({ client, onBack, onAddNote }: any) {
             <div className="flex-1 overflow-y-auto p-8">
 
                 {activeTab === 'Overview' && <OverviewTab />}
-                {activeTab === 'Personal' && <PersonalTab client={client} />}
-                {activeTab === 'Documentation' && <DocumentationTab notes={client.notes} />}
+                {activeTab === 'Personal' && <PersonalTab patient={patient} />}
+                {activeTab === 'Documentation' && <DocumentationTab notes={patient.notes} />}
                 {activeTab === 'Billing' && <BillingTab />}
 
             </div>
@@ -526,7 +526,7 @@ function OverviewTab() {
     )
 }
 
-function PersonalTab({ client }: any) {
+function PersonalTab({ patient }: any) {
     return (
         <div className="max-w-7xl mx-auto space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -549,7 +549,7 @@ function PersonalTab({ client }: any) {
                     <div className="grid grid-cols-3 gap-6">
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">First name</label>
-                            <div className="text-sm font-medium text-slate-900">{client.name.split(' ')[0]}</div>
+                            <div className="text-sm font-medium text-slate-900">{patient.name.split(' ')[0]}</div>
                         </div>
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">Middle name</label>
@@ -557,7 +557,7 @@ function PersonalTab({ client }: any) {
                         </div>
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">Last name</label>
-                            <div className="text-sm font-medium text-slate-900">{client.name.split(' ')[1]}</div>
+                            <div className="text-sm font-medium text-slate-900">{patient.name.split(' ')[1]}</div>
                         </div>
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">Preferred name</label>
@@ -583,7 +583,7 @@ function PersonalTab({ client }: any) {
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">Phone number</label>
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-medium text-slate-900">{client.phone}</span>
+                                <span className="text-sm font-medium text-slate-900">{patient.phone}</span>
                                 <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded">Default</span>
                                 <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded">Mobile</span>
                             </div>
@@ -593,7 +593,7 @@ function PersonalTab({ client }: any) {
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">Email</label>
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-medium text-slate-900">{client.email}</span>
+                                <span className="text-sm font-medium text-slate-900">{patient.email}</span>
                                 <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded">Default</span>
                                 <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded">Personal</span>
                             </div>
@@ -607,7 +607,7 @@ function PersonalTab({ client }: any) {
                     </div>
                 </div>
 
-                {/* ABOUT CLIENT CARD */}
+                {/* ABOUT PATIENT CARD */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div className="flex justify-between items-center mb-6">
                         <div className="flex items-center gap-2 font-bold text-slate-800">
@@ -685,13 +685,13 @@ function PersonalTab({ client }: any) {
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">Status</label>
                             <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                <div className="w-3 h-3 bg-green-600 rounded-sm"></div> {client.status}
+                                <div className="w-3 h-3 bg-green-600 rounded-sm"></div> {patient.status}
                             </div>
                         </div>
                         <div>
                             <label className="text-xs text-slate-500 block mb-1">Tags</label>
                             <div className="flex flex-wrap gap-2">
-                                {client.tags?.map((tag: any) => (
+                                {patient.tags?.map((tag: any) => (
                                     <span key={tag.label} className={`px-2 py-0.5 text-xs font-bold rounded-full border border-black/5 ${tag.color}`}>
                                         {tag.label}
                                     </span>
@@ -846,7 +846,7 @@ function BillingTab() {
                         <span>Payment methods</span>
                     </div>
                     <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                        Add and manage your client's payment methods to streamline their invoicing and billing process.
+                        Add and manage your patient's payment methods to streamline their invoicing and billing process.
                     </p>
                     <button className="text-brand text-xs font-bold hover:underline flex items-center gap-1">
                         <Plus className="w-3 h-3" /> New payment method
@@ -987,7 +987,7 @@ function FloatingButton({ icon: Icon, label }: any) {
     )
 }
 
-function NewClientModal({ onClose, onSave }: { onClose: () => void, onSave: (data: any) => void }) {
+function NewPatientModal({ onClose, onSave }: { onClose: () => void, onSave: (data: any) => void }) {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [status, setStatus] = useState('Active');
@@ -1007,7 +1007,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void, onSave: (dat
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                     <div className="flex items-center gap-2 text-slate-800 font-bold text-lg">
                         <Users className="w-5 h-5 text-slate-500" />
-                        <span>New client</span>
+                        <span>New patient</span>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100">
                         <X className="w-5 h-5" />
@@ -1127,7 +1127,7 @@ function DocumentationTab({ notes }: { notes: any[] }) {
 
                 {(!notes || notes.length === 0) ? (
                     <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-100 border-dashed">
-                        <p className="text-slate-500 text-sm">No notes found for this client.</p>
+                        <p className="text-slate-500 text-sm">No notes found for this patient.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -1199,7 +1199,7 @@ function SoapNoteModal({ onClose, onSave }: any) {
 
                     <div className="space-y-1.5">
                         <label className="text-sm font-bold text-slate-500">Subjective</label>
-                        <textarea rows={3} value={s} onChange={e => setS(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand" placeholder="Client's description of symptoms/condition..." />
+                        <textarea rows={3} value={s} onChange={e => setS(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand" placeholder="Patient's description of symptoms/condition..." />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-sm font-bold text-slate-500">Objective</label>

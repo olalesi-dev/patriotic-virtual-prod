@@ -8,7 +8,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 
-// Client component wrapper for metadata separation if needed, but for now simple layout
+// Patient component wrapper for metadata separation if needed, but for now simple layout
 export default function RootLayout({
     children,
 }: {
