@@ -152,7 +152,7 @@ export function PatientChart({ patient, onBack, onAddNote }: PatientChartProps) 
 
             {/* Build Version Indicator */}
             <div className="fixed bottom-4 right-4 text-[8px] font-black text-slate-300 pointer-events-none uppercase tracking-widest z-50">
-                v2.0.4-DYNAMIC-SECURE
+                v2.1.0-DYNAMIC-SSR
             </div>
         </div>
     );
