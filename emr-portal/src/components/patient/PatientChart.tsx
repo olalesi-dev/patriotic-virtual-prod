@@ -149,6 +149,11 @@ export function PatientChart({ patient, onBack, onAddNote }: PatientChartProps) 
                     onSave={handleSaveNote}
                 />
             )}
+
+            {/* Build Version Indicator */}
+            <div className="fixed bottom-4 right-4 text-[8px] font-black text-slate-300 pointer-events-none uppercase tracking-widest z-50">
+                v2.0.4-DYNAMIC-SECURE
+            </div>
         </div>
     );
 }
