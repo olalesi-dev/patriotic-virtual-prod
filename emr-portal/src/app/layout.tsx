@@ -17,7 +17,9 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     // Purge old service workers from the static version
+    // Force new build hash: v2.1.0-DYNAMIC-FIX
     useEffect(() => {
+        // Clear old caches aggressively
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((registrations) => {
                 for (const registration of registrations) {
