@@ -24,6 +24,12 @@ const nextConfig = {
                     }
                 ],
             },
+            {
+                source: '/reset-cache',
+                headers: [
+                    { key: 'Clear-Site-Data', value: '"cache", "cookies", "storage", "executionContexts"' },
+                ],
+            },
         ];
     },
 };
