@@ -10,7 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build EMR Portal
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -21,13 +20,22 @@ jobs:
           npm ci
           cd emr-portal && npm ci
 
-      # Deploy to Firebase Hosting
-      - name: Deploy to Firebase
+      - name: Deploy to Firebase EMR
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATRIOTIC_VIRTUAL_PROD }}'
           channelId: live
           projectId: patriotic-virtual-prod
+          target: emr
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
+
+      - name: Deploy to Firebase Landing
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATRIOTIC_VIRTUAL_PROD }}'
+          channelId: live
+          projectId: patriotic-virtual-prod
+          target: landing
