@@ -2024,8 +2024,21 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
 export function DocumentsTab({ patient }: { patient: any }) {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
-    const documents = patient.documents || [];
-    const categories = ['All', 'Consent Forms', 'Lab Results', 'Imaging Reports', 'Clinical Notes', 'Prior Auth', 'Patient-Uploaded', 'Other'];
+    const [selectedIntake, setSelectedIntake] = useState<any>(null); // For the modal
+
+    const staticDocs = patient.documents || [];
+    const consultDocs = (patient.rawConsultations || []).map((c: any) => ({
+        id: c.id,
+        name: `${c.symptom || 'General'} Intake Form`,
+        category: 'Intake Forms',
+        type: 'Patient Submission',
+        date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Unknown',
+        size: 'System Record',
+        rawData: c
+    }));
+
+    const documents = [...consultDocs, ...staticDocs];
+    const categories = ['All', 'Intake Forms', 'Consent Forms', 'Lab Results', 'Imaging Reports', 'Clinical Notes', 'Prior Auth', 'Patient-Uploaded', 'Other'];
 
     const filteredDocs = documents.filter((doc: any) => {
         const matchesCategory = selectedCategory === 'All' || doc.category === selectedCategory;
@@ -2036,6 +2049,7 @@ export function DocumentsTab({ patient }: { patient: any }) {
 
     const getIcon = (category: string) => {
         switch (category) {
+            case 'Intake Forms': return ClipboardCheck;
             case 'Consent Forms': return ShieldCheck;
             case 'Lab Results': return FlaskConical;
             case 'Imaging Reports': return Microscope;
@@ -2127,7 +2141,13 @@ export function DocumentsTab({ patient }: { patient: any }) {
                                                     <Download className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => alert(`Previewing ${doc.name}...`)}
+                                                    onClick={() => {
+                                                        if (doc.category === 'Intake Forms') {
+                                                            setSelectedIntake(doc.rawData);
+                                                        } else {
+                                                            alert(`Previewing ${doc.name}...`);
+                                                        }
+                                                    }}
                                                     className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg hover:text-brand transition-all"
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -2161,6 +2181,54 @@ export function DocumentsTab({ patient }: { patient: any }) {
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {selectedIntake && (
+                <IntakeModal
+                    intakeData={selectedIntake}
+                    patientName={patient.name}
+                    onClose={() => setSelectedIntake(null)}
+                />
+            )}
+        </div>
+    );
+}
+
+function IntakeModal({ intakeData, patientName, onClose }: { intakeData: any, patientName: string, onClose: () => void }) {
+    if (!intakeData) return null;
+    return (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]">
+                <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex flex-col items-center justify-center">
+                            <ClipboardCheck className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">Patient Intake Form</h2>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{patientName} • {intakeData.symptom || 'General Consultation'}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-all border border-transparent hover:border-slate-200">
+                        <X className="w-5 h-5 text-slate-400" />
+                    </button>
+                </div>
+
+                <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                    {intakeData.answers ? (
+                        Object.entries(intakeData.answers).map(([key, value], i) => (
+                            <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                                <p className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-2">Question {i + 1}</p>
+                                <p className="text-sm font-bold text-slate-800 mb-4">{key}</p>
+                                <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-sm text-slate-700 font-medium whitespace-pre-wrap">
+                                    {String(value)}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-12 text-slate-400 font-medium">No answers recorded.</div>
+                    )}
                 </div>
             </div>
         </div>

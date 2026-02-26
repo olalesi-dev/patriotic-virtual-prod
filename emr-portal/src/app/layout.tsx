@@ -6,7 +6,16 @@ import { MfaEnrollmentGate } from '@/components/auth/MfaEnrollmentGate';
 import { Inter } from 'next/font/google';
 import { SecurityShell } from '@/components/auth/SecurityShell';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { initializeTrustedTypes } from '@/lib/trusted-types';
 import { useEffect } from 'react';
+
+// Initialize Trusted Types immediately
+if (typeof window !== 'undefined') {
+    console.log('🚀 RootLayout module evaluated. Initializing Trusted Types...');
+    initializeTrustedTypes();
+}
+
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,9 +48,8 @@ export default function RootLayout({
             <body className={`${inter.className} bg-slate-50 text-navy antialiased min-h-screen`}>
                 <MfaEnrollmentGate>
                     <SecurityShell>
-                        <MainLayout>
-                            {children}
-                        </MainLayout>
+                        <Toaster position="top-right" />
+                        {children}
                     </SecurityShell>
                 </MfaEnrollmentGate>
             </body>

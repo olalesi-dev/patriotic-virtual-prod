@@ -9,10 +9,12 @@ if (Test-Path $EnvFile) {
     
     # Read .env file, ignore comments and empty lines
     $content = Get-Content $EnvFile | Where-Object { $_ -notmatch '^\s*#' -and $_ -notmatch '^\s*$' }
+    
+    # Ensure variables are joined with commas and wrapped in quotes to prevent shell parsing issues
     $vars = $content -join ","
     
     if ($vars) {
-        $EnvArgs = "--set-env-vars=$vars"
+        $EnvArgs = "--set-env-vars=`"$vars`""
     }
 } else {
     Write-Host "⚠️  backend/.env not found, proceeding without setting new env vars..." -ForegroundColor Yellow
