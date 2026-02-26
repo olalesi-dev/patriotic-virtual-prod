@@ -34,7 +34,29 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "https://*.firebaseapp.com", "https://*.googleapis.com"],
+            frameSrc: ["'self'", "https://*.stripe.com"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    }
+}));
+
+// SECURITY: Prevent caching of all sensitive API responses
+app.use('/api/v1', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
 
 // Webhook handling needs raw body, others need JSON
 app.use('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }));
@@ -154,6 +176,38 @@ app.get('/api/v1/admin/consultations', async (req, res) => {
         res.json({ consultations: enrichedConsultations });
     } catch (error) {
         console.error('Error fetching admin consultations:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/v1/admin/users/create', async (req, res) => {
+    try {
+        const { email, password, firstName, lastName, role } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const idToken = authHeader.split('Bearer ')[1];
+        await admin.auth().verifyIdToken(idToken);
+
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName: `${firstName} ${lastName}`.trim(),
+        });
+
+        await db.collection('patients').doc(userRecord.uid).set({
+            uid: userRecord.uid,
+            firstName,
+            lastName,
+            email,
+            role: role || 'patient',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true, uid: userRecord.uid });
+    } catch (error) {
+        console.error('Error creating user:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -512,9 +566,11 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
             return res.json({ sessionId: 'mock_session_' + Date.now(), url: mockUrl });
         }
 
-        // Lookup item in catalog
         const item = CATALOG[serviceKey];
         if (!item) return res.status(400).json({ error: `Invalid service key: ${serviceKey}` });
+
+        // DETERMINE BASE URL (Prioritize custom domain for production)
+        const baseUrl = process.env.FRONTEND_URL || 'https://patriotictelehealth.com';
 
         const sessionConfig = {
             payment_method_types: ['card'],
@@ -530,8 +586,8 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: item.interval ? 'subscription' : 'payment',
-            success_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-prod.web.app'}?payment=success&session_id={CHECKOUT_SESSION_ID}&consultationId=${consultationId}`,
-            cancel_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-prod.web.app'}?payment=cancelled`,
+            success_url: `${baseUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}&consultationId=${consultationId}`,
+            cancel_url: `${baseUrl}?payment=cancelled`,
             metadata: {
                 serviceKey,
                 consultationId
@@ -551,6 +607,61 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
     }
 });
 
+app.post('/api/v1/billing/create-balance-checkout', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        // Fetch user profile for email
+        const user = await admin.auth().getUser(uid);
+
+        // Fetch current balance
+        const summarySnap = await db.collection('patients').doc(uid).collection('billing').doc('summary').get();
+        if (!summarySnap.exists) return res.status(404).json({ error: "Billing summary not found" });
+        const summary = summarySnap.data();
+        const balanceCents = Math.round(summary.balance * 100);
+
+        if (balanceCents <= 0) return res.status(400).json({ error: "No outstanding balance" });
+
+        // MOCK PAYMENT FLOW (If Stripe Key is missing)
+        if (!stripe) {
+            const mockUrl = `${process.env.FRONTEND_URL || 'https://patriotic-virtual-portal.web.app'}/patient/billing?payment=success&mock=true`;
+            return res.json({ sessionId: 'mock_bal_' + Date.now(), url: mockUrl });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            customer_email: user.email,
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'Outstanding Healthcare Balance',
+                        description: `Payment for patient: ${user.displayName || user.email}`
+                    },
+                    unit_amount: balanceCents,
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-portal.web.app'}/patient/billing?payment=success`,
+            cancel_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-portal.web.app'}/patient/billing?payment=cancelled`,
+            metadata: {
+                paymentType: 'balance_payment',
+                uid: uid
+            }
+        });
+
+        res.json({ sessionId: session.id, url: session.url });
+    } catch (error) {
+        console.error('Create balance checkout error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 3. Stripe Webhook
 app.post('/api/v1/webhooks/stripe', async (req, res) => {
     if (!stripe) return res.status(503).json({ error: "Payment service unavailable" });
@@ -566,13 +677,38 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
     // Handle the event
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
-        const { consultationId } = session.metadata;
+        const { consultationId, paymentType, uid } = session.metadata;
         if (consultationId) {
             await db.collection('consultations').doc(consultationId).update({
                 paymentStatus: 'paid',
                 stripeSessionId: session.id,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
+        }
+
+        if (paymentType === 'balance_payment' && uid) {
+            const batch = db.batch();
+
+            // 1. Reset Balance
+            const summaryRef = db.collection('patients').doc(uid).collection('billing').doc('summary');
+            batch.update(summaryRef, {
+                balance: 0,
+                status: 'current',
+                lastPaymentDate: admin.firestore.FieldValue.serverTimestamp(),
+                lastPaymentId: session.id
+            });
+
+            // 2. Mark unpaid statements as paid
+            const statementsSnap = await summaryRef.collection('statements').where('status', '==', 'unpaid').get();
+            statementsSnap.forEach(doc => {
+                batch.update(doc.ref, {
+                    status: 'paid',
+                    paidAt: admin.firestore.FieldValue.serverTimestamp(),
+                    stripePaymentId: session.id
+                });
+            });
+
+            await batch.commit();
         }
     }
 
@@ -628,17 +764,137 @@ app.post('/api/v1/radiology/upload', upload.single('dicom'), async (req, res) =>
     }
 });
 
+// --- DOCTOR & AVAILABILITY ---
+
+app.get('/api/v1/doctors', async (req, res) => {
+    try {
+        const snap = await db.collection('patients').where('role', 'in', ['doctor', 'provider', 'Doctor', 'Provider']).get();
+        const doctors = [];
+        snap.forEach(doc => {
+            const data = doc.data();
+            const role = (data.role || '').toLowerCase();
+            const prefix = (role === 'doctor') ? 'Dr. ' : '';
+            doctors.push({
+                id: doc.id,
+                name: `${prefix}${data.firstName || 'Unknown'} ${data.lastName || ''}`.trim(),
+                specialty: data.specialty || 'Healthcare Provider',
+                photoUrl: data.photoUrl || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200&h=200'
+            });
+        });
+        res.json(doctors);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/v1/doctor/availability', async (req, res) => {
+    try {
+        const { doctorId } = req.query;
+        if (!doctorId) return res.status(400).send('Missing doctorId');
+
+        const snap = await db.collection('availability')
+            .where('doctorId', '==', doctorId)
+            .get();
+
+        const blocks = [];
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.startTime && data.startTime.toDate && data.endTime && data.endTime.toDate) {
+                blocks.push({
+                    id: doc.id,
+                    ...data,
+                    startTime: data.startTime.toDate().toISOString(),
+                    endTime: data.endTime.toDate().toISOString()
+                });
+            } else {
+                console.warn(`Invalid block entry in doc ${doc.id}`);
+            }
+        });
+
+        res.json(blocks);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/v1/doctor/availability/toggle', async (req, res) => {
+    try {
+        const { startTime } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const token = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const doctorId = decodedToken.uid;
+
+        const start = new Date(startTime);
+        const end = new Date(start.getTime() + 30 * 60000); // 30 min default
+
+        // Check if exists
+        const snap = await db.collection('availability')
+            .where('doctorId', '==', doctorId)
+            .where('startTime', '==', admin.firestore.Timestamp.fromDate(start))
+            .get();
+
+        if (!snap.empty) {
+            const batch = db.batch();
+            snap.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            return res.json({ message: 'Slot unblocked' });
+        }
+
+        const blockRef = db.collection('availability').doc();
+        await blockRef.set({
+            doctorId,
+            startTime: admin.firestore.Timestamp.fromDate(start),
+            endTime: admin.firestore.Timestamp.fromDate(end),
+            type: 'block',
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ message: 'Slot blocked' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/v1/doctor/availability/add-range', async (req, res) => {
+    try {
+        const { startDateTime, endDateTime } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const token = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const doctorId = decodedToken.uid;
+
+        if (!startDateTime || !endDateTime) return res.status(400).send('Missing range');
+
+        const blockRef = db.collection('availability').doc();
+        await blockRef.set({
+            doctorId,
+            startTime: admin.firestore.Timestamp.fromDate(new Date(startDateTime)),
+            endTime: admin.firestore.Timestamp.fromDate(new Date(endDateTime)),
+            type: 'block',
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ message: 'Availability range added' });
+    } catch (error) {
+        console.error('Error adding range:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 3. APPOINTMENTS (New)
 app.post('/api/v1/appointments/book', async (req, res) => {
     try {
-        const { consultationId, startTime } = req.body;
+        const { consultationId, startTime, doctorId } = req.body;
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
         const token = authHeader.split('Bearer ')[1];
         const decodedToken = await admin.auth().verifyIdToken(token);
         const uid = decodedToken.uid;
 
-        if (!consultationId || !startTime) {
+        if (!consultationId || !startTime || !doctorId) {
             console.error('Booking failed: Missing fields', req.body);
             return res.status(400).send('Missing fields');
         }
@@ -657,21 +913,86 @@ app.post('/api/v1/appointments/book', async (req, res) => {
             return res.status(409).send('Slot taken');
         }
 
+        // --- Fetch Patient Information ---
+        let patientName = 'Unknown Patient';
+        try {
+            const patientDoc = await db.collection('patients').doc(uid).get();
+            if (patientDoc.exists) {
+                const pData = patientDoc.data();
+                patientName = pData.name || (pData.firstName && pData.lastName ? `${pData.firstName} ${pData.lastName}` : 'Unknown Patient');
+            } else {
+                const userDoc = await db.collection('users').doc(uid).get();
+                if (userDoc.exists) {
+                    const uData = userDoc.data();
+                    patientName = uData.name || (uData.firstName && uData.lastName ? `${uData.firstName} ${uData.lastName}` : 'Unknown Patient');
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch patient name:', e);
+        }
+
+        // --- Fetch Provider Information ---
+        let providerName = 'Provider';
+        try {
+            const providerDoc = await db.collection('users').doc(doctorId).get();
+            if (providerDoc.exists) {
+                providerName = providerDoc.data().name || 'Provider';
+            }
+        } catch (e) {
+            console.error('Failed to fetch provider name:', e);
+        }
+
+        // --- Fetch Consultation String ---
+        let serviceName = 'Initial Consultation';
+        if (consultationId) {
+            try {
+                const consultDoc = await db.collection('consultations').doc(consultationId).get();
+                if (consultDoc.exists) {
+                    serviceName = consultDoc.data().symptom || 'Initial Consultation';
+                }
+            } catch (e) {
+                console.error('Failed to fetch consultation details:', e);
+            }
+        }
+
+        // Use explicitly passed localDate and localTime if available (to fix timezone bugs), fallback to UTC approximation
+        const dateString = req.body.localDate || requestedTime.toISOString().split('T')[0];
+        const timeString = req.body.localTime || requestedTime.toTimeString().split(' ')[0].substring(0, 5);
+
         const aptRef = db.collection('appointments').doc();
         await aptRef.set({
             id: aptRef.id,
             consultationId,
             patientId: uid,
-            providerId: 'test-provider-001', // Assigned to Dr. Test for now
-            startTime: admin.firestore.Timestamp.fromDate(new Date(startTime)),
+            patient: patientName,
+            patientName: patientName,
+            providerId: doctorId,
+            providerName: providerName,
+            doctor: providerName,
+            startTime: admin.firestore.Timestamp.fromDate(requestedTime),
+            date: dateString,
+            time: timeString,
+            type: 'video',
+            service: serviceName,
             durationMinutes: 30,
-            status: 'confirmed',
+            status: 'paid', // Assuming payment has been made in preceding screens
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
         res.json({ success: true, id: aptRef.id });
     } catch (error) {
         console.error('Booking error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/debug/appointments', async (req, res) => {
+    try {
+        const snap = await db.collection('appointments').orderBy('createdAt', 'desc').limit(10).get();
+        const appts = [];
+        snap.forEach(doc => appts.push({ id: doc.id, ...doc.data() }));
+        res.json(appts);
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
@@ -689,13 +1010,17 @@ app.get('/api/v1/doctor/appointments', async (req, res) => {
 
         snap.forEach(doc => {
             const data = doc.data();
-            appointments.push({
-                id: doc.id,
-                ...data,
-                startTime: data.startTime.toDate().toISOString()
-            });
-            if (data.patientId) uids.add(data.patientId);
-            if (data.consultationId) consultIds.add(data.consultationId);
+            if (data.startTime && data.startTime.toDate) {
+                appointments.push({
+                    id: doc.id,
+                    ...data,
+                    startTime: data.startTime.toDate().toISOString()
+                });
+                if (data.patientId) uids.add(data.patientId);
+                if (data.consultationId) consultIds.add(data.consultationId);
+            } else {
+                console.warn(`Corrupt appointment doc missing startTime: ${doc.id}`);
+            }
         });
 
         // Fetch Patient Details
@@ -722,11 +1047,35 @@ app.get('/api/v1/doctor/appointments', async (req, res) => {
             const c = consultMap[apt.consultationId] || {};
             return {
                 ...apt,
-                patientName: `${p.firstName || 'Unknown'} ${p.lastName || ''}`.trim(),
+                patientName: apt.patientName || `${p.firstName || 'Unknown'} ${p.lastName || ''}`.trim(),
                 patientEmail: p.email || '',
-                serviceName: c.serviceKey ? c.serviceKey.replace(/_/g, ' ') : 'General Visit',
+                serviceName: apt.service || (c.serviceKey ? c.serviceKey.replace(/_/g, ' ') : 'General Visit'),
                 consultationStatus: c.status || 'pending'
             };
+        });
+
+        // Fetch Blocks (Availability)
+        // Optimization: In real app, filter blockSnap by current provider
+        const blockSnap = await db.collection('availability').get();
+        blockSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.startTime && data.startTime.toDate) {
+                const start = data.startTime.toDate();
+                const end = data.endTime ? data.endTime.toDate() : new Date(start.getTime() + 30 * 60000);
+                enriched.push({
+                    id: doc.id,
+                    title: 'BLOCKED',
+                    status: 'blocked',
+                    isBlock: true,
+                    startTime: start.toISOString(),
+                    endTime: end.toISOString(),
+                    start: start.toISOString(), // FullCalendar compat
+                    end: end.toISOString(),
+                    backgroundColor: '#cbd5e1',
+                    borderColor: '#94a3b8',
+                    display: 'background'
+                });
+            }
         });
 
         res.json(enriched);
@@ -811,6 +1160,158 @@ app.get('/api/v1/billing/claims', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// Update Insurance (Verifies and moves to reviews)
+app.post('/api/v1/insurance/update', async (req, res) => {
+    try {
+        const { carrier, memberId, groupNumber } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const idToken = authHeader.split('Bearer ')[1];
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const uid = decoded.uid;
+
+        await db.collection('insurance_reviews').add({
+            patientId: uid,
+            carrier,
+            memberId,
+            groupNumber,
+            status: 'pending_verification',
+            submittedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true, message: 'Insurance update submitted for review' });
+    } catch (error) {
+        console.error('Insurance update error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- ADMIN USER MANAGEMENT ---
+app.get('/api/v1/admin/users', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        // A real system would verify if the user has admin claims here
+
+        const listUsersResult = await admin.auth().listUsers(100);
+        const users = await Promise.all(listUsersResult.users.map(async (userRecord) => {
+            let userData = null;
+            try {
+                const userDoc = await db.collection('patients').doc(userRecord.uid).get();
+                if (userDoc.exists) userData = userDoc.data();
+            } catch (e) {
+                console.error("Error fetching patient doc:", e);
+            }
+
+            return {
+                uid: userRecord.uid,
+                email: userRecord.email,
+                displayName: userRecord.displayName || (userData ? userData.name : 'Unknown'),
+                role: (userData && userData.role) ? userData.role : 'patient',
+                disabled: userRecord.disabled,
+                lastSignInTime: userRecord.metadata.lastSignInTime,
+                creationTime: userRecord.metadata.creationTime,
+            };
+        }));
+        res.json({ success: true, users });
+    } catch (error) {
+        console.error('Error listing users:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/v1/admin/users', async (req, res) => {
+    try {
+        const { email, password, displayName, role } = req.body;
+        if (!email || !password || !role) return res.status(400).json({ success: false, error: 'Missing required fields' });
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const userRecord = await admin.auth().createUser({ email, password, displayName });
+
+        await db.collection('patients').doc(userRecord.uid).set({
+            uid: userRecord.uid,
+            email,
+            name: displayName,
+            firstName: displayName ? displayName.split(' ')[0] : '',
+            lastName: displayName ? displayName.split(' ').slice(1).join(' ') : '',
+            role: role,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        });
+
+        await admin.auth().setCustomUserClaims(userRecord.uid, { role });
+
+        res.json({
+            success: true,
+            user: { uid: userRecord.uid, email: userRecord.email, displayName: userRecord.displayName, role }
+        });
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.patch('/api/v1/admin/users/:uid', async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const { role, disabled, displayName } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        const updates = {};
+        if (displayName !== undefined) updates.displayName = displayName;
+        if (disabled !== undefined) updates.disabled = disabled;
+
+        if (Object.keys(updates).length > 0) {
+            await admin.auth().updateUser(uid, updates);
+        }
+
+        const firestoreUpdates = {};
+        if (role !== undefined) {
+            firestoreUpdates.role = role;
+            await admin.auth().setCustomUserClaims(uid, { role });
+        }
+        if (displayName !== undefined) {
+            firestoreUpdates.name = displayName;
+            firestoreUpdates.firstName = displayName ? displayName.split(' ')[0] : '';
+            firestoreUpdates.lastName = displayName ? displayName.split(' ').slice(1).join(' ') : '';
+        }
+        if (disabled !== undefined) {
+            firestoreUpdates.status = disabled ? 'disabled' : 'active';
+        }
+
+        if (Object.keys(firestoreUpdates).length > 0) {
+            await db.collection('patients').doc(uid).set(firestoreUpdates, { merge: true });
+            await db.collection('users').doc(uid).set(firestoreUpdates, { merge: true });
+        }
+
+        res.json({ success: true, message: 'User updated successfully' });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.delete('/api/v1/admin/users/:uid', async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+
+        await admin.auth().deleteUser(uid);
+        await db.collection('patients').doc(uid).delete();
+        await db.collection('users').doc(uid).delete();
+
+        res.json({ success: true, message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);

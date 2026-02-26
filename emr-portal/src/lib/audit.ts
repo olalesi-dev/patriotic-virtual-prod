@@ -1,56 +1,31 @@
-import { db, auth } from './firebase';
+import { db } from './firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-export type AuditAction =
-    | 'VIEW_PATIENT_PHI'
-    | 'EDIT_PATIENT_PHI'
-    | 'SIGN_ENCOUNTER'
-    | 'LOGIN_SUCCESS'
-    | 'LOGIN_FAILURE'
-    | 'REFILL_APPROVED'
-    | 'ORDER_PLACED'
-    | 'DOC_DOWNLOAD'
-    | 'CONSENT_RECORDED';
-
-interface AuditLog {
+export interface AuditLogEntry {
     userId: string;
-    userName: string;
-    action: AuditAction;
-    resourceId?: string; // e.g., patientId or encounterId
-    details: string;
-    ipAddress: string;
-    userAgent: string;
-    timestamp: any;
+    userEmail?: string;
+    action: string;
+    resourceId?: string;
+    resourceType?: string;
+    details?: any;
+    timestamp?: any;
 }
 
 /**
- * Log a HIPAA-compliant audit event to Firestore.
- * This collection should have Firestore Rules that prevent deletion or modification.
+ * Log a security or data access event to Firestore Audit Logs.
+ * Designed for HIPAA compliance to track all PHI access and key system events.
  */
-export async function logHIPAAEvent(
-    action: AuditAction,
-    details: string,
-    resourceId?: string
-) {
+export async function logAuditEvent(entry: AuditLogEntry) {
     try {
-        const user = auth.currentUser;
-        const auditLogsRef = collection(db, 'audit_logs');
-
-        const logEntry: AuditLog = {
-            userId: user?.uid || 'SYSTEM',
-            userName: user?.email || 'Anonymous/System',
-            action,
-            resourceId,
-            details,
-            ipAddress: '0.0.0.0', // In a real app, capture via API call or header
-            userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
-            timestamp: serverTimestamp()
-        };
-
-        await addDoc(auditLogsRef, logEntry);
-        console.log(`[HIPAA Audit] ${action}: ${details}`);
+        const auditRef = collection(db, 'audit_logs');
+        await addDoc(auditRef, {
+            ...entry,
+            timestamp: serverTimestamp(),
+            userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'server',
+        });
     } catch (error) {
-        console.error('Failed to log HIPAA event:', error);
-        // In production, consider a fallback logging mechanism if Firestore is down
+        console.error('Failed to log audit event:', error);
+        // We don't throw here to avoid breaking the main UI flow if logging fails
+        // but in a strict HIPAA environment, you might want to block the action.
     }
 }

@@ -5674,6 +5674,7 @@
         const consData = await consRes.json();
         const consultationId = consData.id;
         sessionStorage.setItem('pendingConsultationId', consultationId);
+        localStorage.setItem('pendingConsultationId', consultationId); // Fallback for cross-origin redirects
         currentConsultId = consultationId;
 
         // 2. Create Payment Session
@@ -5843,18 +5844,30 @@
     let doctorsData = [];
 
     async function openBookingModal(consultId) {
+      console.log('openBookingModal triggered with ID:', consultId);
       if (!consultId) consultId = currentConsultId;
+      console.log('ID after currentConsultId check:', consultId);
+
       if (!consultId) {
         const params = new URLSearchParams(window.location.search);
         consultId = params.get('consultationId');
+        console.log('ID from URL params:', consultId);
       }
-      if (!consultId) consultId = sessionStorage.getItem('pendingConsultationId');
+      if (!consultId) {
+        consultId = sessionStorage.getItem('pendingConsultationId');
+        console.log('ID from sessionStorage:', consultId);
+      }
+      if (!consultId) {
+        consultId = localStorage.getItem('pendingConsultationId');
+        console.log('ID from localStorage:', consultId);
+      }
 
       if (!consultId) {
-        console.error('No consultation ID available for booking.');
+        console.error('CRITICAL: No consultation ID available for booking modal.');
         return toast('Error: Unable to find consultation details.');
       }
 
+      console.log('Opening booking modal for consultation:', consultId);
       document.getElementById('bookingModal').classList.add('active');
       document.getElementById('bookingConsultId').value = consultId;
 
@@ -7394,17 +7407,42 @@
 
     function checkPaymentStatus() {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('payment') === 'success') {
+      const paymentStatus = params.get('payment');
+      console.log('Checking payment status. Result:', paymentStatus);
+
+      if (paymentStatus === 'success') {
+        const urlId = params.get('consultationId');
+        const sessionId = sessionStorage.getItem('pendingConsultationId');
+        const localId = localStorage.getItem('pendingConsultationId');
+
+        console.log('Recovery attempt - URL:', urlId, 'Session:', sessionId, 'Local:', localId);
+
+        const savedId = urlId || sessionId || localId;
+
+        if (savedId) {
+          console.log('Successfully recovered Consultation ID:', savedId);
+          currentConsultId = savedId;
+          // Ensure it's re-saved if it came from URL
+          localStorage.setItem('pendingConsultationId', savedId);
+        } else {
+          console.warn('Payment success landing but no Consultation ID found in storage or URL.');
+        }
+
         // Show Success Modal
-        document.getElementById('scheduleModal').classList.add('active');
+        const schedModal = document.getElementById('scheduleModal');
+        if (schedModal) {
+          schedModal.classList.add('active');
+          console.log('Schedule modal activated.');
+        } else {
+          console.error('Could not find scheduleModal element!');
+        }
 
-        // Clean URL
+        // Clean URL after we've extracted everything
         const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.pushState({ path: newUrl }, '', newUrl);
+        window.history.replaceState({ path: newUrl }, '', newUrl);
 
-        // Optional: show toast
         toast('Payment successful! Please schedule your visit.');
-      } else if (params.get('payment') === 'cancelled') {
+      } else if (paymentStatus === 'cancelled') {
         toast('Payment was cancelled.');
       }
     }
