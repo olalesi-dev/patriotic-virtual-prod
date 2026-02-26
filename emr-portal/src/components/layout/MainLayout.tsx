@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { GlobalSearch } from './GlobalSearch';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -22,7 +24,64 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [time, setTime] = useState('10:00');
     const [type, setType] = useState('video');
 
+    const [userProfile, setUserProfile] = useState<any>(null);
+
     const router = useRouter();
+
+    React.useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                let profileData: any = {
+                    name: user.displayName || 'Provider',
+                    role: 'Clinician'
+                };
+
+                try {
+                    const userRef = doc(db, 'users', user.uid);
+                    const userSnap = await getDoc(userRef);
+
+                    if (userSnap.exists()) {
+                        profileData = { ...profileData, ...userSnap.data() };
+                    } else {
+                        // Fallback check against patients collection
+                        const patientRef = doc(db, 'patients', user.uid);
+                        const patientSnap = await getDoc(patientRef);
+                        if (patientSnap.exists()) {
+                            const data = patientSnap.data();
+                            profileData = { ...profileData, ...data };
+                            if (!profileData.name && data.firstName && data.lastName) {
+                                profileData.name = `${data.firstName} ${data.lastName}`;
+                            } else if (!profileData.name && data.firstName) {
+                                profileData.name = data.firstName;
+                            }
+                            profileData.role = 'Patient (Testing Provider View)';
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error fetching user profile", e);
+                }
+
+                setUserProfile(profileData);
+            } else {
+                router.push('/login');
+            }
+        });
+        return () => unsubscribe();
+    }, [router]);
+
+    const getInitials = (name: string) => {
+        if (!name) return 'PR';
+        const parts = name.trim().split(' ');
+        if (parts.length > 1) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
+
+    const handleLogout = async () => {
+        await auth.signOut();
+        router.push('/login');
+    };
 
     const handleSchedule = () => {
         const newAppointment = {
@@ -75,7 +134,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     {/* CLINICAL */}
                     <div className="space-y-1">
                         <NavSection label="Clinical" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/" icon={LayoutDashboard} label="Dashboard" active={pathname === '/'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" active={pathname === '/dashboard'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname === '/calendar'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patient-search" icon={Search} label="Patient Search" active={pathname === '/patient-search'} collapsed={isSidebarCollapsed} />
@@ -88,12 +147,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/orders/erx" icon={Pill} label="eRx / Prescriptions" active={pathname === '/orders/erx'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/orders/labs" icon={Microscope} label="Lab Orders" active={pathname === '/orders/labs'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/orders/imaging" icon={Scan} label="Imaging Orders" active={pathname === '/orders/imaging'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/orders/pacs" icon={Scan} label="PACS" active={pathname === '/orders/pacs'} collapsed={isSidebarCollapsed} />
                     </div>
 
                     {/* SERVICES */}
                     <div className="space-y-1">
                         <NavSection label="Services" collapsed={isSidebarCollapsed} />
                         <NavItem href="/services" icon={Briefcase} label="Services Catalog" active={pathname === '/services'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/book" icon={Video} label="Booking" active={pathname === '/book'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
                     </div>
 
@@ -115,6 +176,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <div className="space-y-1">
                         <NavSection label="Admin" collapsed={isSidebarCollapsed} />
                         <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
                     </div>
 
@@ -140,15 +202,22 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </button>
                     )}
 
-                    <div className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-sidebar-hover cursor-pointer transition-colors group ${isSidebarCollapsed ? 'justify-center p-0' : ''}`}>
-                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm shadow-md group-hover:bg-indigo-400 text-white transition-colors shrink-0">
-                            DO
+                    <div
+                        onClick={handleLogout}
+                        className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-red-500/10 hover:text-red-400 cursor-pointer transition-colors group ${isSidebarCollapsed ? 'justify-center p-0' : ''}`}
+                        title="Sign Out"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm shadow-md group-hover:bg-red-500 text-white transition-colors shrink-0">
+                            {getInitials(userProfile?.name)}
                         </div>
                         {!isSidebarCollapsed && (
                             <div className="flex-1 overflow-hidden">
-                                <div className="text-sm font-medium truncate group-hover:text-indigo-200 transition-colors">Dayo Olufolaju</div>
-                                <div className="text-xs text-slate-400 truncate">Clinician</div>
+                                <div className="text-sm font-medium truncate transition-colors">{userProfile?.name || 'Provider'}</div>
+                                <div className="text-xs text-slate-400 group-hover:text-red-400/80 truncate">{userProfile?.role || 'Clinician'}</div>
                             </div>
+                        )}
+                        {!isSidebarCollapsed && (
+                            <LogOut className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         )}
                     </div>
                 </div>
@@ -161,7 +230,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90 dark:bg-slate-800/90">
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 capitalize">
-                            {pathname === '/' ? 'Dashboard' : pathname.replace('/', '')}
+                            {pathname === '/dashboard' ? 'Dashboard' : pathname.replace('/', '')}
                         </h1>
                     </div>
 
@@ -170,13 +239,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <GlobalSearch />
                         </div>
 
-                        <a
-                            href="https://patriotictelehealth.com/"
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 hover:text-brand hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-indigo-400 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-lg transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900/30 cursor-pointer"
                         >
                             <LogOut className="w-4 h-4" />
-                            <span className="hidden lg:inline">Exit to Patient Portal</span>
-                        </a>
+                            <span className="hidden lg:inline">Sign Out</span>
+                        </button>
 
                         <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 

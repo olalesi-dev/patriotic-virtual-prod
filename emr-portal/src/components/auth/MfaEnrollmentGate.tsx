@@ -1,113 +1,78 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase'; // Use initialized auth instance
-
-interface UserProfile {
-    role: string;
-    mfa_enrolled_at: string | null;
-}
+import { usePathname, useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase';
+import { multiFactor } from 'firebase/auth';
+import { MfaSetup } from './MfaSetup';
 
 export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) => {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [isEnrolled, setIsEnrolled] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<any>(null);
+    const pathname = usePathname();
     const router = useRouter();
 
     useEffect(() => {
-        console.log('MfaEnrollmentGate: Effect running');
-        const checkMfaStatus = async () => {
-            const user = auth.currentUser;
-            console.log('MfaEnrollmentGate: Current User:', user ? user.uid : 'null');
+        console.log('MfaEnrollmentGate: Checking auth state...');
+        // Local dev bypass check
+        const isMockAuth = localStorage.getItem('emr_mock_auth') === 'true';
+        if (isMockAuth) {
+            console.log('MfaEnrollmentGate: Mock auth detected');
+            setUser({ email: 'demo@patriotic.com', displayName: 'Demo Clinician' });
+            setIsEnrolled(true);
+            setLoading(false);
+            return;
+        }
 
-            if (!user) {
-                console.log('MfaEnrollmentGate: No user found, stopping loading');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                console.log('MfaEnrollmentGate: Getting ID token...');
-                const token = await user.getIdToken();
-                console.log('MfaEnrollmentGate: Token acquired');
-                // In production, fetch from actual backend
-                // For now, assume un-enrolled provider for demo
-                // const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-                // const data = await res.json();
-
-                // MOCK PROFILE FOR DEMO (Simulating a Provider who hasn't enrolled)
-                // In real app, remove this mock and use fetch
-                const isEnrolled = localStorage.getItem('mfa_completed') === 'true';
-                const mockProfile = { role: 'Provider', mfa_enrolled_at: isEnrolled ? new Date().toISOString() : null };
-                setProfile(mockProfile);
-                console.log('MfaEnrollmentGate: Profile set');
-
-            } catch (error) {
-                console.error('Failed to check MFA status', error);
-            } finally {
-                console.log('MfaEnrollmentGate: Finally block, stopping loading');
-                setLoading(false);
-            }
-        };
-
-        // Use onAuthStateChanged to ensure we catch the initial load correctly
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            console.log('MfaEnrollmentGate: Auth State Changed:', user ? user.uid : 'null');
-            // If we have a user, check MFA. If not, stop loading.
-            if (user) {
-                checkMfaStatus();
+        const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+            console.log('MfaEnrollmentGate: Auth state changed. User:', currentUser ? currentUser.email : 'None');
+            setUser(currentUser);
+            if (currentUser) {
+                const enrolledFactors = multiFactor(currentUser).enrolledFactors;
+                console.log('MfaEnrollmentGate: Enrolled factors count:', enrolledFactors.length);
+                setIsEnrolled(enrolledFactors.length > 0);
             } else {
-                setLoading(false);
+                console.log('MfaEnrollmentGate: No user session found');
+                setIsEnrolled(false);
+                if (pathname !== '/login') {
+                    console.log('MfaEnrollmentGate: Not on login page, redirecting...');
+                    router.push('/login');
+                }
             }
+            console.log('MfaEnrollmentGate: Loading finished');
+            setLoading(false);
         });
 
-        // Safety timeout to prevent infinite loading state
-        const timer = setTimeout(() => {
-            console.log('MfaEnrollmentGate: Safety timeout reached');
-            setLoading(false);
-        }, 3000);
+        return () => unsubscribe();
+    }, [pathname, router]);
 
-        return () => {
-            unsubscribe();
-            clearTimeout(timer);
-        };
-    }, []);
+    // Skip all checks for the login page
+    if (pathname === '/login') {
+        return <>{children}</>;
+    }
 
-    if (loading) return <div className="flex h-screen items-center justify-center">Loading Security Context...</div>;
-
-    if (profile?.role === 'Provider' && !profile.mfa_enrolled_at) {
+    if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-slate-50">
-                <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg border border-slate-200">
-                    <div className="mb-6 text-center">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl">🛡️</span>
-                        </div>
-                        <h2 className="text-2xl font-bold text-navy">MFA Required</h2>
-                        <p className="text-slate-500 mt-2">
-                            To access the EMR, you must enroll in 2-Factor Authentication.
-                        </p>
-                    </div>
-
-                    <button
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-                        onClick={() => {
-                            if (window.confirm('Simulate MFA Enrollment (Demo)?')) {
-                                localStorage.setItem('mfa_completed', 'true');
-                                setProfile(prev => prev ? { ...prev, mfa_enrolled_at: new Date().toISOString() } : null);
-                            }
-                        }}
-                    >
-                        Enroll Now
-                    </button>
-
-                    <div className="mt-6 text-xs text-center text-slate-400">
-                        HIPAA Security Rule §164.312(d) Compliance
-                    </div>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-slate-200 border-t-brand rounded-full animate-spin"></div>
+                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Security Check</p>
                 </div>
             </div>
         );
     }
 
-    return <>{children}</>;
+    // If no user survived the onAuthStateChanged redirect, just show children (likely /login)
+    if (!user || isEnrolled) {
+        return <>{children}</>;
+    }
+
+    // If user is logged in but NOT enrolled in MFA, show the setup gate
+    return (
+        <div className="flex h-screen items-center justify-center bg-slate-50 p-4">
+            <MfaSetup onComplete={() => setIsEnrolled(true)} />
+        </div>
+    );
 };
+

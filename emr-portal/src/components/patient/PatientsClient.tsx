@@ -11,23 +11,158 @@ import { PATIENTS as INITIAL_PATIENTS, Patient } from '@/lib/data';
 import { PatientChart } from '@/components/patient/PatientChart';
 import NewPatientRegistration from '@/components/patient/NewPatientRegistration';
 
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
+
 export default function PatientsClient() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const patientIdParam = searchParams.get('id');
 
-    const [patients, setPatients] = useState<any[]>(INITIAL_PATIENTS);
-    const [filteredPatients, setFilteredPatients] = useState<any[]>(INITIAL_PATIENTS);
+    const [patients, setPatients] = useState<any[]>([]);
+    const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
     const [filters, setFilters] = useState({ tags: [] as string[], team: [] as string[], status: [] as string[] });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [selectedPatientIds, setSelectedPatientIds] = useState<number[]>([]);
     const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch Live Patients & Consultations from Firebase
+    React.useEffect(() => {
+        let unsubscribeConsults: any;
+        let unsubscribePatients: any;
+
+        const fetchData = async () => {
+            const tempPatientsMap = new Map();
+
+            // 1. Fetch logic for Patients Collection
+            const patientsQuery = query(collection(db, 'patients'));
+            unsubscribePatients = onSnapshot(patientsQuery, (snapshot) => {
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const name = data.name || (data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : 'Unknown Patient');
+
+                    const p = {
+                        id: docSnap.id, // Store doc ID as string
+                        name: name,
+                        email: data.email || 'N/A',
+                        phone: data.phone || 'N/A',
+                        dob: data.dob || 'Unknown',
+                        sex: data.sexAtBirth || data.sex || 'Unknown',
+                        state: data.state || 'Unknown',
+                        status: 'Active',
+                        statusColor: 'bg-emerald-100 text-emerald-700',
+                        mrn: docSnap.id.substring(0, 6).toUpperCase(),
+                        team: ['DO'],
+                        isDemo: false,
+                        tags: [],
+                        notes: [],
+                        allergies: ['NKDA'],
+                        alerts: [],
+                        consents: [],
+                        problemList: [],
+                        activeMedications: [],
+                        recentEncounters: [],
+                        upcomingAppointments: [],
+                        orders: [],
+                        imaging: [],
+                        weightTrend: [180, 178, 175],
+                        serviceLine: 'General Consultation',
+                        rawConsultations: [] // We'll map consultations here
+                    };
+
+                    // merge with existing map if any (e.g. from consult sync overlapping)
+                    if (tempPatientsMap.has(docSnap.id)) {
+                        tempPatientsMap.set(docSnap.id, { ...tempPatientsMap.get(docSnap.id), ...p, rawConsultations: tempPatientsMap.get(docSnap.id).rawConsultations });
+                    } else {
+                        tempPatientsMap.set(docSnap.id, p);
+                    }
+                });
+
+                // Update final array
+                updatePatientsState(tempPatientsMap);
+            });
+
+            // 2. Fetch logic for Consultations Collection (to get Intake Answers & Form types)
+            const consultQuery = query(collection(db, 'consultations'), orderBy('createdAt', 'desc'));
+            unsubscribeConsults = onSnapshot(consultQuery, (snapshot) => {
+                snapshot.forEach((docSnap) => {
+                    const cData = docSnap.data();
+                    const pId = cData.patientId || cData.userId;
+                    if (!pId) return;
+
+                    if (!tempPatientsMap.has(pId)) {
+                        // Create phantom patient if they don't exist in 'patients' collection yet but have a consult
+                        tempPatientsMap.set(pId, {
+                            id: pId,
+                            name: cData.patientName || 'Unknown Patient',
+                            email: cData.patientEmail || 'N/A',
+                            phone: cData.patientPhone || 'N/A',
+                            status: 'Pending Intake',
+                            statusColor: 'bg-amber-100 text-amber-700',
+                            mrn: pId.substring(0, 6).toUpperCase(),
+                            tags: [{ label: cData.symptom || 'Consult', color: 'bg-purple-50 text-purple-700' }],
+                            problemList: [],
+                            activeMedications: [],
+                            recentEncounters: [],
+                            upcomingAppointments: [],
+                            orders: [],
+                            imaging: [],
+                            weightTrend: [],
+                            allergies: ['NKDA'],
+                            alerts: [],
+                            consents: [],
+                            serviceLine: cData.symptom || 'General Consultation',
+                            rawConsultations: []
+                        });
+                    }
+
+                    const patient = tempPatientsMap.get(pId);
+
+                    // Prevent pushing duplicate consultations on re-renders
+                    if (!patient.rawConsultations.find((c: any) => c.id === docSnap.id)) {
+                        patient.rawConsultations.push({
+                            id: docSnap.id,
+                            ...cData,
+                            createdAt: cData.createdAt?.toDate ? cData.createdAt.toDate() : new Date()
+                        });
+
+                        // Dynamically update Problem list from Symptom
+                        if (cData.symptom && !patient.problemList.find((p: any) => p.description === cData.symptom)) {
+                            patient.problemList.push({
+                                code: 'INTAKE',
+                                description: cData.symptom
+                            });
+                        }
+                    }
+                });
+
+                updatePatientsState(tempPatientsMap);
+                setIsLoading(false);
+            }, (error) => {
+                console.error("Error fetching consultations:", error);
+                setIsLoading(false);
+            });
+        };
+
+        const updatePatientsState = (pMap: any) => {
+            const arr = Array.from(pMap.values());
+            setPatients(arr);
+        };
+
+        fetchData();
+
+        return () => {
+            if (unsubscribeConsults) unsubscribeConsults();
+            if (unsubscribePatients) unsubscribePatients();
+        };
+    }, []);
 
     // Auto-select patient from URL
     React.useEffect(() => {
-        if (patientIdParam) {
-            const p = patients.find(p => p.id === parseInt(patientIdParam));
+        if (patientIdParam && patients.length > 0) {
+            const p = patients.find(p => p.id === patientIdParam || p.id === parseInt(patientIdParam));
             if (p) setSelectedPatient(p);
         }
     }, [patientIdParam, patients]);
@@ -37,7 +172,7 @@ export default function PatientsClient() {
         const results = patients.filter(patient => {
             if (searchTerm && !patient.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
                 !patient.phone.includes(searchTerm) && !patient.email.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-            if (filters.tags.length > 0 && !patient.tags?.some((t: any) => filters.tags.includes(t.label))) return false;
+            // if (filters.tags.length > 0 && !patient.tags?.some((t: any) => filters.tags.includes(t.label))) return false;
             if (filters.team.length > 0 && !patient.team?.some((t: string) => filters.team.includes(t))) return false;
             if (filters.status.length > 0 && !filters.status.includes(patient.status)) return false;
             return true;

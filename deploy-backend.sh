@@ -18,7 +18,7 @@ gcloud run deploy patriotic-virtual-backend \
   --source backend \
   --region us-central1 \
   --allow-unauthenticated \
-  $ENV_ARGS \
+  "$ENV_ARGS" \
   --project patriotic-virtual-prod
 
 echo "✅ Backend Deployed Successfully!"

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Patriotic Telehealth - Functional Test Plan (Phases 1-8)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            color: #0EA5E9;
+            border-bottom: 2px solid #0EA5E9;
+            padding-bottom: 10px;
+            font-weight: 800;
+        }
+
+        h2 {
+            color: #1E293B;
+            margin-top: 30px;
+            font-weight: 800;
+            border-left: 5px solid #0EA5E9;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #334155;
+            margin-top: 20px;
+            font-weight: 700;
+        }
+
+        .phase {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .objective {
+            font-style: italic;
+            color: #64748B;
+            margin-bottom: 15px;
+        }
+
+        .step {
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .success {
+            color: #059669;
+            font-weight: 600;
+            background: #ECFDF5;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .important {
+            color: #E11D48;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #CBD5E1;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #F1F5F9;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Protocol: Patriotic Telehealth Functional Test Plan</h1>
+    <p><strong>Project:</strong> Patriotic Virtual EMR Production Hardening</p>
+    <p><strong>Phases Covered:</strong> P1 - P8 (Full Implementation)</p>
+    <p><strong>Date:</strong> February 23, 2026</p>
+
+    <div class="phase">
+        <h2>P1: Secure Authentication & Patient Profile</h2>
+        <p class="objective">Verify identity protection, base medical profiles, and the HIPAA consent gate.</p>
+        <div class="step">1. Login with a new or reset patient account.</div>
+        <div class="step">2. Observe the emergence of the <strong>HIPAA Privacy Consent</strong> banner.</div>
+        <span class="success">Verification: Dashboard is inaccessible until consent is audit-logged to Firestore.</span>
+    </div>
+
+    <div class="phase">
+        <h2>P2: Clinical Intake & Consultation Flow</h2>
+        <p class="objective">Verify that medical intake data is securely captured and isolated.</p>
+        <div class="step">1. Initiate a Consultation (e.g., Weight Loss).</div>
+        <div class="step">2. Complete the multi-step intake survey.</div>
+        <span class="success">Verification: Document is created in 'consultations' matching the expected schema.</span>
+    </div>
+
+    <div class="phase">
+        <h2>P3: End-to-End Secure Messaging</h2>
+        <p class="objective">Verify real-time communication with anti-caching protection.</p>
+        <div class="step">1. Send a clinical message to a provider.</div>
+        <div class="step">2. Inspect browser network headers for the messages page.</div>
+        <span class="success">Verification: 'Cache-Control: no-store' is active, preventing browser persistence of
+            PHI.</span>
+    </div>
+
+    <div class="phase">
+        <h2>P4: Appointment Scheduling & Telehealth</h2>
+        <p class="objective">Verify clinical scheduling and pre-visit hardware checklists.</p>
+        <div class="step">1. Book a 'Telehealth' appointment.</div>
+        <div class="step">2. Trigger the Pre-Visit Checklist (Camera/Mic/ID).</div>
+        <span class="success">Verification: Video room is inaccessible until all HIPAA security prerequisites are
+            checked.</span>
+    </div>
+
+    <div class="phase">
+        <h2>P5: Lab Orders & Clinical Results</h2>
+        <p class="objective">Verify access to diagnostic data and error resilience.</p>
+        <div class="step">1. Navigate to 'Lab Results'.</div>
+        <div class="step">2. Verify document rendering.</div>
+        <span class="success">Verification: Global Error Boundary catches any rendering failures without a site
+            crash.</span>
+    </div>
+
+    <div class="phase">
+        <h2>P6: Radiology & Imaging PACS</h2>
+        <p class="objective">Verify DICOM study viewing and context security.</p>
+        <div class="step">1. Launch OHIF Viewer from the Imaging tab.</div>
+        <span class="success">Verification: Study loads via secure proxy; console shows no CSP 'Mixed Content'
+            violations.</span>
+    </div>
+
+    <div class="phase">
+        <h2>P7: Billing, Subscription & Insurance</h2>
+        <p class="objective">Verify Stripe reconciliation and sanitized insurance review.</p>
+        <div class="step">1. Submit an 'Update Insurance' request.</div>
+        <div class="step">2. Attempt to pay an outstanding balance via 'Pay Now'.</div>
+        <span class="success">Verification: Redirected to secure Stripe Checkout; Insurance data is sanitized via
+            dompurify.</span>
+    </div>
+
+    <div class="phase">
+        <h2>P8: Production Hardening & Compliance</h2>
+        <p class="objective">Verify the final security wrapper around the entire portal.</p>
+        <div class="step">1. 15-Minute Inactivity Test: Leave app idle.</div>
+        <span class="success">Verification: Timeout modal at 13m; Auto-logout + Audit Log entry at 15m.</span>
+        <div class="step">2. XSS Test: Enter script tags in profile fields.</div>
+        <span class="success">Verification: System strips tags before storage.</span>
+    </div>
+
+    <p style="text-align: center; margin-top: 50px; font-size: 0.8em; color: #94A3B8;">
+        Patriotic Virtual Telehealth | Internal Systems Documentation | confidential
+    </p>
+</body>
+
+</html>
