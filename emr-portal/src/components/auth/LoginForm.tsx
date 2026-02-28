@@ -1,22 +1,22 @@
 "use client";
 
-import React, { useState } from 'react';
 import {
-    signInWithEmailAndPassword,
+    GoogleAuthProvider,
     getMultiFactorResolver,
+    getRedirectResult,
     PhoneAuthProvider,
     PhoneMultiFactorGenerator,
     RecaptchaVerifier,
-    GoogleAuthProvider,
+    signInWithEmailAndPassword,
     signInWithPopup,
-    signInWithRedirect,
-    getRedirectResult
+    signInWithRedirect
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { AlertCircle, ArrowRight, Lock, LogIn, Mail, Phone, Shield } from 'lucide-react';
 import Link from 'next/link';
-import { Mail, Lock, LogIn, Shield, ArrowRight, AlertCircle, Phone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { auth, db } from '@/lib/firebase';
 
 export function LoginForm() {
     const [email, setEmail] = useState('');
@@ -28,68 +28,79 @@ export function LoginForm() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const recaptchaRef = React.useRef<RecaptchaVerifier | null>(null);
+    const hasCheckedRedirectRef = React.useRef(false);
     const router = useRouter();
+
+    const isMfaRequiredError = (authError: any) => {
+        return authError?.code === 'auth/multi-factor-auth-required' ||
+            authError?.message?.includes('multi-factor-auth-required') ||
+            authError?.code?.includes('multi-factor-auth-required');
+    };
+
+    const startPhoneMfaChallenge = async (authError: any, flowLabel: string) => {
+        try {
+            const mfaResolver = getMultiFactorResolver(auth, authError);
+            setResolver(mfaResolver);
+
+            const phoneHint = mfaResolver.hints.find((hint: any) => hint.factorId === PhoneMultiFactorGenerator.FACTOR_ID);
+            if (!phoneHint) {
+                setError('This account requires MFA, but no phone factor is available.');
+                return;
+            }
+
+            console.log(`Initiating MFA Phone verification (${flowLabel})`);
+            if (!recaptchaRef.current) {
+                recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    size: 'invisible'
+                });
+            }
+
+            const phoneAuthProvider = new PhoneAuthProvider(auth);
+            const verificationToken = await phoneAuthProvider.verifyPhoneNumber({
+                multiFactorHint: phoneHint,
+                session: mfaResolver.session
+            }, recaptchaRef.current);
+
+            setVerificationId(verificationToken);
+            setMfaStep(true);
+        } catch (mfaError: any) {
+            console.error(`MFA Initiation Error (${flowLabel}):`, mfaError);
+            setError('Failed to initiate MFA challenge.');
+        }
+    };
+
+    const upsertUserProfile = React.useCallback(async (user: any) => {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            await setDoc(doc(db, 'users', user.uid), {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                role: 'patient',
+                createdAt: serverTimestamp(),
+                isMfaEnrolled: false
+            });
+        }
+    }, []);
 
     // Handle Google Redirect Result
     React.useEffect(() => {
+        if (hasCheckedRedirectRef.current) {
+            return;
+        }
+        hasCheckedRedirectRef.current = true;
+
         const checkRedirectResult = async () => {
-            console.log('Checking for Google Redirect result...');
             try {
                 const result = await getRedirectResult(auth);
                 if (result) {
-                    console.log('Google Redirect Result detected:', result.user.email);
-                    const user = result.user;
-                    // Handle post-login profile logic
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (!userDoc.exists()) {
-                        console.log('Creating new user profile for:', user.email);
-                        await setDoc(doc(db, 'users', user.uid), {
-                            displayName: user.displayName,
-                            email: user.email,
-                            photoURL: user.photoURL,
-                            role: 'patient',
-                            createdAt: serverTimestamp(),
-                            isMfaEnrolled: false
-                        });
-                    } else {
-                        console.log('Existing user profile found for:', user.email);
-                    }
-                    console.log('Redirecting to dashboard...');
-                    router.push('/');
-                } else {
-                    console.log('No Google Redirect result found.');
+                    await upsertUserProfile(result.user);
+                    router.replace('/');
                 }
             } catch (err: any) {
                 console.error('Redirect Result Error:', err.code, err.message, err);
-                if (err.code === 'auth/multi-factor-auth-required' ||
-                    err.message?.includes('multi-factor-auth-required') ||
-                    err.code?.includes('multi-factor-auth-required')) {
-
-                    console.log('MFA Required for redirected user');
-                    try {
-                        const mfaResolver = getMultiFactorResolver(auth, err);
-                        setResolver(mfaResolver);
-                        const phoneOpts = mfaResolver.hints[0];
-
-                        if (phoneOpts && phoneOpts.factorId === PhoneMultiFactorGenerator.FACTOR_ID) {
-                            console.log('Initiating MFA Phone verification (Redirect flow)');
-                            if (!recaptchaRef.current) {
-                                recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                                    size: 'invisible'
-                                });
-                            }
-                            const phoneAuthProvider = new PhoneAuthProvider(auth);
-                            const verId = await phoneAuthProvider.verifyPhoneNumber({
-                                multiFactorHint: phoneOpts,
-                                session: mfaResolver.session
-                            }, recaptchaRef.current);
-                            setVerificationId(verId);
-                            setMfaStep(true);
-                        }
-                    } catch (mfaErr: any) {
-                        console.error('MFA Initiation Error (Redirect):', mfaErr);
-                        setError(`Identity verification required: ${mfaErr.message}`);
-                    }
+                if (isMfaRequiredError(err)) {
+                    await startPhoneMfaChallenge(err, 'Redirect flow');
                 } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
                     console.log('Auth popup/redirect cancelled by user');
                 } else {
@@ -100,7 +111,7 @@ export function LoginForm() {
         };
 
         checkRedirectResult();
-    }, [router]);
+    }, [router, upsertUserProfile]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -111,38 +122,12 @@ export function LoginForm() {
         try {
             const result = await signInWithEmailAndPassword(auth, email, password);
             console.log('Email Login Successful:', result.user.email);
-            router.push('/');
+            router.replace('/');
         } catch (err: any) {
             console.error('Email Login Failed:', err.code, err.message);
-            if (err.code === 'auth/multi-factor-auth-required') {
+            if (isMfaRequiredError(err)) {
                 console.log('MFA Required for Email login');
-                const mfaResolver = getMultiFactorResolver(auth, err);
-                setResolver(mfaResolver);
-
-                // Start MFA challenge
-                const phoneOpts = mfaResolver.hints[0];
-                if (phoneOpts.factorId === PhoneMultiFactorGenerator.FACTOR_ID) {
-                    try {
-                        console.log('Initiating MFA Phone verification');
-                        if (!recaptchaRef.current) {
-                            recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                                size: 'invisible'
-                            });
-                        }
-
-                        const phoneAuthProvider = new PhoneAuthProvider(auth);
-                        const verId = await phoneAuthProvider.verifyPhoneNumber({
-                            multiFactorHint: phoneOpts,
-                            session: mfaResolver.session
-                        }, recaptchaRef.current);
-
-                        setVerificationId(verId);
-                        setMfaStep(true);
-                    } catch (mfaErr: any) {
-                        console.error('MFA Initiation Error:', mfaErr);
-                        setError('Failed to initiate MFA challenge.');
-                    }
-                }
+                await startPhoneMfaChallenge(err, 'Email flow');
             } else {
                 setError('Invalid email or password.');
             }
@@ -156,14 +141,31 @@ export function LoginForm() {
         setLoading(true);
         setError(null);
         const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
 
         try {
-            console.log('Attempting signInWithRedirect...');
-            // Using Redirect instead of Popup to bypass COOP header restrictions
-            await signInWithRedirect(auth, provider);
+            console.log('Attempting signInWithPopup...');
+            const popupResult = await signInWithPopup(auth, provider);
+            await upsertUserProfile(popupResult.user);
+            router.replace('/');
         } catch (err: any) {
             console.error('Google Login Initiation Error:', err.code, err.message, err);
-            setError(`Failed to start Google sign-in: ${err.message}`);
+            if (isMfaRequiredError(err)) {
+                console.log('MFA Required for Google login');
+                await startPhoneMfaChallenge(err, 'Google flow');
+                setLoading(false);
+                return;
+            }
+
+            if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request') {
+                console.warn('Popup unavailable, falling back to redirect flow...');
+                await signInWithRedirect(auth, provider);
+                return;
+            }
+
+            if (err?.code !== 'auth/popup-closed-by-user') {
+                setError(`Failed to start Google sign-in: ${err.message}`);
+            }
             setLoading(false);
         }
     };
@@ -177,7 +179,7 @@ export function LoginForm() {
             const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
             const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
             await resolver.resolveSignIn(multiFactorAssertion);
-            router.push('/');
+            router.replace('/');
         } catch (err: any) {
             console.error('MFA Verification Error:', err);
             setError('Invalid verification code.');

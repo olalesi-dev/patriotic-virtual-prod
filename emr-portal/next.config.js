@@ -9,7 +9,7 @@ const nextConfig = {
     },
     transpilePackages: ['undici', 'firebase', '@firebase/auth'],
     experimental: {
-        serverExternalPackages: ['firebase-admin'],
+        serverComponentsExternalPackages: ['firebase-admin'],
     },
     async headers() {
         return [
@@ -24,7 +24,7 @@ const nextConfig = {
                     { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
                     {
                         key: 'Content-Security-Policy',
-                        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://doxy.me; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.stripe.com; img-src 'self' data: https://storage.googleapis.com https://*.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.stripe.com https://doxy.me; trusted-types firebase-auth google-auth default;"
+                        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com https://accounts.google.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://www.googletagmanager.com https://doxy.me; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.stripe.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; img-src 'self' data: https://storage.googleapis.com https://*.stripe.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.stripe.com https://*.firebaseapp.com https://*.google.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://doxy.me; trusted-types firebase-auth google-auth firebase-js-sdk-policy gapi#gapi goog#html dompurify nextjs#bundler default;"
                     }
                 ],
             },
