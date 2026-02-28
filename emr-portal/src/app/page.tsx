@@ -1,51 +1,52 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { auth, db } from '@/lib/firebase';
+
+const normalizeRole = (value: unknown): 'patient' | 'provider' | null => {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'patient') return 'patient';
+    if (!normalized) return null;
+    return 'provider';
+};
 
 export default function RootDispatcher() {
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let isActive = true;
+
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!isActive) return;
+
             if (user) {
                 try {
-                    // Check Firestore for role
-                    const docRef = doc(db, 'patients', user.uid);
-                    const docSnap = await getDoc(docRef);
+                    const [userDoc, patientDoc] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDoc(doc(db, 'patients', user.uid))
+                    ]);
 
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        const role = data.role?.toLowerCase();
+                    const userRole = normalizeRole(userDoc.exists() ? userDoc.data()?.role : null);
+                    const patientRole = normalizeRole(patientDoc.exists() ? patientDoc.data()?.role : null);
+                    const effectiveRole = userRole ?? patientRole ?? (patientDoc.exists() ? 'patient' : 'provider');
 
-                        if (role === 'patient') {
-                            router.replace('/patient');
-                        } else {
-                            // Admins, Providers, etc. go to the EMR dashboard
-                            router.replace('/dashboard');
-                            // WAIT: If I moved the provider page to (provider), 
-                            // the root '/' will hit THIS dispatcher again if I'm not careful.
-                            // Actually, in Next.js, (provider)/page.tsx DOES match '/'
-                            // but since src/app/page.tsx also exists, there's a conflict.
-                        }
-                    } else {
-                        // Default to provider side or login
-                        router.replace('/login');
-                    }
+                    router.replace(effectiveRole === 'patient' ? '/patient' : '/dashboard');
                 } catch (error) {
                     console.error('Dispatch error:', error);
-                    router.replace('/login');
+                    router.replace('/dashboard');
                 }
             } else {
                 router.replace('/login');
             }
-            setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            isActive = false;
+            unsubscribe();
+        };
     }, [router]);
 
     return (

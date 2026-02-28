@@ -2,12 +2,13 @@
 
 import './globals.css';
 import '@/lib/firebase'; // Initialize Firebase
-import { MfaEnrollmentGate } from '@/components/auth/MfaEnrollmentGate';
 import { Inter } from 'next/font/google';
+import { useEffect } from 'react';
+import { Toaster as SonnerToaster } from 'sonner';
+import { MfaEnrollmentGate } from '@/components/auth/MfaEnrollmentGate';
 import { SecurityShell } from '@/components/auth/SecurityShell';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { initializeTrustedTypes } from '@/lib/trusted-types';
-import { useEffect } from 'react';
 
 // Initialize Trusted Types immediately
 if (typeof window !== 'undefined') {
@@ -45,9 +46,10 @@ export default function RootLayout({
 
     return (
         <html lang="en">
-            <body className={`${inter.className} bg-slate-50 text-navy antialiased min-h-screen`}>
+            <body className={`${inter.className} bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased min-h-screen`}>
                 <MfaEnrollmentGate>
                     <SecurityShell>
+                        <SonnerToaster position="top-right" richColors closeButton />
                         <Toaster position="top-right" />
                         {children}
                     </SecurityShell>

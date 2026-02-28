@@ -3,6 +3,22 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --sidebar-bg: 248 250 252;
+    --sidebar-active: 226 232 240;
+    --sidebar-hover: 241 245 249;
+    --sidebar-foreground: 15 23 42;
+    --sidebar-muted: 100 116 139;
+  }
+
+  .dark {
+    --sidebar-bg: 15 23 42;
+    --sidebar-active: 30 41 59;
+    --sidebar-hover: 51 65 85;
+    --sidebar-foreground: 248 250 252;
+    --sidebar-muted: 148 163 184;
+  }
+
   body {
     @apply antialiased text-slate-900 bg-slate-50 dark:text-slate-100 dark:bg-slate-900;
   }
