@@ -28,11 +28,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
     const router = useRouter();
 
-    const profile = useUserProfile(auth.currentUser);
+    const profile = useUserProfile();
 
     React.useEffect(() => {
         if (!profile.loading) {
-            if (!auth.currentUser) {
+            if (!profile.authenticated) {
                 router.replace('/login');
             } else if (profile.normalizedRole !== 'provider') {
                 router.replace('/patient');

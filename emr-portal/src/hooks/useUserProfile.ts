@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { User } from 'firebase/auth';
+import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 
 export type NormalizedRole = 'patient' | 'provider';
 
@@ -13,9 +13,10 @@ export interface UserProfile {
     initials: string;
     sourceCollection: 'users' | 'patients' | null;
     uid: string;
+    authenticated: boolean;
 }
 
-export const useUserProfile = (user: User | null) => {
+export const useUserProfile = () => {
     const [profile, setProfile] = useState<UserProfile>({
         loading: true,
         normalizedRole: 'patient',
@@ -23,16 +24,26 @@ export const useUserProfile = (user: User | null) => {
         email: '',
         initials: '',
         sourceCollection: null,
-        uid: user?.uid || '',
+        uid: '',
+        authenticated: false,
     });
 
     useEffect(() => {
-        if (!user) {
-            setProfile((prev) => ({ ...prev, loading: false }));
-            return;
-        }
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                setProfile({
+                    loading: false,
+                    normalizedRole: 'patient',
+                    displayName: '',
+                    email: '',
+                    initials: '',
+                    sourceCollection: null,
+                    uid: '',
+                    authenticated: false,
+                });
+                return;
+            }
 
-        const fetchProfile = async () => {
             try {
                 let profileData: any = null;
                 let source: 'users' | 'patients' | null = null;
@@ -51,8 +62,11 @@ export const useUserProfile = (user: User | null) => {
                     }
                 }
 
+                let displayName = '';
+                let normalizedRole: NormalizedRole = 'patient';
+                let initials = '';
+
                 if (profileData) {
-                    let displayName = '';
                     if (source === 'patients') {
                         displayName = profileData.firstName && profileData.lastName
                             ? `${profileData.firstName} ${profileData.lastName}`
@@ -62,7 +76,6 @@ export const useUserProfile = (user: User | null) => {
                     }
 
                     const role = profileData.role?.toLowerCase() || '';
-                    let normalizedRole: NormalizedRole = 'patient';
 
                     if (['provider', 'clinician', 'admin', 'staff'].includes(role)) {
                         normalizedRole = 'provider';
@@ -72,43 +85,40 @@ export const useUserProfile = (user: User | null) => {
                         console.warn(`Unknown role "${role}" for user ${user.uid}, defaulting to patient`);
                         normalizedRole = 'patient';
                     }
-
-                    const initials = displayName
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .substring(0, 2);
-
-                    setProfile({
-                        loading: false,
-                        normalizedRole,
-                        displayName,
-                        email: user.email || '',
-                        initials: initials || user.email?.substring(0, 2).toUpperCase() || 'U',
-                        sourceCollection: source,
-                        uid: user.uid,
-                    });
                 } else {
-                    // Default profile if no doc exists
-                    setProfile({
-                        loading: false,
-                        normalizedRole: 'patient',
-                        displayName: user.displayName || 'User',
-                        email: user.email || '',
-                        initials: user.displayName?.substring(0, 2).toUpperCase() || user.email?.substring(0, 2).toUpperCase() || 'U',
-                        sourceCollection: null,
-                        uid: user.uid,
-                    });
+                    displayName = user.displayName || 'User';
+                    normalizedRole = 'patient';
                 }
+
+                initials = displayName
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+
+                if (!initials && user.email) {
+                    initials = user.email.substring(0, 2).toUpperCase();
+                }
+
+                setProfile({
+                    loading: false,
+                    normalizedRole,
+                    displayName,
+                    email: user.email || '',
+                    initials: initials || 'U',
+                    sourceCollection: source,
+                    uid: user.uid,
+                    authenticated: true,
+                });
             } catch (error) {
                 console.error('Error fetching user profile:', error);
-                setProfile((prev) => ({ ...prev, loading: false }));
+                setProfile((prev) => ({ ...prev, loading: false, authenticated: true }));
             }
-        };
+        });
 
-        fetchProfile();
-    }, [user]);
+        return () => unsubscribe();
+    }, []);
 
     return profile;
 };

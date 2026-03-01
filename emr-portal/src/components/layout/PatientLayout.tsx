@@ -32,11 +32,11 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
 
-    const profile = useUserProfile(auth.currentUser);
+    const profile = useUserProfile();
 
     useEffect(() => {
         if (!profile.loading) {
-            if (!auth.currentUser) {
+            if (!profile.authenticated) {
                 if (!['/login', '/signup', '/forgot-password'].includes(pathname)) {
                     router.replace('/login');
                 }
