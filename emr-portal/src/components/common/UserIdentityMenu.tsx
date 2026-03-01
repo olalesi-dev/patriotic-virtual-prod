@@ -27,7 +27,7 @@ export function UserIdentityMenu() {
     const [theme, setTheme] = useState<string>('light');
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const profile = useUserProfile(auth.currentUser);
+    const profile = useUserProfile();
 
     useEffect(() => {
         // Initialize theme from localStorage
