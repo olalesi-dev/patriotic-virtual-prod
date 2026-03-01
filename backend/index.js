@@ -690,7 +690,11 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
 
-            // 2. Create Appointment in Patient Sub-collection
+            // 2. Fetch Consultation details for clinical context
+            const consultSnap = await consultRef.get();
+            const consultData = consultSnap.exists ? consultSnap.data() : {};
+
+            // 3. Create Appointment in Patient Sub-collection
             // Path: patients/{uid}/appointments
             // We'll use the UID from metadata
             if (uid) {
@@ -703,7 +707,8 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
                     status: "scheduled",
                     meetingUrl: "https://doxy.me/patriotictelehealth",
                     consultationId: consultationId,
-                    serviceKey: serviceKey || 'general_consultation',
+                    serviceKey: consultData.serviceKey || 'general_consultation',
+                    intakeAnswers: consultData.intake || {},
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
                 });
             }
