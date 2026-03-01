@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { canMoveAppointmentStatusForward } from '@/lib/appointment-flow';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
 
@@ -100,6 +101,12 @@ export async function PATCH(
         }
 
         const newStatus = parsedBody.data.status;
+        if (!canMoveAppointmentStatusForward(appointmentData.status, newStatus)) {
+            return NextResponse.json(
+                { success: false, error: 'Backward status updates are not allowed.' },
+                { status: 409 }
+            );
+        }
         const now = new Date();
         const appointmentUpdate: Record<string, unknown> = {
             status: newStatus,

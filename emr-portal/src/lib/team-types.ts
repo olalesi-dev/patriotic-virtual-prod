@@ -9,6 +9,7 @@ export interface TeamSummary {
     id: string;
     name: string;
     description: string | null;
+    color: string;
     ownerId: string;
     ownerName: string;
     memberIds: string[];

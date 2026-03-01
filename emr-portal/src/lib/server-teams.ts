@@ -1,4 +1,5 @@
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { getDeterministicTeamColor, normalizeTeamColor } from '@/lib/team-colors';
 import type { TeamMemberSummary, TeamSummary } from '@/lib/team-types';
 
 function asNonEmptyString(value: unknown): string | null {
@@ -125,6 +126,7 @@ export function mapTeamSnapshot(snapshot: QueryDocumentSnapshot | DocumentSnapsh
         id: snapshot.id,
         name: asNonEmptyString(data.name) ?? 'Untitled Team',
         description: asNonEmptyString(data.description),
+        color: normalizeTeamColor(data.color) ?? getDeterministicTeamColor(snapshot.id),
         ownerId,
         ownerName,
         memberIds,

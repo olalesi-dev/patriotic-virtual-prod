@@ -72,6 +72,7 @@ function normalizeNotificationType(value: unknown): AppNotificationType {
     if (normalized === 'team_invite_response') return 'team_invite_response';
     if (normalized === 'appointment_rescheduled') return 'appointment_rescheduled';
     if (normalized === 'appointment_cancelled') return 'appointment_cancelled';
+    if (normalized === 'team_patient_assigned') return 'team_patient_assigned';
     return 'appointment_booked';
 }
 

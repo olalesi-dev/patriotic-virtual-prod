@@ -136,7 +136,11 @@ function NotificationRow({
     );
 }
 
-export function ProviderNotificationBell() {
+interface ProviderNotificationBellProps {
+    viewAllHref?: string;
+}
+
+export function ProviderNotificationBell({ viewAllHref = '/notifications' }: ProviderNotificationBellProps) {
     const [open, setOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement | null>(null);
 
@@ -233,7 +237,7 @@ export function ProviderNotificationBell() {
 
                     <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
                         <Link
-                            href="/notifications"
+                            href={viewAllHref}
                             onClick={() => setOpen(false)}
                             className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
                         >

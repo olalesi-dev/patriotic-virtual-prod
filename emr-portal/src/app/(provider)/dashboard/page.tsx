@@ -6,11 +6,12 @@ import {
     AlertCircle, Calendar, CheckCircle, Clock, Filter, MessageSquare,
     MoreHorizontal, RefreshCw, Video, XCircle
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useRef, useState } from 'react';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { useTimezonePreference } from '@/hooks/useTimezonePreference';
+import { canMoveAppointmentStatusForward, isVideoVisitType, toCanonicalAppointmentStatus } from '@/lib/appointment-flow';
 import {
     PROVIDER_APPOINTMENT_CREATED_EVENT,
     type ProviderAppointmentCreatedEventDetail
@@ -89,6 +90,10 @@ const STATUS_OPTIONS: Array<{ key: MutableStatusKey; label: string }> = [
     { key: 'waitlist', label: 'Waitlist' }
 ];
 
+const WeeklyVolumeChart = dynamic(() => import('@/components/dashboard/WeeklyVolumeChart'), {
+    ssr: false
+});
+
 async function buildAuthHeaders(user: FirebaseUser | null) {
     const activeUser = user ?? auth.currentUser;
     if (!activeUser) {
@@ -151,7 +156,7 @@ function toRelativeTime(value: Date | null): string {
     return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(value);
 }
 
-export default function EmrDashboard() {
+function useEmrDashboardView() {
     const router = useRouter();
     const scheduleRef = useRef<HTMLDivElement>(null);
     const inboxRef = useRef<HTMLDivElement>(null);
@@ -181,25 +186,10 @@ export default function EmrDashboard() {
         [activeTab, appointments]
     );
 
-    const upcomingCount = useMemo(
-        () => appointments.filter((appointment) => UPCOMING_KEYS.includes(appointment.statusKey)).length,
-        [appointments]
-    );
-
-    const completedCount = useMemo(
-        () => appointments.filter((appointment) => appointment.statusKey === 'completed').length,
-        [appointments]
-    );
-
-    const cancelledCount = useMemo(
-        () => appointments.filter((appointment) => appointment.statusKey === 'cancelled').length,
-        [appointments]
-    );
-
-    const waitlistCount = useMemo(
-        () => appointments.filter((appointment) => appointment.statusKey === 'waitlist').length,
-        [appointments]
-    );
+    const upcomingCount = appointments.filter((appointment) => UPCOMING_KEYS.includes(appointment.statusKey)).length;
+    const completedCount = appointments.filter((appointment) => appointment.statusKey === 'completed').length;
+    const cancelledCount = appointments.filter((appointment) => appointment.statusKey === 'cancelled').length;
+    const waitlistCount = appointments.filter((appointment) => appointment.statusKey === 'waitlist').length;
 
     const fetchDashboard = React.useCallback(async (user: FirebaseUser, backgroundRefresh: boolean = false) => {
         if (!backgroundRefresh) {
@@ -446,6 +436,17 @@ export default function EmrDashboard() {
             return;
         }
 
+        const currentAppointment = appointments.find((appointment) => appointment.id === id);
+        if (!currentAppointment) {
+            setError('Appointment not found.');
+            return;
+        }
+
+        if (!canMoveAppointmentStatusForward(currentAppointment.statusKey, newStatus)) {
+            setError('Backward status updates are blocked. Please move status forward only.');
+            return;
+        }
+
         setStatusUpdatingId(id);
         setMenuOpenId(null);
 
@@ -625,22 +626,7 @@ export default function EmrDashboard() {
                             </span>
                         </div>
                         <div className="h-32 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={weeklyVolume}>
-                                    <defs>
-                                        <linearGradient id="colorBrand" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.2} />
-                                            <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                    <Tooltip
-                                        cursor={{ stroke: '#e2e8f0' }}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                    />
-                                    <Area type="monotone" dataKey="visits" stroke="#4F46E5" strokeWidth={2} fillOpacity={1} fill="url(#colorBrand)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                            <WeeklyVolumeChart data={weeklyVolume} />
                         </div>
                     </div>
 
@@ -666,6 +652,10 @@ export default function EmrDashboard() {
             </div>
         </div>
     );
+}
+
+export default function EmrDashboard() {
+    return useEmrDashboardView();
 }
 
 function Tab({
@@ -725,6 +715,14 @@ function ScheduleCard({
     };
 
     const isActionable = ['upcoming', 'checked_in', 'confirmed'].includes(appointment.statusKey);
+    const isVideoVisit = isVideoVisitType(appointment.type);
+    const currentCanonicalStatus = toCanonicalAppointmentStatus(appointment.statusKey);
+    const availableStatusOptions = STATUS_OPTIONS.filter((statusOption) => {
+        const optionCanonicalStatus = toCanonicalAppointmentStatus(statusOption.key);
+        if (!optionCanonicalStatus || !currentCanonicalStatus) return false;
+        if (optionCanonicalStatus === currentCanonicalStatus) return false;
+        return canMoveAppointmentStatusForward(currentCanonicalStatus, optionCanonicalStatus);
+    });
     const fallbackDisplay = appointment.displayTime;
     const computedDisplay = appointment.startAt
         ? toHourMinuteLabel(new Date(appointment.startAt), preferredTimezone)
@@ -749,7 +747,7 @@ function ScheduleCard({
                     {appointment.statusLabel}
                 </span>
 
-                {isActionable && (
+                {isActionable && isVideoVisit && (
                     <button
                         onClick={(event) => {
                             event.stopPropagation();
@@ -780,7 +778,7 @@ function ScheduleCard({
                                 <div className="px-3 py-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                     Update Status
                                 </div>
-                                {STATUS_OPTIONS.map((statusOption) => (
+                                {availableStatusOptions.map((statusOption) => (
                                     <button
                                         key={statusOption.key}
                                         onClick={(event) => {
@@ -798,6 +796,11 @@ function ScheduleCard({
                                         Mark as {statusOption.label}
                                     </button>
                                 ))}
+                                {availableStatusOptions.length === 0 && (
+                                    <p className="px-4 py-3 text-[11px] font-medium text-slate-400">
+                                        No forward status changes available.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
