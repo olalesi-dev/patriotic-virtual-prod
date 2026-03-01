@@ -168,7 +168,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </button>
                     )}
 
-                    {!isSidebarCollapsed && <UserIdentityMenu />}
+                    <UserIdentityMenu collapsed={isSidebarCollapsed} />
                 </div>
             </aside>
 
