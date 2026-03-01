@@ -22,7 +22,7 @@ import { auth } from '@/lib/firebase';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'react-hot-toast';
 
-export function UserIdentityMenu() {
+export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
     const [theme, setTheme] = useState<string>('light');
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -119,10 +119,10 @@ export function UserIdentityMenu() {
     const helpHref = profile.normalizedRole === 'patient' ? '/patient/help' : '/dashboard/help';
 
     return (
-        <div className="relative w-full px-4 mb-6" ref={dropdownRef}>
+        <div className={`relative w-full ${collapsed ? 'px-0' : 'px-4'} mb-6`} ref={dropdownRef}>
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-in slide-in-from-bottom-2 duration-200">
+                <div className={`absolute bottom-full left-4 right-4 mb-2 lg:bottom-0 lg:left-[calc(100%+8px)] lg:right-auto lg:w-[280px] lg:mb-0 bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-in slide-in-from-bottom-2 lg:slide-in-from-left-2 duration-200`}>
                     {/* Header */}
                     <div className="p-5 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -216,32 +216,39 @@ export function UserIdentityMenu() {
                     ${isOpen
                         ? 'bg-indigo-600 shadow-xl shadow-indigo-100 dark:shadow-none'
                         : 'bg-slate-900 border border-slate-800 shadow-xl hover:bg-slate-800'}
+                    ${collapsed ? 'w-12 h-12 p-0 justify-center mx-auto rounded-xl' : ''}
                 `}
+                title={collapsed ? profile.displayName : ''}
             >
-                {!isOpen && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none"></div>}
+                {!isOpen && !collapsed && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none"></div>}
 
                 <div className={`w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md ring-2 transition-all
                     ${isOpen ? 'bg-white text-indigo-600 ring-indigo-500' : 'bg-indigo-500 ring-slate-900'}
+                    ${collapsed && !isOpen ? 'ring-offset-2 ring-indigo-500/20' : ''}
                 `}>
                     {profile.initials}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                    <h4 className={`text-sm font-bold truncate drop-shadow-sm transition-colors
-                        ${isOpen ? 'text-white' : 'text-white'}
-                    `}>
-                        {profile.displayName}
-                    </h4>
-                    <p className={`text-[10px] font-black uppercase tracking-widest truncate transition-colors
-                        ${isOpen ? 'text-indigo-200' : 'text-slate-400'}
-                    `}>
-                        {profile.normalizedRole}
-                    </p>
-                </div>
+                {!collapsed && (
+                    <>
+                        <div className="flex-1 min-w-0">
+                            <h4 className={`text-sm font-bold truncate drop-shadow-sm transition-colors
+                                ${isOpen ? 'text-white' : 'text-white'}
+                            `}>
+                                {profile.displayName}
+                            </h4>
+                            <p className={`text-[10px] font-black uppercase tracking-widest truncate transition-colors
+                                ${isOpen ? 'text-indigo-200' : 'text-slate-400'}
+                            `}>
+                                {profile.normalizedRole}
+                            </p>
+                        </div>
 
-                <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-                    <User className={`w-4 h-4 ${isOpen ? 'text-white' : 'text-slate-500'}`} />
-                </div>
+                        <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                            <User className={`w-4 h-4 ${isOpen ? 'text-white' : 'text-slate-500'}`} />
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
