@@ -312,7 +312,7 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 	);
 }
 
-export function SettingsWorkspace({ role }: { role: PortalRole }) {
+function useSettingsWorkspaceView({ role }: { role: PortalRole }) {
 	const { settings, loading, error, refresh, savingSection, updateSection } =
 		useUserSettings({ expectedRole: role });
 
@@ -1708,6 +1708,10 @@ export function SettingsWorkspace({ role }: { role: PortalRole }) {
 			)}
 		</div>
 	);
+}
+
+export function SettingsWorkspace({ role }: { role: PortalRole }) {
+    return useSettingsWorkspaceView({ role });
 }
 
 function Field({

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
+import { createNotification } from '@/lib/server-notifications';
 import { mapTeamSnapshot } from '@/lib/server-teams';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,16 @@ function asNonEmptyString(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const normalized = value.trim();
     return normalized.length > 0 ? normalized : null;
+}
+
+function resolveDisplayName(value: Record<string, unknown> | undefined): string | null {
+    const directName = asNonEmptyString(value?.name) ?? asNonEmptyString(value?.displayName);
+    if (directName) return directName;
+
+    const firstName = asNonEmptyString(value?.firstName);
+    const lastName = asNonEmptyString(value?.lastName);
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    return firstName ?? lastName ?? null;
 }
 
 export async function POST(
@@ -49,15 +60,20 @@ export async function POST(
 
         const patientId = parsedBody.data.patientId;
 
+        let shouldNotifyPatientAssignment = false;
+        let assignedTeamName: string | null = null;
+
         await db.runTransaction(async (transaction) => {
             const teamRef = db!.collection('teams').doc(teamId);
             const patientRef = db!.collection('patients').doc(patientId);
             const userPatientRef = db!.collection('users').doc(patientId);
+            const teamMembershipQuery = db!.collection('teams').where('patientIds', 'array-contains', patientId);
 
-            const [teamDoc, patientDoc, patientUserDoc] = await Promise.all([
+            const [teamDoc, patientDoc, patientUserDoc, teamMembershipSnapshot] = await Promise.all([
                 transaction.get(teamRef),
                 transaction.get(patientRef),
-                transaction.get(userPatientRef)
+                transaction.get(userPatientRef),
+                transaction.get(teamMembershipQuery)
             ]);
 
             const team = mapTeamSnapshot(teamDoc);
@@ -75,18 +91,22 @@ export async function POST(
                     : (patientUserDoc.exists ? patientUserDoc.data() : {})
             ) as Record<string, unknown>;
             const previousTeamId = asNonEmptyString(patientData.teamId);
+            const isAlreadyInTargetTeam = team.patientIds.includes(patientId);
+            const wasInDifferentTeam = teamMembershipSnapshot.docs.some((membershipDoc) => membershipDoc.id !== teamId);
+            shouldNotifyPatientAssignment = !isAlreadyInTargetTeam || wasInDifferentTeam || (previousTeamId !== null && previousTeamId !== teamId);
+            assignedTeamName = team.name;
 
-            if (previousTeamId && previousTeamId !== teamId) {
-                const previousTeamRef = db!.collection('teams').doc(previousTeamId);
-                const previousTeamDoc = await transaction.get(previousTeamRef);
-                const previousTeam = mapTeamSnapshot(previousTeamDoc);
-                if (previousTeam) {
-                    transaction.update(previousTeamRef, {
-                        patientIds: previousTeam.patientIds.filter((id) => id !== patientId),
-                        updatedAt: new Date()
-                    });
-                }
-            }
+            teamMembershipSnapshot.docs.forEach((membershipDoc) => {
+                if (membershipDoc.id === teamId) return;
+                const membershipTeam = mapTeamSnapshot(membershipDoc);
+                if (!membershipTeam) return;
+                if (!membershipTeam.patientIds.includes(patientId)) return;
+
+                transaction.update(membershipDoc.ref, {
+                    patientIds: membershipTeam.patientIds.filter((id) => id !== patientId),
+                    updatedAt: new Date()
+                });
+            });
 
             const nextPatientIds = Array.from(new Set([...team.patientIds, patientId]));
             transaction.update(teamRef, {
@@ -99,13 +119,41 @@ export async function POST(
                 updatedAt: new Date()
             }, { merge: true });
 
-            if (patientUserDoc.exists) {
-                transaction.set(userPatientRef, {
-                    teamId,
-                    updatedAt: new Date()
-                }, { merge: true });
-            }
+            transaction.set(userPatientRef, {
+                teamId,
+                updatedAt: new Date()
+            }, { merge: true });
         });
+
+        if (shouldNotifyPatientAssignment) {
+            const actorDoc = await db.collection('users').doc(user.uid).get();
+
+            const actorData = actorDoc.exists
+                ? actorDoc.data() as Record<string, unknown>
+                : undefined;
+            const actorName = resolveDisplayName(actorData)
+                ?? user.email?.split('@')[0]
+                ?? 'Care Team';
+
+            try {
+                await createNotification({
+                    recipientId: patientId,
+                    actorId: user.uid,
+                    actorName,
+                    type: 'team_patient_assigned',
+                    title: `Care team assigned`,
+                    body: `${actorName} assigned you to ${assignedTeamName ?? 'a care team'}.`,
+                    href: '/patient',
+                    metadata: {
+                        teamId,
+                        teamName: assignedTeamName,
+                        patientId
+                    }
+                });
+            } catch (notificationError) {
+                console.warn('Assign patient notification skipped:', notificationError);
+            }
+        }
 
         return NextResponse.json({ success: true, teamId, patientId });
     } catch (error: unknown) {
@@ -152,11 +200,13 @@ export async function DELETE(
 
         const teamRef = db.collection('teams').doc(teamId);
         const patientRef = db.collection('patients').doc(patientId);
+        const userPatientRef = db.collection('users').doc(patientId);
 
         await db.runTransaction(async (transaction) => {
-            const [teamDoc, patientDoc] = await Promise.all([
+            const [teamDoc, patientDoc, patientUserDoc] = await Promise.all([
                 transaction.get(teamRef),
-                transaction.get(patientRef)
+                transaction.get(patientRef),
+                transaction.get(userPatientRef)
             ]);
 
             const team = mapTeamSnapshot(teamDoc);
@@ -177,6 +227,16 @@ export async function DELETE(
                 const patientData = patientDoc.data() as Record<string, unknown>;
                 if (asNonEmptyString(patientData.teamId) === teamId) {
                     transaction.set(patientRef, {
+                        teamId: null,
+                        updatedAt: new Date()
+                    }, { merge: true });
+                }
+            }
+
+            if (patientUserDoc.exists) {
+                const patientUserData = patientUserDoc.data() as Record<string, unknown>;
+                if (asNonEmptyString(patientUserData.teamId) === teamId) {
+                    transaction.set(userPatientRef, {
                         teamId: null,
                         updatedAt: new Date()
                     }, { merge: true });

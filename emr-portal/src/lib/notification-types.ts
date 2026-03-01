@@ -3,7 +3,8 @@ export type AppNotificationType =
     | 'team_invite_response'
     | 'appointment_booked'
     | 'appointment_rescheduled'
-    | 'appointment_cancelled';
+    | 'appointment_cancelled'
+    | 'team_patient_assigned';
 
 export type NotificationActionStatus = 'pending' | 'accepted' | 'rejected' | null;
 

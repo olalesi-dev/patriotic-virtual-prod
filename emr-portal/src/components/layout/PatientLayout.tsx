@@ -10,7 +10,6 @@ import {
 } from "firebase/firestore";
 import {
 	Activity,
-	Bell,
 	Calendar,
 	ChevronRight,
 	CreditCard,
@@ -29,18 +28,81 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ProviderNotificationBell } from "@/components/common/ProviderNotificationBell";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { auth, db } from "@/lib/firebase";
 
-export function PatientLayout({ children }: { children: React.ReactNode }) {
+interface PatientLayoutState {
+	userProfile: any;
+	loading: boolean;
+	unreadCount: number;
+}
+
+type PatientLayoutAction =
+	| { type: "auth_changed" }
+	| { type: "profile_loaded"; payload: any }
+	| { type: "set_unread_count"; payload: number }
+	| { type: "auth_missing" }
+	| { type: "finish_loading" };
+
+const initialPatientLayoutState: PatientLayoutState = {
+	userProfile: null,
+	loading: true,
+	unreadCount: 0,
+};
+
+function patientLayoutReducer(
+	state: PatientLayoutState,
+	action: PatientLayoutAction,
+): PatientLayoutState {
+	if (action.type === "auth_changed") {
+		return {
+			...state,
+			userProfile: null,
+			loading: true,
+			unreadCount: 0,
+		};
+	}
+
+	if (action.type === "profile_loaded") {
+		return {
+			...state,
+			userProfile: action.payload,
+		};
+	}
+
+	if (action.type === "set_unread_count") {
+		return {
+			...state,
+			unreadCount: action.payload,
+		};
+	}
+
+	if (action.type === "auth_missing") {
+		return {
+			userProfile: null,
+			loading: false,
+			unreadCount: 0,
+		};
+	}
+
+	return {
+		...state,
+		loading: false,
+	};
+}
+
+function usePatientLayoutView({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const [userProfile, setUserProfile] = useState<any>(null);
-	const [loading, setLoading] = useState(true);
-	const [unreadCount, setUnreadCount] = useState(0);
+	const [layoutState, dispatchLayout] = useReducer(
+		patientLayoutReducer,
+		initialPatientLayoutState,
+	);
+	const { userProfile, loading, unreadCount } = layoutState;
 	const unreadThreadSnapshotRef = useRef<Record<string, number>>({});
 	const hasHydratedPatientThreadsRef = useRef(false);
 
@@ -53,9 +115,9 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 				unsubThreads = null;
 			}
 
+			dispatchLayout({ type: "auth_changed" });
 			unreadThreadSnapshotRef.current = {};
 			hasHydratedPatientThreadsRef.current = false;
-			setUnreadCount(0);
 
 			if (user) {
 				// Profile Retrieval (Check Patients then Users collection)
@@ -83,7 +145,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 					}
 				}
 
-				setUserProfile(profileData);
+				dispatchLayout({ type: "profile_loaded", payload: profileData });
 
 				// Unread Count Listener
 				const q = query(
@@ -94,8 +156,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 					const nextUnreadByThread: Record<string, number> = {};
 					let total = 0;
 
-					snapshot.docs.forEach((threadDoc) => {
-						const data = threadDoc.data();
+						snapshot.docs.forEach((threadDoc) => {
+							const data = threadDoc.data();
 						const threadUnreadRaw =
 							typeof data.patientUnreadCount === "number"
 								? data.patientUnreadCount
@@ -105,11 +167,11 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 						const threadUnread =
 							threadUnreadRaw > 0 ? threadUnreadRaw : data.unread === true ? 1 : 0;
 
-						nextUnreadByThread[threadDoc.id] = threadUnread;
-						total += threadUnread;
-					});
+							nextUnreadByThread[threadDoc.id] = threadUnread;
+							total += threadUnread;
+						});
 
-					setUnreadCount(total);
+						dispatchLayout({ type: "set_unread_count", payload: total });
 
 					if (hasHydratedPatientThreadsRef.current) {
 						snapshot.docChanges().forEach((change) => {
@@ -148,19 +210,19 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 						hasHydratedPatientThreadsRef.current = true;
 					}
 
-					unreadThreadSnapshotRef.current = nextUnreadByThread;
-				});
-                } else {
-                    setUserProfile(null);
-                }
-                setLoading(false);
-            });
+						unreadThreadSnapshotRef.current = nextUnreadByThread;
+					});
+				dispatchLayout({ type: "finish_loading" });
+			} else {
+				dispatchLayout({ type: "auth_missing" });
+			}
+		});
 
 		return () => {
 			unsubscribe();
 			if (unsubThreads) unsubThreads();
 		};
-		}, []);
+	}, []);
 
 	const handleLogout = async () => {
 		await auth.signOut();
@@ -207,13 +269,16 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 
 	return (
 		<div className="min-h-screen bg-[#F0F9FF] dark:bg-slate-900 flex text-slate-900 dark:text-slate-100">
-			{/* MOBILE SIDEBAR OVERLAY */}
-			{isSidebarOpen && (
-				<div
-					className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
-					onClick={() => setIsSidebarOpen(false)}
-				/>
-			)}
+				{/* MOBILE SIDEBAR OVERLAY */}
+				{isSidebarOpen && (
+					<button
+						type="button"
+						aria-label="Close sidebar"
+						className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
+						onClick={() => setIsSidebarOpen(false)}
+						tabIndex={0}
+					/>
+				)}
 
 			{/* SIDEBAR */}
 			<aside
@@ -326,10 +391,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 							/>
 						</div>
 
-						<button className="p-2.5 text-slate-400 dark:text-slate-300 hover:text-[#0EA5E9] hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-xl transition-all relative">
-							<Bell className="w-5 h-5" />
-							<span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-						</button>
+						<ProviderNotificationBell viewAllHref="/patient/notifications" />
 
 						<ThemeToggle />
 
@@ -350,4 +412,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 			</div>
 		</div>
 	);
+}
+
+export function PatientLayout({ children }: { children: React.ReactNode }) {
+	return usePatientLayoutView({ children });
 }

@@ -59,7 +59,7 @@ const scheduleVisitSchema = z.object({
 
 type ScheduleVisitValues = z.infer<typeof scheduleVisitSchema>;
 
-export function MainLayout({ children }: { children: React.ReactNode }) {
+function useMainLayoutView({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -498,7 +498,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </button>
                     )}
 
-                    <div
+                    <button
+                        type="button"
                         onClick={handleLogout}
                         className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-red-500/10 hover:text-red-400 cursor-pointer transition-colors group ${isSidebarCollapsed ? 'justify-center p-0' : ''}`}
                         title="Sign Out"
@@ -515,7 +516,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         {!isSidebarCollapsed && (
                             <LogOut className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         )}
-                    </div>
+                    </button>
                 </div>
             </aside>
 
@@ -585,8 +586,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                 <input type="hidden" {...scheduleForm.register('visitType')} />
                                 <div className="p-6 space-y-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">Patient</label>
+                                        <label htmlFor="schedule-patient" className="block text-sm font-bold text-slate-700 mb-1">Patient</label>
                                         <select
+                                            id="schedule-patient"
                                             {...scheduleForm.register('patientId')}
                                             disabled={loadingPatients || isSchedulingVisit}
                                             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow disabled:opacity-60"
@@ -608,8 +610,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-1">Date</label>
+                                            <label htmlFor="schedule-date" className="block text-sm font-bold text-slate-700 mb-1">Date</label>
                                             <input
+                                                id="schedule-date"
                                                 type="date"
                                                 {...scheduleForm.register('date')}
                                                 disabled={isSchedulingVisit}
@@ -620,8 +623,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                             )}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-1">Time</label>
+                                            <label htmlFor="schedule-time" className="block text-sm font-bold text-slate-700 mb-1">Time</label>
                                             <input
+                                                id="schedule-time"
                                                 type="time"
                                                 {...scheduleForm.register('time')}
                                                 disabled={isSchedulingVisit}
@@ -634,7 +638,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">Visit Type</label>
+                                        <p className="block text-sm font-bold text-slate-700 mb-1">Visit Type</p>
                                         <div className="flex gap-2">
                                             <button
                                                 type="button"
@@ -660,8 +664,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">Notes</label>
+                                        <label htmlFor="schedule-notes" className="block text-sm font-bold text-slate-700 mb-1">Notes</label>
                                         <textarea
+                                            id="schedule-notes"
                                             {...scheduleForm.register('notes')}
                                             disabled={isSchedulingVisit}
                                             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow disabled:opacity-60"
@@ -698,6 +703,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
         </div >
     );
+}
+
+export function MainLayout({ children }: { children: React.ReactNode }) {
+    return useMainLayoutView({ children });
 }
 
 function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {

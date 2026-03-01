@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { auth, db } from '@/lib/firebase';
 
-export function LoginForm() {
+function useLoginFormView() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [mfaStep, setMfaStep] = useState(false);
@@ -208,8 +208,9 @@ export function LoginForm() {
 
                 <form onSubmit={handleMfaVerify} className="space-y-4">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Security Code</label>
+                        <label htmlFor="mfa-security-code" className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Security Code</label>
                         <input
+                            id="mfa-security-code"
                             type="text"
                             placeholder="000000"
                             value={verificationCode}
@@ -259,10 +260,11 @@ export function LoginForm() {
 
             <form onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-1.5">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Email Address</label>
+                    <label htmlFor="patient-login-email" className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Email Address</label>
                     <div className="relative">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
+                            id="patient-login-email"
                             type="email"
                             placeholder="clinician@patriotic.com"
                             value={email}
@@ -274,10 +276,11 @@ export function LoginForm() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Password</label>
+                    <label htmlFor="patient-login-password" className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Password</label>
                     <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
+                            id="patient-login-password"
                             type="password"
                             placeholder="••••••••"
                             value={password}
@@ -344,4 +347,8 @@ export function LoginForm() {
             </div>
         </div>
     );
+}
+
+export function LoginForm() {
+    return useLoginFormView();
 }

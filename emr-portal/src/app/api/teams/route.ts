@@ -3,13 +3,15 @@ import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
 import { mapTeamSnapshot, mapUserDocToMember, toProviderRole } from '@/lib/server-teams';
+import { getRandomTeamColor, normalizeTeamColor } from '@/lib/team-colors';
 import type { PatientSummary, ProviderSummary } from '@/lib/team-types';
 
 export const dynamic = 'force-dynamic';
 
 const createTeamSchema = z.object({
     name: z.string().trim().min(2).max(80),
-    description: z.string().trim().max(220).optional()
+    description: z.string().trim().max(220).optional(),
+    color: z.string().trim().optional()
 });
 
 function asNonEmptyString(value: unknown): string | null {
@@ -20,30 +22,61 @@ function asNonEmptyString(value: unknown): string | null {
 
 function normalizePatientSummaries(
     patientDocs: Array<{ id: string; data: Record<string, unknown> }>,
-    userPatientDocs: Array<{ id: string; data: Record<string, unknown> }>
+    userPatientDocs: Array<{ id: string; data: Record<string, unknown> }>,
+    context: {
+        teamIdsInScope: Set<string>;
+        patientTeamByMembership: Map<string, string>;
+    }
 ): PatientSummary[] {
     const map = new Map<string, PatientSummary>();
 
-    const push = (id: string, data: Record<string, unknown>) => {
+    const push = (
+        id: string,
+        data: Record<string, unknown>,
+        source: 'patients' | 'users'
+    ) => {
         const current = map.get(id);
         const name = asNonEmptyString(data.name)
             ?? asNonEmptyString(data.displayName)
             ?? [asNonEmptyString(data.firstName), asNonEmptyString(data.lastName)].filter(Boolean).join(' ')
             ?? asNonEmptyString(data.email)?.split('@')[0]
             ?? `Patient ${id.slice(0, 6)}`;
+        const incomingTeamId = asNonEmptyString(data.teamId);
+        const teamId = source === 'patients'
+            ? (incomingTeamId ?? current?.teamId ?? null)
+            : (current?.teamId ?? incomingTeamId ?? null);
 
         map.set(id, {
             id,
             name,
             email: asNonEmptyString(data.email) ?? current?.email ?? null,
-            teamId: asNonEmptyString(data.teamId) ?? current?.teamId ?? null
+            teamId
         });
     };
 
-    patientDocs.forEach((doc) => push(doc.id, doc.data));
-    userPatientDocs.forEach((doc) => push(doc.id, doc.data));
+    patientDocs.forEach((doc) => push(doc.id, doc.data, 'patients'));
+    userPatientDocs.forEach((doc) => push(doc.id, doc.data, 'users'));
 
-    return Array.from(map.values()).sort((first, second) => first.name.localeCompare(second.name));
+    return Array.from(map.values())
+        .map((patient) => {
+            const membershipTeamId = context.patientTeamByMembership.get(patient.id) ?? null;
+            if (membershipTeamId) {
+                return {
+                    ...patient,
+                    teamId: membershipTeamId
+                };
+            }
+
+            if (patient.teamId && context.teamIdsInScope.has(patient.teamId)) {
+                return {
+                    ...patient,
+                    teamId: null
+                };
+            }
+
+            return patient;
+        })
+        .sort((first, second) => first.name.localeCompare(second.name));
 }
 
 export async function GET(request: Request) {
@@ -83,6 +116,16 @@ export async function GET(request: Request) {
             .filter((team): team is NonNullable<typeof team> => Boolean(team))
             .sort((first, second) => first.name.localeCompare(second.name));
 
+        const teamIdsInScope = new Set(teams.map((team) => team.id));
+        const patientTeamByMembership = new Map<string, string>();
+        teams.forEach((team) => {
+            team.patientIds.forEach((patientId) => {
+                if (!patientTeamByMembership.has(patientId)) {
+                    patientTeamByMembership.set(patientId, team.id);
+                }
+            });
+        });
+
         const providers: ProviderSummary[] = providersSnapshot.docs.reduce<ProviderSummary[]>((accumulator, providerDoc) => {
             const data = providerDoc.data() as Record<string, unknown>;
             const providerRole = toProviderRole(data.role);
@@ -104,7 +147,11 @@ export async function GET(request: Request) {
 
         const patients = normalizePatientSummaries(
             patientsSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> })),
-            patientUsersSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> }))
+            patientUsersSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> })),
+            {
+                teamIdsInScope,
+                patientTeamByMembership
+            }
         );
 
         return NextResponse.json({
@@ -157,9 +204,11 @@ export async function POST(request: Request) {
 
         const now = new Date();
         const teamRef = firestore.collection('teams').doc();
+        const normalizedColor = normalizeTeamColor(parsedBody.data.color) ?? getRandomTeamColor();
         await teamRef.set({
             name: parsedBody.data.name.trim(),
             description: asNonEmptyString(parsedBody.data.description ?? ''),
+            color: normalizedColor,
             ownerId: user.uid,
             ownerName: member.name,
             memberIds: [user.uid],

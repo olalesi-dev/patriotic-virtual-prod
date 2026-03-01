@@ -3,12 +3,14 @@ import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
 import { mapTeamSnapshot } from '@/lib/server-teams';
+import { getRandomTeamColor, normalizeTeamColor } from '@/lib/team-colors';
 
 export const dynamic = 'force-dynamic';
 
 const updateTeamSchema = z.object({
     name: z.string().trim().min(2).max(80).optional(),
-    description: z.string().trim().max(220).nullable().optional()
+    description: z.string().trim().max(220).nullable().optional(),
+    color: z.string().trim().nullable().optional()
 });
 
 function asNonEmptyString(value: unknown): string | null {
@@ -73,6 +75,10 @@ export async function PATCH(
             updatePayload.description = parsedBody.data.description === null
                 ? null
                 : asNonEmptyString(parsedBody.data.description);
+        }
+
+        if (parsedBody.data.color !== undefined) {
+            updatePayload.color = normalizeTeamColor(parsedBody.data.color) ?? getRandomTeamColor();
         }
 
         await teamRef.update(updatePayload);
