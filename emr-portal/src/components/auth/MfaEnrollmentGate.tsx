@@ -64,15 +64,7 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
     }
 
     // If no user survived the onAuthStateChanged redirect, just show children (likely /login)
-    if (!user || isEnrolled) {
-        return <>{children}</>;
-    }
-
-    // If user is logged in but NOT enrolled in MFA, show the setup gate
-    return (
-        <div className="flex h-screen items-center justify-center bg-slate-50 p-4">
-            <MfaSetup onComplete={() => setIsEnrolled(true)} />
-        </div>
-    );
+    // NOTE: MFA Enforcement disabled for now as requested.
+    return <>{children}</>;
 };
 
