@@ -67,6 +67,7 @@ Set one of these in your deployment environment variables:
 
 Also set:
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` (Firebase Console → Project settings → Cloud Messaging → Web Push certificates)
 - `FIREBASE_VERIFY_REVOKED_TOKENS=true`
 
 ## Security notes

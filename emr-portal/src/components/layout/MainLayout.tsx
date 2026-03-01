@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { User as FirebaseUser } from 'firebase/auth';
 import {
     collection,
     doc,
@@ -25,6 +26,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
     PROVIDER_APPOINTMENT_CREATED_EVENT,
     type ProviderDashboardAppointmentEventPayload
@@ -66,11 +68,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [isSchedulingVisit, setIsSchedulingVisit] = useState(false);
 
     const [userProfile, setUserProfile] = useState<any>(null);
+    const [activeUser, setActiveUser] = useState<FirebaseUser | null>(null);
     const [providerUnreadCount, setProviderUnreadCount] = useState(0);
     const threadUnreadSnapshotRef = useRef<Record<string, number>>({});
     const hasHydratedProviderThreadsRef = useRef(false);
 
     const router = useRouter();
+    usePushNotifications(activeUser);
     const scheduleForm = useForm<ScheduleVisitValues>({
         resolver: zodResolver(scheduleVisitSchema),
         defaultValues: {
@@ -157,6 +161,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         let unsubProviderThreads: (() => void) | null = null;
 
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            setActiveUser(user);
             if (unsubProviderThreads) {
                 unsubProviderThreads();
                 unsubProviderThreads = null;
@@ -254,6 +259,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 });
             } else {
                 setBookingPatients([]);
+                setUserProfile(null);
             }
         });
 
