@@ -11,7 +11,10 @@ import { logAuditEvent } from '@/lib/audit';
 
 export default function SignupPage() {
     const [formData, setFormData] = useState({
-        fullName: '',
+        firstName: '',
+        lastName: '',
+        dob: '',
+        sex: '',
         email: '',
         password: '',
         confirmPassword: ''
@@ -48,7 +51,7 @@ export default function SignupPage() {
 
             // 2. Update Auth Profile
             await updateProfile(user, {
-                displayName: formData.fullName
+                displayName: `${formData.firstName} ${formData.lastName}`.trim()
             });
 
             // 3. Create Patient Record in Firestore
@@ -56,9 +59,11 @@ export default function SignupPage() {
             await setDoc(doc(db, 'patients', user.uid), {
                 uid: user.uid,
                 email: formData.email,
-                name: formData.fullName,
-                firstName: formData.fullName.split(' ')[0],
-                lastName: formData.fullName.split(' ').slice(1).join(' '),
+                name: `${formData.firstName} ${formData.lastName}`.trim(),
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                dob: formData.dob || null,
+                sex: formData.sex || null,
                 role: 'patient',
                 status: 'active',
                 emailVerified: false,
@@ -143,18 +148,64 @@ export default function SignupPage() {
                     )}
 
                     <form onSubmit={handleSignup} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Full legal Name</label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="John Doe"
-                                    value={formData.fullName}
-                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                    className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
-                                    required
-                                />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">First Name</label>
+                                <div className="relative">
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="John"
+                                        value={formData.firstName}
+                                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                        className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Last Name</label>
+                                <div className="relative">
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Doe"
+                                        value={formData.lastName}
+                                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                        className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Date of Birth</label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        value={formData.dob}
+                                        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                                        className="w-full bg-slate-50 border-none rounded-xl py-4 px-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Sex</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.sex}
+                                        onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
+                                        className="w-full bg-slate-50 border-none rounded-xl py-4 px-4 text-slate-900 font-bold focus:ring-2 focus:ring-brand/20 transition-all"
+                                        required
+                                    >
+                                        <option value="" disabled>Select...</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
