@@ -570,7 +570,7 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
         if (!item) return res.status(400).json({ error: `Invalid service key: ${serviceKey}` });
 
         // DETERMINE BASE URL (Prioritize custom domain for production)
-        const baseUrl = process.env.FRONTEND_URL || 'https://patriotictelehealth.com';
+        const baseUrl = process.env.FRONTEND_URL || 'https://patriotic-virtual-emr.web.app';
 
         const sessionConfig = {
             payment_method_types: ['card'],
@@ -590,7 +590,8 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
             cancel_url: `${baseUrl}?payment=cancelled`,
             metadata: {
                 serviceKey,
-                consultationId
+                consultationId,
+                uid: req.body.uid || 'unauthenticated_patient'
             }
         };
 
@@ -647,8 +648,8 @@ app.post('/api/v1/billing/create-balance-checkout', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-portal.web.app'}/patient/billing?payment=success`,
-            cancel_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-portal.web.app'}/patient/billing?payment=cancelled`,
+            success_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-emr.web.app'}/patient/billing?payment=success`,
+            cancel_url: `${process.env.FRONTEND_URL || 'https://patriotic-virtual-emr.web.app'}/patient/billing?payment=cancelled`,
             metadata: {
                 paymentType: 'balance_payment',
                 uid: uid
@@ -679,11 +680,35 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
         const session = event.data.object;
         const { consultationId, paymentType, uid } = session.metadata;
         if (consultationId) {
-            await db.collection('consultations').doc(consultationId).update({
+            const batch = db.batch();
+            const consultRef = db.collection('consultations').doc(consultationId);
+
+            // 1. Mark consultation as paid
+            batch.update(consultRef, {
                 paymentStatus: 'paid',
                 stripeSessionId: session.id,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
+
+            // 2. Create Appointment in Patient Sub-collection
+            // Path: patients/{uid}/appointments
+            // We'll use the UID from metadata
+            if (uid) {
+                const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
+                batch.set(apptRef, {
+                    date: admin.firestore.FieldValue.serverTimestamp(), // Initial slot, patient can reschedule
+                    providerName: "Patriotic Provider", // Default as requested
+                    providerId: "dr-o-admin-uid", // Placeholder for Dr. O / Admin
+                    type: "Telehealth",
+                    status: "scheduled",
+                    meetingUrl: "https://doxy.me/patriotictelehealth",
+                    consultationId: consultationId,
+                    serviceKey: serviceKey || 'general_consultation',
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            await batch.commit();
         }
 
         if (paymentType === 'balance_payment' && uid) {
