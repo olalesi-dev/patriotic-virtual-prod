@@ -12,6 +12,8 @@ import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { GlobalSearch } from './GlobalSearch';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -24,64 +26,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [time, setTime] = useState('10:00');
     const [type, setType] = useState('video');
 
-    const [userProfile, setUserProfile] = useState<any>(null);
-
     const router = useRouter();
 
+    const profile = useUserProfile(auth.currentUser);
+
     React.useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                let profileData: any = {
-                    name: user.displayName || 'Provider',
-                    role: 'Clinician'
-                };
-
-                try {
-                    const userRef = doc(db, 'users', user.uid);
-                    const userSnap = await getDoc(userRef);
-
-                    if (userSnap.exists()) {
-                        profileData = { ...profileData, ...userSnap.data() };
-                    } else {
-                        // Fallback check against patients collection
-                        const patientRef = doc(db, 'patients', user.uid);
-                        const patientSnap = await getDoc(patientRef);
-                        if (patientSnap.exists()) {
-                            const data = patientSnap.data();
-                            profileData = { ...profileData, ...data };
-                            if (!profileData.name && data.firstName && data.lastName) {
-                                profileData.name = `${data.firstName} ${data.lastName}`;
-                            } else if (!profileData.name && data.firstName) {
-                                profileData.name = data.firstName;
-                            }
-                            profileData.role = 'Patient (Testing Provider View)';
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error fetching user profile", e);
-                }
-
-                setUserProfile(profileData);
-            } else {
-                router.push('/login');
+        if (!profile.loading) {
+            if (!auth.currentUser) {
+                router.replace('/login');
+            } else if (profile.normalizedRole !== 'provider') {
+                router.replace('/patient');
             }
-        });
-        return () => unsubscribe();
-    }, [router]);
-
-    const getInitials = (name: string) => {
-        if (!name) return 'PR';
-        const parts = name.trim().split(' ');
-        if (parts.length > 1) {
-            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         }
-        return name.substring(0, 2).toUpperCase();
-    };
+    }, [profile, router]);
 
-    const handleLogout = async () => {
-        await auth.signOut();
-        router.push('/login');
-    };
 
     const handleSchedule = () => {
         const newAppointment = {
@@ -103,6 +61,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             window.location.reload();
         }
     };
+
+    if (profile.loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
@@ -202,24 +168,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </button>
                     )}
 
-                    <div
-                        onClick={handleLogout}
-                        className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-red-500/10 hover:text-red-400 cursor-pointer transition-colors group ${isSidebarCollapsed ? 'justify-center p-0' : ''}`}
-                        title="Sign Out"
-                    >
-                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm shadow-md group-hover:bg-red-500 text-white transition-colors shrink-0">
-                            {getInitials(userProfile?.name)}
-                        </div>
-                        {!isSidebarCollapsed && (
-                            <div className="flex-1 overflow-hidden">
-                                <div className="text-sm font-medium truncate transition-colors">{userProfile?.name || 'Provider'}</div>
-                                <div className="text-xs text-slate-400 group-hover:text-red-400/80 truncate">{userProfile?.role || 'Clinician'}</div>
-                            </div>
-                        )}
-                        {!isSidebarCollapsed && (
-                            <LogOut className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                    </div>
+                    {!isSidebarCollapsed && <UserIdentityMenu />}
                 </div>
             </aside>
 
@@ -240,7 +189,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </div>
 
                         <button
-                            onClick={handleLogout}
+                            onClick={async () => {
+                                await auth.signOut();
+                                router.push('/login');
+                            }}
                             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-lg transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900/30 cursor-pointer"
                         >
                             <LogOut className="w-4 h-4" />

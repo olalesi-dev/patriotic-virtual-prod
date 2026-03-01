@@ -23,84 +23,45 @@ import {
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 
 export function PatientLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [userProfile, setUserProfile] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
+
+    const profile = useUserProfile(auth.currentUser);
+
+    useEffect(() => {
+        if (!profile.loading) {
+            if (!auth.currentUser) {
+                if (!['/login', '/signup', '/forgot-password'].includes(pathname)) {
+                    router.replace('/login');
+                }
+            } else if (profile.normalizedRole !== 'patient') {
+                router.replace('/dashboard');
+            }
+        }
+    }, [profile, pathname, router]);
 
     useEffect(() => {
         let unsubThreads: any;
 
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                // Profile Retrieval (Check Patients then Users collection)
-                let profileData: any = {
-                    name: user.displayName || 'Patient',
-                    firstName: user.displayName ? user.displayName.split(' ')[0] : 'Patient',
-                    role: 'Patient' // default fallback
-                };
-
-                const docRef = doc(db, 'patients', user.uid);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    profileData = { ...profileData, ...docSnap.data() };
-                } else {
-                    const userRef = doc(db, 'users', user.uid);
-                    const userSnap = await getDoc(userRef);
-                    if (userSnap.exists()) {
-                        profileData = { ...profileData, ...userSnap.data() };
-                        if (profileData.displayName && !profileData.name) {
-                            profileData.name = profileData.displayName;
-                        }
-                    }
-                }
-
-                setUserProfile(profileData);
-
-                // Unread Count Listener
-                const q = query(collection(db, 'threads'), where('patientId', '==', user.uid));
-                unsubThreads = onSnapshot(q, (snapshot) => {
-                    const total = snapshot.docs.reduce((acc, d) => acc + (d.data().unreadCount || 0), 0);
-                    setUnreadCount(total);
-                });
-
-            } else {
-                if (!['/login', '/signup', '/forgot-password'].includes(pathname)) {
-                    router.push('/login');
-                }
-            }
-            setLoading(false);
-        });
+        if (auth.currentUser) {
+            const q = query(collection(db, 'threads'), where('patientId', '==', auth.currentUser.uid));
+            unsubThreads = onSnapshot(q, (snapshot) => {
+                const total = snapshot.docs.reduce((acc, d) => acc + (d.data().unreadCount || 0), 0);
+                setUnreadCount(total);
+            });
+        }
 
         return () => {
-            unsubscribe();
             if (unsubThreads) unsubThreads();
         };
-    }, [pathname, router]);
+    }, []);
 
-    const handleLogout = async () => {
-        await auth.signOut();
-        router.push('/login');
-    };
-
-    const getInitials = (name: string) => {
-        if (!name || name === 'Patient') return 'P';
-        const parts = name.trim().split(' ');
-        if (parts.length > 1) {
-            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-        }
-        return name.substring(0, 2).toUpperCase();
-    };
-
-    const getFirstName = (name: string) => {
-        if (!name) return 'Patient';
-        return name.trim().split(' ')[0];
-    };
 
     const navigation = [
         { name: 'Dashboard', href: '/patient', icon: LayoutDashboard },
@@ -113,7 +74,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
         { name: 'Settings', href: '/patient/settings', icon: Settings },
     ];
 
-    if (loading) {
+    if (profile.loading) {
         return (
             <div className="min-h-screen bg-[#F0F9FF] flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-slate-200 border-t-[#0EA5E9] rounded-full animate-spin"></div>
@@ -176,33 +137,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                     })}
                 </nav>
 
-                {/* User Profile info - Redesigned Dark Theme Box */}
-                <div className="mt-auto p-4 mx-4 mb-6 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-xl relative group overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none"></div>
-
-                    <div className="flex items-center gap-3 relative z-10">
-                        <div className="w-10 h-10 rounded-full bg-[#6366F1] flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md ring-2 ring-[#0F172A]">
-                            {getInitials(userProfile?.name)}
-                        </div>
-                        <div className="flex-1 min-w-0 pr-6">
-                            <h4 className="text-sm font-bold text-white truncate drop-shadow-sm">
-                                {userProfile?.name || 'Patient'}
-                            </h4>
-                            <p className="text-xs font-semibold text-slate-400 capitalize truncate">
-                                {userProfile?.role || 'Patient'}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Logout Button (Appears on Hover) */}
-                    <button
-                        onClick={handleLogout}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-800/0 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-all z-20"
-                        title="Sign Out"
-                    >
-                        <LogOut className="w-4 h-4" />
-                    </button>
-                </div>
+                {/* User Profile info */}
+                <UserIdentityMenu />
             </aside>
 
             {/* MAIN CONTENT */}
@@ -217,7 +153,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                             <Menu className="w-6 h-6" />
                         </button>
                         <h2 className="text-xl font-black text-slate-800 tracking-tight hidden sm:block">
-                            Welcome back, <span className="text-[#0EA5E9]">{getFirstName(userProfile?.name)}</span>
+                            Welcome back, <span className="text-[#0EA5E9]">{profile.displayName.split(' ')[0]}</span>
                         </h2>
                     </div>
 

@@ -28,7 +28,10 @@ export default function UserManagementPage() {
 
     // Form state
     const [formData, setFormData] = useState({
-        displayName: '',
+        firstName: '',
+        lastName: '',
+        dob: '',
+        sex: '',
         email: '',
         password: '',
         role: 'patient'
@@ -70,7 +73,7 @@ export default function UserManagementPage() {
             const data = await res.json();
             if (data.success) {
                 setIsCreateModalOpen(false);
-                setFormData({ displayName: '', email: '', password: '', role: 'patient' });
+                setFormData({ firstName: '', lastName: '', dob: '', sex: '', email: '', password: '', role: 'patient' });
                 fetchUsers();
             } else {
                 throw new Error(data.error);
@@ -362,18 +365,64 @@ export default function UserManagementPage() {
                             )}
 
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Full Name</label>
-                                    <div className="relative">
-                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <input
-                                            required
-                                            type="text"
-                                            placeholder="e.g. Dr. John Watson"
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                            value={formData.displayName}
-                                            onChange={e => setFormData({ ...formData, displayName: e.target.value })}
-                                        />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <input
+                                                required
+                                                type="text"
+                                                placeholder="e.g. John"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                                value={formData.firstName}
+                                                onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <input
+                                                required
+                                                type="text"
+                                                placeholder="e.g. Watson"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                                value={formData.lastName}
+                                                onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">D.O.B.</label>
+                                        <div className="relative">
+                                            <input
+                                                required
+                                                type="date"
+                                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                                value={formData.dob}
+                                                onChange={e => setFormData({ ...formData, dob: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Sex</label>
+                                        <div className="relative">
+                                            <select
+                                                required
+                                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                                value={formData.sex}
+                                                onChange={e => setFormData({ ...formData, sex: e.target.value })}
+                                            >
+                                                <option value="" disabled>Select Sex...</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 

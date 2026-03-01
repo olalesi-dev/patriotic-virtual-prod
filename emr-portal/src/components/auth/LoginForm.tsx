@@ -39,23 +39,34 @@ export function LoginForm() {
                 if (result) {
                     console.log('Google Redirect Result detected:', result.user.email);
                     const user = result.user;
-                    // Handle post-login profile logic
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (!userDoc.exists()) {
-                        console.log('Creating new user profile for:', user.email);
-                        await setDoc(doc(db, 'users', user.uid), {
-                            displayName: user.displayName,
-                            email: user.email,
-                            photoURL: user.photoURL,
-                            role: 'patient',
-                            createdAt: serverTimestamp(),
-                            isMfaEnrolled: false
-                        });
+                    let targetRoute = '/';
+
+                    // Check patients collection first
+                    const patientDoc = await getDoc(doc(db, 'patients', user.uid));
+                    if (patientDoc.exists()) {
+                        if (patientDoc.data().role === 'patient') targetRoute = '/patient';
                     } else {
-                        console.log('Existing user profile found for:', user.email);
+                        // Check users collection
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (!userDoc.exists()) {
+                            console.log('Creating new user profile for:', user.email);
+                            await setDoc(doc(db, 'users', user.uid), {
+                                displayName: user.displayName,
+                                email: user.email,
+                                photoURL: user.photoURL,
+                                role: 'patient',
+                                createdAt: serverTimestamp(),
+                                isMfaEnrolled: false
+                            });
+                            targetRoute = '/patient';
+                        } else {
+                            console.log('Existing user profile found for:', user.email);
+                            if (userDoc.data().role === 'patient') targetRoute = '/patient';
+                        }
                     }
-                    console.log('Redirecting to dashboard...');
-                    router.push('/');
+
+                    console.log(`Redirecting to ${targetRoute}...`);
+                    router.push(targetRoute);
                 } else {
                     console.log('No Google Redirect result found.');
                 }
@@ -111,7 +122,23 @@ export function LoginForm() {
         try {
             const result = await signInWithEmailAndPassword(auth, email, password);
             console.log('Email Login Successful:', result.user.email);
-            router.push('/');
+
+            let targetRoute = '/';
+            try {
+                const patientDoc = await getDoc(doc(db, 'patients', result.user.uid));
+                if (patientDoc.exists() && patientDoc.data().role === 'patient') {
+                    targetRoute = '/patient';
+                } else {
+                    const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'patient') {
+                        targetRoute = '/patient';
+                    }
+                }
+            } catch (roleErr) {
+                console.error('Error fetching role for correct routing', roleErr);
+            }
+
+            router.push(targetRoute);
         } catch (err: any) {
             console.error('Email Login Failed:', err.code, err.message);
             if (err.code === 'auth/multi-factor-auth-required') {
@@ -176,8 +203,24 @@ export function LoginForm() {
         try {
             const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
             const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
-            await resolver.resolveSignIn(multiFactorAssertion);
-            router.push('/');
+            const result = await resolver.resolveSignIn(multiFactorAssertion);
+
+            let targetRoute = '/';
+            try {
+                const patientDoc = await getDoc(doc(db, 'patients', result.user.uid));
+                if (patientDoc.exists() && patientDoc.data().role === 'patient') {
+                    targetRoute = '/patient';
+                } else {
+                    const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'patient') {
+                        targetRoute = '/patient';
+                    }
+                }
+            } catch (roleErr) {
+                console.error('Error fetching role for correct routing', roleErr);
+            }
+
+            router.push(targetRoute);
         } catch (err: any) {
             console.error('MFA Verification Error:', err);
             setError('Invalid verification code.');
