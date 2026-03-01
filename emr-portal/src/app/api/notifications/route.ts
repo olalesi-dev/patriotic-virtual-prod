@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
-import { mapNotificationSnapshot } from '@/lib/server-notifications';
 import { requireAuthenticatedUser } from '@/lib/server-auth';
+import { mapNotificationSnapshot } from '@/lib/server-notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +10,22 @@ function parseLimit(value: string | null): number {
     const parsed = Number.parseInt(value, 10);
     if (!Number.isFinite(parsed)) return 25;
     return Math.max(1, Math.min(parsed, 100));
+}
+
+function isMissingIndexError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false;
+    const typedError = error as Error & { code?: string | number };
+    const message = typedError.message.toLowerCase();
+    const code = typeof typedError.code === 'number'
+        ? String(typedError.code)
+        : (typedError.code ?? '').toLowerCase();
+
+    return (
+        code === 'failed-precondition' ||
+        code === '9' ||
+        message.includes('failed_precondition') ||
+        message.includes('requires an index')
+    );
 }
 
 export async function GET(request: Request) {
@@ -32,13 +48,26 @@ export async function GET(request: Request) {
         const unreadOnly = url.searchParams.get('unread') === 'true';
 
         const baseQuery = db.collection('notifications').where('recipientId', '==', user.uid);
-        const [recentSnapshot, allSnapshot] = await Promise.all([
-            baseQuery.orderBy('createdAt', 'desc').limit(limit).get(),
-            baseQuery.get()
-        ]);
+        const allSnapshotPromise = baseQuery.get();
 
-        const recentNotifications = recentSnapshot.docs
-            .map((notificationDoc) => mapNotificationSnapshot(notificationDoc));
+        let recentNotifications;
+        try {
+            const recentSnapshot = await baseQuery.orderBy('createdAt', 'desc').limit(limit).get();
+            recentNotifications = recentSnapshot.docs
+                .map((notificationDoc) => mapNotificationSnapshot(notificationDoc));
+        } catch (recentQueryError) {
+            if (!isMissingIndexError(recentQueryError)) {
+                throw recentQueryError;
+            }
+
+            const allSnapshotForFallback = await allSnapshotPromise;
+            recentNotifications = allSnapshotForFallback.docs
+                .map((notificationDoc) => mapNotificationSnapshot(notificationDoc))
+                .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
+                .slice(0, limit);
+        }
+
+        const allSnapshot = await allSnapshotPromise;
 
         const notifications = unreadOnly
             ? recentNotifications.filter((notification) => notification.read === false)

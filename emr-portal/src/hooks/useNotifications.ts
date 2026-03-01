@@ -26,6 +26,11 @@ interface NotificationApiResponse {
     error?: string;
 }
 
+interface NotificationListApiResponse extends NotificationApiResponse {
+    notifications?: AppNotification[];
+    unreadCount?: number;
+}
+
 function asString(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const normalized = value.trim();
@@ -145,6 +150,44 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
         setLoading(true);
         setError(null);
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+        const fetchByApi = async () => {
+            try {
+                const headers = await buildAuthHeaders(activeUser);
+                const response = await fetch(`/api/notifications?limit=${Math.max(1, limit)}`, {
+                    method: 'GET',
+                    headers,
+                    cache: 'no-store'
+                });
+
+                const payload = await response.json() as NotificationListApiResponse;
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.error || 'Failed to load notifications.');
+                }
+
+                const nextItems = sortNotifications(
+                    Array.isArray(payload.notifications)
+                        ? payload.notifications
+                        : []
+                ).slice(0, Math.max(1, limit));
+                setNotifications(nextItems);
+                setError(null);
+                setLoading(false);
+            } catch (apiError) {
+                const message = apiError instanceof Error ? apiError.message : 'Failed to load notifications.';
+                setError(message);
+                setLoading(false);
+            }
+        };
+
+        const startPollingFallback = () => {
+            if (pollTimer) return;
+            void fetchByApi();
+            pollTimer = setInterval(() => {
+                void fetchByApi();
+            }, 15_000);
+        };
 
         const notificationsQuery = query(
             collection(db, 'notifications'),
@@ -170,14 +213,26 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
             hydratedRef.current = true;
             setNotifications(mapped);
+            setError(null);
             setLoading(false);
         }, (snapshotError) => {
+            if ((snapshotError as { code?: string })?.code === 'permission-denied') {
+                console.warn('Realtime notifications disabled by Firestore rules; using API polling fallback.');
+                setError(null);
+                startPollingFallback();
+                return;
+            }
             console.error('Notifications listener error:', snapshotError);
             setError('Unable to subscribe to notifications.');
-            setLoading(false);
+            startPollingFallback();
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            if (pollTimer) {
+                clearInterval(pollTimer);
+            }
+        };
     }, [activeUser, limit, toastOnNew]);
 
     const updateNotificationReadState = useCallback(async (id: string, read: boolean): Promise<boolean> => {

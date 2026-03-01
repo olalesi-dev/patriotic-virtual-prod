@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 import { Toaster as SonnerToaster } from 'sonner';
 import { MfaEnrollmentGate } from '@/components/auth/MfaEnrollmentGate';
 import { SecurityShell } from '@/components/auth/SecurityShell';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { initializeTrustedTypes } from '@/lib/trusted-types';
 
 // Initialize Trusted Types immediately
@@ -26,21 +25,20 @@ export default function RootLayout({
 }: {
     children: React.ReactNode;
 }) {
-    // Purge old service workers from the static version
-    // Force new build hash: v2.1.0-DYNAMIC-FIX
+    // Cleanup only legacy cache-busting workers while preserving FCM worker.
     useEffect(() => {
-        // Clear old caches aggressively
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((registrations) => {
+                const legacyWorkerNames = ['/sw.js', '/service-worker.js', '/workbox-sw.js'];
                 for (const registration of registrations) {
+                    const scriptUrl = registration.active?.scriptURL ?? registration.waiting?.scriptURL ?? registration.installing?.scriptURL;
+                    if (!scriptUrl) continue;
+                    const shouldUnregister = legacyWorkerNames.some((legacyWorkerName) => scriptUrl.endsWith(legacyWorkerName));
+                    if (!shouldUnregister) continue;
                     registration.unregister();
-                    console.log('Unregistered stale service worker');
+                    console.log('Unregistered legacy service worker:', scriptUrl);
                 }
             });
-        }
-        // Force reload if we find specific old keys
-        if (localStorage.getItem('user_role') === null) {
-            // Optional: force a refresh if the user seems stuck on old version
         }
     }, []);
 

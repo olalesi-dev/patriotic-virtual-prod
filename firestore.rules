@@ -1,12 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(uid) {
       return request.auth.uid == uid;
     }
@@ -84,6 +84,13 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isStaff();
     }
+
+    // --- NOTIFICATIONS (client reads only own notifications) ---
+    match /notifications/{id} {
+      allow read: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
     // --- API & SYSTEM ---
     match /appointments/{id} {
       allow read, write: if isAuthenticated();

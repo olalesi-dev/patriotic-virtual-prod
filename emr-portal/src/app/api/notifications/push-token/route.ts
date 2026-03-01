@@ -30,10 +30,27 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: 'Invalid push token payload.' }, { status: 400 });
         }
 
-        await db.collection('users').doc(user.uid).set({
-            fcmTokens: FieldValue.arrayUnion(parsedBody.data.token),
+        const token = parsedBody.data.token;
+        const usersCollection = db.collection('users');
+        const existingTokenOwners = await usersCollection
+            .where('fcmTokens', 'array-contains', token)
+            .get();
+
+        const batch = db.batch();
+        existingTokenOwners.docs.forEach((ownerDoc) => {
+            if (ownerDoc.id === user.uid) return;
+            batch.set(ownerDoc.ref, {
+                fcmTokens: FieldValue.arrayRemove(token),
+                updatedAt: new Date()
+            }, { merge: true });
+        });
+
+        batch.set(usersCollection.doc(user.uid), {
+            fcmTokens: FieldValue.arrayUnion(token),
             updatedAt: new Date()
         }, { merge: true });
+
+        await batch.commit();
 
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
