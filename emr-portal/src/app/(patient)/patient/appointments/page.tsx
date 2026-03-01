@@ -20,8 +20,16 @@ import {
     MoreVertical,
     Sparkles,
     ThumbsUp,
-    ThumbsDown
+    ThumbsDown,
+    Activity,
+    Stethoscope,
+    CreditCard,
+    ArrowLeft,
+    Info,
+    ClipboardCheck,
+    Search
 } from 'lucide-react';
+import { svcs, iQs } from '@/lib/catalog';
 import { auth, db } from '@/lib/firebase';
 import {
     collection,
@@ -59,6 +67,8 @@ interface Appointment {
     status: 'scheduled' | 'cancelled' | 'completed';
     reason: string;
     meetingUrl?: string;
+    intakeAnswers?: Record<string, any>;
+    serviceKey?: string;
 }
 
 interface Provider {
@@ -81,11 +91,9 @@ export default function AppointmentsPage() {
 
     // Form Values
     const [newAppt, setNewAppt] = useState({
-        type: 'Telehealth' as 'Telehealth' | 'In-Person',
-        providerId: '',
-        providerName: '',
+        serviceKey: '',
+        intake: {} as Record<string, any>,
         date: new Date(addDays(new Date(), 1).setHours(10, 0, 0, 0)),
-        reason: ''
     });
 
     // Checklist State
@@ -165,38 +173,49 @@ export default function AppointmentsPage() {
     };
 
     const handleSchedule = async () => {
-        if (!auth.currentUser) return;
+        if (!auth.currentUser || !newAppt.serviceKey) return;
+        setLoading(true);
 
         try {
-            // HIPAA: Sanitize all user-inputted fields
-            const sanitizedReason = sanitize(newAppt.reason);
+            const token = await auth.currentUser.getIdToken();
+            const service = svcs.find(s => s.k === newAppt.serviceKey);
+            if (!service) throw new Error('Service not found');
 
-            const apptsRef = collection(db, 'patients', auth.currentUser.uid, 'appointments');
-            await addDoc(apptsRef, {
-                ...newAppt,
-                reason: sanitizedReason,
-                date: Timestamp.fromDate(newAppt.date),
-                status: 'scheduled',
-                createdAt: serverTimestamp(),
-                // Mock meeting URL for telehealth
-                meetingUrl: newAppt.type === 'Telehealth' ? `https://doxy.me/patriotic-visit-${Math.random().toString(36).substring(7)}` : null
+            // 1. Create Consultation
+            const consRes = await fetch('/api/v1/consultations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    serviceKey: newAppt.serviceKey,
+                    intake: newAppt.intake,
+                    stripeProductId: service.priceId
+                })
             });
 
-            await logAuditEvent({
-                userId: auth.currentUser.uid,
-                action: 'APPOINTMENT_SCHEDULED',
-                details: { provider: newAppt.providerName, type: newAppt.type }
+            if (!consRes.ok) throw new Error('Failed to create consultation');
+            const consData = await consRes.json();
+
+            // 2. Create Payment Session
+            const payRes = await fetch('/api/v1/payments/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    priceId: service.priceId,
+                    serviceKey: newAppt.serviceKey,
+                    consultationId: consData.id,
+                    uid: auth.currentUser.uid
+                })
             });
 
-            toast.success('Appointment scheduled successfully!', {
-                icon: '🗓️',
-                className: 'font-black uppercase tracking-widest text-xs'
-            });
-            setIsScheduling(false);
-            setStep(1);
-        } catch (error) {
-            console.error('Schedule error:', error);
-            toast.error('Failed to schedule appointment');
+            if (!payRes.ok) throw new Error('Payment initialization failed');
+            const payData = await payRes.json();
+
+            // 3. Redirect to Stripe
+            window.location.href = payData.url;
+        } catch (error: any) {
+            console.error('Booking error:', error);
+            toast.error(error.message || 'Failed to initialize booking');
+            setLoading(false);
         }
     };
 
@@ -359,8 +378,14 @@ export default function AppointmentsPage() {
                                                     Cancel
                                                 </button>
                                             )}
-                                            <button className="flex-1 md:w-24 bg-white text-slate-400 border border-slate-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 transition-all">
-                                                Reschedule
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedSummary(appt);
+                                                    setIsThinking(false);
+                                                }}
+                                                className="flex-1 md:w-24 bg-white text-sky-600 border border-sky-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 transition-all shadow-sm"
+                                            >
+                                                View Intake
                                             </button>
                                         </div>
                                     )}
@@ -399,157 +424,136 @@ export default function AppointmentsPage() {
             {isScheduling && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
-                        <div className="bg-[#0EA5E9] p-8 text-white flex justify-between items-center shrink-0">
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Step {step} of 5</p>
-                                <h2 className="text-2xl font-black tracking-tight">
-                                    {step === 1 && "Select Visit Type"}
-                                    {step === 2 && "Choose Physician"}
-                                    {step === 3 && "Select Date & Time"}
-                                    {step === 4 && "Reason for Visit"}
-                                    {step === 5 && "Review & Confirm"}
-                                </h2>
+                        <div className="bg-[#0EA5E9] p-8 text-white flex justify-between items-center shrink-0 shadow-lg z-10">
+                            <div className="flex items-center gap-4">
+                                {step > 1 && (
+                                    <button onClick={() => setStep(step - 1)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                        <ArrowLeft className="w-5 h-5" />
+                                    </button>
+                                )}
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Step {step} of 3</p>
+                                    <h2 className="text-2xl font-black tracking-tight leading-none">
+                                        {step === 1 && "Select Care Package"}
+                                        {step === 2 && "Clinical Intake"}
+                                        {step === 3 && "Review & Checkout"}
+                                    </h2>
+                                </div>
                             </div>
-                            <button onClick={() => setIsScheduling(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
+                            <button onClick={() => setIsScheduling(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-all">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <div className="p-8 overflow-y-auto flex-1">
+                        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
                             {step === 1 && (
-                                <div className="grid grid-cols-1 gap-4">
-                                    <VisitTypeCard
-                                        icon={Video}
-                                        title="Telehealth"
-                                        desc="Secure video call from anywhere"
-                                        active={newAppt.type === 'Telehealth'}
-                                        onClick={() => { setNewAppt({ ...newAppt, type: 'Telehealth' }); setStep(2); }}
-                                    />
-                                    <VisitTypeCard
-                                        icon={MapPin}
-                                        title="In-Person"
-                                        desc="Meet your doctor at the clinic"
-                                        active={newAppt.type === 'In-Person'}
-                                        onClick={() => { setNewAppt({ ...newAppt, type: 'In-Person' }); setStep(2); }}
-                                    />
-                                </div>
-                            )}
-
-                            {step === 2 && (
-                                <div className="space-y-3">
-                                    {providers.map(p => (
-                                        <button
-                                            key={p.id}
-                                            onClick={() => { setNewAppt({ ...newAppt, providerId: p.id, providerName: p.name }); setStep(3); }}
-                                            className="w-full p-4 rounded-2xl border border-slate-100 hover:border-[#0EA5E9] hover:bg-sky-50 transition-all text-left flex items-center gap-4 group"
-                                        >
-                                            <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-[#0EA5E9]">
-                                                <User className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <p className="font-black text-slate-800 text-sm">{p.name}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{p.specialty}</p>
-                                            </div>
-                                            <ChevronRight className="ml-auto w-4 h-4 text-slate-200" />
-                                        </button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {svcs.map(s => (
+                                        <VisitTypeCard
+                                            key={s.k}
+                                            icon={() => <span className="text-2xl">{s.icon}</span>}
+                                            title={s.name}
+                                            desc={`$${s.price} — ${s.cat}`}
+                                            active={newAppt.serviceKey === s.k}
+                                            onClick={() => {
+                                                setNewAppt({ ...newAppt, serviceKey: s.k });
+                                                setStep(2);
+                                            }}
+                                        />
                                     ))}
                                 </div>
                             )}
 
+                            {step === 2 && (
+                                <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                                    {(iQs[newAppt.serviceKey as keyof typeof iQs] || []).map((q: any) => (
+                                        <div key={q.k} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                                            <label className="block text-sm font-black text-slate-800 mb-4">{q.l}</label>
+                                            {q.t === 'yn' ? (
+                                                <div className="flex gap-3">
+                                                    {[
+                                                        { label: 'Yes', value: true },
+                                                        { label: 'No', value: false }
+                                                    ].map(opt => (
+                                                        <button
+                                                            key={opt.label}
+                                                            onClick={() => setNewAppt({
+                                                                ...newAppt,
+                                                                intake: { ...newAppt.intake, [q.k]: opt.value }
+                                                            })}
+                                                            className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border transition-all ${newAppt.intake[q.k] === opt.value ? 'bg-[#0EA5E9] text-white border-transparent' : 'bg-white text-slate-400 border-slate-100 hover:border-[#0EA5E9]'}`}
+                                                        >
+                                                            {opt.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    type="text"
+                                                    placeholder={q.p || 'Type your answer...'}
+                                                    value={newAppt.intake[q.k] || ''}
+                                                    onChange={(e) => setNewAppt({
+                                                        ...newAppt,
+                                                        intake: { ...newAppt.intake, [q.k]: e.target.value }
+                                                    })}
+                                                    className="w-full bg-white border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/10 focus:border-[#0EA5E9] transition-all"
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button
+                                        onClick={() => setStep(3)}
+                                        className="w-full bg-[#0EA5E9] text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-sky-100 flex items-center justify-center gap-2"
+                                    >
+                                        Proceed to Review <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+
                             {step === 3 && (
-                                <div className="space-y-6">
-                                    <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 overflow-hidden">
-                                        <Calendar
-                                            onChange={(val) => setNewAppt({ ...newAppt, date: val as Date })}
-                                            value={newAppt.date}
-                                            minDate={addDays(new Date(), 1)}
-                                            className="w-full border-none font-sans !bg-transparent"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['09:00 AM', '10:30 AM', '01:00 PM', '02:30 PM', '04:00 PM'].map(time => (
-                                            <button
-                                                key={time}
-                                                className={`py-3 rounded-xl font-black text-[10px] border transition-all ${newAppt.date.getHours() === parseInt(time) ? 'bg-[#0EA5E9] text-white border-transparent' : 'bg-white text-slate-500 border-slate-100 hover:border-[#0EA5E9]'}`}
-                                                onClick={() => {
-                                                    const [h, m] = time.split(':');
-                                                    const date = new Date(newAppt.date);
-                                                    date.setHours(parseInt(h) + (time.includes('PM') && h !== '12' ? 12 : 0));
-                                                    date.setMinutes(parseInt(m));
-                                                    setNewAppt({ ...newAppt, date });
-                                                }}
-                                            >
-                                                {time}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <button
-                                        onClick={() => setStep(4)}
-                                        className="w-full bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2"
-                                    >
-                                        Next <ArrowRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
+                                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                    <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
+                                        <div className="flex justify-between items-center pb-6 border-b border-slate-200/50">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Service Selection</p>
+                                                <h4 className="text-xl font-black text-slate-800">{svcs.find(s => s.k === newAppt.serviceKey)?.name}</h4>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Due</p>
+                                                <h4 className="text-xl font-black text-emerald-600">${svcs.find(s => s.k === newAppt.serviceKey)?.price}</h4>
+                                            </div>
+                                        </div>
 
-                            {step === 4 && (
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Why are you booking this visit?</label>
-                                        <textarea
-                                            className="w-full bg-slate-50 border-none rounded-3xl p-6 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100 transition-all min-h-[150px] placeholder:text-slate-300"
-                                            placeholder="Describe your symptoms or reason for the appointment..."
-                                            value={newAppt.reason}
-                                            onChange={(e) => setNewAppt({ ...newAppt, reason: e.target.value })}
-                                        />
-                                    </div>
-                                    <button
-                                        disabled={!newAppt.reason}
-                                        onClick={() => setStep(5)}
-                                        className="w-full bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        Review Appointment <ArrowRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
-
-                            {step === 5 && (
-                                <div className="space-y-8">
-                                    <div className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 space-y-4">
-                                        <div className="flex justify-between items-center pb-4 border-b border-slate-200/50">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Provider</span>
-                                            <span className="font-black text-slate-800">{newAppt.providerName}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pb-4 border-b border-slate-200/50">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date & Time</span>
-                                            <span className="font-black text-slate-800">{format(newAppt.date, 'PPP p')}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pb-4 border-b border-slate-200/50">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</span>
-                                            <span className="font-black text-[#0EA5E9]">{newAppt.type}</span>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason</span>
-                                            <p className="text-sm font-bold text-slate-600 italic">{newAppt.reason}</p>
+                                        <div className="space-y-4">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intake Summary</p>
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {Object.entries(newAppt.intake).map(([k, v]) => (
+                                                    <div key={k} className="flex justify-between text-xs font-bold py-1 border-b border-slate-100 last:border-0">
+                                                        <span className="text-slate-500 capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                                        <span className="text-slate-800">{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                                        <ShieldCheck className="w-4 h-4" /> Secure HIPAA appointment
+                                    <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                                        <ShieldCheck className="w-5 h-5" /> HIPAA Secured Payment Processing
                                     </div>
 
                                     <button
                                         onClick={handleSchedule}
-                                        className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                                        disabled={loading}
+                                        className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-slate-200 hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                     >
-                                        Confirm & Schedule <CheckCircle2 className="w-4 h-4" />
+                                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><CreditCard className="w-5 h-5" /> Pay & Book Appointment</>}
                                     </button>
                                 </div>
                             )}
                         </div>
 
                         {step > 1 && (
-                            <div className="p-6 pt-0 shrink-0">
+                            <div className="p-6 pt-0 shrink-0 border-t border-slate-100 bg-slate-50/50">
                                 <button onClick={() => setStep(step - 1)} className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-[#0EA5E9]">
                                     Back to previous step
                                 </button>
@@ -596,7 +600,7 @@ export default function AppointmentsPage() {
                             <button
                                 disabled={!checklist.camera || !checklist.mic || !checklist.idReady || !checklist.quiet}
                                 onClick={() => {
-                                    window.open(joiningAppt.meetingUrl, '_blank');
+                                    if (joiningAppt.meetingUrl) window.open(joiningAppt.meetingUrl, '_blank');
                                     setJoiningAppt(null);
                                     setChecklist({ camera: false, mic: false, idReady: false, quiet: false });
                                 }}
@@ -611,6 +615,7 @@ export default function AppointmentsPage() {
                     </div>
                 </div>
             )}
+
             {/* AI VISIT SUMMARY MODAL */}
             {selectedSummary && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -638,9 +643,55 @@ export default function AppointmentsPage() {
                                     <div className="w-12 h-12 border-4 border-purple-50 border-t-purple-600 rounded-full animate-spin"></div>
                                     <p className="text-xs font-black text-purple-400 uppercase tracking-widest animate-pulse">AI Scribe is parsing clinical findings...</p>
                                 </div>
-                            ) : aiSummary && (
+                            ) : (
                                 <>
-                                    <SummarySection title="Chief Complaint" content={aiSummary.complaint} />
+                                    {/* ALWAYS show Intake if available */}
+                                    {selectedSummary.intakeAnswers && Object.keys(selectedSummary.intakeAnswers).length > 0 && (
+                                        <div className="p-8 rounded-[2rem] border bg-slate-50 border-slate-100 shadow-inner">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="w-8 h-8 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center border border-indigo-100 shadow-sm">
+                                                    <ClipboardCheck className="w-4 h-4" />
+                                                </div>
+                                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Clinical Intake Record</h4>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                                {Object.entries(selectedSummary.intakeAnswers).map(([k, v]) => {
+                                                    const serviceKey = selectedSummary.serviceKey || 'general_visit';
+                                                    const question = (iQs[serviceKey as keyof typeof iQs] || []).find((q: any) => q.k === k);
+                                                    return (
+                                                        <div key={k} className="space-y-1.5 group">
+                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-indigo-400 transition-colors">
+                                                                {question?.l || k.replace(/([A-Z])/g, ' $1')}
+                                                            </p>
+                                                            <div className="text-sm font-bold text-slate-800 bg-white/60 p-4 rounded-2xl border border-slate-200/50 shadow-sm">
+                                                                {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Show AI Summary if available */}
+                                    {aiSummary ? (
+                                        <div className="space-y-6 animate-in fade-in duration-500 delay-150">
+                                            <SummarySection title="Chief Complaint" content={aiSummary.complaint} />
+                                            <SummarySection title="Clinical Findings" content={aiSummary.findings} />
+                                            <SummarySection title="Assessment & Plan" content={aiSummary.plan} />
+                                            <SummarySection title="Follow-Up Action" content={aiSummary.followUp} highlight />
+                                        </div>
+                                    ) : !isThinking && selectedSummary.status === 'scheduled' && (
+                                        <div className="p-8 bg-sky-50 rounded-3xl border border-sky-100 text-sky-700">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <Info className="w-5 h-5" />
+                                                <h4 className="text-sm font-black uppercase tracking-widest">Appointment Confirmed</h4>
+                                            </div>
+                                            <p className="text-xs font-bold leading-relaxed">
+                                                Your clinical intake has been successfully received. After your consultation, the AI Scribe will update this page with a detailed clinical summary and treatment plan.
+                                            </p>
+                                        </div>
+                                    )}
                                     <SummarySection title="Clinical Findings" content={aiSummary.findings} />
                                     <SummarySection title="Assessment & Plan" content={aiSummary.plan} />
                                     <SummarySection title="Follow-Up Action" content={aiSummary.followUp} highlight />
