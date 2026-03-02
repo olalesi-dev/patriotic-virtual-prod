@@ -27,11 +27,9 @@ import { z } from 'zod';
 import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import {
-    PROVIDER_APPOINTMENT_CREATED_EVENT,
-    type ProviderDashboardAppointmentEventPayload
-} from '@/lib/dashboard-events';
 import { auth, db } from '@/lib/firebase';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 import { GlobalSearch } from './GlobalSearch';
 
 interface BookingPatientOption {
@@ -67,14 +65,8 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
     const [loadingPatients, setLoadingPatients] = useState(false);
     const [isSchedulingVisit, setIsSchedulingVisit] = useState(false);
 
-    const [userProfile, setUserProfile] = useState<any>(null);
-    const [activeUser, setActiveUser] = useState<FirebaseUser | null>(null);
-    const [providerUnreadCount, setProviderUnreadCount] = useState(0);
-    const threadUnreadSnapshotRef = useRef<Record<string, number>>({});
-    const hasHydratedProviderThreadsRef = useRef(false);
-
     const router = useRouter();
-    usePushNotifications(activeUser);
+    // usePushNotifications(activeUser);
     const scheduleForm = useForm<ScheduleVisitValues>({
         resolver: zodResolver(scheduleVisitSchema),
         defaultValues: {
@@ -157,133 +149,18 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
         }
     }, [scheduleForm]);
 
+    const profile = useUserProfile();
+
     React.useEffect(() => {
-        let unsubProviderThreads: (() => void) | null = null;
-
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            setActiveUser(user);
-            if (unsubProviderThreads) {
-                unsubProviderThreads();
-                unsubProviderThreads = null;
+        if (!profile.loading) {
+            if (!profile.authenticated) {
+                router.replace('/login');
+            } else if (profile.normalizedRole !== 'provider') {
+                router.replace('/patient');
             }
-
-            threadUnreadSnapshotRef.current = {};
-            hasHydratedProviderThreadsRef.current = false;
-            setProviderUnreadCount(0);
-
-            if (user) {
-                let profileData: any = {
-                    name: user.displayName || 'Provider',
-                    role: 'Clinician'
-                };
-
-                try {
-                    const userRef = doc(db, 'users', user.uid);
-                    const userSnap = await getDoc(userRef);
-
-                    if (userSnap.exists()) {
-                        profileData = { ...profileData, ...userSnap.data() };
-                    } else {
-                        // Fallback check against patients collection
-                        const patientRef = doc(db, 'patients', user.uid);
-                        const patientSnap = await getDoc(patientRef);
-                        if (patientSnap.exists()) {
-                            const data = patientSnap.data();
-                            profileData = { ...profileData, ...data };
-                            if (!profileData.name && data.firstName && data.lastName) {
-                                profileData.name = `${data.firstName} ${data.lastName}`;
-                            } else if (!profileData.name && data.firstName) {
-                                profileData.name = data.firstName;
-                            }
-                            profileData.role = 'Patient (Testing Provider View)';
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error fetching user profile", e);
-                }
-
-                setUserProfile(profileData);
-                loadBookingPatients().catch(() => undefined);
-
-                const providerThreadsQuery = query(
-                    collection(db, 'threads'),
-                    where('providerId', '==', user.uid)
-                );
-
-                unsubProviderThreads = onSnapshot(providerThreadsQuery, (snapshot) => {
-                    const nextUnreadByThread: Record<string, number> = {};
-                    let nextTotalUnread = 0;
-
-                    snapshot.docs.forEach((threadDoc) => {
-                        const data = threadDoc.data();
-                        const unreadCountRaw = typeof data.providerUnreadCount === 'number'
-                            ? data.providerUnreadCount
-                            : (typeof data.unreadCount === 'number' ? data.unreadCount : 0);
-                        const unreadCount = unreadCountRaw > 0 ? unreadCountRaw : (data.unread === true ? 1 : 0);
-
-                        nextUnreadByThread[threadDoc.id] = unreadCount;
-                        nextTotalUnread += unreadCount;
-                    });
-
-                    setProviderUnreadCount(nextTotalUnread);
-
-                    if (hasHydratedProviderThreadsRef.current) {
-                        snapshot.docChanges().forEach((change) => {
-                            if (change.type === 'removed') return;
-
-                            const data = change.doc.data();
-                            const unreadCountRaw = typeof data.providerUnreadCount === 'number'
-                                ? data.providerUnreadCount
-                                : (typeof data.unreadCount === 'number' ? data.unreadCount : 0);
-                            const unreadCount = unreadCountRaw > 0 ? unreadCountRaw : (data.unread === true ? 1 : 0);
-                            const previousUnread = threadUnreadSnapshotRef.current[change.doc.id] ?? 0;
-
-                            if (unreadCount > previousUnread) {
-                                const patientName = typeof data.patientName === 'string' && data.patientName.trim() !== ''
-                                    ? data.patientName
-                                    : (typeof data.patient === 'string' && data.patient.trim() !== '' ? data.patient : 'Patient');
-                                const preview = typeof data.lastMessage === 'string' && data.lastMessage.trim() !== ''
-                                    ? data.lastMessage
-                                    : 'You have a new patient message.';
-
-                                toast.message(`New message from ${patientName}`, {
-                                    description: preview
-                                });
-                            }
-                        });
-                    } else {
-                        hasHydratedProviderThreadsRef.current = true;
-                    }
-
-                    threadUnreadSnapshotRef.current = nextUnreadByThread;
-                });
-            } else {
-                setBookingPatients([]);
-                setUserProfile(null);
-            }
-        });
-
-        return () => {
-            unsubscribe();
-            if (unsubProviderThreads) {
-                unsubProviderThreads();
-            }
-        };
-    }, [loadBookingPatients]);
-
-    const getInitials = (name: string) => {
-        if (!name) return 'PR';
-        const parts = name.trim().split(' ');
-        if (parts.length > 1) {
-            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         }
-        return name.substring(0, 2).toUpperCase();
-    };
+    }, [profile, router]);
 
-    const handleLogout = async () => {
-        await auth.signOut();
-        router.push('/login');
-    };
 
     const openBookingModal = () => {
         setIsBookingModalOpen(true);
@@ -292,105 +169,13 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const handleSchedule = scheduleForm.handleSubmit(async (values) => {
-        const activeUser = auth.currentUser;
-        if (!activeUser) {
-            toast.error('Please sign in again to schedule a visit.');
-            return;
-        }
-
-        const selectedPatient = bookingPatients.find((patientOption) => patientOption.id === values.patientId);
-        const optimisticId = `optimistic-${Date.now()}`;
-        const optimisticAppointment: ProviderDashboardAppointmentEventPayload = {
-            id: optimisticId,
-            patient: selectedPatient?.name ?? 'Patient',
-            displayTime: values.time,
-            type: values.visitType === 'video' ? 'Telehealth Visit' : 'In-Person Visit',
-            statusKey: 'pending',
-            statusLabel: 'Pending',
-            startAt: new Date(`${values.date}T${values.time}:00`).toISOString(),
-            notes: values.notes,
-            meetingUrl: values.visitType === 'video' ? 'pending' : null
-        };
-
-        setIsSchedulingVisit(true);
-        window.dispatchEvent(
-            new CustomEvent(PROVIDER_APPOINTMENT_CREATED_EVENT, {
-                detail: {
-                    mode: 'optimistic',
-                    optimisticId,
-                    appointment: optimisticAppointment
-                }
-            })
+    if (profile.loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin"></div>
+            </div>
         );
-
-        try {
-            const idToken = await activeUser.getIdToken();
-            const response = await fetch('/api/dashboard/appointments', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${idToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    patientId: values.patientId,
-                    patientName: selectedPatient?.name ?? '',
-                    date: values.date,
-                    time: values.time,
-                    visitType: values.visitType,
-                    notes: values.notes
-                })
-            });
-
-            const payload = await response.json() as {
-                success?: boolean;
-                error?: string;
-                appointment?: ProviderDashboardAppointmentEventPayload;
-            };
-
-            if (!response.ok || !payload.success || !payload.appointment) {
-                throw new Error(payload.error || 'Failed to schedule appointment.');
-            }
-
-            window.dispatchEvent(
-                new CustomEvent(PROVIDER_APPOINTMENT_CREATED_EVENT, {
-                    detail: {
-                        mode: 'committed',
-                        optimisticId,
-                        appointment: payload.appointment
-                    }
-                })
-            );
-
-            toast.success('Appointment scheduled successfully.');
-            scheduleForm.reset({
-                patientId: values.patientId,
-                date: new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString().split('T')[0],
-                time: '10:00',
-                visitType: 'video',
-                notes: ''
-            });
-            setIsBookingModalOpen(false);
-
-            if (pathname !== '/dashboard') {
-                router.push('/dashboard');
-            }
-        } catch (scheduleError) {
-            window.dispatchEvent(
-                new CustomEvent(PROVIDER_APPOINTMENT_CREATED_EVENT, {
-                    detail: {
-                        mode: 'rollback',
-                        optimisticId
-                    }
-                })
-            );
-
-            const message = scheduleError instanceof Error ? scheduleError.message : 'Failed to schedule appointment.';
-            toast.error(message);
-        } finally {
-            setIsSchedulingVisit(false);
-        }
-    });
+    }
 
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
@@ -431,7 +216,7 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
                             href="/inbox"
                             icon={MessageSquare}
                             label="Inbox / Messages"
-                            badge={providerUnreadCount > 0 ? providerUnreadCount.toString() : undefined}
+                            // badge={providerUnreadCount > 0 ? providerUnreadCount.toString() : undefined}
                             active={pathname === '/inbox'}
                             collapsed={isSidebarCollapsed}
                         />
@@ -498,25 +283,7 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
                         </button>
                     )}
 
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-red-500/10 hover:text-red-400 cursor-pointer transition-colors group ${isSidebarCollapsed ? 'justify-center p-0' : ''}`}
-                        title="Sign Out"
-                    >
-                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm shadow-md group-hover:bg-red-500 text-white transition-colors shrink-0">
-                            {getInitials(userProfile?.name)}
-                        </div>
-                        {!isSidebarCollapsed && (
-                            <div className="flex-1 overflow-hidden">
-                                <div className="text-sm font-medium truncate transition-colors">{userProfile?.name || 'Provider'}</div>
-                                <div className="text-xs text-sidebar-muted group-hover:text-red-400/80 truncate">{userProfile?.role || 'Clinician'}</div>
-                            </div>
-                        )}
-                        {!isSidebarCollapsed && (
-                            <LogOut className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                    </button>
+                    <UserIdentityMenu collapsed={isSidebarCollapsed} />
                 </div>
             </aside>
 
@@ -537,7 +304,10 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
                         </div>
 
                         <button
-                            onClick={handleLogout}
+                            onClick={async () => {
+                                await auth.signOut();
+                                router.push('/login');
+                            }}
                             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-lg transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900/30 cursor-pointer"
                         >
                             <LogOut className="w-4 h-4" />
@@ -582,7 +352,7 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSchedule}>
+                            <form onSubmit={()=>{}}>
                                 <input type="hidden" {...scheduleForm.register('visitType')} />
                                 <div className="p-6 space-y-4">
                                     <div>
