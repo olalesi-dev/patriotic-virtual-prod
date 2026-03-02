@@ -70,6 +70,15 @@
         "**/.*",
         "**/node_modules/**"
       ],
+      "rewrites": [
+        {
+          "source": "/api/v1/**",
+          "run": {
+            "serviceId": "patriotic-virtual-backend",
+            "region": "us-central1"
+          }
+        }
+      ],
       "frameworksBackend": {
         "region": "us-central1"
       }
