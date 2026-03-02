@@ -85,24 +85,26 @@ Add these GitHub repository secrets:
 - `NEXT_PUBLIC_FIREBASE_VAPID_KEY`
 - `NEXT_PUBLIC_BASE_URL` (optional)
 - `NEXT_PUBLIC_API_URL` (optional)
-- `FIREBASE_SERVICE_ACCOUNT_JSON` (single-line JSON from Firebase Admin service account)
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
 
-Local deployment can also be file-free by setting `FIREBASE_SERVICE_ACCOUNT_JSON` in `emr-portal/.env.local` and removing `GOOGLE_APPLICATION_CREDENTIALS=../google-services-account.json`.
+Local deployment can also be file-free by setting `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` in `emr-portal/.env.local` and removing `GOOGLE_APPLICATION_CREDENTIALS=../google-services-account.json`.
 
-### Helper: convert existing key file to env value
+### Helper: convert existing key file to split env values
 
-If you already have `../google-services-account.json`, convert it to a one-line JSON value:
+If you already have `../google-services-account.json`, append split vars into `.env.local`:
 
 ```bash
 cd emr-portal
-printf "FIREBASE_SERVICE_ACCOUNT_JSON='%s'\n" "$(jq -c . ../google-services-account.json)" >> .env.local
+jq -r '"FIREBASE_PROJECT_ID=\(.project_id)\nFIREBASE_CLIENT_EMAIL=\(.client_email)\nFIREBASE_PRIVATE_KEY=\"\(.private_key)\""' ../google-services-account.json >> .env.local
 ```
 
 If `jq` is not installed:
 
 ```bash
 cd emr-portal
-printf "FIREBASE_SERVICE_ACCOUNT_JSON='%s'\n" "$(tr -d '\n' < ../google-services-account.json)" >> .env.local
+echo "Install jq (recommended) to safely extract split env vars from JSON."
 ```
 
 ## Security notes
