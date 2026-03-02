@@ -70,6 +70,41 @@ Also set:
 - `NEXT_PUBLIC_FIREBASE_VAPID_KEY` (Firebase Console → Project settings → Cloud Messaging → Web Push certificates)
 - `FIREBASE_VERIFY_REVOKED_TOKENS=true`
 
+## Automatic Firebase deploys (no local key file dependency)
+
+This repository deploys on `main` via GitHub Actions (`.github/workflows/deploy.yml`) and writes `emr-portal/.env.production.local` in CI from GitHub secrets.
+
+Add these GitHub repository secrets:
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (optional if analytics is unused)
+- `NEXT_PUBLIC_FIREBASE_VAPID_KEY`
+- `NEXT_PUBLIC_BASE_URL` (optional)
+- `NEXT_PUBLIC_API_URL` (optional)
+- `FIREBASE_SERVICE_ACCOUNT_JSON` (single-line JSON from Firebase Admin service account)
+
+Local deployment can also be file-free by setting `FIREBASE_SERVICE_ACCOUNT_JSON` in `emr-portal/.env.local` and removing `GOOGLE_APPLICATION_CREDENTIALS=../google-services-account.json`.
+
+### Helper: convert existing key file to env value
+
+If you already have `../google-services-account.json`, convert it to a one-line JSON value:
+
+```bash
+cd emr-portal
+printf "FIREBASE_SERVICE_ACCOUNT_JSON='%s'\n" "$(jq -c . ../google-services-account.json)" >> .env.local
+```
+
+If `jq` is not installed:
+
+```bash
+cd emr-portal
+printf "FIREBASE_SERVICE_ACCOUNT_JSON='%s'\n" "$(tr -d '\n' < ../google-services-account.json)" >> .env.local
+```
+
 ## Security notes
 
 - Never commit service-account JSON or private keys.
