@@ -8,6 +8,7 @@ import { errorHandler } from './middleware/error';
 import healthRoutes from './routes/health';
 import appointmentRoutes from './routes/appointments';
 import patientRoutes from './routes/patients';
+import notificationRoutes from './routes/notifications';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api', verifyFirebaseToken, loadUserContext, enforceMfaForStaff); // Gl
 // Routes
 app.use('/api/patients', patientRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error Handling
 app.use(errorHandler);
