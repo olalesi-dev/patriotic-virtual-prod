@@ -26,8 +26,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'payment',
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/book/success?session_id={CHECKOUT_SESSION_ID}&patientName=${encodeURIComponent(patientName)}&service=${encodeURIComponent(service)}&date=${date}&time=${time}&appointmentId=${appointmentId}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/book`,
+            success_url: `https://patriotic-virtual-emr.web.app/book/success?session_id={CHECKOUT_SESSION_ID}&patientName=${encodeURIComponent(patientName)}&service=${encodeURIComponent(service)}&date=${date || 'TBD'}&time=${time || 'TBD'}&appointmentId=${appointmentId}`,
+            cancel_url: `https://patriotic-virtual-emr.web.app/patient/appointments`,
             metadata: {
                 patientName,
                 service,

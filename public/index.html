@@ -4493,18 +4493,29 @@
         onclick="document.getElementById('scheduleModal').classList.remove('active')">×</button>
       <div style="font-size:48px; margin-bottom:10px">✅</div>
       <h2>Payment Confirmed!</h2>
-      <p style="margin-bottom:20px; color:var(--slate)">Your transaction was successful. You can now schedule your
-        consultation securely.</p>
+      <p style="margin-bottom:20px; color:var(--slate)">Your transaction was successful. You have been added to our
+        care waitlist.</p>
 
-      <!-- Integrated Booking Trigger -->
-      <button class="btn btn-primary" onclick="openBookingModal(currentConsultId)"
+      <!-- Waitlist Notice -->
+      <div
+        style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:12px; padding:18px 20px; margin-bottom:24px; text-align:left">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="font-size:24px;line-height:1">🩺</div>
+          <div>
+            <div style="font-weight:700;font-size:15px;color:var(--navy);margin-bottom:6px">You're on the Waitlist!
+            </div>
+            <p style="font-size:14px;color:var(--g600);line-height:1.6;margin:0">A board-certified provider will review
+              your intake and follow up with you shortly to confirm your appointment time. You'll receive an email
+              notification when your slot is confirmed.</p>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary"
+        onclick="document.getElementById('scheduleModal').classList.remove('active'); window.location.href='https://patriotic-virtual-emr.web.app/dashboard';"
         style="width:100%;margin-bottom:10px">
-        📅 Select Appointment Time
+        🏥 Go to My Dashboard
       </button>
-
-      <button class="cta-btn" onclick="document.getElementById('scheduleModal').classList.remove('active')"
-        style="background:transparent; border:1px solid var(--slate); color:var(--slate); width:100%">I'll do it
-        later</button>
     </div>
   </div>
 
@@ -6063,6 +6074,16 @@
         const consultId = document.getElementById('bookingConsultId').value;
         const token = await auth.currentUser.getIdToken();
 
+        // Update Firestore status to PENDING_SCHEDULING
+        if (consultId) {
+          await db.collection('appointments').doc(consultId).update({
+            status: 'PENDING_SCHEDULING',
+            scheduledStartTime: startTime.toISOString(),
+            preferredProviderId: selectedDoctorId,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
         const res = await fetch(`${API}/api/v1/appointments/book`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -6071,7 +6092,8 @@
             startTime: startTime.toISOString(),
             doctorId: selectedDoctorId,
             localDate: selectedDate.getFullYear() + '-' + String(selectedDate.getMonth() + 1).padStart(2, '0') + '-' + String(selectedDate.getDate()).padStart(2, '0'),
-            localTime: selectedTime
+            localTime: selectedTime,
+            status: 'PENDING_SCHEDULING'
           })
         });
 
@@ -6079,7 +6101,7 @@
 
         document.getElementById('bookingModal').classList.remove('active');
         showBookingSuccess(startTime);
-        toast(`Successfully booked with ${selectedDoctorName}!`);
+        toast(`Request sent! One of our providers will confirm your visit soon.`);
 
       } catch (e) {
         console.error('Booking error:', e);
@@ -6092,10 +6114,25 @@
     let currentConsultId = null;
 
     function showBookingSuccess(dateObj) {
-      // Appointment Confirmed!
-      toast('Appointment Confirmed!');
-      // Ideally prompt to add to GCal here
-      // showDashboard(); // Refresh
+      let modal = document.getElementById('successModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'successModal';
+        modal.className = 'mo active';
+        modal.innerHTML = `
+          <div class="modal" style="max-width:480px; text-align:center; padding:48px; border-radius:32px; box-shadow:var(--sh-xl)">
+            <div style="width:80px; height:80px; background:var(--emerald-soft); color:var(--emerald); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto 32px">✓</div>
+            <h3 style="font-family:'Fraunces', serif; font-size:28px; color:var(--navy); margin-bottom:16px; letter-spacing:-0.02em">Request Received</h3>
+            <p style="color:var(--g500); font-size:16px; line-height:1.6; margin-bottom:32px">
+              Thank you for choosing Patriotic Telehealth! One of our Providers will review your request and get back to you within 24 hours to finalize your visit.
+            </p>
+            <button class="btn btn-primary" onclick="document.getElementById('successModal').classList.remove('active')" style="width:100%; border-radius:16px; height:56px; font-size:16px">Got it, thank you!</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } else {
+        modal.classList.add('active');
+      }
     }
 
     // New Function specifically for Payment Return

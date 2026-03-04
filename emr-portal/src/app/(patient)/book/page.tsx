@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Calendar, Clock, User, CreditCard, ChevronRight, CheckCircle2, ShieldCheck, Stethoscope, ChevronLeft } from 'lucide-react';
 import { format, addDays } from 'date-fns';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, getDoc, doc } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_mock');
 
@@ -42,10 +42,7 @@ const SERVICES = [
     { id: 'telehealth-basic', k: 'telehealth_basic', name: 'Telehealth Basic', desc: 'AI + limited visits for general telehealth. Digital support & care navigation for non-emergency concerns.', icon: '💡', price: 29, duration: '/mo', tab: 'memberships' },
 ];
 
-// The three hand-picked popular cards
-const POPULAR_IDS = new Set(['imaging-video', 'membership-elite', 'weight-loss']);
-
-
+const POPULAR_IDS = new Set(['erectile-dysfunction', 'imaging-video', 'membership-elite', 'weight-loss']);
 
 const INTAKE_QUESTIONS: any = {
     general_visit: [{ k: 'chiefComplaint', l: 'What brings you in today?', t: 'i', p: 'Describe your concerns' }, { k: 'symptomDuration', l: 'How long have you had these concerns?', t: 'i', p: 'e.g. 3 days, 2 weeks' }, { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }, { k: 'allergies', l: 'Drug allergies?', t: 'i', p: 'List allergies or "None"' }],
@@ -75,8 +72,8 @@ export default function BookingPage() {
     const [selectedService, setSelectedService] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'popular' | 'all' | 'telehealth' | 'imaging' | 'memberships'>('popular');
     const [patientName, setPatientName] = useState('');
-    const [selectedDate, setSelectedDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
-    const [selectedTime, setSelectedTime] = useState('09:00');
+    const [selectedDate, setSelectedDate] = useState('TBD');
+    const [selectedTime, setSelectedTime] = useState('TBD');
     const [intakeAnswers, setIntakeAnswers] = useState<any>({});
     const [loading, setLoading] = useState(false);
 
@@ -97,9 +94,25 @@ export default function BookingPage() {
         setLoading(true);
         let appointmentId = '';
         try {
+            // Get patient contact info from Firestore if not in auth
+            let pPhone = auth.currentUser?.phoneNumber || '';
+            let pEmail = auth.currentUser?.email || '';
+
+            if (auth.currentUser) {
+                const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    pPhone = pPhone || userData.phone || '';
+                    pEmail = pEmail || userData.email || '';
+                }
+            }
+
             // First create a pending appointment with intake data
             const docRef = await addDoc(collection(db, 'appointments'), {
                 patient: patientName,
+                patientId: auth.currentUser?.uid || 'guest',
+                patientEmail: pEmail,
+                patientPhone: pPhone,
                 service: selectedService.name,
                 date: selectedDate,
                 time: selectedTime,
@@ -127,8 +140,7 @@ export default function BookingPage() {
             await (stripe as any)?.redirectToCheckout({ sessionId: id });
         } catch (err) {
             console.error(err);
-            alert('Stripe is in mock mode (no keys found). Redirecting to dummy success page...');
-            // Need a generic fallback for local dev / un-configured Stripe
+            // Fallback for local dev
             window.location.href = `/book/success?patientName=${encodeURIComponent(patientName)}&service=${encodeURIComponent(selectedService.name)}&date=${selectedDate}&time=${selectedTime}&appointmentId=${appointmentId}`;
         }
     };
@@ -140,8 +152,8 @@ export default function BookingPage() {
     };
 
     const handleIntakeSubmit = () => {
-        // Validation could be added here
-        setStep(3);
+        // Skip Step 3 (Date/Time) and go to Step 4 (Confirm)
+        setStep(4);
     };
 
     return (
@@ -162,11 +174,10 @@ export default function BookingPage() {
                     {[
                         { num: 1, label: 'Service' },
                         { num: 2, label: 'Intake' },
-                        { num: 3, label: 'Details' },
                         { num: 4, label: 'Confirm' }
                     ].map(s => (
                         <div key={s.num} className="flex flex-col items-center gap-2">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${step >= s.num ? 'bg-indigo-600 border-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>{s.num}</div>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${step >= s.num ? 'bg-indigo-600 border-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>{s.num === 4 ? 3 : s.num}</div>
                             <span className={step >= s.num ? 'text-indigo-400' : 'text-slate-500'}>{s.label}</span>
                         </div>
                     ))}
@@ -175,17 +186,10 @@ export default function BookingPage() {
                 {/* STEP 1: SELECT SERVICE */}
                 {step === 1 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-                        {/* Tab Bar */}
+                        {/* Tab Bar (Previously here, now simplified to only show Popular) */}
                         <div className="flex gap-2 mb-8 overflow-x-auto pb-1">
                             {[
                                 { id: 'popular', label: '⭐ Popular' },
-                                { id: 'clinical', label: '🩺 Clinical Visits' },
-                                { id: 'mens', label: '⚡ Men\'s Health' },
-                                { id: 'imaging', label: '🔬 Imaging' },
-                                { id: 'ai', label: '🤖 AI & Digital' },
-                                { id: 'memberships', label: '🏆 Memberships' },
-                                { id: 'all', label: 'All Services' },
                             ].map(tab => {
                                 const isActive = activeTab === tab.id;
                                 const isPopular = tab.id === 'popular';
@@ -200,7 +204,7 @@ export default function BookingPage() {
                                         } : {}}
                                         className={`whitespace-nowrap px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest border transition-all ${isActive
                                             ? isPopular
-                                                ? '' // styles applied via style prop
+                                                ? ''
                                                 : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
                                             : 'border-slate-800 text-slate-500 bg-slate-900/50 hover:border-slate-700 hover:text-slate-300'
                                             }`}
@@ -234,69 +238,24 @@ export default function BookingPage() {
                                                 ? ''
                                                 : 'border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-800/50'
                                             }`}
-                                        onMouseEnter={e => {
-                                            if (isPopular && !isSelected) {
-                                                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,168,76,0.55)';
-                                            }
-                                        }}
-                                        onMouseLeave={e => {
-                                            if (isPopular && !isSelected) {
-                                                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,168,76,0.35)';
-                                            }
-                                        }}
                                     >
                                         <div>
-                                            {/* Popular badge */}
                                             {isPopular && (
                                                 <div className="mb-3">
-                                                    <span
-                                                        style={{
-                                                            color: '#c9a84c',
-                                                            borderColor: 'rgba(201,168,76,0.25)',
-                                                            background: 'rgba(201,168,76,0.07)',
-                                                        }}
-                                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-widest"
-                                                    >
-                                                        ⭐ Popular
-                                                    </span>
+                                                    <span style={{ color: '#c9a84c', borderColor: 'rgba(201,168,76,0.25)', background: 'rgba(201,168,76,0.07)' }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-widest">⭐ Popular</span>
                                                 </div>
                                             )}
-
                                             <div className="flex items-center justify-between mb-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-xl group-hover:bg-indigo-500/20 transition-colors">
-                                                    {s.icon}
-                                                </div>
+                                                <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-xl group-hover:bg-indigo-500/20 transition-colors">{s.icon}</div>
                                                 <div className="text-right">
                                                     <div className="text-sm font-black text-indigo-400">${s.price}</div>
                                                     <div className="text-[10px] font-bold text-slate-500 uppercase">{s.duration}</div>
                                                 </div>
                                             </div>
-
-                                            <h3
-                                                style={isPopular ? { color: '#e8dfc0' } : {}}
-                                                className={`text-lg font-black mb-2 ${!isPopular ? 'text-white' : ''}`}
-                                            >
-                                                {s.name}
-                                            </h3>
+                                            <h3 style={isPopular ? { color: '#e8dfc0' } : {}} className={`text-lg font-black mb-2 ${!isPopular ? 'text-white' : ''}`}>{s.name}</h3>
                                             <p className="text-sm text-slate-400 font-medium mb-6 leading-relaxed line-clamp-3">{s.desc}</p>
                                         </div>
-
-                                        {/* CTA button */}
-                                        <button
-                                            style={isPopular && !isSelected ? {
-                                                borderColor: 'rgba(201,168,76,0.35)',
-                                                background: 'rgba(201,168,76,0.07)',
-                                                color: '#d4aa50',
-                                            } : {}}
-                                            className={`w-full py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${isSelected
-                                                ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 border-transparent'
-                                                : isPopular
-                                                    ? '' // styles via style prop
-                                                    : 'bg-slate-800 text-slate-400 border-transparent group-hover:bg-indigo-600 group-hover:text-white'
-                                                }`}
-                                        >
-                                            Select Service
-                                        </button>
+                                        <button style={isPopular && !isSelected ? { borderColor: 'rgba(201,168,76,0.35)', background: 'rgba(201,168,76,0.07)', color: '#d4aa50' } : {}} className={`w-full py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${isSelected ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 border-transparent' : isPopular ? '' : 'bg-slate-800 text-slate-400 border-transparent group-hover:bg-indigo-600 group-hover:text-white'}`}>Select Service</button>
                                     </div>
                                 );
                             })}
@@ -312,118 +271,31 @@ export default function BookingPage() {
                             <p className="text-sm text-indigo-400 font-bold mt-1">For: {selectedService.name}</p>
                             <p className="text-slate-400 text-sm mt-2">Please answer the following questions to help us prepare for your visit.</p>
                         </div>
-
                         <div className="space-y-6">
                             {INTAKE_QUESTIONS[selectedService.k]?.length > 0 ? (
                                 INTAKE_QUESTIONS[selectedService.k].map((q: any, i: number) => (
                                     <div key={i} className="space-y-2">
                                         <label className="text-sm font-bold text-slate-300 block">{q.l}</label>
-                                        {q.t === 'yn' || q.type === 'yn' ? (
+                                        {q.t === 'yn' ? (
                                             <div className="flex gap-4">
                                                 <label className="flex-1 flex items-center justify-center gap-2 cursor-pointer p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-800 transition-colors">
-                                                    <input type="radio" name={q.k} value="Yes" className="text-indigo-500 focus:ring-indigo-500 w-4 h-4 bg-slate-900 border-slate-700"
-                                                        onChange={(e) => setIntakeAnswers({ ...intakeAnswers, [q.k]: e.target.value })}
-                                                        checked={intakeAnswers[q.k] === 'Yes'}
-                                                    /> <span className="text-sm font-bold text-white">Yes</span>
+                                                    <input type="radio" name={q.k} value="Yes" className="text-indigo-500 w-4 h-4 bg-slate-900 border-slate-700" onChange={(e) => setIntakeAnswers({ ...intakeAnswers, [q.k]: e.target.value })} checked={intakeAnswers[q.k] === 'Yes'} /> <span className="text-sm font-bold text-white">Yes</span>
                                                 </label>
                                                 <label className="flex-1 flex items-center justify-center gap-2 cursor-pointer p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-800 transition-colors">
-                                                    <input type="radio" name={q.k} value="No" className="text-indigo-500 focus:ring-indigo-500 w-4 h-4 bg-slate-900 border-slate-700"
-                                                        onChange={(e) => setIntakeAnswers({ ...intakeAnswers, [q.k]: e.target.value })}
-                                                        checked={intakeAnswers[q.k] === 'No'}
-                                                    /> <span className="text-sm font-bold text-white">No</span>
+                                                    <input type="radio" name={q.k} value="No" className="text-indigo-500 w-4 h-4 bg-slate-900 border-slate-700" onChange={(e) => setIntakeAnswers({ ...intakeAnswers, [q.k]: e.target.value })} checked={intakeAnswers[q.k] === 'No'} /> <span className="text-sm font-bold text-white">No</span>
                                                 </label>
                                             </div>
                                         ) : (
-                                            <input
-                                                type="text"
-                                                placeholder={q.p || "Your answer..."}
-                                                value={intakeAnswers[q.k] || ''}
-                                                onChange={(e) => setIntakeAnswers({ ...intakeAnswers, [q.k]: e.target.value })}
-                                                className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-4 px-6 text-white font-medium placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                                            />
+                                            <input type="text" placeholder={q.p || "Your answer..."} value={intakeAnswers[q.k] || ''} onChange={(e) => setIntakeAnswers({ ...intakeAnswers, [q.k]: e.target.value })} className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-4 px-6 text-white font-medium placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
                                         )}
                                     </div>
                                 ))
                             ) : (
                                 <div className="text-slate-400 italic text-sm p-4 bg-slate-800/30 rounded-xl border border-slate-800">No specific intake questions for this service.</div>
                             )}
-
                             <div className="pt-8 flex gap-4">
-                                <button onClick={() => setStep(1)} className="w-[120px] bg-slate-800 text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center gap-2">
-                                    <ChevronLeft size={16} /> Back
-                                </button>
-                                <button
-                                    onClick={handleIntakeSubmit}
-                                    className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:bg-indigo-500 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                >
-                                    Continue <ChevronRight size={16} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-
-                {/* STEP 3: PATIENT DETAILS & TIME */}
-                {step === 3 && (
-                    <div className="max-w-xl mx-auto p-8 rounded-[40px] bg-slate-900/50 border border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-xl">
-                        <div className="mb-8 pb-6 border-b border-slate-800">
-                            <h2 className="text-2xl font-black text-white">Appointment Details</h2>
-                            <p className="text-slate-400 text-sm mt-2">When should we schedule this?</p>
-                        </div>
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                    <User size={12} /> Full Name / Patient Id
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter your name"
-                                    value={patientName}
-                                    onChange={(e) => setPatientName(e.target.value)}
-                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-4 px-6 text-white font-bold placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                        <Calendar size={12} /> Select Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={selectedDate}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-4 px-6 text-white font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all [color-scheme:dark]"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                        <Clock size={12} /> Select Time
-                                    </label>
-                                    <select
-                                        value={selectedTime}
-                                        onChange={(e) => setSelectedTime(e.target.value)}
-                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-4 px-6 text-white font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                                    >
-                                        {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map(t => (
-                                            <option key={t} value={t}>{t}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="pt-8 flex gap-4">
-                                <button onClick={() => setStep(2)} className="w-[120px] bg-slate-800 text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center gap-2">
-                                    <ChevronLeft size={16} /> Back
-                                </button>
-                                <button
-                                    disabled={!patientName}
-                                    onClick={() => setStep(4)}
-                                    className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    Review <ChevronRight size={16} />
-                                </button>
+                                <button onClick={() => setStep(1)} className="w-[120px] bg-slate-800 text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center gap-2"><ChevronLeft size={16} /> Back</button>
+                                <button onClick={handleIntakeSubmit} className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:bg-indigo-500 transition-all active:scale-95 flex items-center justify-center gap-2">Continue <ChevronRight size={16} /></button>
                             </div>
                         </div>
                     </div>
@@ -432,53 +304,22 @@ export default function BookingPage() {
                 {/* STEP 4: CONFIRM & STRIPE */}
                 {step === 4 && selectedService && (
                     <div className="max-w-xl mx-auto p-8 rounded-[40px] bg-slate-900 border border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center shadow-2xl">
-                        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-8 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-                            <CreditCard size={32} />
-                        </div>
+                        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-8 shadow-[0_0_30px_rgba(16,185,129,0.2)]"><CreditCard size={32} /></div>
                         <h2 className="text-2xl font-black mb-2">Confirm Your Appointment</h2>
                         <p className="text-slate-400 text-sm font-medium mb-12">Review your selection before secure checkout.</p>
-
                         <div className="bg-slate-800/30 rounded-3xl p-6 text-left space-y-4 border border-slate-800 mb-12 shadow-inner">
-                            <div className="flex justify-between items-center pb-4 border-b border-slate-800/50">
-                                <span className="text-[10px] font-black text-slate-500 uppercase">Service</span>
-                                <span className="font-bold flex items-center gap-2"><span className="text-xl">{selectedService.icon}</span> {selectedService.name}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-4 border-b border-slate-800/50">
-                                <span className="text-[10px] font-black text-slate-500 uppercase">Patient</span>
-                                <span className="font-bold text-indigo-300">{patientName}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-4 border-b border-slate-800/50">
-                                <span className="text-[10px] font-black text-slate-500 uppercase">Date & Time</span>
-                                <span className="font-bold">{format(new Date(selectedDate), 'MMM d, yyyy')} @ {selectedTime}</span>
-                            </div>
-                            <div className="flex justify-between items-center pt-2">
-                                <span className="text-[10px] font-black text-slate-500 uppercase">Total Due</span>
-                                <span className="text-2xl font-black text-emerald-400">${selectedService.price}</span>
-                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-slate-800/50"><span className="text-[10px] font-black text-slate-500 uppercase">Service</span><span className="font-bold flex items-center gap-2"><span className="text-xl">{selectedService.icon}</span> {selectedService.name}</span></div>
+                            <div className="flex justify-between items-center pb-4 border-b border-slate-800/50"><span className="text-[10px] font-black text-slate-500 uppercase">Status</span><span className="font-bold text-amber-500">Priority Queue</span></div>
+                            <div className="flex justify-between items-center pt-2"><span className="text-[10px] font-black text-slate-500 uppercase">Total Due</span><span className="text-2xl font-black text-emerald-400">${selectedService.price}</span></div>
                         </div>
-
                         <div className="flex gap-4">
-                            <button onClick={() => setStep(3)} className="w-[120px] bg-slate-800 text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center gap-2">
-                                <ChevronLeft size={16} />
-                            </button>
-                            <button
-                                onClick={handleBooking}
-                                disabled={loading}
-                                className="flex-1 bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {loading ? 'Redirecting...' : 'Review & Pay'}
-                            </button>
+                            <button onClick={() => setStep(2)} className="w-[120px] bg-slate-800 text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center gap-2"><ChevronLeft size={16} /> Back</button>
+                            <button onClick={handleBooking} disabled={loading} className="flex-1 bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2">{loading ? 'Redirecting...' : 'Review & Pay'}</button>
                         </div>
                     </div>
                 )}
-
             </div>
-
-            {/* Float Logos */}
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 opacity-20 pointer-events-none">
-                <div className="flex items-center gap-2 text-xs font-black grayscale"><ShieldCheck size={16} /> HIPAA COMPLIANT</div>
-                <div className="flex items-center gap-2 text-xs font-black grayscale"><CheckCircle2 size={16} /> POWERED BY STRIPE</div>
-            </div>
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 opacity-20 pointer-events-none"><div className="flex items-center gap-2 text-xs font-black grayscale">🛡️ HIPAA COMPLIANT</div><div className="flex items-center gap-2 text-xs font-black grayscale"><CheckCircle2 size={16} /> POWERED BY STRIPE</div></div>
         </div>
     );
 }

@@ -26,7 +26,7 @@ app.use((req, res, next) => {
     const origin = req.headers.origin || '*';
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-EMR-Key');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
@@ -63,6 +63,102 @@ app.use('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // Routes
+
+// EMR API Key middleware — allows the EMR provider dashboard to call the backend
+// without the provider being signed into patriotic-virtual-prod Firebase.
+const EMR_API_KEY = process.env.EMR_API_KEY || 'emr-provider-key-patriotic-2024';
+function requireEmrKey(req, res, next) {
+    const key = req.headers['x-emr-key'] || req.query.emrKey;
+    if (key !== EMR_API_KEY) return res.status(403).json({ error: 'Forbidden: invalid EMR key' });
+    next();
+}
+
+// EMR Provider: Get Waitlist (no Firebase auth needed — uses API key)
+app.get('/api/v1/emr/waitlist', requireEmrKey, async (req, res) => {
+    try {
+        const snapshot = await db.collection('consultations')
+            .where('status', '==', 'waitlist')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const consultations = [];
+        const uids = new Set();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            consultations.push({ id: doc.id, ...data });
+            if (data.uid) uids.add(data.uid);
+        });
+
+        let userMap = {};
+        if (uids.size > 0) {
+            try {
+                const userRecords = await admin.auth().getUsers([...uids].map(uid => ({ uid })));
+                userRecords.users.forEach(user => {
+                    userMap[user.uid] = { name: user.displayName || user.email || 'Unknown', email: user.email || '' };
+                });
+            } catch (e) { console.error('Auth lookup:', e); }
+        }
+
+        const enriched = consultations.map(c => {
+            const u = userMap[c.uid] || {};
+            // Also try to pull name from intake answers
+            const intake = c.intake || {};
+            const intakeName = (intake.firstName || intake.first_name || '') + ' ' + (intake.lastName || intake.last_name || '');
+            return {
+                ...c,
+                patientName: u.name || intakeName.trim() || 'Unknown',
+                patientEmail: u.email || intake.email || ''
+            };
+        });
+
+        res.json({ consultations: enriched });
+    } catch (error) {
+        console.error('EMR waitlist error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// EMR Provider: Schedule a Waitlisted Appointment (no Firebase auth needed — uses API key)
+app.patch('/api/v1/emr/consultations/:id/schedule', requireEmrKey, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { scheduledAt } = req.body;
+
+        const scheduledDate = new Date(scheduledAt);
+        if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'Invalid scheduledAt date' });
+
+        await db.collection('consultations').doc(id).update({
+            status: 'scheduled',
+            scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Also update the sub-collection appointment doc
+        const consultSnap = await db.collection('consultations').doc(id).get();
+        if (consultSnap.exists) {
+            const uid = consultSnap.data().uid;
+            if (uid) {
+                const apptSnap = await db.collection('patients').doc(uid)
+                    .collection('appointments')
+                    .where('consultationId', '==', id)
+                    .limit(1).get();
+                if (!apptSnap.empty) {
+                    await apptSnap.docs[0].ref.update({
+                        status: 'scheduled',
+                        scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            }
+        }
+
+        res.json({ success: true, message: 'Appointment scheduled' });
+    } catch (error) {
+        console.error('EMR schedule error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 1. Consultation Intake
 app.post('/api/v1/consultations', async (req, res) => {
     try {
@@ -176,6 +272,49 @@ app.get('/api/v1/admin/consultations', async (req, res) => {
         res.json({ consultations: enrichedConsultations });
     } catch (error) {
         console.error('Error fetching admin consultations:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.6b ADMIN: Get Waitlist (paid but unscheduled)
+app.get('/api/v1/admin/waitlist', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        await admin.auth().verifyIdToken(idToken);
+
+        const snapshot = await db.collection('consultations')
+            .where('status', '==', 'waitlist')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const consultations = [];
+        const uids = new Set();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            consultations.push({ id: doc.id, ...data });
+            if (data.uid) uids.add(data.uid);
+        });
+
+        let userMap = {};
+        if (uids.size > 0) {
+            try {
+                const userRecords = await admin.auth().getUsers([...uids].map(uid => ({ uid })));
+                userRecords.users.forEach(user => {
+                    userMap[user.uid] = { name: user.displayName || 'Unknown', email: user.email || '' };
+                });
+            } catch (e) { console.error('Auth lookup error:', e); }
+        }
+
+        const enriched = consultations.map(c => {
+            const u = userMap[c.uid] || {};
+            return { ...c, patientName: u.name || 'Unknown', patientEmail: u.email || '' };
+        });
+
+        res.json({ consultations: enriched });
+    } catch (error) {
+        console.error('Error fetching waitlist:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -479,6 +618,52 @@ app.patch('/api/v1/doctor/labs/:orderId/review', async (req, res) => {
     }
 });
 
+// 1.7b PROVIDER: Schedule a Waitlisted Appointment
+app.patch('/api/v1/consultations/:id/schedule', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { scheduledAt } = req.body; // ISO string
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        await admin.auth().verifyIdToken(idToken);
+
+        const scheduledDate = new Date(scheduledAt);
+        if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'Invalid scheduledAt date' });
+
+        // Update the consultation doc
+        await db.collection('consultations').doc(id).update({
+            status: 'scheduled',
+            scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Find and update the corresponding appointment doc in patients sub-collection
+        const consultSnap = await db.collection('consultations').doc(id).get();
+        if (consultSnap.exists) {
+            const uid = consultSnap.data().uid;
+            if (uid) {
+                const apptSnap = await db.collection('patients').doc(uid)
+                    .collection('appointments')
+                    .where('consultationId', '==', id)
+                    .limit(1).get();
+                if (!apptSnap.empty) {
+                    await apptSnap.docs[0].ref.update({
+                        status: 'scheduled',
+                        scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            }
+        }
+
+        res.json({ success: true, message: 'Appointment scheduled' });
+    } catch (error) {
+        console.error('Error scheduling appointment:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 1.7 ADMIN: Update Consultation Status
 app.patch('/api/v1/admin/consultations/:id', async (req, res) => {
     try {
@@ -683,9 +868,10 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             const batch = db.batch();
             const consultRef = db.collection('consultations').doc(consultationId);
 
-            // 1. Mark consultation as paid
+            // 1. Mark consultation as paid + move to waitlist
             batch.update(consultRef, {
                 paymentStatus: 'paid',
+                status: 'waitlist',
                 stripeSessionId: session.id,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
@@ -694,21 +880,22 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             const consultSnap = await consultRef.get();
             const consultData = consultSnap.exists ? consultSnap.data() : {};
 
-            // 3. Create Appointment in Patient Sub-collection
+            // 3. Create Waitlist Appointment in Patient Sub-collection
             // Path: patients/{uid}/appointments
-            // We'll use the UID from metadata
+            // status='waitlist' until provider schedules it
             if (uid) {
                 const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
                 batch.set(apptRef, {
-                    date: admin.firestore.FieldValue.serverTimestamp(), // Initial slot, patient can reschedule
-                    providerName: "Patriotic Provider", // Default as requested
-                    providerId: "dr-o-admin-uid", // Placeholder for Dr. O / Admin
+                    providerName: "Patriotic Provider",
+                    providerId: "dr-o-admin-uid",
                     type: "Telehealth",
-                    status: "scheduled",
+                    status: "waitlist",
+                    scheduledAt: null,
                     meetingUrl: "https://doxy.me/patriotictelehealth",
                     consultationId: consultationId,
                     serviceKey: consultData.serviceKey || 'general_consultation',
                     intakeAnswers: consultData.intake || {},
+                    patientUid: uid,
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
                 });
             }
