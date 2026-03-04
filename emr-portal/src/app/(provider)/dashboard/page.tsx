@@ -507,7 +507,7 @@ function Tab({ label, active, onClick, count }: any) {
     )
 }
 
-function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, onJoin }: any) {
+function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, onJoin, onReviewSchedule }: any) {
     const { time, displayTime, patient, type, status } = appointment;
     const isActionable = ['Upcoming', 'Checked In'].includes(status);
 
@@ -544,7 +544,7 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            appointment.onReviewSchedule();
+                            onReviewSchedule();
                         }}
                         className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1"
                     >
