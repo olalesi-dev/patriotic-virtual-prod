@@ -27,7 +27,7 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATRIOTIC_VIRTUAL_PROD }}'
 
       - name: Deploy Firestore Rules and Indexes
-        run: npx firebase-tools deploy --only firestore:rules,firestore:indexes --project patriotic-virtual-prod --non-interactive
+        run: npx firebase-tools deploy --only firestore --project patriotic-virtual-prod --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: '${{ steps.auth.outputs.credentials_file_path }}'
 
