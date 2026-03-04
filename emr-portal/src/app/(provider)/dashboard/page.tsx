@@ -28,7 +28,7 @@ interface Message {
 
 // --- Mock Data ---
 const INITIAL_APPOINTMENTS: Appointment[] = [
-    { id: 1, patient: 'John Doe', time: '2023-10-27 10:00', displayTime: '10:00 AM', type: 'Video Consult · Follow-up', status: 'Checked In' },
+    { id: 1, patient: 'John Doe', time: '2023-10-27 10:00', displayTime: '10:00 AM', type: 'Video Consult Â· Follow-up', status: 'Checked In' },
     { id: 2, patient: 'Sarah Connor', time: '2023-10-27 11:30', displayTime: '11:30 AM', type: 'Initial Assessment', status: 'Confirmed' },
     { id: 3, patient: 'Michael Brown', time: '2023-10-27 14:15', displayTime: '02:15 PM', type: 'Lab Review', status: 'Pending' },
     { id: 4, patient: 'Emily White', time: '2023-10-27 16:00', displayTime: '04:00 PM', type: 'Therapy Session', status: 'Upcoming' },
@@ -128,7 +128,11 @@ export default function EmrDashboard() {
                             const unsubBucket = onSnapshot(bucketQuery, (snapshot) => {
                                 const bucketAppts = snapshot.docs.map(docSnap => {
                                     const data = docSnap.data();
-                                    const dateObj = data.createdAt?.toDate() || new Date(); // Use createdAt for bucket sorting
+                                    // FIX: safely convert createdAt (may be Timestamp, Date, or string)
+                                    let dateObj: Date;
+                                    if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
+                                    else if (data.createdAt instanceof Date) dateObj = data.createdAt;
+                                    else dateObj = new Date();
                                     return {
                                         id: docSnap.id as any,
                                         patient: data.patient || data.patientName || 'Unknown Patient',
@@ -150,7 +154,19 @@ export default function EmrDashboard() {
                             const unsubAppts = onSnapshot(q, (snapshot) => {
                                 const newAppts = snapshot.docs.map(docSnap => {
                                     const data = docSnap.data();
-                                    const dateObj = data.date?.toDate() || new Date();
+                                    // FIX: safely convert date field (may be Timestamp, Date, string 'YYYY-MM-DD', or undefined)
+                                    let dateObj: Date;
+                                    if (data.date?.toDate) dateObj = data.date.toDate();
+                                    else if (data.date instanceof Date) dateObj = data.date;
+                                    else if (typeof data.date === 'string' && data.time) {
+                                        dateObj = new Date(`${data.date}T${data.time}:00`);
+                                    } else if (typeof data.date === 'string') {
+                                        dateObj = new Date(data.date);
+                                    } else {
+                                        dateObj = new Date();
+                                    }
+                                    if (isNaN(dateObj.getTime())) dateObj = new Date();
+
                                     let dt = 'TBD';
                                     try {
                                         dt = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric' }).format(dateObj);
@@ -242,22 +258,35 @@ export default function EmrDashboard() {
         if (!reviewAppt || !scheduleDate || !scheduleTime) return;
         setIsScheduling(true);
         try {
-            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+            const { doc, updateDoc, serverTimestamp, Timestamp } = await import('firebase/firestore');
             const { db } = await import('@/lib/firebase');
             if (db) {
                 const apptRef = doc(db, 'appointments', reviewAppt.id.toString());
                 const fullDate = new Date(`${scheduleDate}T${scheduleTime}:00`);
 
+                // FIX: Write date as plain 'YYYY-MM-DD' string and time as 'HH:mm' string.
+                // The calendar page reads appt.date as a string and does new Date(appt.date + 'T' + appt.time + ':00')
+                // Writing a JS Date object here causes a Firestore Timestamp that breaks the calendar.
                 await updateDoc(apptRef, {
                     status: 'scheduled',
-                    date: fullDate,
+                    date: scheduleDate,           // 'YYYY-MM-DD' string âœ…
+                    time: scheduleTime,           // 'HH:mm' string âœ…
+                    startTime: Timestamp.fromDate(fullDate), // Firestore Timestamp for ordering âœ…
                     providerId: auth.currentUser?.uid,
                     providerName: providerName,
+                    patientId: reviewAppt.patientId || reviewAppt.id?.toString(),
+                    patientName: reviewAppt.patient,
+                    type: 'Telehealth',
+                    service: reviewAppt.type || 'Consultation',
                     updatedAt: serverTimestamp()
                 });
 
                 setReviewAppt(null);
-                alert('Appointment scheduled successfully!');
+                // Update local state so card moves from Waitlist to Upcoming
+                setAppointments(prev => prev.map(a =>
+                    a.id === reviewAppt.id ? { ...a, status: 'Upcoming', displayTime: scheduleTime } : a
+                ));
+                alert('Appointment scheduled successfully! It will now appear on the calendar.');
             }
         } catch (e) {
             console.error('Failed to schedule appointment', e);
