@@ -5,8 +5,10 @@ import Link from 'next/link';
 import {
     Users, Plus, Search, MoreVertical, Shield, User,
     UserPlus, Mail, Key, Trash2, Edit2, ShieldAlert,
-    CheckCircle2, XCircle, AlertCircle
+    CheckCircle2, XCircle, AlertCircle, Phone, Check, X
 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 interface UserData {
     uid: string;
@@ -16,6 +18,7 @@ interface UserData {
     disabled: boolean;
     creationTime: string;
     lastSignInTime: string;
+    phone?: string;
 }
 
 export default function UserManagementPage() {
@@ -26,7 +29,15 @@ export default function UserManagementPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Selected user detail state
+    const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [editPhone, setEditPhone] = useState('');
+    const [isEditingPhone, setIsEditingPhone] = useState(false);
+    const [savingPhone, setSavingPhone] = useState(false);
+
     // Form state
+    const [newUserPhone, setNewUserPhone] = useState('');
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -60,6 +71,42 @@ export default function UserManagementPage() {
         }
     };
 
+    // Open detail panel and fetch phone from Firestore
+    const handleSelectUser = async (user: UserData) => {
+        setSelectedUser(user);
+        setIsEditingPhone(false);
+        setDetailLoading(true);
+        try {
+            const snap = await getDoc(doc(db, 'users', user.uid));
+            if (snap.exists()) {
+                const phone = snap.data().phone || '';
+                setEditPhone(phone);
+                setSelectedUser(prev => prev ? { ...prev, phone } : prev);
+            } else {
+                setEditPhone(user.phone || '');
+            }
+        } catch (e) {
+            setEditPhone(user.phone || '');
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
+    // Save updated phone to Firestore
+    const handleSavePhone = async () => {
+        if (!selectedUser) return;
+        setSavingPhone(true);
+        try {
+            await updateDoc(doc(db, 'users', selectedUser.uid), { phone: editPhone });
+            setSelectedUser(prev => prev ? { ...prev, phone: editPhone } : prev);
+            setIsEditingPhone(false);
+        } catch (e) {
+            alert('Failed to save phone number.');
+        } finally {
+            setSavingPhone(false);
+        }
+    };
+
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -68,12 +115,19 @@ export default function UserManagementPage() {
             const res = await fetch('/api/admin/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, phone: newUserPhone })
             });
             const data = await res.json();
             if (data.success) {
+                // Also write phone to Firestore users doc if uid returned
+                if (data.uid && newUserPhone) {
+                    try {
+                        await updateDoc(doc(db, 'users', data.uid), { phone: newUserPhone });
+                    } catch (_) { }
+                }
                 setIsCreateModalOpen(false);
                 setFormData({ firstName: '', lastName: '', dob: '', sex: '', email: '', password: '', role: 'patient' });
+                setNewUserPhone('');
                 fetchUsers();
             } else {
                 throw new Error(data.error);
@@ -110,6 +164,7 @@ export default function UserManagementPage() {
             const data = await res.json();
             if (data.success) {
                 fetchUsers();
+                if (selectedUser?.uid === uid) setSelectedUser(null);
             }
         } catch (err: any) {
             alert('Failed to delete user');
@@ -203,139 +258,270 @@ export default function UserManagementPage() {
                 />
             </div>
 
-            {/* Main Table Container */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4 bg-slate-50/50 dark:bg-slate-800/50">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Filter by name or email..."
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+            {/* Main layout: table + detail panel */}
+            <div className="flex gap-6 items-start">
+                {/* Main Table Container */}
+                <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden min-w-0">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4 bg-slate-50/50 dark:bg-slate-800/50">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Filter by name or email..."
+                                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        {filterRole && (
+                            <button
+                                onClick={() => setFilterRole(null)}
+                                className="text-xs font-bold text-slate-400 hover:text-brand flex items-center gap-1 transition-colors"
+                            >
+                                <XCircle className="w-3 h-3" />
+                                Clear filter: {filterRole}
+                            </button>
+                        )}
                     </div>
-                    {filterRole && (
-                        <button
-                            onClick={() => setFilterRole(null)}
-                            className="text-xs font-bold text-slate-400 hover:text-brand flex items-center gap-1 transition-colors"
-                        >
-                            <XCircle className="w-3 h-3" />
-                            Clear filter: {filterRole}
-                        </button>
-                    )}
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
+                                    <th className="px-6 py-4">User</th>
+                                    <th className="px-6 py-4">Role</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Created</th>
+                                    <th className="px-6 py-4">Last Login</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                                {loading ? (
+                                    Array(5).fill(0).map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td colSpan={6} className="px-6 py-4 h-16 bg-slate-100/10"></td>
+                                        </tr>
+                                    ))
+                                ) : filteredUsers.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Users className="w-8 h-8 opacity-20" />
+                                                <span>No users found</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredUsers.map((user) => (
+                                        <tr
+                                            key={user.uid}
+                                            className={`hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group cursor-pointer ${selectedUser?.uid === user.uid ? 'bg-brand/5 border-l-2 border-brand' : ''}`}
+                                            onClick={() => handleSelectUser(user)}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-offset-2 ring-transparent group-hover:ring-brand/30 transition-all ${user.disabled ? 'bg-slate-100 text-slate-400' : 'bg-brand/10 text-brand dark:bg-brand/20'
+                                                        }`}>
+                                                        {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <button
+                                                            className={`font-bold text-sm hover:text-brand transition-colors text-left ${user.disabled ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}
+                                                        >
+                                                            {user.displayName}
+                                                        </button>
+                                                        <div className="text-xs text-slate-500">{user.email}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
+                                            <td className="px-6 py-4">
+                                                {user.disabled ? (
+                                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-red-500 uppercase tracking-tight">
+                                                        <XCircle className="w-3.5 h-3.5" /> Disabled
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-tight">
+                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Active
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-slate-500">
+                                                {user.creationTime ? new Date(user.creationTime).toLocaleDateString() : 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-slate-500">
+                                                {user.lastSignInTime ? new Date(user.lastSignInTime).toLocaleDateString() : 'Never'}
+                                            </td>
+                                            <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => {
+                                                            const confirmReset = confirm("Generate a password reset link for this user?");
+                                                            if (!confirmReset) return;
+                                                            fetch(`/api/admin/users/${user.uid}/reset`, { method: 'POST' })
+                                                                .then(res => res.json())
+                                                                .then(data => {
+                                                                    if (data.success) {
+                                                                        alert(`Reset link generated: ${data.link}`);
+                                                                    } else {
+                                                                        alert('Error: ' + data.error);
+                                                                    }
+                                                                });
+                                                        }}
+                                                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Generate Reset Link"
+                                                    >
+                                                        <Key className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleStatus(user)}
+                                                        className={`p-2 rounded-lg transition-colors ${user.disabled ? 'text-emerald-500 hover:bg-emerald-50' : 'text-orange-500 hover:bg-orange-50'}`}
+                                                        title={user.disabled ? "Enable account" : "Disable account"}
+                                                    >
+                                                        {user.disabled ? <CheckCircle2 className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user.uid)}
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete user"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
-                                <th className="px-6 py-4">User</th>
-                                <th className="px-6 py-4">Role</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Created</th>
-                                <th className="px-6 py-4">Last Login</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                            {loading ? (
-                                Array(5).fill(0).map((_, i) => (
-                                    <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-6 py-4 h-16 bg-slate-100/10"></td>
-                                    </tr>
-                                ))
-                            ) : filteredUsers.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Users className="w-8 h-8 opacity-20" />
-                                            <span>No users found</span>
+                {/* â”€â”€ USER DETAIL PANEL â”€â”€ */}
+                {selectedUser && (
+                    <div className="w-80 flex-shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden animate-in slide-in-from-right duration-200">
+                        {/* Panel header */}
+                        <div className="bg-brand/5 border-b border-brand/10 p-5 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center font-black text-sm">
+                                    {selectedUser.displayName?.charAt(0) || selectedUser.email?.charAt(0)}
+                                </div>
+                                <div>
+                                    <p className="font-black text-slate-900 dark:text-white text-sm">{selectedUser.displayName}</p>
+                                    <p className="text-xs text-slate-500">{selectedUser.email}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedUser(null)}
+                                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Panel body */}
+                        <div className="p-5 space-y-4">
+                            {/* Role */}
+                            <DetailField label="Role" value={getRoleBadge(selectedUser.role)} />
+
+                            {/* Status */}
+                            <DetailField label="Status" value={
+                                selectedUser.disabled
+                                    ? <span className="text-xs font-black text-red-500 flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Disabled</span>
+                                    : <span className="text-xs font-black text-emerald-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Active</span>
+                            } />
+
+                            {/* Created */}
+                            <DetailField label="Created" value={
+                                <span className="text-xs text-slate-600">
+                                    {selectedUser.creationTime ? new Date(selectedUser.creationTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                </span>
+                            } />
+
+                            {/* Last Login */}
+                            <DetailField label="Last Login" value={
+                                <span className="text-xs text-slate-600">
+                                    {selectedUser.lastSignInTime ? new Date(selectedUser.lastSignInTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Never'}
+                                </span>
+                            } />
+
+                            {/* â”€â”€ PHONE NUMBER FIELD â”€â”€ */}
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Phone Number</p>
+                                {detailLoading ? (
+                                    <div className="h-8 bg-slate-100 rounded-lg animate-pulse" />
+                                ) : isEditingPhone ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative flex-1">
+                                            <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                            <input
+                                                type="tel"
+                                                value={editPhone}
+                                                onChange={e => setEditPhone(e.target.value)}
+                                                placeholder="+1 (555) 000-0000"
+                                                autoFocus
+                                                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-brand rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand/20"
+                                            />
                                         </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredUsers.map((user) => (
-                                    <tr key={user.uid} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-offset-2 ring-transparent group-hover:ring-brand/30 transition-all ${user.disabled ? 'bg-slate-100 text-slate-400' : 'bg-brand/10 text-brand dark:bg-brand/20'
-                                                    }`}>
-                                                    {user.displayName?.charAt(0) || user.email?.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <Link
-                                                        href={`/admin/users/${user.uid}`}
-                                                        className={`font-bold text-sm hover:text-brand transition-colors ${user.disabled ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}
-                                                    >
-                                                        {user.displayName}
-                                                    </Link>
-                                                    <div className="text-xs text-slate-500">{user.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
-                                        <td className="px-6 py-4">
-                                            {user.disabled ? (
-                                                <span className="flex items-center gap-1.5 text-[10px] font-black text-red-500 uppercase tracking-tight">
-                                                    <XCircle className="w-3.5 h-3.5" /> Disabled
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-tight">
-                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Active
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-slate-500">
-                                            {user.creationTime ? new Date(user.creationTime).toLocaleDateString() : 'N/A'}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-slate-500">
-                                            {user.lastSignInTime ? new Date(user.lastSignInTime).toLocaleDateString() : 'Never'}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => {
-                                                        const confirmReset = confirm("Generate a password reset link for this user?");
-                                                        if (!confirmReset) return;
-                                                        fetch(`/api/admin/users/${user.uid}/reset`, { method: 'POST' })
-                                                            .then(res => res.json())
-                                                            .then(data => {
-                                                                if (data.success) {
-                                                                    alert(`Reset link generated: ${data.link}`);
-                                                                } else {
-                                                                    alert('Error: ' + data.error);
-                                                                }
-                                                            });
-                                                    }}
-                                                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Generate Reset Link"
-                                                >
-                                                    <Key className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleToggleStatus(user)}
-                                                    className={`p-2 rounded-lg transition-colors ${user.disabled ? 'text-emerald-500 hover:bg-emerald-50' : 'text-orange-500 hover:bg-orange-50'}`}
-                                                    title={user.disabled ? "Enable account" : "Disable account"}
-                                                >
-                                                    {user.disabled ? <CheckCircle2 className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteUser(user.uid)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Delete history"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                        <button
+                                            onClick={handleSavePhone}
+                                            disabled={savingPhone}
+                                            className="p-1.5 bg-brand text-white rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50"
+                                            title="Save"
+                                        >
+                                            <Check className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                            onClick={() => { setIsEditingPhone(false); setEditPhone(selectedUser.phone || ''); }}
+                                            className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"
+                                            title="Cancel"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between group/phone">
+                                        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                            {editPhone || <span className="text-slate-400 italic">Not set</span>}
+                                        </div>
+                                        <button
+                                            onClick={() => setIsEditingPhone(true)}
+                                            className="p-1.5 text-slate-300 hover:text-brand hover:bg-brand/5 rounded-lg transition-all opacity-0 group-hover/phone:opacity-100"
+                                            title="Edit phone number"
+                                        >
+                                            <Edit2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* UID */}
+                            <DetailField label="UID" value={
+                                <span className="text-[10px] font-mono text-slate-400 break-all">{selectedUser.uid}</span>
+                            } />
+                        </div>
+
+                        {/* Panel actions */}
+                        <div className="px-5 pb-5 flex flex-col gap-2">
+                            <button
+                                onClick={() => handleToggleStatus(selectedUser)}
+                                className={`w-full py-2.5 rounded-xl text-xs font-black transition-all ${selectedUser.disabled
+                                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
+                                    : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'}`}
+                            >
+                                {selectedUser.disabled ? 'âœ“ Enable Account' : 'âš  Disable Account'}
+                            </button>
+                            <button
+                                onClick={() => handleDeleteUser(selectedUser.uid)}
+                                className="w-full py-2.5 rounded-xl text-xs font-black bg-red-50 text-red-500 hover:bg-red-100 border border-red-200 transition-all"
+                            >
+                                Delete User
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Create User Modal */}
@@ -441,6 +627,23 @@ export default function UserManagementPage() {
                                     </div>
                                 </div>
 
+                                {/* â”€â”€ PHONE NUMBER FIELD (new) â”€â”€ */}
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">
+                                        Phone Number <span className="text-slate-300 font-normal normal-case tracking-normal">(optional)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            type="tel"
+                                            placeholder="+1 (555) 000-0000"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                            value={newUserPhone}
+                                            onChange={e => setNewUserPhone(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Initial Password</label>
                                     <div className="relative">
@@ -448,7 +651,7 @@ export default function UserManagementPage() {
                                         <input
                                             required
                                             type="password"
-                                            placeholder="••••••••"
+                                            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                                             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                             value={formData.password}
                                             onChange={e => setFormData({ ...formData, password: e.target.value })}
@@ -490,6 +693,15 @@ export default function UserManagementPage() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function DetailField({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+            <div>{value}</div>
         </div>
     );
 }
