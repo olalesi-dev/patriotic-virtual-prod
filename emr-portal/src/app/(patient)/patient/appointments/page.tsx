@@ -123,21 +123,50 @@ export default function AppointmentsPage() {
 
     const fetchAppointments = async (uid: string, isNext: boolean = false) => {
         try {
-            // Source of Truth: Top-level appointments collection
+            // Query WITHOUT orderBy to avoid requiring a composite Firestore index.
+            // We sort client-side instead, which works with no index configuration.
             const apptsRef = collection(db, 'appointments');
-            let q = query(
+            const q = query(
                 apptsRef,
                 where('patientId', '==', uid),
-                orderBy('date', activeTab === 'upcoming' ? 'asc' : 'desc'),
-                limit(20)
+                limit(50)
             );
 
-            if (isNext && lastDoc) {
-                q = query(q, startAfter(lastDoc));
+            const snapshot = await getDocs(q);
+            let data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Appointment));
+
+            // If no appointments found in 'appointments', fall back to 'consultations' (legacy)
+            if (data.length === 0) {
+                const consultRef = collection(db, 'consultations');
+                const consultQ = query(consultRef, where('uid', '==', uid), limit(50));
+                const consultSnap = await getDocs(consultQ);
+                data = consultSnap.docs.map(d => {
+                    const raw = d.data();
+                    // Normalize legacy consultation fields to appointment shape
+                    return {
+                        id: d.id,
+                        patientId: raw.uid,
+                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' : (raw.status || 'PENDING_SCHEDULING'),
+                        paymentStatus: raw.paymentStatus,
+                        reason: raw.serviceKey || raw.reason || 'Consultation',
+                        type: 'Telehealth',
+                        date: raw.createdAt,
+                        providerName: raw.providerName || '',
+                        providerId: raw.providerId || '',
+                        intakeAnswers: raw.intake || {},
+                        serviceKey: raw.serviceKey,
+                        ...raw
+                    } as Appointment;
+                });
             }
 
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Appointment));
+            // Sort client-side ascending or descending by date
+            const isAsc = activeTab === 'upcoming';
+            data.sort((a, b) => {
+                const aMs = a.date?.toDate?.()?.getTime?.() ?? 0;
+                const bMs = b.date?.toDate?.()?.getTime?.() ?? 0;
+                return isAsc ? aMs - bMs : bMs - aMs;
+            });
 
             if (isNext) {
                 setAppointments(prev => [...prev, ...data]);
@@ -146,11 +175,11 @@ export default function AppointmentsPage() {
             }
 
             setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-            setHasMore(snapshot.docs.length === 20);
+            setHasMore(data.length === 50);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching appointments:', error);
-            toast.error('Failed to load appointments from source of truth');
+            toast.error('Failed to load appointments. Please refresh.');
             setLoading(false);
         }
     };
