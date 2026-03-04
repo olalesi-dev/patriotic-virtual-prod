@@ -19,9 +19,9 @@ import {
     limit, where, updateDoc, doc, Timestamp
 } from 'firebase/firestore';
 
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ CONSTANTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7 AM → 7 PM
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7 AM â†’ 7 PM
 const WORKING_START = 8;
 const WORKING_END = 18;
 const SLOT_HEIGHT = 80; // px per hour
@@ -30,6 +30,7 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; border: string
     confirmed: { label: 'Confirmed', dot: 'bg-blue-500', border: 'border-blue-500', bg: 'bg-blue-50' },
     pending: { label: 'Pending', dot: 'bg-yellow-400', border: 'border-yellow-400', bg: 'bg-yellow-50' },
     paid: { label: 'Confirmed', dot: 'bg-blue-500', border: 'border-blue-500', bg: 'bg-blue-50' },
+    scheduled: { label: 'Scheduled', dot: 'bg-blue-500', border: 'border-blue-500', bg: 'bg-blue-50' },
     checked_in: { label: 'Checked In', dot: 'bg-emerald-500', border: 'border-emerald-500', bg: 'bg-emerald-50' },
     no_show: { label: 'No-Show', dot: 'bg-red-500', border: 'border-red-500', bg: 'bg-red-50' },
     completed: { label: 'Completed', dot: 'bg-slate-400', border: 'border-slate-400', bg: 'bg-slate-50' },
@@ -39,10 +40,40 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; border: string
 const TYPE_CONFIG: Record<string, { label: string; border: string; bg: string; text: string; badge: string }> = {
     video: { label: 'VIDEO', border: 'border-cyan-500', bg: 'bg-cyan-50/90', text: 'text-cyan-900', badge: 'bg-cyan-100 text-cyan-700' },
     telehealth: { label: 'VIDEO', border: 'border-cyan-500', bg: 'bg-cyan-50/90', text: 'text-cyan-900', badge: 'bg-cyan-100 text-cyan-700' },
+    'Telehealth': { label: 'VIDEO', border: 'border-cyan-500', bg: 'bg-cyan-50/90', text: 'text-cyan-900', badge: 'bg-cyan-100 text-cyan-700' },
     'in-person': { label: 'IN-PERSON', border: 'border-emerald-500', bg: 'bg-emerald-50/90', text: 'text-emerald-900', badge: '' },
     initial: { label: 'INITIAL', border: 'border-violet-500', bg: 'bg-violet-50/90', text: 'text-violet-900', badge: '' },
     followup: { label: 'FOLLOW-UP', border: 'border-amber-500', bg: 'bg-amber-50/90', text: 'text-amber-900', badge: '' },
 };
+
+// â”€â”€â”€ SAFE DATE HELPER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Handles Firestore Timestamp, JS Date, 'YYYY-MM-DD' string, ISO string, epoch
+function toSafeDate(value: any): Date | null {
+    if (!value) return null;
+    if (typeof value.toDate === 'function') return value.toDate();     // Firestore Timestamp
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+    if (typeof value === 'string' || typeof value === 'number') {
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+}
+
+// Get the best Date for an appointment, preferring startTime (Timestamp) over date+time strings
+function getApptDate(appt: any): Date | null {
+    // 1. Use Firestore Timestamp startTime if available (most reliable)
+    if (appt.startTime?.toDate) return appt.startTime.toDate();
+    // 2. Combine date string + time string
+    if (typeof appt.date === 'string' && appt.date) {
+        const timeStr = appt.time || '00:00';
+        const d = new Date(`${appt.date}T${timeStr}:00`);
+        if (!isNaN(d.getTime())) return d;
+    }
+    // 3. Try toSafeDate on date field alone (handles legacy Timestamp date)
+    const fromDate = toSafeDate(appt.date);
+    if (fromDate) return fromDate;
+    return null;
+}
 
 function getTypeConfig(appt: any) {
     const t = (appt.type || '').toLowerCase();
@@ -51,7 +82,7 @@ function getTypeConfig(appt: any) {
     if (t === 'in-person') return TYPE_CONFIG['in-person'];
     if (s.includes('initial') || s.includes('consultation')) return TYPE_CONFIG.initial;
     if (s.includes('follow')) return TYPE_CONFIG.followup;
-    return TYPE_CONFIG.video; // default
+    return TYPE_CONFIG.video;
 }
 
 function getStatusConfig(status: string) {
@@ -61,11 +92,11 @@ function getStatusConfig(status: string) {
 function isJoinActive(appt: any): boolean {
     const type = (appt.type || '').toLowerCase();
     if (type !== 'video' && type !== 'telehealth') return false;
-    if (!appt.date || !appt.time) return false;
-    const apptTime = new Date(`${appt.date}T${appt.time}:00`);
+    const apptTime = getApptDate(appt);
+    if (!apptTime) return false;
     const now = new Date();
     const diffMs = apptTime.getTime() - now.getTime();
-    return diffMs <= 10 * 60 * 1000 && diffMs > -60 * 60 * 1000; // 10 min before to 1hr after
+    return diffMs <= 10 * 60 * 1000 && diffMs > -60 * 60 * 1000;
 }
 
 function getPatientLabel(appt: any) {
@@ -77,7 +108,7 @@ function getPatientLabel(appt: any) {
     return { name, isFallback: false };
 }
 
-// ─── APPOINTMENT CARD ────────────────────────────────────────────────────────
+// â”€â”€â”€ APPOINTMENT CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AppointmentCard({
     appt, style, onClickCard, onStatusChange, onDragStart
@@ -107,6 +138,10 @@ function AppointmentCard({
         return () => window.removeEventListener('click', close);
     }, [contextMenu]);
 
+    // FIX: use getApptDate() for display time
+    const apptDate = getApptDate(appt);
+    const displayTime = apptDate ? format(apptDate, 'h:mm a') : (appt.time || '');
+
     return (
         <div
             style={style}
@@ -117,7 +152,6 @@ function AppointmentCard({
             className={`absolute left-1 right-1 border-l-4 rounded-xl p-2.5 text-xs shadow-sm cursor-pointer hover:shadow-md transition-all z-10 overflow-hidden group select-none
                 ${typeConf.bg} ${typeConf.border} ${typeConf.text}`}
         >
-            {/* Status dot + patient name */}
             <div className="flex items-start justify-between gap-1 mb-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusConf.dot}`} />
@@ -133,14 +167,12 @@ function AppointmentCard({
                 {appt.isRecurring && <Repeat size={10} className="flex-shrink-0 opacity-50 mt-0.5" />}
             </div>
 
-            {/* Service / visit type */}
             <div className="text-[10px] font-semibold opacity-60 truncate mb-1.5">
                 {appt.service || appt.type || 'Consultation'}
             </div>
 
-            {/* Time + VIDEO badge */}
             <div className="flex items-center justify-between gap-1">
-                <span className="text-[10px] font-bold opacity-70">{appt.time}</span>
+                <span className="text-[10px] font-bold opacity-70">{displayTime}</span>
                 {isVideo && (
                     <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full tracking-wider ${typeConf.badge}`}>
                         VIDEO
@@ -148,7 +180,6 @@ function AppointmentCard({
                 )}
             </div>
 
-            {/* Join button for video */}
             {isVideo && (
                 <div className="mt-1.5" title={joinActive ? 'Join Telehealth Visit' : 'Available 10 min before appointment'}>
                     <button
@@ -158,12 +189,11 @@ function AppointmentCard({
                             ? 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-300'
                             : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
                     >
-                        {joinActive ? '▶ JOIN NOW' : '🔒 JOIN'}
+                        {joinActive ? 'â–¶ JOIN NOW' : 'ðŸ”’ JOIN'}
                     </button>
                 </div>
             )}
 
-            {/* Context Menu */}
             {contextMenu && (
                 <div
                     style={{ top: contextMenu.y, left: contextMenu.x, position: 'fixed', zIndex: 9999 }}
@@ -186,7 +216,7 @@ function AppointmentCard({
     );
 }
 
-// ─── SLIDE-OUT PANEL ─────────────────────────────────────────────────────────
+// â”€â”€â”€ SLIDE-OUT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SlideOutPanel({ appt, onClose, onStatusChange }: {
     appt: any | null;
@@ -199,16 +229,13 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
     const statusConf = getStatusConfig(appt.status);
     const joinActive = isJoinActive(appt);
     const isVideo = (appt.type || '').toLowerCase() === 'video' || (appt.type || '').toLowerCase() === 'telehealth';
+    const apptDate = getApptDate(appt);
+    const displayDateTime = apptDate ? format(apptDate, 'h:mm a Â· MMM d, yyyy') : (appt.time || 'â€”');
 
     return (
         <>
-            {/* Backdrop */}
             <div className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[1px]" onClick={onClose} />
-
-            {/* Panel */}
             <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300">
-
-                {/* Header */}
                 <div className={`p-5 border-b border-slate-100 ${typeConf.bg} border-l-4 ${typeConf.border}`}>
                     <div className="flex items-start justify-between">
                         <div>
@@ -239,14 +266,12 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                     </div>
                 </div>
 
-                {/* Details */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                    <DetailRow icon={<Clock size={14} />} label="Time" value={`${appt.time} — ${appt.date}`} />
-                    <DetailRow icon={<User size={14} />} label="Provider" value={appt.providerName || appt.doctor || '—'} />
-                    <DetailRow icon={<FileText size={14} />} label="Visit Reason" value={appt.notes || appt.service || '—'} />
+                    <DetailRow icon={<Clock size={14} />} label="Time" value={displayDateTime} />
+                    <DetailRow icon={<User size={14} />} label="Provider" value={appt.providerName || appt.doctor || 'â€”'} />
+                    <DetailRow icon={<FileText size={14} />} label="Visit Reason" value={appt.notes || appt.service || 'â€”'} />
                     {appt.patientId && <DetailRow icon={<User size={14} />} label="Patient ID" value={appt.patientId.slice(0, 12)} />}
 
-                    {/* Status quick-update */}
                     <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Update Status</p>
                         <div className="grid grid-cols-2 gap-2">
@@ -266,7 +291,6 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                     </div>
                 </div>
 
-                {/* Actions */}
                 <div className="p-5 border-t border-slate-100 space-y-2">
                     {isVideo && (
                         <button
@@ -311,7 +335,7 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
     );
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// â”€â”€â”€ MAIN COMPONENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function CalendarPage() {
     const router = useRouter();
@@ -338,7 +362,7 @@ export default function CalendarPage() {
         setTimeout(() => setToast(null), 3000);
     };
 
-    // ─── REALTIME SYNC ────────────────────────────────────────────────────────
+    // â”€â”€â”€ REALTIME SYNC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     useEffect(() => {
         import('@/lib/firebase').then(({ auth }) => {
@@ -368,6 +392,8 @@ export default function CalendarPage() {
 
                     const { where: fiWhere } = await import('firebase/firestore');
 
+                    // FIX: Also query appointments where providerId is not set but status is 'scheduled'
+                    // so freshly-scheduled ones always appear regardless of provider query
                     const apptQ = query(collection(db, 'appointments'), fiWhere('providerId', '==', user.uid));
                     const unsubAppts = onSnapshot(apptQ, snap => {
                         setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -399,7 +425,7 @@ export default function CalendarPage() {
         }).catch(() => setPatients([{ id: 'demo-1', name: 'John Doe' }]));
     }, []);
 
-    // ─── VIEW LOGIC ───────────────────────────────────────────────────────────
+    // â”€â”€â”€ VIEW LOGIC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const getViewRange = () => {
         if (viewType === 'day') return { start: startOfDay(currentDate), end: endOfDay(currentDate) };
@@ -422,17 +448,16 @@ export default function CalendarPage() {
         else setCurrentDate(subWeeks(currentDate, 1));
     };
 
-    // ─── APPOINTMENT STYLE (position) ────────────────────────────────────────
+    // â”€â”€â”€ APPOINTMENT STYLE (position) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // FIX: Use getApptDate() which handles Firestore Timestamps, strings, and Date objects
 
     const getApptStyle = (appt: any): React.CSSProperties => {
-        const dateStr = appt.date || '';
-        const timeStr = appt.time || '09:00';
-        const dt = new Date(`${dateStr}T${timeStr}:00`);
+        const dt = getApptDate(appt) || new Date();
         const top = ((dt.getHours() - 7) * SLOT_HEIGHT) + ((dt.getMinutes() / 60) * SLOT_HEIGHT);
-        return { position: 'absolute', top: `${top}px`, height: `${SLOT_HEIGHT}px`, left: 4, right: 4 };
+        return { position: 'absolute', top: `${Math.max(0, top)}px`, height: `${SLOT_HEIGHT}px`, left: 4, right: 4 };
     };
 
-    // ─── STATUS UPDATE ─────────────────────────────────────────────────────
+    // â”€â”€â”€ STATUS UPDATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleStatusChange = async (id: string, status: string) => {
         try {
@@ -442,7 +467,7 @@ export default function CalendarPage() {
         } catch (e) { showToast('Failed to update status.'); }
     };
 
-    // ─── DRAG & DROP ─────────────────────────────────────────────────────────
+    // â”€â”€â”€ DRAG & DROP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleDragStart = (e: React.DragEvent, appt: any) => {
         setDraggedAppt(appt);
@@ -453,7 +478,6 @@ export default function CalendarPage() {
         e.preventDefault();
         if (!draggedAppt) return;
 
-        // Snap to 15-minute intervals based on drop position within cell
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         const relY = e.clientY - rect.top;
         const minuteOffset = Math.round((relY / SLOT_HEIGHT) * 60 / 15) * 15;
@@ -472,7 +496,7 @@ export default function CalendarPage() {
         setDraggedAppt(null);
     };
 
-    // ─── BLOCK TIME ──────────────────────────────────────────────────────────
+    // â”€â”€â”€ BLOCK TIME â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleBlockTime = async (date: Date, hour: number) => {
         const start = new Date(date);
@@ -495,7 +519,7 @@ export default function CalendarPage() {
         } catch (e) { showToast('Failed to unblock.'); }
     };
 
-    // ─── ADD APPOINTMENT ──────────────────────────────────────────────────────
+    // â”€â”€â”€ ADD APPOINTMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleScheduleVisit = async () => {
         if (!apptForm.patientName) { alert('Please select a patient.'); return; }
@@ -522,25 +546,21 @@ export default function CalendarPage() {
         setTeamMembers(prev => prev.map(m => m.id === id ? { ...m, checked: !m.checked } : m));
 
     const allSelected = teamMembers.every(m => m.checked);
-
     const currentWeekRange = { start: startOfWeek(currentDate, { weekStartsOn: 0 }), end: endOfWeek(currentDate, { weekStartsOn: 0 }) };
 
-    // ─── RENDER ───────────────────────────────────────────────────────────────
+    // â”€â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     return (
         <div className="flex h-[calc(100vh-6rem)] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-sans relative">
 
-            {/* TOAST */}
             {toast && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-300 flex items-center gap-2">
                     <Check size={14} className="text-emerald-400" /> {toast}
                 </div>
             )}
 
-            {/* SLIDE OUT PANEL */}
             <SlideOutPanel appt={selectedAppt} onClose={() => setSelectedAppt(null)} onStatusChange={handleStatusChange} />
 
-            {/* APPOINTMENT MODAL */}
             {isModalOpen && (
                 <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200 p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
@@ -578,7 +598,7 @@ export default function CalendarPage() {
                                     {['video', 'in-person'].map(t => (
                                         <button key={t} onClick={() => setApptForm({ ...apptForm, type: t })}
                                             className={`h-11 rounded-xl border-2 font-bold text-sm transition-all ${apptForm.type === t ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'}`}>
-                                            {t === 'video' ? '📹 Video' : '🏥 In-Person'}
+                                            {t === 'video' ? 'ðŸ“¹ Video' : 'ðŸ¥ In-Person'}
                                         </button>
                                     ))}
                                 </div>
@@ -603,8 +623,6 @@ export default function CalendarPage() {
 
             {/* SIDEBAR */}
             <aside className="w-60 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col overflow-y-auto">
-
-                {/* Mini Calendar */}
                 <div className="p-4 border-b border-slate-100">
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-slate-900">{format(currentDate, 'MMMM yyyy')}</span>
@@ -634,7 +652,6 @@ export default function CalendarPage() {
                     </div>
                 </div>
 
-                {/* Filters */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     <FilterSection title="Team Members" defaultOpen>
                         <div onClick={() => teamMembers.forEach(m => setTeamMembers(prev => prev.map(x => ({ ...x, checked: !allSelected }))))}
@@ -672,8 +689,6 @@ export default function CalendarPage() {
 
             {/* MAIN */}
             <div className="flex-1 flex flex-col min-w-0">
-
-                {/* TOOLBAR */}
                 <header className="h-16 border-b border-slate-200 flex items-center justify-between px-6 bg-white z-20 shrink-0">
                     <div className="flex items-center gap-4">
                         <button onClick={() => { setCurrentDate(new Date()); setViewType('week'); }}
@@ -685,7 +700,7 @@ export default function CalendarPage() {
                             <button onClick={handleNext} className="p-1.5 hover:bg-white rounded-lg transition-all text-slate-600"><ChevronRight className="w-4 h-4" /></button>
                         </div>
                         <span className="text-lg font-black text-slate-900 tracking-tight">
-                            {format(viewStart, 'MMM d')} – {format(viewEnd, 'MMM d, yyyy')}
+                            {format(viewStart, 'MMM d')} â€“ {format(viewEnd, 'MMM d, yyyy')}
                         </span>
                         <div className="relative">
                             <button onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}
@@ -715,7 +730,6 @@ export default function CalendarPage() {
                     </div>
                 </header>
 
-                {/* GRID */}
                 <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 relative">
                     {dbLoading && (
                         <div className="absolute inset-0 z-50 bg-white/80 flex items-center justify-center">
@@ -726,12 +740,15 @@ export default function CalendarPage() {
                         </div>
                     )}
 
-                    {/* Day header row */}
                     <div className="flex border-b border-slate-200 shrink-0 bg-white pl-14">
                         {viewDays.map((day, i) => {
                             const isCurrent = isToday(day);
                             const isSelected = isSameDay(day, currentDate);
-                            const dayApptCount = appointments.filter(a => isSameDay(new Date((a.date || '') + 'T00:00:00'), day)).length;
+                            // FIX: use getApptDate() to count appointments per day
+                            const dayApptCount = appointments.filter(a => {
+                                const d = getApptDate(a);
+                                return d ? isSameDay(d, day) : false;
+                            }).length;
                             return (
                                 <div key={i} onClick={() => { setCurrentDate(day); if (viewType === 'week') setViewType('day'); }}
                                     className={`flex-1 py-3 text-center border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors ${isSelected ? 'bg-indigo-50/50' : ''}`}>
@@ -749,10 +766,7 @@ export default function CalendarPage() {
                         })}
                     </div>
 
-                    {/* Scrollable body */}
                     <div className="flex-1 overflow-y-auto flex relative min-h-0">
-
-                        {/* Time column */}
                         <div className="w-14 flex-shrink-0 border-r border-slate-100 bg-white relative sticky left-0 z-20" style={{ minHeight: `${HOURS.length * SLOT_HEIGHT}px` }}>
                             {HOURS.map((hour, i) => {
                                 const isOff = hour < WORKING_START || hour >= WORKING_END;
@@ -765,9 +779,7 @@ export default function CalendarPage() {
                             })}
                         </div>
 
-                        {/* Columns */}
                         <div className="flex-1 flex relative" style={{ minHeight: `${HOURS.length * SLOT_HEIGHT}px` }}>
-                            {/* Hour lines */}
                             <div className="absolute inset-0 z-0 pointer-events-none">
                                 {HOURS.map((hour, i) => {
                                     const isOff = hour < WORKING_START || hour >= WORKING_END;
@@ -780,8 +792,11 @@ export default function CalendarPage() {
 
                             {viewDays.map((day, colIndex) => {
                                 const isSelected = isSameDay(day, currentDate);
-                                const dayAppts = appointments.filter(a =>
-                                    isSameDay(new Date((a.date || '') + 'T00:00:00'), day));
+                                // FIX: Use getApptDate() to filter appointments for this day column
+                                const dayAppts = appointments.filter(a => {
+                                    const d = getApptDate(a);
+                                    return d ? isSameDay(d, day) : false;
+                                });
                                 const dayBlocks = availability.filter(b => {
                                     const bDate = b.startTime?.toDate ? b.startTime.toDate() : new Date(b.startTime || 0);
                                     return isSameDay(bDate, day);
@@ -792,7 +807,6 @@ export default function CalendarPage() {
                                     <div key={colIndex}
                                         className={`flex-1 border-r border-slate-100 relative h-full z-10 ${isSelected ? 'bg-indigo-50/10' : ''}`}>
 
-                                        {/* Droppable hour slots */}
                                         <div className="absolute inset-0 z-0">
                                             {HOURS.map((hour, i) => {
                                                 const isOff = hour < WORKING_START || hour >= WORKING_END;
@@ -819,26 +833,21 @@ export default function CalendarPage() {
                                             })}
                                         </div>
 
-                                        {/* Empty state */}
                                         {!hasAppts && !dayBlocks.length && (
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                 <span className="text-[10px] font-bold text-slate-200 uppercase tracking-widest rotate-90">No appointments</span>
                                             </div>
                                         )}
 
-                                        {/* Blocked slots */}
                                         {dayBlocks.map(block => {
                                             const bDate = block.startTime?.toDate ? block.startTime.toDate() : new Date(block.startTime || 0);
                                             const bTop = ((bDate.getHours() - 7) * SLOT_HEIGHT);
                                             return (
                                                 <div key={block.id}
                                                     style={{
-                                                        top: `${bTop}px`,
-                                                        height: `${SLOT_HEIGHT}px`,
+                                                        top: `${bTop}px`, height: `${SLOT_HEIGHT}px`,
                                                         backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.03) 4px, rgba(0,0,0,0.03) 8px)',
-                                                        position: 'absolute',
-                                                        left: 4, right: 4,
-                                                        zIndex: 10
+                                                        position: 'absolute', left: 4, right: 4, zIndex: 10
                                                     }}
                                                     className="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50/80">
                                                     <div className="flex items-center justify-between px-2 pt-2">
@@ -852,7 +861,6 @@ export default function CalendarPage() {
                                             );
                                         })}
 
-                                        {/* Today line */}
                                         {isToday(day) && (() => {
                                             const now = new Date();
                                             const top = ((now.getHours() - 7) * SLOT_HEIGHT) + ((now.getMinutes() / 60) * SLOT_HEIGHT);
@@ -865,7 +873,6 @@ export default function CalendarPage() {
                                             );
                                         })()}
 
-                                        {/* Appointment cards */}
                                         {dayAppts.map(appt => (
                                             <AppointmentCard
                                                 key={appt.id}
@@ -886,8 +893,6 @@ export default function CalendarPage() {
         </div>
     );
 }
-
-// ─── FILTER SECTION ──────────────────────────────────────────────────────────
 
 function FilterSection({ title, children, defaultOpen = false }: any) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
