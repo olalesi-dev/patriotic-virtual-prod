@@ -29,7 +29,7 @@ export default function SuccessPage() {
                 if (appointmentId) {
                     // Update existing pending appointment
                     await updateDoc(doc(db, 'appointments', appointmentId), {
-                        status: 'paid',
+                        status: 'PENDING_SCHEDULING',
                         stripeSessionId: sessionId || 'mock_session',
                         updatedAt: serverTimestamp()
                     });
@@ -38,12 +38,22 @@ export default function SuccessPage() {
                     await addDoc(collection(db, 'appointments'), {
                         patient: patientName,
                         service: service,
-                        date: date,
-                        time: time,
+                        date: date || 'TBD',
+                        time: time || 'TBD',
                         type: 'video',
-                        status: 'paid',
+                        status: 'PENDING_SCHEDULING',
                         stripeSessionId: sessionId || 'mock_session',
                         createdAt: serverTimestamp()
+                    });
+                }
+
+                // 3. Notify Providers
+                const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+                if (apiBase) {
+                    await fetch(`${apiBase}/api/notifications/appointment-bucket-alert`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ patientName, service, appointmentId })
                     });
                 }
 
@@ -54,7 +64,7 @@ export default function SuccessPage() {
             }
         };
 
-        if ((patientName && service && date && time) || appointmentId) {
+        if ((patientName && service) || appointmentId) {
             createAppointment();
         }
     }, [patientName, service, date, time, sessionId, appointmentId]);
@@ -90,9 +100,11 @@ export default function SuccessPage() {
                 </div>
 
                 <h1 className="text-4xl font-black tracking-tight mb-4 flex items-center justify-center gap-3">
-                    Booking Confirmed <Sparkles className="text-brand" size={24} />
+                    Priority Queue Confirmed <Sparkles className="text-brand" size={24} />
                 </h1>
-                <p className="text-slate-400 font-medium mb-12">Your appointment has been successfully scheduled and payment received.</p>
+                <p className="text-slate-400 font-medium mb-12">
+                    Thank you for your payment. Your case has been prioritized. To ensure the best clinical match, one of our providers will contact you directly to finalize your appointment time.
+                </p>
 
                 <div className="bg-white/5 rounded-3xl p-8 text-left space-y-6 border border-white/5 mb-12">
                     <div className="flex items-start gap-4">
@@ -105,44 +117,33 @@ export default function SuccessPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8">
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-400 shrink-0">
-                                <Calendar size={20} />
-                            </div>
-                            <div>
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Date</span>
-                                <span className="font-bold">{date ? format(new Date(date), 'MMM d, yyyy') : '...'}</span>
-                            </div>
+                    <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-400 shrink-0">
+                            <Clock size={20} />
                         </div>
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-orange-400 shrink-0">
-                                <Clock size={20} />
-                            </div>
-                            <div>
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Time</span>
-                                <span className="font-bold">{time}</span>
-                            </div>
+                        <div>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Expected Outreach</span>
+                            <span className="font-bold">7:00 AM — 7:00 PM (EST)</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="space-y-4">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">What's Next?</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Outreach Protocol</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="p-4 rounded-2xl bg-brand/5 border border-brand/10 text-left">
-                            <span className="block text-[10px] font-black text-brand uppercase mb-1">Confirmation Email</span>
-                            <span className="text-[11px] text-slate-400 font-medium leading-relaxed">Check your inbox for session links and preparation steps.</span>
+                            <span className="block text-[10px] font-black text-brand uppercase mb-1">Provider Callback</span>
+                            <span className="text-[11px] text-slate-400 font-medium leading-relaxed">A licensed healthcare provider will reach out via your registered phone number or email.</span>
                         </div>
                         <div className="p-4 rounded-2xl bg-slate-800/50 border border-white/5 text-left">
-                            <span className="block text-[10px] font-black text-white uppercase mb-1">Telehealth Ready</span>
-                            <span className="text-[11px] text-slate-400 font-medium leading-relaxed">Login 5 minutes before your slot to test your camera.</span>
+                            <span className="block text-[10px] font-black text-white uppercase mb-1">Clinical Matching</span>
+                            <span className="text-[11px] text-slate-400 font-medium leading-relaxed">We are currently matching your intake records with the most appropriate clinical specialist.</span>
                         </div>
                     </div>
                 </div>
 
                 <button
-                    onClick={() => router.push('/')}
+                    onClick={() => router.push('/patient')}
                     className="w-full mt-12 bg-white text-navy py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-white/5"
                 >
                     Return to Dashboard <ArrowRight size={18} />
@@ -151,11 +152,9 @@ export default function SuccessPage() {
                 <div className="mt-8 flex items-center justify-center gap-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                     <span className="flex items-center gap-1"><Phone size={12} /> Support</span>
                     <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                    <span className="flex items-center gap-1"><ShieldCheck size={12} /> HIPAA SECURE</span>
+                    <span className="flex items-center gap-1">🛡️ HIPAA SECURE</span>
                 </div>
             </div>
         </div>
     );
 }
-
-function ShieldCheck({ size }: any) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></svg>; }
