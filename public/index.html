@@ -136,6 +136,35 @@
         text-decoration: none;
       }
 
+      .brand-logo-img {
+        display: block;
+        width: auto;
+        height: 42px;
+        object-fit: contain;
+        flex-shrink: 0;
+        transition: all 0.25s var(--ease);
+      }
+
+      .brand-logo-dark {
+        display: none;
+      }
+
+      body:not(.light-theme) .brand-logo-light {
+        display: none;
+      }
+
+      body:not(.light-theme) .brand-logo-dark {
+        display: block;
+      }
+
+      body.light-theme .brand-logo-light {
+        display: block;
+      }
+
+      body.light-theme .brand-logo-dark {
+        display: none;
+      }
+
       .logo-mark {
         width: 44px;
         height: 44px;
@@ -1235,6 +1264,34 @@
         background: var(--g50);
       }
 
+      .rad-intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        align-items: center;
+        gap: 168px;
+        margin-bottom: 40px;
+      }
+
+      .rad-intro .sec-title {
+        margin-bottom: 14px;
+      }
+
+      .rad-intro .sec-sub {
+        margin-bottom: 0;
+        max-width: 640px;
+      }
+
+      .rad-intro-media {
+        overflow: hidden;
+      }
+
+      .rad-intro-media img {
+        width: 80%;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        display: block;
+      }
+
       .rad-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -2156,6 +2213,78 @@
       }
 
       /* ======= AI NAVIGATOR ======= */
+      body {
+        --ai-label-bg: #0f172a;
+        --ai-label-text: #f8fafc;
+        --ai-label-border: rgba(148, 163, 184, 0.32);
+        --ai-card-bg: #0b1220;
+        --ai-card-border: rgba(148, 163, 184, 0.3);
+        --ai-head-bg: linear-gradient(
+          135deg,
+          rgba(59, 130, 246, 0.2),
+          rgba(99, 102, 241, 0.14)
+        );
+        --ai-body-bg: #020617;
+        --ai-title: #f8fafc;
+        --ai-sub: #94a3b8;
+        --ai-bot-bg: #1e293b;
+        --ai-bot-text: #e2e8f0;
+        --ai-opt-bg: #0f172a;
+        --ai-opt-border: #334155;
+        --ai-opt-text: #e2e8f0;
+        --ai-opt-hover-bg: #172554;
+        --ai-opt-hover-text: #dbeafe;
+        --ai-input-wrap: #0b1220;
+        --ai-input-bg: #0f172a;
+        --ai-input-border: #334155;
+        --ai-input-text: #f8fafc;
+        --ai-input-placeholder: #94a3b8;
+        --ai-typing: #64748b;
+        --ai-elig-pass-bg: rgba(16, 185, 129, 0.16);
+        --ai-elig-pass-border: rgba(16, 185, 129, 0.42);
+        --ai-elig-warn-bg: rgba(245, 158, 11, 0.17);
+        --ai-elig-warn-border: rgba(245, 158, 11, 0.42);
+        --ai-elig-no-bg: rgba(239, 68, 68, 0.17);
+        --ai-elig-no-border: rgba(239, 68, 68, 0.42);
+        --ai-elig-text: #e2e8f0;
+      }
+
+      body.light-theme {
+        --ai-label-bg: #0f172a;
+        --ai-label-text: #ffffff;
+        --ai-label-border: rgba(15, 23, 42, 0.2);
+        --ai-card-bg: #ffffff;
+        --ai-card-border: #dbe3ee;
+        --ai-head-bg: linear-gradient(
+          135deg,
+          rgba(59, 130, 246, 0.08),
+          rgba(99, 102, 241, 0.06)
+        );
+        --ai-body-bg: #f8fafc;
+        --ai-title: #0f172a;
+        --ai-sub: #64748b;
+        --ai-bot-bg: #e2e8f0;
+        --ai-bot-text: #1e293b;
+        --ai-opt-bg: #ffffff;
+        --ai-opt-border: #cbd5e1;
+        --ai-opt-text: #0f172a;
+        --ai-opt-hover-bg: #eff6ff;
+        --ai-opt-hover-text: #1d4ed8;
+        --ai-input-wrap: #ffffff;
+        --ai-input-bg: #f8fafc;
+        --ai-input-border: #cbd5e1;
+        --ai-input-text: #0f172a;
+        --ai-input-placeholder: #94a3b8;
+        --ai-typing: #94a3b8;
+        --ai-elig-pass-bg: #ecfdf5;
+        --ai-elig-pass-border: rgba(16, 185, 129, 0.3);
+        --ai-elig-warn-bg: #fffbeb;
+        --ai-elig-warn-border: rgba(245, 158, 11, 0.3);
+        --ai-elig-no-bg: #fef2f2;
+        --ai-elig-no-border: rgba(239, 68, 68, 0.3);
+        --ai-elig-text: #334155;
+      }
+
       .ai-fab {
         position: fixed;
         bottom: 28px;
@@ -2232,14 +2361,15 @@
       .ai-label {
         position: absolute;
         right: 72px;
-        background: var(--navy);
-        color: #fff;
+        background: var(--ai-label-bg);
+        color: var(--ai-label-text);
         padding: 8px 16px;
         border-radius: 8px;
         font-size: 13px;
         font-weight: 600;
         white-space: nowrap;
         box-shadow: var(--sh-md);
+        border: 1px solid var(--ai-label-border);
         opacity: 0;
         transform: translateX(8px);
         transition: all 0.3s var(--ease);
@@ -2258,7 +2388,7 @@
         top: 50%;
         transform: translateY(-50%);
         border: 6px solid transparent;
-        border-left-color: var(--navy);
+        border-left-color: var(--ai-label-bg);
       }
 
       .ai-chat {
@@ -2268,10 +2398,10 @@
         z-index: 1500;
         width: 400px;
         max-height: 560px;
-        background: #fff;
+        background: var(--ai-card-bg);
         border-radius: var(--r-lg);
         box-shadow: var(--sh-xl);
-        border: 1px solid var(--g100);
+        border: 1px solid var(--ai-card-border);
         display: flex;
         flex-direction: column;
         opacity: 0;
@@ -2288,15 +2418,11 @@
 
       .ai-chat-head {
         padding: 18px 20px;
-        border-bottom: 1px solid var(--g100);
+        border-bottom: 1px solid var(--ai-card-border);
         display: flex;
         align-items: center;
         gap: 12px;
-        background: linear-gradient(
-          135deg,
-          rgba(59, 130, 246, 0.03),
-          rgba(99, 102, 241, 0.03)
-        );
+        background: var(--ai-head-bg);
         border-radius: var(--r-lg) var(--r-lg) 0 0;
       }
 
@@ -2315,12 +2441,12 @@
       .ai-chat-title {
         font-weight: 700;
         font-size: 15px;
-        color: var(--navy);
+        color: var(--ai-title);
       }
 
       .ai-chat-sub {
         font-size: 11px;
-        color: var(--g400);
+        color: var(--ai-sub);
         margin-top: 1px;
       }
 
@@ -2333,6 +2459,7 @@
         gap: 12px;
         max-height: 360px;
         min-height: 200px;
+        background: var(--ai-body-bg);
       }
 
       .ai-msg {
@@ -2345,8 +2472,8 @@
       }
 
       .ai-msg.bot {
-        background: var(--g50);
-        color: var(--g700);
+        background: var(--ai-bot-bg);
+        color: var(--ai-bot-text);
         align-self: flex-start;
         border-bottom-left-radius: 4px;
       }
@@ -2366,13 +2493,13 @@
       }
 
       .ai-opt {
-        background: #fff;
-        border: 1.5px solid var(--g200);
+        background: var(--ai-opt-bg);
+        border: 1.5px solid var(--ai-opt-border);
         border-radius: 8px;
         padding: 10px 14px;
         font-size: 13px;
         font-weight: 500;
-        color: var(--navy);
+        color: var(--ai-opt-text);
         cursor: pointer;
         transition: all 0.2s var(--ease);
         text-align: left;
@@ -2381,26 +2508,33 @@
 
       .ai-opt:hover {
         border-color: var(--blue);
-        background: var(--blue-pale);
-        color: var(--blue-electric);
+        background: var(--ai-opt-hover-bg);
+        color: var(--ai-opt-hover-text);
       }
 
       .ai-chat-input {
         padding: 12px 16px;
-        border-top: 1px solid var(--g100);
+        border-top: 1px solid var(--ai-card-border);
+        background: var(--ai-input-wrap);
         display: flex;
         gap: 8px;
       }
 
       .ai-chat-input input {
         flex: 1;
-        border: 1.5px solid var(--g200);
+        border: 1.5px solid var(--ai-input-border);
         border-radius: 8px;
         padding: 10px 14px;
         font-size: 14px;
         font-family: "Outfit", sans-serif;
+        color: var(--ai-input-text);
+        background: var(--ai-input-bg);
         outline: none;
         transition: all 0.2s var(--ease);
+      }
+
+      .ai-chat-input input::placeholder {
+        color: var(--ai-input-placeholder);
       }
 
       .ai-chat-input input:focus {
@@ -2437,7 +2571,7 @@
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: var(--g300);
+        background: var(--ai-typing);
         animation: blink 1.4s infinite both;
       }
 
@@ -2462,21 +2596,21 @@
       }
 
       .ai-elig {
-        background: var(--emerald-soft);
-        border: 1px solid rgba(16, 185, 129, 0.2);
+        background: var(--ai-elig-pass-bg);
+        border: 1px solid var(--ai-elig-pass-border);
         border-radius: 10px;
         padding: 14px;
         margin-top: 8px;
       }
 
       .ai-elig.warn {
-        background: var(--amber-soft);
-        border-color: rgba(245, 158, 11, 0.2);
+        background: var(--ai-elig-warn-bg);
+        border-color: var(--ai-elig-warn-border);
       }
 
       .ai-elig.no {
-        background: var(--red-soft);
-        border-color: rgba(239, 68, 68, 0.15);
+        background: var(--ai-elig-no-bg);
+        border-color: var(--ai-elig-no-border);
       }
 
       .ai-elig h4 {
@@ -2488,7 +2622,7 @@
       .ai-elig p {
         font-size: 12px;
         line-height: 1.5;
-        color: var(--g600);
+        color: var(--ai-elig-text);
       }
 
       @media (max-width: 1024px) {
@@ -2503,6 +2637,16 @@
 
         .footer-grid {
           grid-template-columns: repeat(3, 1fr);
+        }
+
+        .rad-intro {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+
+        .rad-intro-media {
+          max-width: 560px;
+          width: 100%;
         }
 
         .photo-row {
@@ -3535,38 +3679,175 @@
         color: rgba(255, 255, 255, 0.5) !important;
       }
 
-      /* DARK MODE ABOUT MODAL OVERRIDE */
+      /* ABOUT MODAL THEME TOKENS */
+      #aboutModal {
+        --about-bg: #0a0f1c;
+        --about-border: rgba(255, 255, 255, 0.1);
+        --about-title: #ffffff;
+        --about-text: rgba(255, 255, 255, 0.84);
+        --about-muted: #cbd5e1;
+        --about-card: #111827;
+        --about-accent: #93c5fd;
+        background: rgba(2, 6, 23, 0.74);
+      }
+
+      body.light-theme #aboutModal {
+        --about-bg: #ffffff;
+        --about-border: #d1d5db;
+        --about-title: #0f172a;
+        --about-text: #334155;
+        --about-muted: #64748b;
+        --about-card: #f8fafc;
+        --about-accent: #1d4ed8;
+        background: rgba(15, 23, 42, 0.42);
+      }
+
       #aboutModal .modal {
-        background: #0a0f1c !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        color: #e5e7eb !important;
+        background: var(--about-bg) !important;
+        border: 1px solid var(--about-border) !important;
+        color: var(--about-text) !important;
         box-shadow:
-          0 20px 25px -5px rgba(0, 0, 0, 0.5),
-          0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
+          0 20px 25px -5px rgba(0, 0, 0, 0.45),
+          0 10px 10px -5px rgba(0, 0, 0, 0.35) !important;
       }
 
-      #aboutModal h2 {
-        color: #ffffff !important;
-      }
-
+      #aboutModal h2,
       #aboutModal h3 {
-        color: #ffffff !important;
+        color: var(--about-title) !important;
       }
 
       #aboutModal p,
       #aboutModal li {
-        color: rgba(255, 255, 255, 0.7) !important;
-      }
-
-      #aboutModal div[style*="background:var(--g50)"] {
-        background: #111827 !important;
-        /* Dark Gray/Navy */
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        color: var(--about-text) !important;
       }
 
       #aboutModal b {
-        color: #ffffff !important;
+        color: var(--about-title) !important;
+      }
+
+      #aboutModal [style*="var(--g50)"] {
+        background: var(--about-card) !important;
+        border: 1px solid var(--about-border);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      #aboutModal [style*="var(--navy)"] {
+        color: var(--about-title) !important;
+      }
+
+      #aboutModal [style*="var(--g500)"] {
+        color: var(--about-muted) !important;
+      }
+
+      #aboutModal [style*="var(--g600)"],
+      #aboutModal [style*="var(--g700)"] {
+        color: var(--about-text) !important;
+      }
+
+      #aboutModal [style*="var(--blue)"] {
+        color: var(--about-accent) !important;
+      }
+
+      /* AUTH MODAL THEME TOKENS */
+      #authModal {
+        --auth-bg: #0b1220;
+        --auth-border: rgba(255, 255, 255, 0.12);
+        --auth-title: #ffffff;
+        --auth-text: #dbe3ef;
+        --auth-muted: #9fb0c9;
+        --auth-link: #93c5fd;
+        --auth-field-bg: #111b2d;
+        --auth-field-border: rgba(148, 163, 184, 0.36);
+        --auth-field-text: #f8fafc;
+        --auth-field-placeholder: #8ea0bc;
+        --auth-outline-bg: rgba(255, 255, 255, 0.04);
+        --auth-outline-border: rgba(148, 163, 184, 0.4);
+        --auth-outline-text: #f8fafc;
+        --auth-outline-hover-bg: rgba(147, 197, 253, 0.14);
+        --auth-outline-hover-border: #60a5fa;
+        --auth-outline-hover-text: #dbeafe;
+        --auth-divider: rgba(148, 163, 184, 0.35);
+        background: rgba(2, 6, 23, 0.75);
+      }
+
+      body.light-theme #authModal {
+        --auth-bg: #ffffff;
+        --auth-border: #d1d5db;
+        --auth-title: #0f172a;
+        --auth-text: #334155;
+        --auth-muted: #64748b;
+        --auth-link: #1d4ed8;
+        --auth-field-bg: #f8fafc;
+        --auth-field-border: #cbd5e1;
+        --auth-field-text: #0f172a;
+        --auth-field-placeholder: #94a3b8;
+        --auth-outline-bg: #f8fafc;
+        --auth-outline-border: #cbd5e1;
+        --auth-outline-text: #0f172a;
+        --auth-outline-hover-bg: #eff6ff;
+        --auth-outline-hover-border: #93c5fd;
+        --auth-outline-hover-text: #1d4ed8;
+        --auth-divider: #cbd5e1;
+        background: rgba(15, 23, 42, 0.42);
+      }
+
+      #authModal .modal {
+        background: var(--auth-bg) !important;
+        border: 1px solid var(--auth-border) !important;
+        color: var(--auth-text) !important;
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.45),
+          0 10px 10px -5px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      #authModal h2 {
+        color: var(--auth-title) !important;
+      }
+
+      #authModal .ms,
+      #authModal .ff {
+        color: var(--auth-muted) !important;
+      }
+
+      #authModal .ff a {
+        color: var(--auth-link) !important;
+      }
+
+      #authModal .fg label {
+        color: var(--auth-text) !important;
+      }
+
+      #authModal .fg input,
+      #authModal .fg select,
+      #authModal .fg textarea {
+        background: var(--auth-field-bg) !important;
+        border-color: var(--auth-field-border) !important;
+        color: var(--auth-field-text) !important;
+      }
+
+      #authModal .fg input::placeholder,
+      #authModal .fg textarea::placeholder {
+        color: var(--auth-field-placeholder) !important;
+      }
+
+      #authModal .btn-outline {
+        background: var(--auth-outline-bg) !important;
+        border-color: var(--auth-outline-border) !important;
+        color: var(--auth-outline-text) !important;
+      }
+
+      #authModal .btn-outline:hover {
+        background: var(--auth-outline-hover-bg) !important;
+        border-color: var(--auth-outline-hover-border) !important;
+        color: var(--auth-outline-hover-text) !important;
+      }
+
+      #authModal [style*="background: var(--g200)"] {
+        background: var(--auth-divider) !important;
+      }
+
+      #authModal [style*="color: var(--g400)"] {
+        color: var(--auth-muted) !important;
       }
 
       /* DARK MODE PATIENT CHART OVERRIDE */
@@ -3686,28 +3967,180 @@
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
       }
 
-      /* SAFETY SCREENING QUESTIONS DARK MODE OVERRIDE */
+      /* CONSULT MODAL THEME TOKENS */
+      #consultModal {
+        --consult-bg: #0b1220;
+        --consult-border: rgba(148, 163, 184, 0.3);
+        --consult-title: #f8fafc;
+        --consult-text: #dbe3ef;
+        --consult-muted: #9fb0c9;
+        --consult-choice-bg: #0f172a;
+        --consult-choice-border: #334155;
+        --consult-choice-text: #e2e8f0;
+        --consult-choice-hover: #13203a;
+        --consult-choice-sel-bg: rgba(59, 130, 246, 0.16);
+        --consult-choice-sel-text: #dbeafe;
+        --consult-progress: #334155;
+        --consult-input-bg: #0f172a;
+        --consult-input-border: #334155;
+        --consult-input-text: #f8fafc;
+        --consult-input-ph: #94a3b8;
+        --consult-summary-bg: #111827;
+        --consult-summary-border: rgba(148, 163, 184, 0.26);
+        background: rgba(2, 6, 23, 0.74);
+      }
+
+      body.light-theme #consultModal {
+        --consult-bg: #ffffff;
+        --consult-border: #d1d5db;
+        --consult-title: #0f172a;
+        --consult-text: #334155;
+        --consult-muted: #64748b;
+        --consult-choice-bg: #ffffff;
+        --consult-choice-border: #cbd5e1;
+        --consult-choice-text: #0f172a;
+        --consult-choice-hover: #eff6ff;
+        --consult-choice-sel-bg: #dbeafe;
+        --consult-choice-sel-text: #1d4ed8;
+        --consult-progress: #cbd5e1;
+        --consult-input-bg: #f8fafc;
+        --consult-input-border: #cbd5e1;
+        --consult-input-text: #0f172a;
+        --consult-input-ph: #94a3b8;
+        --consult-summary-bg: #f8fafc;
+        --consult-summary-border: #dbe3ee;
+        background: rgba(15, 23, 42, 0.42);
+      }
+
+      #consultModal .modal.cm {
+        background: var(--consult-bg) !important;
+        border: 1px solid var(--consult-border) !important;
+        color: var(--consult-text) !important;
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.45),
+          0 10px 10px -5px rgba(0, 0, 0, 0.35) !important;
+      }
+
       #consultModal h2,
       #consultModal h3 {
-        color: #ffffff !important;
+        color: var(--consult-title) !important;
       }
 
-      #consultModal p {
-        color: rgba(255, 255, 255, 0.7) !important;
+      #consultModal p,
+      #consultModal .ms {
+        color: var(--consult-text) !important;
       }
 
-      #consultModal .iq h3 {
-        color: #ffffff !important;
+      #consultModal .iq p,
+      #consultModal [style*="color: var(--g500)"] {
+        color: var(--consult-muted) !important;
       }
 
-      #consultModal input {
-        color: #ffffff !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        background: rgba(255, 255, 255, 0.05) !important;
+      #consultModal .ipb {
+        background: var(--consult-progress) !important;
       }
 
-      #consultModal input::placeholder {
-        color: rgba(255, 255, 255, 0.4) !important;
+      #consultModal .ro {
+        background: var(--consult-choice-bg) !important;
+        border-color: var(--consult-choice-border) !important;
+        color: var(--consult-choice-text) !important;
+      }
+
+      #consultModal .rd2 {
+        border-color: var(--consult-choice-border) !important;
+      }
+
+      #consultModal .ro:hover {
+        border-color: var(--blue) !important;
+        background: var(--consult-choice-hover) !important;
+      }
+
+      #consultModal .ro.sel {
+        border-color: var(--blue) !important;
+        background: var(--consult-choice-sel-bg) !important;
+        color: var(--consult-choice-sel-text) !important;
+      }
+
+      #consultModal input,
+      #consultModal select,
+      #consultModal textarea {
+        color: var(--consult-input-text) !important;
+        border-color: var(--consult-input-border) !important;
+        background: var(--consult-input-bg) !important;
+      }
+
+      #consultModal input::placeholder,
+      #consultModal textarea::placeholder {
+        color: var(--consult-input-ph) !important;
+      }
+
+      #consultModal [style*="background: var(--g50)"] {
+        background: var(--consult-summary-bg) !important;
+        border: 1px solid var(--consult-summary-border);
+      }
+
+      #consultModal #cS3 > p {
+        color: var(--consult-muted) !important;
+      }
+
+      #consultModal #rSum {
+        background: var(--consult-summary-bg) !important;
+        border: 1px solid var(--consult-summary-border) !important;
+        color: var(--consult-text) !important;
+      }
+
+      #consultModal .consult-rsum-block {
+        margin-bottom: 14px;
+      }
+
+      #consultModal .consult-rsum-block:last-child {
+        margin-bottom: 0;
+      }
+
+      #consultModal .consult-rsum-label {
+        font-size: 12px;
+        color: var(--consult-muted);
+        margin-bottom: 3px;
+      }
+
+      #consultModal .consult-rsum-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--consult-title);
+      }
+
+      #consultModal .consult-rsum-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--consult-choice-border);
+        font-size: 14px;
+      }
+
+      #consultModal .consult-rsum-key {
+        color: var(--consult-muted);
+      }
+
+      #consultModal .consult-rsum-answer {
+        font-weight: 600;
+        color: var(--consult-title);
+        text-align: right;
+      }
+
+      #consultModal .consult-rsum-empty {
+        font-size: 13px;
+        color: var(--consult-muted);
+        padding: 6px 0 2px;
+      }
+
+      #consultModal .btn-ghost {
+        color: var(--consult-text) !important;
+      }
+
+      #consultModal .btn-ghost:hover {
+        color: var(--consult-title) !important;
+        background: rgba(148, 163, 184, 0.18) !important;
       }
 
       /* LIGHT THEME */
@@ -3897,6 +4330,14 @@
 
       #mainNav .nav-logo {
         gap: 14px;
+      }
+
+      #mainNav .brand-logo-img {
+        height: 46px;
+      }
+
+      #mainNav.scrolled .brand-logo-img {
+        height: 42px;
       }
 
       #mainNav .logo-mark {
@@ -4766,6 +5207,10 @@
 
       #landingPage footer .nav-logo {
         align-items: center;
+      }
+
+      #landingPage footer .brand-logo-img {
+        height: 50px;
       }
 
       #landingPage footer .nav-brand-top {
@@ -5865,17 +6310,16 @@
     <nav id="mainNav">
       <div class="nav-inner">
         <a href="#" class="nav-logo" onclick="showLanding()">
-          <div class="logo-mark">
-            <svg>
-              <use href="#pvtLogo" />
-            </svg>
-          </div>
-          <div class="nav-brand">
-            <div class="nav-brand-top">
-              Patriotic <span class="bv">Virtual</span>
-            </div>
-            <div class="nav-brand-bottom">Telehealth</div>
-          </div>
+          <img
+            src="assets/logo.png"
+            alt="Patriotic Virtual Telehealth"
+            class="brand-logo-img brand-logo-light"
+          />
+          <img
+            src="assets/logomarkdark.png"
+            alt="Patriotic Virtual Telehealth"
+            class="brand-logo-img brand-logo-dark"
+          />
         </a>
         <div class="nav-links">
           <a href="#" onclick="openAboutUs()">About Us</a
@@ -5974,36 +6418,153 @@
                   Start Your Visit -&gt;
                 </button>
               </div>
-              <div class="hero-trust">
-                <div class="tp">
-                  <div class="ti s">SH</div>
-                  <div class="tp-text">
-                    <div class="tp-k">Shield</div>
-                    <div class="tp-v">HIPAA Compliant</div>
-                  </div>
-                </div>
-                <div class="tp">
-                  <div class="ti d">MD</div>
-                  <div class="tp-text">
-                    <div class="tp-k">MD</div>
-                    <div class="tp-v">FL-Licensed</div>
-                  </div>
-                </div>
-                <div class="tp">
-                  <div class="ti b">RX</div>
-                  <div class="tp-text">
-                    <div class="tp-k">Rx</div>
-                    <div class="tp-v">Free Rx Shipping</div>
-                  </div>
-                </div>
-                <div class="tp">
-                  <div class="ti p">SOP</div>
-                  <div class="tp-text">
-                    <div class="tp-k">SOP</div>
-                    <div class="tp-v">Protocol-Based</div>
-                  </div>
-                </div>
-              </div>
+             <div
+  class="trust-micro"
+  style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;max-width:560px;"
+>
+  <div
+    class="trust-pill"
+    style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);"
+  >
+    <span
+      style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);"
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 12 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style="width:12px;height:12px;display:block;"
+      >
+        <path
+          d="M6 1.2 9.5 2.8v3c0 2.4-1.6 4.7-3.5 5.3-1.9-.6-3.5-2.9-3.5-5.3v-3L6 1.2Z"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="m4.1 5.9 1.2 1.2 2.5-2.5"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </span>
+    <span style="display:flex;flex-direction:column;line-height:1.05;">
+      <span style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">Shield</span>
+      <span style="font-size:11px;color:#f0fdf4;font-weight:600;">HIPAA Compliant</span>
+    </span>
+  </div>
+
+  <div
+    class="trust-pill"
+    style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);"
+  >
+    <span
+      style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);"
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 12 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style="width:12px;height:12px;display:block;"
+      >
+        <rect
+          x="1.5"
+          y="2.2"
+          width="9"
+          height="7.3"
+          rx="1.4"
+          stroke="currentColor"
+          stroke-width="1.2"
+        />
+        <path
+          d="M6 4.2v3.2M4.4 5.8h3.2"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </span>
+    <span style="display:flex;flex-direction:column;line-height:1.05;">
+      <span style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">MD</span>
+      <span style="font-size:11px;color:#f0fdf4;font-weight:600;">FL-Licensed</span>
+    </span>
+  </div>
+
+  <div
+    class="trust-pill"
+    style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);"
+  >
+    <span
+      style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);"
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 12 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style="width:12px;height:12px;display:block;"
+      >
+        <path
+          d="M3.3 3.4a2.3 2.3 0 0 1 3.3 0l2 2a2.3 2.3 0 1 1-3.3 3.3l-2-2a2.3 2.3 0 0 1 0-3.3Z"
+          stroke="currentColor"
+          stroke-width="1.2"
+        />
+        <path
+          d="m4.2 7.8 3.6-3.6"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </span>
+    <span style="display:flex;flex-direction:column;line-height:1.05;">
+      <span style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">Rx</span>
+      <span style="font-size:11px;color:#f0fdf4;font-weight:600;">Free Shipping</span>
+    </span>
+  </div>
+
+  <div
+    class="trust-pill"
+    style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);"
+  >
+    <span
+      style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);"
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 12 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style="width:12px;height:12px;display:block;"
+      >
+        <circle
+          cx="6"
+          cy="6"
+          r="4.3"
+          stroke="currentColor"
+          stroke-width="1.2"
+        />
+        <path
+          d="m4.1 6.2 1.2 1.2 2.5-2.5"
+          stroke="currentColor"
+          stroke-width="1.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </span>
+    <span style="display:flex;flex-direction:column;line-height:1.05;">
+      <span style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">SOP</span>
+      <span style="font-size:11px;color:#f0fdf4;font-weight:600;">Protocol-Based</span>
+    </span>
+  </div>
+</div>
+
               <div class="fl-badge">Now serving Florida</div>
             </div>
             <div class="hero-vis hero-services-showcase" id="services">
@@ -6021,8 +6582,7 @@
               >
                 <div class="tab active" onclick="filterSvc('popular', this)">
                   Popular
-                </div>
-                <div class="tab" onclick="filterSvc('clinical', this)">
+                <!-- <div class="tab" onclick="filterSvc('clinical', this)">
                   Clinical Visits
                 </div>
                 <div class="tab" onclick="filterSvc('mens', this)">
@@ -6037,7 +6597,7 @@
                 <div class="tab" onclick="filterSvc('membership', this)">
                   Memberships
                 </div>
-                <div class="tab" onclick="filterSvc('all', this)">All</div>
+                <div class="tab" onclick="filterSvc('all', this)">All</div> -->
               </div>
               <div class="services-grid hero-services-grid" id="svcGrid"></div>
             </div>
@@ -6219,7 +6779,9 @@
             Radiology Education
           </div>
 
-          <h2 class="sec-title">
+          <div class="rad-intro">
+            <div>
+              <h2 class="sec-title">
             Expert imaging insights.<br />Clearer understanding.
           </h2>
           <p class="sec-sub">
@@ -6235,6 +6797,14 @@
               >⚠️ For Educational Purposes Only. Not a diagnostic service.</span
             >
           </p>
+            </div>
+            <div class="rad-intro-media">
+              <img
+                src="assets/familyimage.png"
+                alt="Family reviewing medical imaging information"
+              />
+            </div>
+          </div>
           <div class="rad-grid" style="grid-template-columns: repeat(2, 1fr)">
             <!-- 1. AI Analysis -->
             <div
@@ -6505,25 +7075,16 @@
                 onclick="showLanding()"
                 style="margin-bottom: 4px"
               >
-                <div class="logo-mark">
-                  <svg>
-                    <use href="#pvtLogo" />
-                  </svg>
-                </div>
-                <div class="nav-brand">
-                  <div class="nav-brand-top" style="color: #fff">
-                    Patriotic
-                    <span class="bv" style="color: var(--blue-bright)"
-                      >Virtual</span
-                    >
-                  </div>
-                  <div
-                    class="nav-brand-bottom"
-                    style="color: rgba(255, 255, 255, 0.3)"
-                  >
-                    Telehealth
-                  </div>
-                </div>
+                <img
+                  src="assets/logo.png"
+                  alt="Patriotic Virtual Telehealth"
+                  class="brand-logo-img brand-logo-light"
+                />
+                <img
+                  src="assets/logomarkdark.png"
+                  alt="Patriotic Virtual Telehealth"
+                  class="brand-logo-img brand-logo-dark"
+                />
               </a>
               <p class="footer-brand-text">
                 Board-certified telehealth and radiology services.
@@ -7531,8 +8092,8 @@
         >
           <div
             style="
-              width: 120px;
-              height: 120px;
+              width: 200px;
+              height: 200px;
               border-radius: 50%;
               overflow: hidden;
               border: 3px solid var(--blue);
@@ -8809,6 +9370,19 @@
           cat: ["popular", "radiology"],
           stripe: "prod_TmuBq5Pwvt1rBc",
           priceId: "PRICE_ID_VIDEO_CONSULT",
+        },
+        {
+          id: "erectile-dysfunction",
+          k: "erectile_dysfunction",
+          name: "Erectile Dysfunction",
+          desc: "Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.",
+          icon: "⚡",
+          ic: "blue",
+          c: "blue",
+          price: 79,
+          cat: ["popular", "mens", "clinical"],
+          stripe: "prod_TupASTZvm9MPDJ",
+          priceId: "PRICE_ID_ED",
         },
         {
           id: "membership-elite",
@@ -10392,15 +10966,14 @@
         }
         if (s === 3) {
           const sv = svcs.find((x) => x.k === selSvc);
-          document.getElementById("rSum").innerHTML =
-            `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Service</div><div style="font-size:16px;font-weight:700;color:var(--navy)">${sv.icon} ${sv.name}</div></div><div style="margin-bottom:14px"><div style="font-size:12px;color:var(--g400);margin-bottom:3px">Price</div><div style="font-size:16px;font-weight:700;color:var(--navy)">$${sv.price}</div></div><div><div style="font-size:12px;color:var(--g400);margin-bottom:8px">Responses</div>${Object.entries(
-              intake,
+          const responseRows = Object.entries(intake)
+            .map(
+              ([k, v]) =>
+                `<div class="consult-rsum-row"><span class="consult-rsum-key">${k.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}</span><span class="consult-rsum-answer">${typeof v === "boolean" ? (v ? "Yes" : "No") : v}</span></div>`,
             )
-              .map(
-                ([k, v]) =>
-                  `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--g200);font-size:14px"><span style="color:var(--g600)">${k.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}</span><span style="font-weight:600;color:var(--navy)">${typeof v === "boolean" ? (v ? "Yes" : "No") : v}</span></div>`,
-              )
-              .join("")}</div>`;
+            .join("");
+          document.getElementById("rSum").innerHTML =
+            `<div class="consult-rsum-block"><div class="consult-rsum-label">Service</div><div class="consult-rsum-value">${sv.icon} ${sv.name}</div></div><div class="consult-rsum-block"><div class="consult-rsum-label">Price</div><div class="consult-rsum-value">$${sv.price}</div></div><div class="consult-rsum-block"><div class="consult-rsum-label" style="margin-bottom:8px">Responses</div>${responseRows || '<div class="consult-rsum-empty">No additional responses.</div>'}</div>`;
         }
         ["cS1", "cS2", "cS3", "cS4"].forEach((id) =>
           document.getElementById(id).classList.add("hidden"),
