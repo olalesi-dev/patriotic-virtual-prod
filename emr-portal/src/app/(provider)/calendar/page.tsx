@@ -5,7 +5,7 @@ import {
     ChevronLeft, ChevronRight, ChevronDown, Plus, Filter, Settings,
     Calendar as CalendarIcon, User, Search, Video, Clock, FileText,
     MapPin, X, CheckCircle2, AlertTriangle, RefreshCw, MessageSquare,
-    Phone, MoreVertical, Repeat, Check, UserX, ArrowRight
+    Phone, MoreVertical, Repeat, Check, UserX, ArrowRight, ShieldCheck, ChevronDown as ChevronDownIcon
 } from 'lucide-react';
 import {
     format, addWeeks, subWeeks, startOfWeek, endOfWeek,
@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import {
     collection, onSnapshot, query, orderBy, addDoc, getDocs,
-    limit, where, updateDoc, doc, Timestamp
+    limit, where, updateDoc, doc, Timestamp, getDoc
 } from 'firebase/firestore';
 
 // â”€â”€â”€ CONSTANTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -223,6 +223,27 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
     onClose: () => void;
     onStatusChange: (id: string, status: string) => void;
 }) {
+    const [intakeData, setIntakeData] = useState<Record<string, any> | null>(null);
+    const [intakeLoading, setIntakeLoading] = useState(false);
+    const [screeningOpen, setScreeningOpen] = useState(true);
+
+    // Fetch full appointment doc (including intakeData) when panel opens
+    useEffect(() => {
+        if (!appt?.id) { setIntakeData(null); return; }
+        setIntakeLoading(true);
+        getDoc(doc(db, 'appointments', appt.id))
+            .then(snap => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    setIntakeData(data.intakeData || null);
+                } else {
+                    setIntakeData(null);
+                }
+            })
+            .catch(() => setIntakeData(null))
+            .finally(() => setIntakeLoading(false));
+    }, [appt?.id]);
+
     if (!appt) return null;
     const { name, isFallback } = getPatientLabel(appt);
     const typeConf = getTypeConfig(appt);
@@ -232,10 +253,17 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
     const apptDate = getApptDate(appt);
     const displayDateTime = apptDate ? format(apptDate, 'h:mm a Â· MMM d, yyyy') : (appt.time || 'â€”');
 
+    // Format intake question keys into readable labels
+    const formatKey = (key: string) =>
+        key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^./, s => s.toUpperCase()).trim();
+
+    const intakeEntries = intakeData ? Object.entries(intakeData) : [];
+
     return (
         <>
             <div className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[1px]" onClick={onClose} />
-            <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300">
+            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300">
+                {/* Header */}
                 <div className={`p-5 border-b border-slate-100 ${typeConf.bg} border-l-4 ${typeConf.border}`}>
                     <div className="flex items-start justify-between">
                         <div>
@@ -266,13 +294,79 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                    <DetailRow icon={<Clock size={14} />} label="Time" value={displayDateTime} />
-                    <DetailRow icon={<User size={14} />} label="Provider" value={appt.providerName || appt.doctor || 'â€”'} />
-                    <DetailRow icon={<FileText size={14} />} label="Visit Reason" value={appt.notes || appt.service || 'â€”'} />
-                    {appt.patientId && <DetailRow icon={<User size={14} />} label="Patient ID" value={appt.patientId.slice(0, 12)} />}
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto">
+                    {/* Basic details */}
+                    <div className="p-5 space-y-4 border-b border-slate-100">
+                        <DetailRow icon={<Clock size={14} />} label="Time" value={displayDateTime} />
+                        <DetailRow icon={<User size={14} />} label="Provider" value={appt.providerName || appt.doctor || 'â€”'} />
+                        <DetailRow icon={<FileText size={14} />} label="Visit Reason" value={appt.notes || appt.service || 'â€”'} />
+                        {appt.patientId && <DetailRow icon={<User size={14} />} label="Patient ID" value={appt.patientId.slice(0, 12)} />}
+                    </div>
 
-                    <div>
+                    {/* â”€â”€ SAFETY SCREENING SECTION â”€â”€ */}
+                    <div className="border-b border-slate-100">
+                        <button
+                            onClick={() => setScreeningOpen(o => !o)}
+                            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck size={15} className="text-emerald-500" />
+                                <span className="text-xs font-black text-slate-700 uppercase tracking-widest">Safety Screening</span>
+                                {intakeEntries.length > 0 && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-black">
+                                        {intakeEntries.length} answers
+                                    </span>
+                                )}
+                            </div>
+                            <ChevronDownIcon size={14} className={`text-slate-400 transition-transform duration-200 ${screeningOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {screeningOpen && (
+                            <div className="px-5 pb-5">
+                                {/* Subheading matching the booking page */}
+                                <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
+                                    These questions follow our clinical safety protocols.
+                                </p>
+
+                                {intakeLoading ? (
+                                    <div className="flex items-center gap-2 py-4">
+                                        <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                        <span className="text-xs text-slate-400">Loading intake dataâ€¦</span>
+                                    </div>
+                                ) : intakeEntries.length === 0 ? (
+                                    <div className="bg-slate-50 rounded-xl p-4 text-center">
+                                        <ShieldCheck size={20} className="text-slate-300 mx-auto mb-1.5" />
+                                        <p className="text-xs text-slate-400 font-medium">No intake answers on file</p>
+                                        <p className="text-[10px] text-slate-300 mt-0.5">Patient may have booked before screening was added</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {intakeEntries.map(([key, value]) => (
+                                            <div key={key} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                                                    {formatKey(key)}
+                                                </p>
+                                                <p className={`text-sm font-semibold ${value === true || value === 'yes' || value === 'Yes'
+                                                        ? 'text-amber-700'
+                                                        : value === false || value === 'no' || value === 'No'
+                                                            ? 'text-emerald-700'
+                                                            : 'text-slate-800'
+                                                    }`}>
+                                                    {typeof value === 'boolean'
+                                                        ? (value ? 'âš ï¸ Yes' : 'âœ“ No')
+                                                        : String(value || 'â€”')}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Status update */}
+                    <div className="p-5">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Update Status</p>
                         <div className="grid grid-cols-2 gap-2">
                             {(['confirmed', 'checked_in', 'no_show', 'completed'] as const).map(s => (
@@ -291,6 +385,7 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                     </div>
                 </div>
 
+                {/* Footer actions */}
                 <div className="p-5 border-t border-slate-100 space-y-2">
                     {isVideo && (
                         <button
