@@ -10728,13 +10728,47 @@
     }
 
     // New Function specifically for Payment Return
-    function handlePaymentSuccess(consultationId) {
-      // 1. Show the "Payment Confirmed" Modal (interstitial)
+    async function handlePaymentSuccess(consultationId) {
+      console.log("Processing payment success for:", consultationId);
       currentConsultId = consultationId; // Assign to global variable
 
-      // Show the modal
-      const modal = document.getElementById("scheduleModal"); // Use correct ID
-      if (modal) modal.classList.add("active");
+      try {
+        // 1. Update status in Firestore to ensure it appears in EMR Waitlists
+        // We update both 'consultations' (Legacy React EMR) and 'appointments' (New Next.js EMR)
+        const updateTasks = [];
+
+        if (typeof db !== 'undefined' && consultationId) {
+          const ts = firebase.firestore.FieldValue.serverTimestamp();
+
+          // Legacy support (React EMR expects 'waitlist' status in 'consultations' collection)
+          updateTasks.push(
+            db.collection('consultations').doc(consultationId).update({
+              status: 'waitlist',
+              paymentStatus: 'paid',
+              updatedAt: ts
+            }).catch(e => console.log("Consultations update skipped:", e.message))
+          );
+
+          // New support (Next.js EMR expects 'PENDING_SCHEDULING' status in 'appointments' collection)
+          updateTasks.push(
+            db.collection('appointments').doc(consultationId).update({
+              status: 'PENDING_SCHEDULING',
+              paymentStatus: 'paid',
+              updatedAt: ts
+            }).catch(e => console.log("Appointments update skipped:", e.message))
+          );
+        }
+
+        await Promise.all(updateTasks);
+
+        // 2. Show the professional success modal immediately
+        showBookingSuccess();
+
+      } catch (err) {
+        console.error("Error finalizing payment flow:", err);
+        // Fallback: show success anyway so patient isn't stuck
+        showBookingSuccess();
+      }
 
       // Clean URL
       window.history.replaceState(
