@@ -24,9 +24,9 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy Firestore Rules & Indexes
-        run: firebase deploy --only firestore --project patriotic-virtual-prod
-        env:
-          FIREBASE_TOKEN: '${{ secrets.FIREBASE_TOKEN }}'
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PATRIOTIC_VIRTUAL_PROD }}' > /tmp/sa.json
+          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json firebase deploy --only firestore --project patriotic-virtual-prod
 
       - name: Deploy to Firebase EMR
         uses: FirebaseExtended/action-hosting-deploy@v0
