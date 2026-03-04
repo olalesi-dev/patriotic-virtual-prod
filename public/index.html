@@ -10591,12 +10591,18 @@
             const content = `
                 <div style="margin-bottom:12px">
                     <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Patient</div>
-                    <div style="font-size:16px;font-weight:700;color:var(--navy)">${p.patientName}</div>
-                    <div style="font-size:13px;color:var(--g500)">${p.patientEmail}</div>
+                    <div style="font-size:16px;font-weight:700;color:var(--navy)">${
+                      p.patientName
+                    }</div>
+                    <div style="font-size:13px;color:var(--g500)">${
+                      p.patientEmail
+                    }</div>
                 </div>
                 <div style="margin-bottom:12px">
                     <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Service</div>
-                    <div style="font-size:15px;color:var(--navy)">${p.serviceName}</div>
+                    <div style="font-size:15px;color:var(--navy)">${
+                      p.serviceName
+                    }</div>
                 </div>
                 <div style="display:flex;gap:20px;margin-bottom:12px">
                     <div>
@@ -11520,7 +11526,9 @@
                 <br><span style="font-size:12px;color:var(--g500)">${c.patientEmail || ""}</span>
             </td>
             <td style="padding:12px">${svc}</td>
-            <td style="padding:12px"><span style="color:${statusColor};font-weight:600;text-transform:capitalize">${c.status}</span></td>
+            <td style="padding:12px"><span style="color:${statusColor};font-weight:600;text-transform:capitalize">${
+              c.status
+            }</span></td>
             <td style="padding:12px;display:flex;gap:8px">
               <button class="btn btn-outline" style="padding:6px 12px;font-size:12px" onclick="viewIntake('${c.id}')">View Intake</button>
               <a href="javascript:void(0)" onclick="openPACS('https://patriotictelehealth.cloudflareaccess.com/cdn-cgi/access/login/pacs.patriotictelehealth.com?kid=50d12b77a557150adfb69118eca44c243524d89794459b29611a7326d9485b5c&amp;meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImQwNDZhODYwMmEyNzlmZTg2ZDZhNWE2MzlkMmYwMjE0YmRmNDlhMmM0YTFjM2I5YTdiNmRmNDZjYjJkMmQ0MGMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjUwZDEyYjc3YTU1NzE1MGFkZmI2OTExOGVjYTQ0YzI0MzUyNGQ4OTc5NDQ1OWIyOTYxMWE3MzI2ZDk0ODViNWMiLCJob3N0bmFtZSI6InBhY3MucGF0cmlvdGljdGVsZWhlYWx0aC5jb20iLCJyZWRpcmVjdF91cmwiOiIvIiwic2VydmljZV90b2tlbl9zdGF0dXMiOmZhbHNlLCJpc193YXJwIjpmYWxzZSwiaXNfZ2F0ZXdheSI6ZmFsc2UsImV4cCI6MTc3MTY0Mzc1NywibmJmIjoxNzcxNjQzNDU3LCJpYXQiOjE3NzE2NDM0NTcsImF1dGhfc3RhdHVzIjoiTk9ORSIsIm10bHNfYXV0aCI6eyJjZXJ0X2lzc3Vlcl9kbiI6IiIsImNlcnRfc2VyaWFsIjoiIiwiY2VydF9pc3N1ZXJfc2tpIjoiIiwiY2VydF9wcmVzZW50ZWQiOmZhbHNlLCJjb21tb25fbmFtZSI6IiIsImF1dGhfc3RhdHVzIjoiTk9ORSJ9LCJyZWFsX2NvdW50cnkiOiJVUyIsImFwcF9zZXNzaW9uX2hhc2giOiJjOTZiNjhmOGEyZjYzNzhmYzhhYzA0OTM3YWJkMzkyMDIyN2U4ZWVmZDUzYmNkOGRkZTUxOGQwMTQ2MGZjMDZjIn0.Hz2Svg-SbF3Oi_P_CzJFodwLybyBgJ24PTka6dFjr1v5KjfbNsHVWsyjUvPTrZgJJ0de-0nktzr-rysESAc1EeqA_YotbvPuIkS-W40nJoLfbHwK22f_3RGfGUbnH8sgpIImbggoTBSyUqznLDVMF4uj9pe2KFDnobEtJoprONe1qGT_zwzB8fyVwGaWTNUe74U5EL4paLV88HbV6_0N_ekgFsXuYO5aL_dguN75xq2FeGu8zldtnpKI2FZ9h-3CZ0FSWSPYLPVu1DmhI-lhjQO-7TXmbK4isQNG-x837taraPnaEWZjhk_j7wbm1eI4rJV44H2vJjLZ4dbkFqHl5g&amp;redirect_url=%2F')" class="btn btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none">View PACS</a>
@@ -11630,9 +11638,11 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;height:100%;overflow:hidden;background:#000000">
                 <!-- LEFT SIDEBAR: DEMOGRAPHICS -->
                 <div style="border-right:1px solid rgba(255,255,255,0.1);background:#0A0F1C;padding:40px;display:flex;flex-direction:column;gap:32px;overflow-y:auto">
+                <div style="border-right:1px solid rgba(255,255,255,0.1);background:#0A0F1C;padding:40px;display:flex;flex-direction:column;gap:32px;overflow-y:auto">
                     
                     <!-- Profile Header -->
                     <div style="text-align:center">
+                        <div style="width:100px;height:100px;background:#1F2937;border:2px solid rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 20px;color:var(--blue);font-weight:700;box-shadow:var(--sh-md)">
                         <div style="width:100px;height:100px;background:#1F2937;border:2px solid rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 20px;color:var(--blue);font-weight:700;box-shadow:var(--sh-md)">
                             ${name.charAt(0)}
                         </div>
@@ -11645,6 +11655,7 @@
                     </div>
 
                     <!-- Details Card -->
+                    <div style="background:#1F2937;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;box-shadow:var(--sh-sm)">
                     <div style="background:#1F2937;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;box-shadow:var(--sh-sm)">
                         <h4 style="margin:0 0 20px 0;font-size:14px;text-transform:uppercase;color:rgba(255,255,255,0.5);letter-spacing:1px;font-weight:700">Patient Details</h4>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px 16px">
@@ -11666,7 +11677,9 @@
 
                              <div>
                                 <div style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px">Visits</div>
-                                <div style="font-size:16px;color:#FFFFFF;font-weight:600">${history.length}</div>
+                                <div style="font-size:16px;color:#FFFFFF;font-weight:600">${
+                                  history.length
+                                }</div>
                             </div>
                         </div>
                     </div>
@@ -11680,8 +11693,10 @@
 
                 <!-- RIGHT CONTENT -->
                 <div style="flex:1;overflow-y:auto;padding:20px;background:#000000">
+                <div style="flex:1;overflow-y:auto;padding:20px;background:#000000">
                     
                     <!-- TABS -->
+                    <div class="chart-tabs" style="margin:-20px -20px 20px -20px">
                     <div class="chart-tabs" style="margin:-20px -20px 20px -20px">
                         <div class="chart-tab active" onclick="switchTab('tab-notes', this)">Clinical Notes</div>
                         <div class="chart-tab" onclick="switchTab('tab-labs', this)">Labs & Results</div>
@@ -11690,6 +11705,7 @@
                     </div>
 
                     <!-- TAB: NOTES -->
+                    <div id="tab-notes" class="chart-content active" style="padding:0;background:transparent">
                     <div id="tab-notes" class="chart-content active" style="padding:0;background:transparent">
                         <button class="btn btn-primary" style="width:100%;margin-bottom:20px" onclick="toggleSoapForm()">+ Add SOAP Note</button>
                         
@@ -11758,14 +11774,24 @@
 
                     <!-- TAB: LABS -->
                     <div id="tab-labs" class="chart-content" style="padding:0;background:transparent">
+                    <div id="tab-labs" class="chart-content" style="padding:0;background:transparent">
                         <button class="btn btn-primary" style="width:100%;margin-bottom:20px" onclick="toggleLabForm()">+ New Lab Order</button>
                         
                         <!-- LAB FORM -->
                         <div id="labForm" style="display:none;background:#111827;padding:15px;border-radius:8px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.1)">
                             <h4 style="margin-top:0;color:#FFFFFF">Order Labs</h4>
+                        <div id="labForm" style="display:none;background:#111827;padding:15px;border-radius:8px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.1)">
+                            <h4 style="margin-top:0;color:#FFFFFF">Order Labs</h4>
                             <div style="margin-bottom:12px">
                                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Select Panels</label>
+                                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Select Panels</label>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                                    <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CBC"> CBC</label>
+                                    <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CMP"> CMP</label>
+                                    <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Lipid Panel"> Lipid Panel</label>
+                                    <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Testosterone Free/Total"> Testosterone</label>
+                                    <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="PSA"> PSA</label>
+                                    <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Estradiol"> Estradiol</label>
                                     <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CBC"> CBC</label>
                                     <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CMP"> CMP</label>
                                     <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Lipid Panel"> Lipid Panel</label>
@@ -11775,6 +11801,8 @@
                                 </div>
                             </div>
                             <div style="margin-bottom:12px">
+                                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Diagnosis Code</label>
+                                <input id="labDiagnosis" type="text" placeholder="e.g. E29.1" style="width:100%;padding:8px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px">
                                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Diagnosis Code</label>
                                 <input id="labDiagnosis" type="text" placeholder="e.g. E29.1" style="width:100%;padding:8px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px">
                             </div>
@@ -11813,6 +11841,9 @@
                         <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px">
                              <h3 style="margin-top:0;color:#FFFFFF;font-size:16px">Blood Pressure</h3>
                              <div style="height:150px;border-left:1px solid rgba(255,255,255,0.1);border-bottom:1px solid rgba(255,255,255,0.1);position:relative;margin-top:20px">
+                        <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px">
+                             <h3 style="margin-top:0;color:#FFFFFF;font-size:16px">Blood Pressure</h3>
+                             <div style="height:150px;border-left:1px solid rgba(255,255,255,0.1);border-bottom:1px solid rgba(255,255,255,0.1);position:relative;margin-top:20px">
                                 <!-- Mock Line Chart -->
                                 <svg style="width:100%;height:100%;overflow:visible">
                                     <polyline points="0,80 50,75 100,78 150,72 200,70 250,68" fill="none" stroke="var(--blush)" stroke-width="2" />
@@ -11836,11 +11867,13 @@
                                     <span style="color:var(--blue)">● Systolic</span>
                                     <span style="color:var(--blush)">● Diastolic</span>
                                  </div>
+                                 </div>
                              </div>
                         </div>
                     </div>
 
                     <!-- TAB: HISTORY -->
+                    <div id="tab-history" class="chart-content" style="padding:0;background:transparent">
                     <div id="tab-history" class="chart-content" style="padding:0;background:transparent">
                         <div style="display:grid;gap:10px">
                             ${
@@ -11912,7 +11945,9 @@
                          <div style="font-size:13px;margin-bottom:8px"><b>Date:</b> ${d}</div>
                          
                          <div style="display:flex;gap:8px;flex-wrap:wrap">
-                             <a href="${l.requisitionUrl}" target="_blank" class="btn btn-outline" style="padding:4px 10px;font-size:11px">📄 Req</a>
+                             <a href="${
+                               l.requisitionUrl
+                             }" target="_blank" class="btn btn-outline" style="padding:4px 10px;font-size:11px">📄 Req</a>
                              
                              ${
                                showUpload
