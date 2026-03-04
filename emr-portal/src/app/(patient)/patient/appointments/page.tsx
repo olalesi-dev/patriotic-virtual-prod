@@ -64,7 +64,7 @@ interface Appointment {
     providerName: string;
     providerId: string;
     type: 'Telehealth' | 'In-Person';
-    status: 'scheduled' | 'cancelled' | 'completed';
+    status: 'scheduled' | 'cancelled' | 'completed' | 'PENDING_SCHEDULING';
     reason: string;
     meetingUrl?: string;
     intakeAnswers?: Record<string, any>;
@@ -123,9 +123,11 @@ export default function AppointmentsPage() {
 
     const fetchAppointments = async (uid: string, isNext: boolean = false) => {
         try {
-            const apptsRef = collection(db, 'patients', uid, 'appointments');
+            // Source of Truth: Top-level appointments collection
+            const apptsRef = collection(db, 'appointments');
             let q = query(
                 apptsRef,
+                where('patientId', '==', uid),
                 orderBy('date', activeTab === 'upcoming' ? 'asc' : 'desc'),
                 limit(20)
             );
@@ -148,7 +150,7 @@ export default function AppointmentsPage() {
             setLoading(false);
         } catch (error) {
             console.error('Error fetching appointments:', error);
-            toast.error('Failed to load appointments');
+            toast.error('Failed to load appointments from source of truth');
             setLoading(false);
         }
     };
@@ -289,7 +291,7 @@ export default function AppointmentsPage() {
         return isAfter(apptDate.toDate(), addDays(new Date(), 1));
     };
 
-    const upcoming = appointments.filter(a => a.status === 'scheduled' && isAfter(a.date.toDate(), subMinutes(new Date(), 60)));
+    const upcoming = appointments.filter(a => (a.status === 'scheduled' || a.status === 'PENDING_SCHEDULING') && isAfter(a.date.toDate(), subMinutes(new Date(), 60)));
     const past = appointments.filter(a => a.status === 'completed' || a.status === 'cancelled' || isBefore(a.date.toDate(), subMinutes(new Date(), 60)));
 
     const filteredAppts = activeTab === 'upcoming' ? upcoming : past;
@@ -342,10 +344,11 @@ export default function AppointmentsPage() {
                             <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
                                 <h3 className="text-xl font-black text-slate-800 tracking-tight truncate">{appt.providerName}</h3>
                                 <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${appt.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' :
-                                    appt.status === 'cancelled' ? 'bg-rose-50 text-rose-500 border-rose-100' :
-                                        'bg-slate-50 text-slate-400 border-slate-100'
+                                    appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse' :
+                                        appt.status === 'cancelled' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                                            'bg-slate-50 text-slate-400 border-slate-100'
                                     }`}>
-                                    {appt.status}
+                                    {appt.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider' : appt.status}
                                 </span>
                             </div>
                             <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-400 font-bold text-xs uppercase tracking-widest">
@@ -359,9 +362,9 @@ export default function AppointmentsPage() {
                         </div>
 
                         <div className="shrink-0 w-full md:w-auto flex flex-col gap-2">
-                            {appt.status === 'scheduled' && (
+                            {(appt.status === 'scheduled' || appt.status === 'PENDING_SCHEDULING') && (
                                 <>
-                                    {isJoinable(appt.date) ? (
+                                    {appt.status === 'scheduled' && isJoinable(appt.date) ? (
                                         <button
                                             onClick={() => setJoiningAppt(appt)}
                                             className="w-full md:w-48 bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-sky-100 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse"
@@ -370,7 +373,7 @@ export default function AppointmentsPage() {
                                         </button>
                                     ) : (
                                         <div className="flex gap-2">
-                                            {canCancel(appt.date) && (
+                                            {appt.status === 'scheduled' && canCancel(appt.date) && (
                                                 <button
                                                     onClick={() => handleCancel(appt.id)}
                                                     className="flex-1 md:w-24 bg-white text-rose-500 border border-rose-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 transition-all"
@@ -692,9 +695,6 @@ export default function AppointmentsPage() {
                                             </p>
                                         </div>
                                     )}
-                                    <SummarySection title="Clinical Findings" content={aiSummary.findings} />
-                                    <SummarySection title="Assessment & Plan" content={aiSummary.plan} />
-                                    <SummarySection title="Follow-Up Action" content={aiSummary.followUp} highlight />
 
                                     <div className="mt-10 pt-8 border-t border-slate-50 flex items-center justify-between">
                                         <div className="flex items-center gap-4">

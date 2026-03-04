@@ -63,6 +63,10 @@ export default function EmrDashboard() {
     const [activeTab, setActiveTab] = useState('Upcoming');
     const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
     const [providerName, setProviderName] = useState('Dr. Smith'); // Default fallback
+    const [reviewAppt, setReviewAppt] = useState<Appointment | any>(null);
+    const [scheduleDate, setScheduleDate] = useState('');
+    const [scheduleTime, setScheduleTime] = useState('');
+    const [isScheduling, setIsScheduling] = useState(false);
 
     // --- Refs ---
     const scheduleRef = useRef<HTMLDivElement>(null);
@@ -119,6 +123,29 @@ export default function EmrDashboard() {
                     try {
                         const { collection, query, where, onSnapshot } = await import('firebase/firestore');
                         if (db) {
+                            // --- Fetch Global Waiting Bucket ---
+                            const bucketQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
+                            const unsubBucket = onSnapshot(bucketQuery, (snapshot) => {
+                                const bucketAppts = snapshot.docs.map(docSnap => {
+                                    const data = docSnap.data();
+                                    const dateObj = data.createdAt?.toDate() || new Date(); // Use createdAt for bucket sorting
+                                    return {
+                                        id: docSnap.id as any,
+                                        patient: data.patient || data.patientName || 'Unknown Patient',
+                                        time: dateObj.toISOString(),
+                                        displayTime: 'Awaiting',
+                                        type: data.service || 'New Intake',
+                                        status: 'Waitlist',
+                                        notes: data.reason
+                                    } as Appointment;
+                                });
+                                // Merge bucket appointments with provider's own appointments
+                                setAppointments(prev => {
+                                    const nonBucket = prev.filter(a => a.status !== 'Waitlist');
+                                    return [...nonBucket, ...bucketAppts].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+                                });
+                            });
+
                             const q = query(collection(db, 'appointments'), where('providerId', '==', user.uid));
                             const unsubAppts = onSnapshot(q, (snapshot) => {
                                 const newAppts = snapshot.docs.map(docSnap => {
@@ -133,26 +160,24 @@ export default function EmrDashboard() {
                                     if (activeStatus === 'scheduled') activeStatus = 'Upcoming';
                                     if (activeStatus === 'completed') activeStatus = 'Completed';
                                     if (activeStatus === 'cancelled') activeStatus = 'Cancelled';
-                                    if (activeStatus === 'paid') activeStatus = 'Confirmed';
+                                    if (activeStatus === 'paid' || activeStatus === 'PENDING_SCHEDULING') activeStatus = 'Waitlist';
 
                                     return {
-                                        id: docSnap.id as unknown as number, // casting purely for the TS typing in dashboard without needing refactor
-                                        patient: data.patientName || 'Unknown Patient',
+                                        id: docSnap.id as any,
+                                        patient: data.patientName || data.patient || 'Unknown Patient',
                                         time: dateObj.toISOString(),
                                         displayTime: dt,
-                                        type: data.type || 'Consultation',
-                                        status: activeStatus,
+                                        type: data.type || data.service || 'Consultation',
+                                        status: activeStatus as any,
                                         notes: data.reason
                                     } as Appointment;
                                 });
-                                // Only override if we actually found real appointments, otherwise let the mock data stay for visual purposes
-                                if (newAppts.length > 0) {
-                                    // sort
-                                    newAppts.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-                                    setAppointments(newAppts);
-                                }
+
+                                setAppointments(prev => {
+                                    const bucket = prev.filter(a => a.status === 'Waitlist');
+                                    return [...newAppts, ...bucket].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+                                });
                             });
-                            // Not formally returning unsubscribe so we don't leak logic easily in this small test file, but it runs.
                         }
                     } catch (e) {
                         console.error('Failed to grab appointments', e);
@@ -173,14 +198,73 @@ export default function EmrDashboard() {
         inboxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
-    const handleUpdateStatus = (id: number | string, newStatus: Appointment['status']) => {
+    const handleUpdateStatus = async (id: number | string, newStatus: Appointment['status']) => {
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
         setMenuOpenId(null);
+
+        try {
+            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+            const { db } = await import('@/lib/firebase');
+            if (db) {
+                const apptRef = doc(db, 'appointments', id.toString());
+                const statusMap: Record<string, string> = {
+                    'Upcoming': 'scheduled',
+                    'Completed': 'completed',
+                    'Cancelled': 'cancelled',
+                    'Confirmed': 'scheduled',
+                };
+
+                await updateDoc(apptRef, {
+                    status: statusMap[newStatus] || newStatus.toLowerCase(),
+                    updatedAt: serverTimestamp()
+                });
+            }
+        } catch (e) {
+            console.error('Failed to update status in Firestore', e);
+        }
     };
 
     const handleJoinCall = (appt: Appointment) => {
         alert(`Starting secure video session with ${appt.patient}...`);
         // In real app: router.push(/telehealth/${appt.id})
+    };
+
+    const handleReviewSchedule = (appt: Appointment) => {
+        setReviewAppt(appt);
+        // Default to tomorrow 10 AM
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setScheduleDate(tomorrow.toISOString().split('T')[0]);
+        setScheduleTime('10:00');
+    };
+
+    const handleConfirmSchedule = async () => {
+        if (!reviewAppt || !scheduleDate || !scheduleTime) return;
+        setIsScheduling(true);
+        try {
+            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+            const { db } = await import('@/lib/firebase');
+            if (db) {
+                const apptRef = doc(db, 'appointments', reviewAppt.id.toString());
+                const fullDate = new Date(`${scheduleDate}T${scheduleTime}:00`);
+
+                await updateDoc(apptRef, {
+                    status: 'scheduled',
+                    date: fullDate,
+                    providerId: auth.currentUser?.uid,
+                    providerName: providerName,
+                    updatedAt: serverTimestamp()
+                });
+
+                setReviewAppt(null);
+                alert('Appointment scheduled successfully!');
+            }
+        } catch (e) {
+            console.error('Failed to schedule appointment', e);
+            alert('Scheduling failed. Please try again.');
+        } finally {
+            setIsScheduling(false);
+        }
     };
 
     return (
@@ -269,6 +353,7 @@ export default function EmrDashboard() {
                                     onToggleMenu={() => setMenuOpenId(menuOpenId === appt.id ? null : appt.id)}
                                     onStatusChange={handleUpdateStatus}
                                     onJoin={() => handleJoinCall(appt)}
+                                    onReviewSchedule={() => handleReviewSchedule(appt)}
                                 />
                             ))
                         )}
@@ -318,6 +403,89 @@ export default function EmrDashboard() {
                 </div>
 
             </div>
+
+            {/* REVIEW & SCHEDULE MODAL */}
+            {reviewAppt && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800">Review & Schedule</h2>
+                                <p className="text-slate-500 text-sm">Review intake and assign a time for {reviewAppt.patient}</p>
+                            </div>
+                            <button onClick={() => setReviewAppt(null)} className="p-2 hover:bg-white rounded-full transition-colors">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto space-y-8">
+                            {/* Intake Section */}
+                            <section>
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">Patient Intake Q&A</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {reviewAppt.notes ? (
+                                        <div className="col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                            <p className="text-sm text-slate-700 leading-relaxed font-medium capitalize">
+                                                {reviewAppt.notes}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-slate-400 italic">No detailed intake provided.</p>
+                                    )}
+                                    {/* Real data fields if available in raw object */}
+                                    {reviewAppt.raw?.intakeAnswers && Object.entries(reviewAppt.raw.intakeAnswers).map(([k, v]: any) => (
+                                        <div key={k} className="bg-white p-3 rounded-lg border border-slate-100">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{k.replace(/([A-Z])/g, ' $1')}</p>
+                                            <p className="text-sm text-slate-800 font-semibold">{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Scheduling Section */}
+                            <section className="bg-indigo-50/20 p-6 rounded-2xl border border-indigo-100/50">
+                                <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Set Appointment Time</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">Date</label>
+                                        <input
+                                            type="date"
+                                            value={scheduleDate}
+                                            onChange={(e) => setScheduleDate(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">Time</label>
+                                        <input
+                                            type="time"
+                                            value={scheduleTime}
+                                            onChange={(e) => setScheduleTime(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                            <button
+                                onClick={() => setReviewAppt(null)}
+                                className="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:bg-white rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmSchedule}
+                                disabled={isScheduling}
+                                className="bg-brand text-white px-8 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-brand/20 hover:bg-brand-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {isScheduling ? 'Scheduling...' : 'Finalize & Schedule'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -371,6 +539,19 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
                 <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusColors[status as keyof typeof statusColors] || 'bg-slate-50'}`}>
                     {status}
                 </span>
+
+                {status === 'Waitlist' && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            appointment.onReviewSchedule();
+                        }}
+                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1"
+                    >
+                        <Calendar className="w-3 h-3" />
+                        Review & Schedule
+                    </button>
+                )}
 
                 {isActionable && (
                     <button
