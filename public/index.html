@@ -7346,27 +7346,7 @@
     </div>
   </div>
 
-  <!-- SCHEDULE MODAL (Post-Payment) -->
-  <div class="mo" id="scheduleModal" onclick="closeModal(event)">
-    <div class="modal" style="text-align:center; max-width:500px" onclick="event.stopPropagation()">
-      <button class="modal-close"
-        onclick="document.getElementById('scheduleModal').classList.remove('active')">×</button>
-      <div style="font-size:48px; margin-bottom:10px">✅</div>
-      <h2>Payment Confirmed!</h2>
-      <p style="margin-bottom:20px; color:var(--slate)">Your transaction was successful. You can now schedule your
-        consultation securely.</p>
 
-      <!-- Integrated Booking Trigger -->
-      <button class="btn btn-primary" onclick="openBookingModal(currentConsultId)"
-        style="width:100%;margin-bottom:10px">
-        📅 Select Appointment Time
-      </button>
-
-      <button class="cta-btn" onclick="document.getElementById('scheduleModal').classList.remove('active')"
-        style="background:transparent; border:1px solid var(--slate); color:var(--slate); width:100%">I'll do it
-        later</button>
-    </div>
-  </div>
 
   <!-- BOOKING WIZARD MODAL (Phase 7) -->
   <div class="mo" id="bookingModal">
@@ -10739,23 +10719,26 @@
 
         if (typeof db !== 'undefined' && consultationId) {
           const ts = firebase.firestore.FieldValue.serverTimestamp();
+          const uid = (auth && auth.currentUser) ? auth.currentUser.uid : null;
 
-          // Legacy support (React EMR expects 'waitlist' status in 'consultations' collection)
           updateTasks.push(
-            db.collection('consultations').doc(consultationId).update({
+            db.collection('consultations').doc(consultationId).set({
               status: 'waitlist',
               paymentStatus: 'paid',
               updatedAt: ts
-            }).catch(e => console.log("Consultations update skipped:", e.message))
+            }, { merge: true }).catch(e => console.log("Consultations sync skipped:", e.message))
           );
 
-          // New support (Next.js EMR expects 'PENDING_SCHEDULING' status in 'appointments' collection)
+          const apptData = {
+            status: 'PENDING_SCHEDULING',
+            paymentStatus: 'paid',
+            updatedAt: ts
+          };
+          if (uid) apptData.patientId = uid;
+
           updateTasks.push(
-            db.collection('appointments').doc(consultationId).update({
-              status: 'PENDING_SCHEDULING',
-              paymentStatus: 'paid',
-              updatedAt: ts
-            }).catch(e => console.log("Appointments update skipped:", e.message))
+            db.collection('appointments').doc(consultationId).set(apptData, { merge: true })
+              .catch(e => console.log("Appointments sync skipped:", e.message))
           );
         }
 
@@ -12411,30 +12394,16 @@
           currentConsultId = savedId;
           // Ensure it's re-saved if it came from URL
           localStorage.setItem("pendingConsultationId", savedId);
+
+          // Use the consolidated professional success flow
+          handlePaymentSuccess(savedId);
         } else {
           console.warn(
             "Payment success landing but no Consultation ID found in storage or URL.",
           );
+          // Fallback: show success anyway so patient isn't stuck
+          showBookingSuccess();
         }
-
-        // Show Success Modal
-        const schedModal = document.getElementById("scheduleModal");
-        if (schedModal) {
-          schedModal.classList.add("active");
-          console.log("Schedule modal activated.");
-        } else {
-          console.error("Could not find scheduleModal element!");
-        }
-
-        // Clean URL after we've extracted everything
-        const newUrl =
-          window.location.protocol +
-          "//" +
-          window.location.host +
-          window.location.pathname;
-        window.history.replaceState({ path: newUrl }, "", newUrl);
-
-        toast("Payment successful! Please schedule your visit.");
       } else if (paymentStatus === "cancelled") {
         toast("Payment was cancelled.");
       }
