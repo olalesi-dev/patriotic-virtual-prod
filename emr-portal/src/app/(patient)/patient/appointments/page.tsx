@@ -57,10 +57,23 @@ import 'react-calendar/dist/Calendar.css';
 import { logAuditEvent } from '@/lib/audit';
 import { sanitize } from '@/lib/security';
 
+// Helper: safely convert a Firestore Timestamp (or plain Date / ISO string) to a JS Date.
+// Returns null if the value is missing or cannot be converted.
+function toSafeDate(value: any): Date | null {
+    if (!value) return null;
+    if (typeof value.toDate === 'function') return value.toDate();           // Firestore Timestamp
+    if (value instanceof Date) return value;                                   // already a Date
+    if (typeof value === 'string' || typeof value === 'number') {
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+}
+
 // --- Types ---
 interface Appointment {
     id: string;
-    date: Timestamp;
+    date: any; // Firestore Timestamp | Date | string â€” we guard with toSafeDate()
     providerName: string;
     providerId: string;
     type: 'Telehealth' | 'In-Person';
@@ -150,7 +163,7 @@ export default function AppointmentsPage() {
                         paymentStatus: raw.paymentStatus,
                         reason: raw.serviceKey || raw.reason || 'Consultation',
                         type: 'Telehealth',
-                        date: raw.createdAt,
+                        date: raw.createdAt,   // may be undefined â€” guarded by toSafeDate()
                         providerName: raw.providerName || '',
                         providerId: raw.providerId || '',
                         intakeAnswers: raw.intake || {},
@@ -163,8 +176,8 @@ export default function AppointmentsPage() {
             // Sort client-side ascending or descending by date
             const isAsc = activeTab === 'upcoming';
             data.sort((a, b) => {
-                const aMs = a.date?.toDate?.()?.getTime?.() ?? 0;
-                const bMs = b.date?.toDate?.()?.getTime?.() ?? 0;
+                const aMs = toSafeDate(a.date)?.getTime() ?? 0;
+                const bMs = toSafeDate(b.date)?.getTime() ?? 0;
                 return isAsc ? aMs - bMs : bMs - aMs;
             });
 
@@ -310,18 +323,32 @@ export default function AppointmentsPage() {
         }
     };
 
-    const isJoinable = (apptDate: Timestamp) => {
-        const date = apptDate.toDate();
+    // FIX: Guard against undefined date before calling toDate()
+    const isJoinable = (apptDate: any) => {
+        const date = toSafeDate(apptDate);
+        if (!date) return false;
         const now = new Date();
         return isAfter(now, subMinutes(date, 15)) && isBefore(now, addMinutes(date, 60));
     };
 
-    const canCancel = (apptDate: Timestamp) => {
-        return isAfter(apptDate.toDate(), addDays(new Date(), 1));
+    const canCancel = (apptDate: any) => {
+        const date = toSafeDate(apptDate);
+        if (!date) return false;
+        return isAfter(date, addDays(new Date(), 1));
     };
 
-    const upcoming = appointments.filter(a => (a.status === 'scheduled' || a.status === 'PENDING_SCHEDULING') && isAfter(a.date.toDate(), subMinutes(new Date(), 60)));
-    const past = appointments.filter(a => a.status === 'completed' || a.status === 'cancelled' || isBefore(a.date.toDate(), subMinutes(new Date(), 60)));
+    // FIX: Use toSafeDate() in filter â€” was crashing with .toDate() on undefined
+    const upcoming = appointments.filter(a => {
+        const d = toSafeDate(a.date);
+        return (a.status === 'scheduled' || a.status === 'PENDING_SCHEDULING') &&
+            (d ? isAfter(d, subMinutes(new Date(), 60)) : true);
+    });
+
+    const past = appointments.filter(a => {
+        const d = toSafeDate(a.date);
+        return a.status === 'completed' || a.status === 'cancelled' ||
+            (d ? isBefore(d, subMinutes(new Date(), 60)) : false);
+    });
 
     const filteredAppts = activeTab === 'upcoming' ? upcoming : past;
 
@@ -362,78 +389,90 @@ export default function AppointmentsPage() {
 
             {/* List */}
             <div className="space-y-4">
-                {filteredAppts.length > 0 ? filteredAppts.map((appt) => (
-                    <div key={appt.id} className="bg-white rounded-[32px] border border-slate-50 shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 transition-all">
-                        <div className="w-20 h-20 bg-[#F8FAFC] rounded-3xl flex flex-col items-center justify-center shrink-0 border border-slate-50">
-                            <span className="text-[10px] font-black text-[#0EA5E9] uppercase">{format(appt.date.toDate(), 'MMM')}</span>
-                            <span className="text-2xl font-black text-slate-800">{format(appt.date.toDate(), 'dd')}</span>
-                        </div>
-
-                        <div className="flex-1 text-center md:text-left space-y-2 min-w-0">
-                            <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
-                                <h3 className="text-xl font-black text-slate-800 tracking-tight truncate">{appt.providerName}</h3>
-                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${appt.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' :
-                                    appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse' :
-                                        appt.status === 'cancelled' ? 'bg-rose-50 text-rose-500 border-rose-100' :
-                                            'bg-slate-50 text-slate-400 border-slate-100'
-                                    }`}>
-                                    {appt.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider' : appt.status}
-                                </span>
+                {filteredAppts.length > 0 ? filteredAppts.map((appt) => {
+                    // FIX: Compute safe date once per card â€” never call .toDate() directly
+                    const apptDate = toSafeDate(appt.date);
+                    return (
+                        <div key={appt.id} className="bg-white rounded-[32px] border border-slate-50 shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 transition-all">
+                            <div className="w-20 h-20 bg-[#F8FAFC] rounded-3xl flex flex-col items-center justify-center shrink-0 border border-slate-50">
+                                {apptDate ? (
+                                    <>
+                                        <span className="text-[10px] font-black text-[#0EA5E9] uppercase">{format(apptDate, 'MMM')}</span>
+                                        <span className="text-2xl font-black text-slate-800">{format(apptDate, 'dd')}</span>
+                                    </>
+                                ) : (
+                                    <span className="text-[10px] font-black text-slate-300 uppercase">TBD</span>
+                                )}
                             </div>
-                            <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-400 font-bold text-xs uppercase tracking-widest">
-                                <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(appt.date.toDate(), 'h:mm a')}</div>
-                                <div className="flex items-center gap-1.5">
-                                    {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                                    {appt.type}
+
+                            <div className="flex-1 text-center md:text-left space-y-2 min-w-0">
+                                <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
+                                    <h3 className="text-xl font-black text-slate-800 tracking-tight truncate">{appt.providerName}</h3>
+                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${appt.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' :
+                                        appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse' :
+                                            appt.status === 'cancelled' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                                                'bg-slate-50 text-slate-400 border-slate-100'
+                                        }`}>
+                                        {appt.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider' : appt.status}
+                                    </span>
                                 </div>
-                            </div>
-                            <p className="text-slate-500 text-sm italic line-clamp-1">{appt.reason}</p>
-                        </div>
-
-                        <div className="shrink-0 w-full md:w-auto flex flex-col gap-2">
-                            {(appt.status === 'scheduled' || appt.status === 'PENDING_SCHEDULING') && (
-                                <>
-                                    {appt.status === 'scheduled' && isJoinable(appt.date) ? (
-                                        <button
-                                            onClick={() => setJoiningAppt(appt)}
-                                            className="w-full md:w-48 bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-sky-100 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse"
-                                        >
-                                            <Video className="w-4 h-4" /> Join Now
-                                        </button>
-                                    ) : (
-                                        <div className="flex gap-2">
-                                            {appt.status === 'scheduled' && canCancel(appt.date) && (
-                                                <button
-                                                    onClick={() => handleCancel(appt.id)}
-                                                    className="flex-1 md:w-24 bg-white text-rose-500 border border-rose-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 transition-all"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedSummary(appt);
-                                                    setIsThinking(false);
-                                                }}
-                                                className="flex-1 md:w-24 bg-white text-sky-600 border border-sky-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 transition-all shadow-sm"
-                                            >
-                                                View Intake
-                                            </button>
-                                        </div>
+                                <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-400 font-bold text-xs uppercase tracking-widest">
+                                    {apptDate && (
+                                        <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
                                     )}
-                                </>
-                            )}
-                            {appt.status === 'completed' && (
-                                <button
-                                    onClick={() => handleViewSummary(appt)}
-                                    className="w-full md:w-48 bg-slate-50 text-slate-400 py-4 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-100 hover:bg-white hover:text-[#0EA5E9] transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Sparkles className="w-4 h-4" /> View AI Summary
-                                </button>
-                            )}
+                                    <div className="flex items-center gap-1.5">
+                                        {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                                        {appt.type}
+                                    </div>
+                                </div>
+                                <p className="text-slate-500 text-sm italic line-clamp-1">{appt.reason}</p>
+                            </div>
+
+                            <div className="shrink-0 w-full md:w-auto flex flex-col gap-2">
+                                {(appt.status === 'scheduled' || appt.status === 'PENDING_SCHEDULING') && (
+                                    <>
+                                        {appt.status === 'scheduled' && isJoinable(appt.date) ? (
+                                            <button
+                                                onClick={() => setJoiningAppt(appt)}
+                                                className="w-full md:w-48 bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-sky-100 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse"
+                                            >
+                                                <Video className="w-4 h-4" /> Join Now
+                                            </button>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                {appt.status === 'scheduled' && canCancel(appt.date) && (
+                                                    <button
+                                                        onClick={() => handleCancel(appt.id)}
+                                                        className="flex-1 md:w-24 bg-white text-rose-500 border border-rose-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 transition-all"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedSummary(appt);
+                                                        setIsThinking(false);
+                                                    }}
+                                                    className="flex-1 md:w-24 bg-white text-sky-600 border border-sky-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 transition-all shadow-sm"
+                                                >
+                                                    View Intake
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                                {appt.status === 'completed' && (
+                                    <button
+                                        onClick={() => handleViewSummary(appt)}
+                                        className="w-full md:w-48 bg-slate-50 text-slate-400 py-4 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-100 hover:bg-white hover:text-[#0EA5E9] transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Sparkles className="w-4 h-4" /> View AI Summary
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                )) : (
+                    );
+                }) : (
                     <div className="py-20 text-center space-y-4 bg-white rounded-[40px] border border-slate-50">
                         <CalendarIcon className="w-16 h-16 text-slate-100 mx-auto" />
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No appointments found</p>
@@ -485,7 +524,7 @@ export default function AppointmentsPage() {
                                             key={s.k}
                                             icon={() => <span className="text-2xl">{s.icon}</span>}
                                             title={s.name}
-                                            desc={`$${s.price} — ${s.cat}`}
+                                            desc={`$${s.price} â€” ${s.cat}`}
                                             active={newAppt.serviceKey === s.k}
                                             onClick={() => {
                                                 setNewAppt({ ...newAppt, serviceKey: s.k });
@@ -662,7 +701,11 @@ export default function AppointmentsPage() {
                                     <span className="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Generated by AI Scribe</span>
                                 </div>
                                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">Visit Summary</h2>
-                                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">{selectedSummary.providerName} • {format(selectedSummary.date.toDate(), 'PPP')}</p>
+                                {/* FIX: Guard toDate() in the modal header */}
+                                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">
+                                    {selectedSummary.providerName}
+                                    {toSafeDate(selectedSummary.date) ? ` â€¢ ${format(toSafeDate(selectedSummary.date)!, 'PPP')}` : ''}
+                                </p>
                             </div>
                             <button onClick={() => setSelectedSummary(null)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-white/80 transition-colors shadow-sm relative z-10">
                                 <X className="w-6 h-6 text-slate-400" />
@@ -740,7 +783,7 @@ export default function AppointmentsPage() {
                                     </div>
 
                                     <p className="text-[10px] text-slate-400 italic font-medium leading-relaxed">
-                                        ✨ This summary is generated by AI from your visit transcript. It is intended for informational purposes. For clinical diagnosis or medical emergencies, please consult your doctor immediately.
+                                        âœ¨ This summary is generated by AI from your visit transcript. It is intended for informational purposes. For clinical diagnosis or medical emergencies, please consult your doctor immediately.
                                     </p>
                                 </>
                             )}
