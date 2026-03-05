@@ -73,15 +73,22 @@ function toSafeDate(value: any): Date | null {
 // --- Types ---
 interface Appointment {
     id: string;
-    date: any; // Firestore Timestamp | Date | string â€” we guard with toSafeDate()
+    date: any;
+    scheduledAt?: any;
     providerName: string;
     providerId: string;
     type: 'Telehealth' | 'In-Person';
-    status: 'scheduled' | 'cancelled' | 'completed' | 'PENDING_SCHEDULING';
+    status: 'scheduled' | 'cancelled' | 'completed' | 'PENDING_SCHEDULING' | 'waitlist';
     reason: string;
     meetingUrl?: string;
     intakeAnswers?: Record<string, any>;
+    intake?: Record<string, any>;
     serviceKey?: string;
+    patientName?: string;
+    patientEmail?: string;
+    uid?: string;
+    paymentStatus?: string;
+    consultationId?: string;
 }
 
 interface Provider {
@@ -94,8 +101,7 @@ export default function AppointmentsPage() {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
-    const [lastDoc, setLastDoc] = useState<any>(null);
-    const [hasMore, setHasMore] = useState(false);
+    const [hasMore] = useState(false);
 
     // Scheduling Flow State
     const [isScheduling, setIsScheduling] = useState(false);
@@ -118,84 +124,121 @@ export default function AppointmentsPage() {
         quiet: false
     });
 
-    // AI Summary State
+    // Intake Detail Modal State
+    const [intakeDetail, setIntakeDetail] = useState<Appointment | null>(null);
+
+    // AI Summary State (completed appointments only)
     const [selectedSummary, setSelectedSummary] = useState<Appointment | null>(null);
     const [isThinking, setIsThinking] = useState(false);
     const [aiSummary, setAiSummary] = useState<any>(null);
     const [feedbackSent, setFeedbackSent] = useState(false);
 
     useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-            if (user) {
-                fetchAppointments(user.uid);
-                fetchProviders();
+        let unsubConsult: (() => void) | null = null;
+        let unsubSubAppt: (() => void) | null = null;
+
+        const unsubAuth = auth.onAuthStateChanged((user) => {
+            unsubConsult?.();
+            unsubSubAppt?.();
+
+            if (!user) {
+                setAppointments([]);
+                setLoading(false);
+                return;
             }
-        });
-        return () => unsubscribeAuth();
-    }, [activeTab]);
 
-    const fetchAppointments = async (uid: string, isNext: boolean = false) => {
-        try {
-            // Query WITHOUT orderBy to avoid requiring a composite Firestore index.
-            // We sort client-side instead, which works with no index configuration.
-            const apptsRef = collection(db, 'appointments');
-            const q = query(
-                apptsRef,
-                where('patientId', '==', uid),
-                limit(50)
+            fetchProviders();
+
+            let consultData: Appointment[] = [];
+            let subApptData: Appointment[] = [];
+
+            const merge = () => {
+                // Sub-collection records override consultations (more up-to-date status)
+                const byKey = new Map<string, Appointment>();
+                consultData.forEach(c => byKey.set(c.id, c));
+                subApptData.forEach(a => byKey.set(a.consultationId || a.id, a));
+
+                const merged = Array.from(byKey.values());
+                merged.sort((a, b) => {
+                    const aMs = toSafeDate(a.scheduledAt || a.date)?.getTime() ?? 0;
+                    const bMs = toSafeDate(b.scheduledAt || b.date)?.getTime() ?? 0;
+                    return aMs - bMs;
+                });
+                setAppointments(merged);
+                setLoading(false);
+            };
+
+            // Listener 1: consultations — real-time status updates (waitlist → scheduled)
+            const consultQ = query(
+                collection(db, 'consultations'),
+                where('uid', '==', user.uid),
+                where('paymentStatus', '==', 'paid')
             );
-
-            const snapshot = await getDocs(q);
-            let data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Appointment));
-
-            // If no appointments found in 'appointments', fall back to 'consultations' (legacy)
-            if (data.length === 0) {
-                const consultRef = collection(db, 'consultations');
-                const consultQ = query(consultRef, where('uid', '==', uid), limit(50));
-                const consultSnap = await getDocs(consultQ);
-                data = consultSnap.docs.map(d => {
+            unsubConsult = onSnapshot(consultQ, (snap) => {
+                consultData = snap.docs.map(d => {
                     const raw = d.data();
-                    // Normalize legacy consultation fields to appointment shape
                     return {
                         id: d.id,
-                        patientId: raw.uid,
-                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' : (raw.status || 'PENDING_SCHEDULING'),
+                        uid: raw.uid,
+                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
+                            raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
                         paymentStatus: raw.paymentStatus,
                         reason: raw.serviceKey || raw.reason || 'Consultation',
                         type: 'Telehealth',
-                        date: raw.createdAt,   // may be undefined â€” guarded by toSafeDate()
-                        providerName: raw.providerName || '',
+                        date: raw.scheduledAt || raw.createdAt,
+                        scheduledAt: raw.scheduledAt || null,
+                        providerName: raw.providerName || 'Patriotic Provider',
                         providerId: raw.providerId || '',
                         intakeAnswers: raw.intake || {},
+                        intake: raw.intake || {},
                         serviceKey: raw.serviceKey,
-                        ...raw
+                        meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
+                        patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
+                        patientEmail: raw.intake?.email || '',
                     } as Appointment;
                 });
-            }
+                merge();
+            }, (err) => console.error('Consultation listener error:', err));
 
-            // Sort client-side ascending or descending by date
-            const isAsc = activeTab === 'upcoming';
-            data.sort((a, b) => {
-                const aMs = toSafeDate(a.date)?.getTime() ?? 0;
-                const bMs = toSafeDate(b.date)?.getTime() ?? 0;
-                return isAsc ? aMs - bMs : bMs - aMs;
-            });
+            // Listener 2: patients/{uid}/appointments sub-collection
+            // Written by Stripe webhook & updated by the scheduling endpoint
+            const subApptQ = query(collection(db, 'patients', user.uid, 'appointments'));
+            unsubSubAppt = onSnapshot(subApptQ, (snap) => {
+                subApptData = snap.docs.map(d => {
+                    const raw = d.data();
+                    return {
+                        id: d.id,
+                        consultationId: raw.consultationId,
+                        uid: raw.patientUid || user.uid,
+                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' : (raw.status || 'PENDING_SCHEDULING'),
+                        reason: raw.serviceKey || 'Consultation',
+                        type: 'Telehealth',
+                        date: raw.scheduledAt || raw.createdAt,
+                        scheduledAt: raw.scheduledAt || null,
+                        providerName: raw.providerName || 'Patriotic Provider',
+                        providerId: raw.providerId || '',
+                        intakeAnswers: raw.intakeAnswers || {},
+                        intake: raw.intakeAnswers || {},
+                        serviceKey: raw.serviceKey,
+                        meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
+                        ...raw,
+                    } as Appointment;
+                });
+                merge();
+            }, (err) => console.error('SubAppt listener error:', err));
+        });
 
-            if (isNext) {
-                setAppointments(prev => [...prev, ...data]);
-            } else {
-                setAppointments(data);
-            }
+        return () => {
+            unsubAuth();
+            unsubConsult?.();
+            unsubSubAppt?.();
+        };
+    }, []);
 
-            setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-            setHasMore(data.length === 50);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching appointments:', error);
-            toast.error('Failed to load appointments. Please refresh.');
-            setLoading(false);
-        }
-    };
+
+
+
+
 
     const fetchProviders = async () => {
         try {
@@ -449,10 +492,7 @@ export default function AppointmentsPage() {
                                                     </button>
                                                 )}
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(appt);
-                                                        setIsThinking(false);
-                                                    }}
+                                                    onClick={() => setIntakeDetail(appt)}
                                                     className="flex-1 md:w-24 bg-white text-sky-600 border border-sky-100 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 transition-all shadow-sm"
                                                 >
                                                     View Intake
@@ -480,16 +520,8 @@ export default function AppointmentsPage() {
                 )}
             </div>
 
-            {hasMore && (
-                <div className="flex justify-center pt-8">
-                    <button
-                        onClick={() => auth.currentUser && fetchAppointments(auth.currentUser.uid, true)}
-                        className="px-10 py-4 bg-white text-slate-400 border border-slate-100 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0EA5E9] hover:text-white transition-all shadow-sm hover:shadow-xl hover:shadow-sky-100 flex items-center gap-2"
-                    >
-                        Load More Appointments <ChevronRight className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
+
+
 
             {/* SCHEDULING FLOW MODAL */}
             {isScheduling && (
@@ -682,6 +714,136 @@ export default function AppointmentsPage() {
                             <button onClick={() => setJoiningAppt(null)} className="w-full text-xs font-black text-slate-400 uppercase tracking-widest text-center mt-2">
                                 Close
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* INTAKE DETAIL MODAL — shown when patient clicks View Intake */}
+            {intakeDetail && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+                        <div className="bg-gradient-to-br from-[#0EA5E9] to-indigo-500 p-10 text-white shrink-0 relative overflow-hidden">
+                            <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full" />
+                            <div className="flex justify-between items-start relative z-10">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <ClipboardCheck className="w-5 h-5 opacity-80" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Appointment Detail</span>
+                                    </div>
+                                    <h2 className="text-3xl font-black tracking-tight leading-none">
+                                        {intakeDetail.reason || 'Telehealth Visit'}
+                                    </h2>
+                                    <p className="text-white/70 text-xs font-bold mt-2 uppercase tracking-widest">
+                                        {intakeDetail.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider Scheduling' : 'Confirmed'}
+                                    </p>
+                                </div>
+                                <button onClick={() => setIntakeDetail(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Provider</p>
+                                    <p className="text-sm font-bold text-slate-800">{intakeDetail.providerName || 'Patriotic Provider'}</p>
+                                </div>
+                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Visit Type</p>
+                                    <p className="text-sm font-bold text-slate-800">{intakeDetail.type || 'Telehealth'}</p>
+                                </div>
+                                <div className="col-span-2 bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Scheduled Date & Time</p>
+                                    <p className="text-sm font-bold text-slate-800">
+                                        {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)
+                                            ? format(toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)!, 'PPPP p')
+                                            : 'TBD — Provider will confirm within 24–48 hours'}
+                                    </p>
+                                </div>
+                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${intakeDetail.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                        }`}>
+                                        {intakeDetail.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider' : intakeDetail.status}
+                                    </span>
+                                </div>
+                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Service</p>
+                                    <p className="text-sm font-bold text-slate-800">{intakeDetail.serviceKey?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Consultation'}</p>
+                                </div>
+                                {intakeDetail.meetingUrl && (
+                                    <div className="col-span-2 bg-sky-50 p-5 rounded-3xl border border-sky-100">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Video Visit Link</p>
+                                        <a href={intakeDetail.meetingUrl} target="_blank" rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-sm font-bold text-[#0EA5E9] hover:underline break-all">
+                                            <Video className="w-4 h-4 shrink-0" /> {intakeDetail.meetingUrl}
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+
+                            {(intakeDetail.patientName || intakeDetail.patientEmail) && (
+                                <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-100">
+                                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-4">Patient Information</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {intakeDetail.patientName && (
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Name</p>
+                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.patientName}</p>
+                                            </div>
+                                        )}
+                                        {intakeDetail.patientEmail && (
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.patientEmail}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {(() => {
+                                const answers = intakeDetail.intakeAnswers || intakeDetail.intake || {};
+                                const entries = Object.entries(answers);
+                                if (entries.length === 0) return null;
+                                return (
+                                    <div className="p-6 rounded-[2rem] border bg-slate-50 border-slate-100">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-8 h-8 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center border border-indigo-100">
+                                                <ClipboardCheck className="w-4 h-4" />
+                                            </div>
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Clinical Intake Record</h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
+                                            {entries.map(([k, v]) => {
+                                                const question = (iQs[intakeDetail.serviceKey as keyof typeof iQs] || []).find((q: any) => q.k === k);
+                                                return (
+                                                    <div key={k} className="space-y-1.5">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">
+                                                            {question?.l || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}
+                                                        </p>
+                                                        <div className="text-sm font-bold text-slate-800 bg-white p-3 rounded-2xl border border-slate-200/50">
+                                                            {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v || '—')}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {intakeDetail.status === 'PENDING_SCHEDULING' && (
+                                <div className="flex items-start gap-3 p-5 bg-amber-50 text-amber-700 rounded-2xl border border-amber-100">
+                                    <Info className="w-5 h-5 mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1">In Provider Queue</p>
+                                        <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong>24–48 hours</strong> to confirm your appointment time.</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
