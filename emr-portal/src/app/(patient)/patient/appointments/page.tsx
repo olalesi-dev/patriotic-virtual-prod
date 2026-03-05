@@ -165,40 +165,47 @@ export default function AppointmentsPage() {
                     return aMs - bMs;
                 });
                 setAppointments(merged);
-                setLoading(false);
+                setLoading(false); // always resolve — even if empty
             };
 
+
             // Listener 1: consultations — real-time status updates (waitlist → scheduled)
+            // Single-field filter only — no composite index required
             const consultQ = query(
                 collection(db, 'consultations'),
-                where('uid', '==', user.uid),
-                where('paymentStatus', '==', 'paid')
+                where('uid', '==', user.uid)
             );
             unsubConsult = onSnapshot(consultQ, (snap) => {
-                consultData = snap.docs.map(d => {
-                    const raw = d.data();
-                    return {
-                        id: d.id,
-                        uid: raw.uid,
-                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
-                            raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
-                        paymentStatus: raw.paymentStatus,
-                        reason: raw.serviceKey || raw.reason || 'Consultation',
-                        type: 'Telehealth',
-                        date: raw.scheduledAt || raw.createdAt,
-                        scheduledAt: raw.scheduledAt || null,
-                        providerName: raw.providerName || 'Patriotic Provider',
-                        providerId: raw.providerId || '',
-                        intakeAnswers: raw.intake || {},
-                        intake: raw.intake || {},
-                        serviceKey: raw.serviceKey,
-                        meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
-                        patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
-                        patientEmail: raw.intake?.email || '',
-                    } as Appointment;
-                });
+                consultData = snap.docs
+                    .filter(d => {
+                        const raw = d.data();
+                        // Client-side filter: only paid consultations
+                        return !raw.paymentStatus || raw.paymentStatus === 'paid';
+                    })
+                    .map(d => {
+                        const raw = d.data();
+                        return {
+                            id: d.id,
+                            uid: raw.uid,
+                            status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
+                                raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
+                            paymentStatus: raw.paymentStatus,
+                            reason: raw.serviceKey || raw.reason || 'Consultation',
+                            type: 'Telehealth',
+                            date: raw.scheduledAt || raw.createdAt,
+                            scheduledAt: raw.scheduledAt || null,
+                            providerName: raw.providerName || 'Patriotic Provider',
+                            providerId: raw.providerId || '',
+                            intakeAnswers: raw.intake || {},
+                            intake: raw.intake || {},
+                            serviceKey: raw.serviceKey,
+                            meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
+                            patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
+                            patientEmail: raw.intake?.email || '',
+                        } as Appointment;
+                    });
                 merge();
-            }, (err) => console.error('Consultation listener error:', err));
+            }, (err) => { console.error('Consultation listener error:', err); setLoading(false); });
 
             // Listener 2: patients/{uid}/appointments sub-collection
             // Written by Stripe webhook & updated by the scheduling endpoint

@@ -19,10 +19,9 @@ import {
     collection,
     query,
     where,
-    orderBy,
     limit,
     onSnapshot,
-    Timestamp
+    Timestamp,
 } from 'firebase/firestore';
 import { format, isSameDay, isAfter, subMinutes, addMinutes } from 'date-fns';
 import Link from 'next/link';
@@ -78,6 +77,8 @@ export default function PatientDashboard() {
             if (currentUser) {
                 setUser(currentUser);
                 setupRealtimeListeners(currentUser.uid);
+            } else {
+                setLoading(false);
             }
         });
 
@@ -85,61 +86,144 @@ export default function PatientDashboard() {
     }, []);
 
     const setupRealtimeListeners = (uid: string) => {
-        // 1. Appointments (Next 2)
-        const apptsQuery = query(
-            collection(db, 'patients', uid, 'appointments'),
-            where('status', '!=', 'cancelled'),
-            orderBy('date', 'asc'),
-            limit(2)
+        let consultData: Appointment[] = [];
+        let subApptData: Appointment[] = [];
+
+        // Helper: safe date conversion
+        const toDate = (v: any): Date | null => {
+            if (!v) return null;
+            if (typeof v.toDate === 'function') return v.toDate();
+            if (v instanceof Date) return v;
+            const d = new Date(v);
+            return isNaN(d.getTime()) ? null : d;
+        };
+
+        const mergeAppts = () => {
+            const byKey = new Map<string, Appointment>();
+            // Sub-collection takes precedence (has updated status)
+            consultData.forEach(c => byKey.set(c.id, c));
+            subApptData.forEach(a => byKey.set((a as any).consultationId || a.id, a));
+
+            const merged = Array.from(byKey.values())
+                .filter(a => a.status !== 'cancelled' && a.status !== 'completed')
+                .sort((a, b) => {
+                    const aMs = toDate((a as any).scheduledAt || a.date)?.getTime() ?? 0;
+                    const bMs = toDate((b as any).scheduledAt || b.date)?.getTime() ?? 0;
+                    return aMs - bMs;
+                })
+                .slice(0, 3);
+            setAppointments(merged);
+        };
+
+        // 1a. Consultations with paymentStatus=paid (single-field filter, no composite index needed)
+        const unsubConsult = onSnapshot(
+            query(collection(db, 'consultations'), where('uid', '==', uid)),
+            (snap) => {
+                consultData = snap.docs
+                    .map(d => {
+                        const raw = d.data();
+                        // Only show paid consultations
+                        if (raw.paymentStatus && raw.paymentStatus !== 'paid') return null;
+                        return {
+                            id: d.id,
+                            providerName: raw.providerName || 'Patriotic Provider',
+                            type: 'Telehealth',
+                            status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
+                                raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
+                            // Use scheduledAt if available, fall back to createdAt
+                            date: raw.scheduledAt || raw.createdAt,
+                            meetingUrl: raw.meetingUrl,
+                        } as Appointment;
+                    })
+                    .filter(Boolean) as Appointment[];
+                mergeAppts();
+            },
+            (err) => { console.error('Dashboard consultations error:', err); setLoading(false); }
         );
 
-        // 2. Messages (Last 2 unread threads)
-        const msgsQuery = query(
-            collection(db, 'threads'),
-            where('patientId', '==', uid),
-            where('unreadCount', '>', 0),
-            orderBy('lastMessageAt', 'desc'),
-            limit(2)
+        // 1b. patients/{uid}/appointments sub-collection (no ordering = no index needed)
+        const unsubSubAppt = onSnapshot(
+            query(collection(db, 'patients', uid, 'appointments')),
+            (snap) => {
+                subApptData = snap.docs.map(d => {
+                    const raw = d.data();
+                    return {
+                        id: d.id,
+                        consultationId: raw.consultationId,
+                        providerName: raw.providerName || 'Patriotic Provider',
+                        type: raw.type || 'Telehealth',
+                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' : (raw.status || 'PENDING_SCHEDULING'),
+                        date: raw.scheduledAt || raw.createdAt || raw.date,
+                        meetingUrl: raw.meetingUrl,
+                    } as Appointment;
+                });
+                mergeAppts();
+                setLoading(false); // resolve loading after first merge
+            },
+            (err) => { console.error('Dashboard subappt error:', err); setLoading(false); }
         );
 
-        // 3. Medications (Active)
-        const medsQuery = query(
-            collection(db, 'patients', uid, 'medications'),
-            where('status', '==', 'active')
+        // 2. Messages (no composite index: remove unreadCount filter, filter client-side)
+        const unsubMsgs = onSnapshot(
+            query(collection(db, 'threads'), where('patientId', '==', uid), limit(5)),
+            (snap) => {
+                const msgs = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() } as Message))
+                    .filter(m => m.unreadCount > 0)
+                    .slice(0, 2);
+                setMessages(msgs);
+            },
+            (err) => console.error('Dashboard messages error:', err)
         );
 
-        // 4. Lab Results (Last 1)
-        const labsQuery = query(
-            collection(db, 'patients', uid, 'lab_results'),
-            orderBy('date', 'desc'),
-            limit(1)
+        // 3. Medications
+        const unsubMeds = onSnapshot(
+            query(collection(db, 'patients', uid, 'medications'), where('status', '==', 'active')),
+            (snap) => setMedications(snap.docs.map(d => ({ id: d.id, ...d.data() } as Medication))),
+            (err) => console.error('Dashboard medications error:', err)
         );
 
-        const unsubscribes = [
-            onSnapshot(apptsQuery, (snaps) => {
-                setAppointments(snaps.docs.map(d => ({ id: d.id, ...d.data() } as Appointment)));
-            }),
-            onSnapshot(msgsQuery, (snaps) => {
-                setMessages(snaps.docs.map(d => ({ id: d.id, ...d.data() } as Message)));
-            }),
-            onSnapshot(medsQuery, (snaps) => {
-                setMedications(snaps.docs.map(d => ({ id: d.id, ...d.data() } as Medication)));
-            }),
-            onSnapshot(labsQuery, (snaps) => {
-                setLabResults(snaps.docs.map(d => ({ id: d.id, ...d.data() } as LabResult)));
+        // 4. Lab results (no ordering = no index needed, sort client-side)
+        const unsubLabs = onSnapshot(
+            query(collection(db, 'patients', uid, 'lab_results'), limit(5)),
+            (snap) => {
+                const labs = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() } as LabResult))
+                    .sort((a, b) => {
+                        const aMs = typeof a.date?.toDate === 'function' ? a.date.toDate().getTime() : 0;
+                        const bMs = typeof b.date?.toDate === 'function' ? b.date.toDate().getTime() : 0;
+                        return bMs - aMs;
+                    })
+                    .slice(0, 1);
+                setLabResults(labs);
                 setLoading(false);
-            })
-        ];
+            },
+            (err) => { console.error('Dashboard labs error:', err); setLoading(false); }
+        );
 
-        return () => unsubscribes.forEach(unsub => unsub());
+        return () => {
+            unsubConsult();
+            unsubSubAppt();
+            unsubMsgs();
+            unsubMeds();
+            unsubLabs();
+        };
     };
 
-    const isJoinable = (apptDate: Timestamp) => {
-        const date = apptDate.toDate();
+
+    const safeDate = (v: any): Date | null => {
+        if (!v) return null;
+        if (typeof v.toDate === 'function') return v.toDate();
+        if (v instanceof Date) return v;
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+    };
+
+    const isJoinable = (apptDate: any) => {
+        const date = safeDate(apptDate);
+        if (!date) return false;
         const now = new Date();
-        const fifteenMinsBefore = subMinutes(date, 15);
-        const sixtyMinsAfter = addMinutes(date, 60);
-        return isAfter(now, fifteenMinsBefore) && !isAfter(now, sixtyMinsAfter);
+        return isAfter(now, subMinutes(date, 15)) && !isAfter(now, addMinutes(date, 60));
     };
 
     if (loading) return <DashboardSkeleton />;
@@ -173,41 +257,45 @@ export default function PatientDashboard() {
                     <DashboardCard title="Upcoming Visits" icon={Calendar}>
                         {appointments.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {appointments.map((appt) => (
-                                    <div key={appt.id} className="p-5 rounded-2xl border border-slate-50 bg-[#F8FAFC] group hover:border-[#0EA5E9]/30 transition-all">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#0EA5E9] group-hover:scale-110 transition-transform">
-                                                <History className="w-5 h-5" />
-                                            </div>
-                                            {isJoinable(appt.date) && (
-                                                <span className="flex h-3 w-3 relative">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0EA5E9] opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#0EA5E9]"></span>
+                                {appointments.map((appt) => {
+                                    const apptDate = safeDate(appt.date);
+                                    const isPending = (appt.status as any) === 'PENDING_SCHEDULING';
+                                    return (
+                                        <div key={appt.id} className="p-5 rounded-2xl border border-slate-50 bg-[#F8FAFC] group hover:border-[#0EA5E9]/30 transition-all">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#0EA5E9] group-hover:scale-110 transition-transform">
+                                                    <History className="w-5 h-5" />
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isPending ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-sky-50 text-[#0EA5E9] border-sky-100'
+                                                    }`}>
+                                                    {isPending ? 'Awaiting Provider' : appt.status}
                                                 </span>
+                                            </div>
+                                            <h4 className="font-black text-slate-800 tracking-tight text-lg mb-1">{appt.providerName}</h4>
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">{appt.type}</p>
+                                            <div className="flex items-center gap-4 mb-6">
+                                                <div className="bg-white px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2">
+                                                    <Clock className="w-3.5 h-3.5 text-[#0EA5E9]" />
+                                                    <span className="text-xs font-black text-slate-600">
+                                                        {apptDate ? format(apptDate, 'h:mm a') : 'TBD'}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs font-bold text-slate-400">
+                                                    {apptDate ? format(apptDate, 'MMM do') : 'Date TBD'}
+                                                </div>
+                                            </div>
+                                            {isJoinable(appt.date) ? (
+                                                <button className="w-full bg-[#0EA5E9] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-sky-100 hover:scale-[1.02] active:scale-95 transition-all text-xs">
+                                                    Join Now
+                                                </button>
+                                            ) : (
+                                                <button onClick={() => router.push('/patient/appointments')} className="w-full bg-white text-slate-400 py-3 rounded-xl font-black uppercase tracking-widest border border-slate-100 hover:border-[#0EA5E9] hover:text-[#0EA5E9] transition-all text-xs">
+                                                    {isPending ? 'View Details' : 'View Appointment'}
+                                                </button>
                                             )}
                                         </div>
-                                        <h4 className="font-black text-slate-800 tracking-tight text-lg mb-1">{appt.providerName}</h4>
-                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">{appt.type}</p>
-                                        <div className="flex items-center gap-4 mb-6">
-                                            <div className="bg-white px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2">
-                                                <Clock className="w-3.5 h-3.5 text-[#0EA5E9]" />
-                                                <span className="text-xs font-black text-slate-600">{format(appt.date.toDate(), 'h:mm a')}</span>
-                                            </div>
-                                            <div className="text-xs font-bold text-slate-400">
-                                                {format(appt.date.toDate(), 'MMM do')}
-                                            </div>
-                                        </div>
-                                        {isJoinable(appt.date) ? (
-                                            <button className="w-full bg-[#0EA5E9] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-sky-100 hover:scale-[1.02] active:scale-95 transition-all text-xs">
-                                                Join Now
-                                            </button>
-                                        ) : (
-                                            <button className="w-full bg-white text-slate-400 py-3 rounded-xl font-black uppercase tracking-widest border border-slate-100 hover:border-[#0EA5E9] hover:text-[#0EA5E9] transition-all text-xs">
-                                                Reschedule
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : <EmptyState message="No upcoming appointments" />}
                     </DashboardCard>
