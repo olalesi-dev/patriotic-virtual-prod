@@ -220,6 +220,38 @@ app.get('/api/v1/consultations/mine', async (req, res) => {
     }
 });
 
+// 1.55 Get MY Scheduled Appointments (confirmed, from root /appointments collection)
+app.get('/api/v1/appointments/mine', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const snapshot = await db.collection('appointments')
+            .where('patientId', '==', uid)
+            .orderBy('startTime', 'asc')
+            .get();
+
+        const appointments = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            appointments.push({
+                id: doc.id,
+                ...data,
+                startTime: data.startTime && data.startTime.toDate ? data.startTime.toDate().toISOString() : null,
+                createdAt: data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toISOString() : null,
+            });
+        });
+
+        res.json({ appointments });
+    } catch (error) {
+        console.error('Error fetching patient appointments:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 1.6 ADMIN: Get ALL Consultations
 app.get('/api/v1/admin/consultations', async (req, res) => {
     try {
