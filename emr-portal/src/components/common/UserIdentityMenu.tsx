@@ -25,9 +25,30 @@ import { toast } from 'react-hot-toast';
 export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
     const [theme, setTheme] = useState<string>('light');
+    const [authUser, setAuthUser] = useState<any>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const profile = useUserProfile();
+
+    useEffect(() => {
+        const unsub = auth.onAuthStateChanged((u) => setAuthUser(u));
+        return () => unsub();
+    }, []);
+
+    // Resolve display name: Firebase Auth first (set during signup), then hook, then email
+    const resolvedName = (() => {
+        const authName = authUser?.displayName;
+        const hookName = profile.displayName;
+        const email = authUser?.email || profile.email;
+        if (authName && authName !== 'Unknown' && authName.trim()) return authName.trim();
+        if (hookName && hookName !== 'Unknown' && hookName.trim()) return hookName.trim();
+        if (email) {
+            const prefix = email.split('@')[0];
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        }
+        return 'Patient';
+    })();
+    const resolvedInitials = resolvedName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || 'P';
 
     useEffect(() => {
         // Initialize theme from localStorage
@@ -218,7 +239,7 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
                         : 'bg-slate-900 border border-slate-800 shadow-xl hover:bg-slate-800'}
                     ${collapsed ? 'w-12 h-12 p-0 justify-center mx-auto rounded-xl' : ''}
                 `}
-                title={collapsed ? profile.displayName : ''}
+                title={collapsed ? resolvedName : ''}
             >
                 {!isOpen && !collapsed && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none"></div>}
 
@@ -226,7 +247,7 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
                     ${isOpen ? 'bg-white text-indigo-600 ring-indigo-500' : 'bg-indigo-500 ring-slate-900'}
                     ${collapsed && !isOpen ? 'ring-offset-2 ring-indigo-500/20' : ''}
                 `}>
-                    {profile.initials}
+                    {resolvedInitials}
                 </div>
 
                 {!collapsed && (
@@ -235,7 +256,7 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
                             <h4 className={`text-sm font-bold truncate drop-shadow-sm transition-colors
                                 ${isOpen ? 'text-white' : 'text-white'}
                             `}>
-                                {profile.displayName}
+                                {resolvedName}
                             </h4>
                             <p className={`text-[10px] font-black uppercase tracking-widest truncate transition-colors
                                 ${isOpen ? 'text-indigo-200' : 'text-slate-400'}
