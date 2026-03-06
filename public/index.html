@@ -7231,14 +7231,23 @@
           <label>Password</label><input type="password" id="regPassword" placeholder="Min. 8 characters" />
         </div>
         <div class="fr">
-          <div class="fg">
-            <label>State</label><select id="regState">
-              <option value="">Select your state</option>
-              <option value="FL">Florida ✓</option>
-              <option value="IN" disabled style="color: #9ca3af">
-                Indiana (Coming Soon)
-              </option>
-            </select>
+          <div style="display: flex; gap: 12px">
+            <div class="fg" style="flex: 1.5">
+              <label>State</label><select id="regState">
+                <option value="">Select your state</option>
+                <option value="FL">Florida ✓</option>
+                <option value="IN" disabled style="color: #9ca3af">
+                  Indiana (Coming Soon)
+                </option>
+              </select>
+            </div>
+            <div class="fg" style="flex: 1">
+              <label>Biological Sex *</label><select id="regSex">
+                <option value="">Select</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
           </div>
           <div style="display: flex; gap: 12px">
             <div class="fg" style="flex: 1">
@@ -9577,9 +9586,15 @@
           p = document.getElementById("regPassword").value,
           st = document.getElementById("regState").value,
           dob = document.getElementById("regDob").value,
-          phone = document.getElementById("regPhone").value;
-        if (!fn || !ln || !e || !p || !phone)
+          phoneRaw = document.getElementById("regPhone").value,
+          sex = document.getElementById("regSex").value;
+
+        const phone = phoneRaw.replace(/\D/g, "");
+
+        if (!fn || !ln || !e || !p || !phoneRaw || !sex || !dob)
           return toast("Please fill all required fields.");
+        if (phone.length < 10)
+          return toast("Please enter a valid 10-digit phone number.");
         if (p.length < 6)
           return toast("Password must be at least 6 characters.");
         if (!ACTIVE_STATES.includes(st)) {
@@ -9602,6 +9617,7 @@
                 lastName: ln,
                 state: st,
                 dateOfBirth: dob,
+                gender: sex,
                 role: "patient",
                 firebaseUid: fbUser.uid,
                 email: e,
@@ -9641,6 +9657,7 @@
                 lastName: ln,
                 state: st,
                 dateOfBirth: dob,
+                gender: sex,
                 phone: phone,
                 role: 'patient',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),

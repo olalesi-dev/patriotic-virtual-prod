@@ -28,6 +28,8 @@ interface ProfileData {
     primaryLanguage: string;
     insuranceProvider: string;
     insuranceMemberId: string;
+    height: string;
+    weight: string;
     photoURL: string;
 }
 
@@ -37,7 +39,7 @@ const EMPTY: ProfileData = {
     emergencyContact: '', emergencyPhone: '',
     bloodType: '', allergies: '', currentMedications: '', chronicConditions: '',
     primaryLanguage: 'English', insuranceProvider: '', insuranceMemberId: '',
-    photoURL: '',
+    height: '', weight: '', photoURL: '',
 };
 
 export default function PatientProfilePage() {
@@ -76,6 +78,8 @@ export default function PatientProfilePage() {
                         primaryLanguage: d.primaryLanguage || 'English',
                         insuranceProvider: d.insuranceProvider || '',
                         insuranceMemberId: d.insuranceMemberId || '',
+                        height: d.height || '',
+                        weight: d.weight || '',
                         photoURL: d.photoURL || userProfile.photoURL || '',
                     });
                 } else {
@@ -124,8 +128,12 @@ export default function PatientProfilePage() {
         setSaving(true);
         try {
             const fullName = `${data.firstName} ${data.lastName}`.trim();
+            // Sanitize phone for DoseSpot (must be 10 digits)
+            const sanitizedPhone = data.phone?.replace(/\D/g, '') || '';
+
             await setDoc(doc(db, 'users', auth.currentUser.uid), {
                 ...data,
+                phone: sanitizedPhone, // save the clean version
                 displayName: fullName,
                 name: fullName,
                 email: userProfile.email,
@@ -298,8 +306,8 @@ export default function PatientProfilePage() {
                                 key={id}
                                 onClick={() => setActiveTab(id)}
                                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === id
-                                        ? 'bg-white text-[#0EA5E9] shadow-sm border border-slate-100'
-                                        : 'text-slate-400 hover:text-slate-600'
+                                    ? 'bg-white text-[#0EA5E9] shadow-sm border border-slate-100'
+                                    : 'text-slate-400 hover:text-slate-600'
                                     }`}
                             >
                                 <Icon className="w-3.5 h-3.5" /> {label}
@@ -311,6 +319,15 @@ export default function PatientProfilePage() {
                     {activeTab === 'personal' && (
                         <div className="space-y-6">
                             <section>
+                                {(!data.address || !data.city || !data.state || !data.zip || !data.phone || !data.gender || !data.dateOfBirth) && (
+                                    <div className="mb-6 p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+                                        <div>
+                                            <p className="text-sm font-bold text-amber-800">Action Required for Prescriptions</p>
+                                            <p className="text-xs text-amber-700 mt-1">Our e-prescribing system (DoseSpot) requires your full Address, Date of Birth, Phone, and Sex on file before a provider can issue prescriptions.</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <User className="w-3.5 h-3.5" /> Basic Information
                                 </h3>
@@ -363,6 +380,8 @@ export default function PatientProfilePage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {field('Blood Type', 'bloodType', 'text', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'])}
+                                {field('Height (e.g. 5\'10")', 'height')}
+                                {field('Weight (lbs)', 'weight')}
                             </div>
 
                             <div key="allergies" className="space-y-1.5">
