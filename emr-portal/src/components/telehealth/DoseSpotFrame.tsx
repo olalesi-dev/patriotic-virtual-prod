@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { toast } from 'react-hot-toast';
@@ -82,14 +81,14 @@ export function DoseSpotFrame({ patientDoseSpotId, refillsErrors, height = '100%
 
     if (error) {
         return (
-            <Card className="w-full flex items-center justify-center p-6 border-red-100 bg-red-50/50" style={{ minHeight: '300px' }}>
-                <CardContent className="flex flex-col items-center gap-3 py-10">
+            <div className="w-full flex items-center justify-center p-6 border-red-100 bg-red-50/50 rounded-2xl border shadow-sm" style={{ minHeight: '300px' }}>
+                <div className="flex flex-col items-center gap-3 py-10">
                     <AlertCircle className="w-10 h-10 text-red-500" />
                     <p className="text-sm font-semibold text-red-800 text-center max-w-sm">
                         {error}
                     </p>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         );
     }
 
