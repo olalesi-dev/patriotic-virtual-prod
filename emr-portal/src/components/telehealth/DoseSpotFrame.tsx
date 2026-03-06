@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { auth } from '@/lib/firebase';
-import { toast } from 'react-hot-toast';
 
 interface DoseSpotFrameProps {
     patientDoseSpotId?: number;
@@ -38,7 +37,7 @@ export function DoseSpotFrame({ patientDoseSpotId, refillsErrors, height = '100%
                 }
 
                 const queryStr = params.toString() ? `?${params.toString()}` : '';
-                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
                 const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/dosespot/sso-url${queryStr}`, {
                     headers: {

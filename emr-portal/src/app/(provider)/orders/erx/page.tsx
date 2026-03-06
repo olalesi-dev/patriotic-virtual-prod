@@ -17,7 +17,7 @@ export default function ErxPage() {
                 if (!user) return;
 
                 const token = await user.getIdToken();
-                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
                 const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/dosespot/notification-count`, {
                     headers: {
