@@ -1,9 +1,9 @@
 import crypto from 'crypto';
 
 // FIRESTORE DEPENDENCY:
-// Reads doseSpotClinicianId (integer) from /providers/{uid}
+// Reads doseSpotClinicianId (integer) from /users/{uid}
 // Set this field when creating a provider via POST /api/v1/admin/users
-// or manually: db.collection('providers').doc(uid).set({ doseSpotClinicianId: 3088396 }, { merge: true })
+// or manually: db.collection('users').doc(uid).set({ doseSpotClinicianId: 3088396 }, { merge: true })
 // The staging test clinician ID is: 3088396
 
 function generatePhrase(): string {
