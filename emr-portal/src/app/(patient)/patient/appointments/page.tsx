@@ -169,43 +169,66 @@ export default function AppointmentsPage() {
             };
 
 
-            // Listener 1: consultations — real-time status updates (waitlist → scheduled)
-            // Single-field filter only — no composite index required
+
+            // Listener 1a: consultations by uid field (new docs after our fix)
             const consultQ = query(
                 collection(db, 'consultations'),
                 where('uid', '==', user.uid)
             );
-            unsubConsult = onSnapshot(consultQ, (snap) => {
-                consultData = snap.docs
-                    .filter(d => {
-                        const raw = d.data();
-                        // Client-side filter: only paid consultations
-                        return !raw.paymentStatus || raw.paymentStatus === 'paid';
-                    })
-                    .map(d => {
-                        const raw = d.data();
-                        return {
-                            id: d.id,
-                            uid: raw.uid,
-                            status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
-                                raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
-                            paymentStatus: raw.paymentStatus,
-                            reason: raw.serviceKey || raw.reason || 'Consultation',
-                            type: 'Telehealth',
-                            date: raw.scheduledAt || raw.createdAt,
-                            scheduledAt: raw.scheduledAt || null,
-                            providerName: raw.providerName || 'Patriotic Provider',
-                            providerId: raw.providerId || '',
-                            intakeAnswers: raw.intake || {},
-                            intake: raw.intake || {},
-                            serviceKey: raw.serviceKey,
-                            meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
-                            patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
-                            patientEmail: raw.intake?.email || '',
-                        } as Appointment;
-                    });
+
+            // Listener 1b: consultations by patientId field (older docs before fix)
+            const consultByPatientIdQ = query(
+                collection(db, 'consultations'),
+                where('patientId', '==', user.uid)
+            );
+
+            const mapConsultDoc = (d: any): Appointment => {
+                const raw = d.data();
+                return {
+                    id: d.id,
+                    uid: raw.uid || raw.patientId,
+                    status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
+                        raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
+                    paymentStatus: raw.paymentStatus,
+                    reason: raw.serviceKey || raw.reason || 'Consultation',
+                    type: 'Telehealth',
+                    date: raw.scheduledAt || raw.createdAt,
+                    scheduledAt: raw.scheduledAt || null,
+                    providerName: raw.providerName || 'Patriotic Provider',
+                    providerId: raw.providerId || '',
+                    intakeAnswers: raw.intake || {},
+                    intake: raw.intake || {},
+                    serviceKey: raw.serviceKey,
+                    meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
+                    patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
+                    patientEmail: raw.intake?.email || '',
+                } as Appointment;
+            };
+
+            let consultByUid: Appointment[] = [];
+            let consultByPatientId: Appointment[] = [];
+
+            const rebuildConsultData = () => {
+                // Merge both queries, deduplicate by doc id
+                const byId = new Map<string, Appointment>();
+                consultByUid.forEach(a => byId.set(a.id, a));
+                consultByPatientId.forEach(a => byId.set(a.id, a));
+                consultData = Array.from(byId.values()).filter(a => !a.paymentStatus || a.paymentStatus === 'paid');
                 merge();
-            }, (err) => { console.error('Consultation listener error:', err); setLoading(false); });
+            };
+
+            unsubConsult = onSnapshot(consultQ, (snap) => {
+                consultByUid = snap.docs.map(mapConsultDoc);
+                rebuildConsultData();
+            }, (err) => { console.error('Consultation (uid) listener error:', err); setLoading(false); });
+
+            // Second listener for older docs using patientId
+            const unsubConsultByPatientId = onSnapshot(consultByPatientIdQ, (snap) => {
+                consultByPatientId = snap.docs.map(mapConsultDoc);
+                rebuildConsultData();
+            }, (err) => { console.error('Consultation (patientId) listener error:', err); });
+
+
 
             // Listener 2: patients/{uid}/appointments sub-collection
             // Written by Stripe webhook & updated by the scheduling endpoint
