@@ -9610,7 +9610,26 @@
           };
         }
         document.getElementById("authModal").classList.remove("active");
+        // Write user profile to Firestore users collection so EMR portal can resolve name
+        if (db && fbUser) {
+          try {
+            await db.collection('users').doc(fbUser.uid).set({
+              uid: fbUser.uid,
+              email: e,
+              displayName: fn + ' ' + ln,
+              firstName: fn,
+              lastName: ln,
+              state: st,
+              dateOfBirth: dob,
+              role: 'patient',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+          } catch (writeErr) {
+            console.log('User profile write skipped:', writeErr.message);
+          }
+        }
         updateNav();
+
         showDashboard();
         toast("Welcome to Patriotic Virtual Telehealth!");
       } catch (err) {

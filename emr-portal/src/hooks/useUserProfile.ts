@@ -92,6 +92,26 @@ export const useUserProfile = () => {
                     .toUpperCase()
                     .substring(0, 2) || (user.email?.substring(0, 2).toUpperCase() ?? 'P');
 
+                // Self-heal: if Firestore doc is missing or has bad name, write the correct one back
+                const storedBadName = !profileData?.displayName
+                    || profileData?.displayName === 'Unknown'
+                    || profileData?.firstName === undefined;
+
+                if (storedBadName && source === null || (source && storedBadName)) {
+                    try {
+                        const { setDoc: sd, doc: d, serverTimestamp: st } = await import('firebase/firestore');
+                        const nameParts = displayName.split(' ');
+                        await sd(d(db, 'users', user.uid), {
+                            displayName,
+                            firstName: nameParts[0] || '',
+                            lastName: nameParts.slice(1).join(' ') || '',
+                            email: user.email || '',
+                            role: profileData?.role || 'patient',
+                            updatedAt: st(),
+                        }, { merge: true });
+                    } catch (healErr) { /* silent — best-effort */ }
+                }
+
                 setProfile({
                     loading: false,
                     normalizedRole,
