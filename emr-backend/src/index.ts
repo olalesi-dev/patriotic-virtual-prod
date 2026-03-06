@@ -46,7 +46,7 @@ app.get('/api/v1/dosespot/sso-url', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const providerDoc = await admin.firestore().collection('providers').doc(uid).get();
+        const providerDoc = await admin.firestore().collection('users').doc(uid).get();
         if (!providerDoc.exists) {
             return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
         }
@@ -87,7 +87,7 @@ app.get('/api/v1/dosespot/notification-count', async (req, res) => {
         };
 
         const snapshot = await admin.firestore()
-            .collection('providers')
+            .collection('users')
             .doc(uid)
             .collection('dosespot')
             .doc('notifications')
@@ -134,7 +134,7 @@ app.post('/api/v1/admin/users', async (req, res) => {
         }
 
         if (doseSpotClinicianId) {
-            await admin.firestore().collection('providers').doc(userToUpdate).set({
+            await admin.firestore().collection('users').doc(userToUpdate).set({
                 doseSpotClinicianId: parseInt(doseSpotClinicianId, 10)
             }, { merge: true });
         }
