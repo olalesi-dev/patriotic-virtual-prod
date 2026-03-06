@@ -37,8 +37,33 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     const [notifOpen, setNotifOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const notifRef = useRef<HTMLDivElement>(null);
+    // Direct Firebase Auth user — always has the real displayName (set during signup)
+    const [authUser, setAuthUser] = useState<any>(null);
 
     const profile = useUserProfile();
+
+    // Derive the display name: prefer direct Firebase Auth, then hook, then email prefix
+    const getDisplayName = () => {
+        const authName = authUser?.displayName;
+        const hookName = profile.displayName;
+        const email = authUser?.email || profile.email;
+        if (authName && authName !== 'Unknown' && authName.trim()) return authName.trim();
+        if (hookName && hookName !== 'Unknown' && hookName.trim()) return hookName.trim();
+        if (email) {
+            const prefix = email.split('@')[0];
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        }
+        return 'Patient';
+    };
+    const displayName = getDisplayName();
+    const firstName = displayName.split(' ')[0];
+    const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || 'P';
+
+    useEffect(() => {
+        // Listen to Firebase Auth directly — most reliable source for displayName
+        const unsub = auth.onAuthStateChanged((u) => setAuthUser(u));
+        return () => unsub();
+    }, []);
 
     useEffect(() => {
         if (!profile.loading) {
@@ -231,7 +256,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                             <Menu className="w-6 h-6" />
                         </button>
                         <h2 className="text-xl font-black text-slate-800 tracking-tight hidden sm:block">
-                            Welcome back, <span className="text-[#0EA5E9]">{profile.displayName.split(' ')[0]}</span>
+                            Welcome back, <span className="text-[#0EA5E9]">{firstName}</span>
                         </h2>
                     </div>
 
@@ -272,9 +297,9 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                                             <Link key={n.id} href={n.href} onClick={() => setNotifOpen(false)}
                                                 className="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors group">
                                                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm ${n.icon === 'message' ? 'bg-indigo-50 text-indigo-500' :
-                                                        n.icon === 'check' ? 'bg-emerald-50 text-emerald-600' :
-                                                            n.icon === 'clock' ? 'bg-amber-50 text-amber-500' :
-                                                                'bg-sky-50 text-sky-500'
+                                                    n.icon === 'check' ? 'bg-emerald-50 text-emerald-600' :
+                                                        n.icon === 'clock' ? 'bg-amber-50 text-amber-500' :
+                                                            'bg-sky-50 text-sky-500'
                                                     }`}>
                                                     {n.icon === 'message' && <MessageSquare className="w-4 h-4" />}
                                                     {n.icon === 'check' && <CheckCircle2 className="w-4 h-4" />}
