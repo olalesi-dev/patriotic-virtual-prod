@@ -3,305 +3,318 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, Video, User, FileText, Settings, Filter, MoreHorizontal, MessageSquare, Briefcase, CheckCircle, XCircle, Clock, AlertCircle, Phone, X } from 'lucide-react';
+import { Calendar, Video, Filter, MoreHorizontal, CheckCircle, XCircle, Clock, X, Mail, Phone, User, Activity, ChevronDown } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, serverTimestamp, Timestamp, getDoc, getDocs, orderBy, limit } from 'firebase/firestore';
 
 // --- Types ---
 interface Appointment {
-    id: number | string;
+    id: string;
     patient: string;
-    patientEmail?: string;
-    patientUid?: string;
-    serviceKey?: string;
+    patientEmail: string;
+    patientUid: string;
+    serviceKey: string;
     time: string;
     displayTime: string;
+    displayDate: string;
     type: string;
     status: 'Upcoming' | 'Checked In' | 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'Waitlist';
-    notes?: string;
-    intakeAnswers?: Record<string, any>;
-    createdAt?: string; // ISO string for display
+    intakeAnswers: Record<string, any>;
+    createdAt: string;
+    meetingUrl?: string;
     raw?: Record<string, any>;
 }
 
 interface Message {
-    id: number;
+    id: string;
     sender: string;
     preview: string;
     time: string;
     unread: boolean;
+    patientId?: string;
 }
 
-// --- Mock Data ---
-const INITIAL_APPOINTMENTS: Appointment[] = [
-    { id: 1, patient: 'John Doe', time: '2023-10-27 10:00', displayTime: '10:00 AM', type: 'Video Consult Â· Follow-up', status: 'Checked In' },
-    { id: 2, patient: 'Sarah Connor', time: '2023-10-27 11:30', displayTime: '11:30 AM', type: 'Initial Assessment', status: 'Confirmed' },
-    { id: 3, patient: 'Michael Brown', time: '2023-10-27 14:15', displayTime: '02:15 PM', type: 'Lab Review', status: 'Pending' },
-    { id: 4, patient: 'Emily White', time: '2023-10-27 16:00', displayTime: '04:00 PM', type: 'Therapy Session', status: 'Upcoming' },
-    { id: 5, patient: 'Robert Smith', time: '2023-10-26 09:00', displayTime: '09:00 AM', type: 'Routine Checkup', status: 'Completed' },
-    { id: 6, patient: 'Linda Green', time: '2023-10-26 14:00', displayTime: '02:00 PM', type: 'Video Consult', status: 'Completed' },
-    { id: 7, patient: 'Gary Oak', time: '2023-10-27 13:00', displayTime: '01:00 PM', type: 'Emergency', status: 'Cancelled' },
-    { id: 8, patient: 'Bruce Wayne', time: 'Waitlist', displayTime: 'Anytime', type: 'General Inquiry', status: 'Waitlist' },
-    { id: 9, patient: 'Clark Kent', time: 'Waitlist', displayTime: 'Afternoon', type: 'Follow-up', status: 'Waitlist' },
-];
-
-const INITIAL_MESSAGES: Message[] = [
-    { id: 1, sender: 'Jane Doe', preview: 'Can we reschedule my appt...', time: '2m ago', unread: true },
-    { id: 2, sender: 'Billing Dept', preview: 'Invoice #40292 approved', time: '1h ago', unread: true },
-    { id: 3, sender: 'Dr. House', preview: 'Consultation notes attached', time: '3h ago', unread: true },
-    { id: 4, sender: 'Pharmacy', preview: 'Refill request #99281 processed', time: '1d ago', unread: false },
-];
-
-const chartData = [
-    { name: 'M', visits: 12 },
-    { name: 'T', visits: 19 },
-    { name: 'W', visits: 15 },
-    { name: 'T', visits: 22 },
-    { name: 'F', visits: 28 },
-    { name: 'S', visits: 10 },
-    { name: 'S', visits: 8 },
-];
+interface WeekData { name: string; visits: number; }
 
 export default function EmrDashboard() {
-    // --- State ---
-    const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
-    const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [weekData, setWeekData] = useState<WeekData[]>([
+        { name: 'M', visits: 0 }, { name: 'T', visits: 0 }, { name: 'W', visits: 0 },
+        { name: 'T', visits: 0 }, { name: 'F', visits: 0 }, { name: 'S', visits: 0 }, { name: 'S', visits: 0 },
+    ]);
     const [activeTab, setActiveTab] = useState('Upcoming');
-    const [menuOpenId, setMenuOpenId] = useState<number | string | null>(null);
-    const [providerName, setProviderName] = useState('Dr. Smith'); // Default fallback
-    const [reviewAppt, setReviewAppt] = useState<Appointment | any>(null);
+    const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+    const [providerName, setProviderName] = useState('Provider');
+    const [providerUid, setProviderUid] = useState('');
+
+    // Review & Schedule modal
+    const [reviewAppt, setReviewAppt] = useState<Appointment | null>(null);
     const [scheduleDate, setScheduleDate] = useState('');
     const [scheduleTime, setScheduleTime] = useState('');
     const [isScheduling, setIsScheduling] = useState(false);
 
-    // --- Refs ---
+    // Detail modal (Upcoming card click)
+    const [detailAppt, setDetailAppt] = useState<Appointment | null>(null);
+
+    // Filter
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+
     const scheduleRef = useRef<HTMLDivElement>(null);
-    const inboxRef = useRef<HTMLDivElement>(null);
 
     // --- Derived State ---
-    const unreadCount = messages.filter(m => m.unread).length;
-    const upcomingCount = appointments.filter(a => ['Upcoming', 'Checked In', 'Confirmed', 'Pending'].includes(a.status)).length;
+    const counts = {
+        Upcoming: appointments.filter(a => ['Upcoming', 'Checked In', 'Confirmed', 'Pending'].includes(a.status)).length,
+        Completed: appointments.filter(a => a.status === 'Completed').length,
+        Cancelled: appointments.filter(a => a.status === 'Cancelled').length,
+        Waitlist: appointments.filter(a => a.status === 'Waitlist').length,
+    };
 
     const filteredAppointments = appointments.filter(appt => {
-        if (activeTab === 'Upcoming') return ['Upcoming', 'Checked In', 'Confirmed', 'Pending'].includes(appt.status);
-        if (activeTab === 'Completed') return appt.status === 'Completed';
-        if (activeTab === 'Cancelled') return appt.status === 'Cancelled';
-        if (activeTab === 'Waitlist') return appt.status === 'Waitlist';
-        return true;
+        const tabMatch =
+            activeTab === 'Upcoming' ? ['Upcoming', 'Checked In', 'Confirmed', 'Pending'].includes(appt.status) :
+                activeTab === 'Completed' ? appt.status === 'Completed' :
+                    activeTab === 'Cancelled' ? appt.status === 'Cancelled' :
+                        appt.status === 'Waitlist';
+        const statusMatch = filterStatus === 'all' || appt.status.toLowerCase() === filterStatus;
+        return tabMatch && statusMatch;
     });
 
-    React.useEffect(() => {
-        const storedAuth = localStorage.getItem('emr_mock_auth');
-        import('@/lib/firebase').then(({ auth, db }) => {
-            const unsubscribe = auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    const { doc, getDoc } = await import('firebase/firestore');
-                    let fetchedName = user.displayName;
+    // --- Helper: enrich appointment from consultations doc ---
+    const enrichFromConsultation = async (apptId: string, data: Record<string, any>) => {
+        let patientName = data.patient || data.patientName || 'Unknown Patient';
+        let patientEmail = data.patientEmail || '';
+        let patientUid = data.patientId || data.uid || '';
+        let serviceKey = data.serviceKey || data.service || data.type || 'Consultation';
+        let intakeAnswers: Record<string, any> = {};
+        let meetingUrl = data.meetingUrl || 'https://doxy.me/patriotictelehealth';
 
-                    try {
-                        const userRef = doc(db, 'users', user.uid);
-                        const userSnap = await getDoc(userRef);
+        try {
+            const consultSnap = await getDoc(doc(db, 'consultations', apptId));
+            if (consultSnap.exists()) {
+                const cd = consultSnap.data();
+                intakeAnswers = cd.intake || {};
+                serviceKey = cd.serviceKey || serviceKey;
+                patientUid = cd.uid || cd.patientId || patientUid;
+                meetingUrl = cd.meetingUrl || meetingUrl;
+                if (cd.intake?.firstName || cd.intake?.lastName) {
+                    patientName = `${cd.intake.firstName || ''} ${cd.intake.lastName || ''}`.trim() || patientName;
+                }
+                if (cd.intake?.email) patientEmail = cd.intake.email;
+            }
+        } catch (e) { /* silent */ }
 
-                        if (userSnap.exists() && userSnap.data().name) {
-                            fetchedName = userSnap.data().name;
-                        } else {
-                            // Check patients collection as fallback
-                            const patientRef = doc(db, 'patients', user.uid);
-                            const patientSnap = await getDoc(patientRef);
-                            if (patientSnap.exists()) {
-                                const data = patientSnap.data();
-                                if (data.name) fetchedName = data.name;
-                                else if (data.firstName && data.lastName) fetchedName = `${data.firstName} ${data.lastName}`;
-                                else if (data.firstName) fetchedName = data.firstName;
-                            }
-                        }
-                    } catch (e) {
-                        console.log('Error fetching provider name', e);
+        // Lookup patient profile if still unknown
+        if (patientUid && (patientName === 'Unknown Patient' || !patientEmail)) {
+            try {
+                const userSnap = await getDoc(doc(db, 'users', patientUid));
+                if (userSnap.exists()) {
+                    const ud = userSnap.data();
+                    if (patientName === 'Unknown Patient') {
+                        patientName = ud.displayName || `${ud.firstName || ''} ${ud.lastName || ''}`.trim() || ud.name || 'Unknown Patient';
                     }
-
-                    if (fetchedName) {
-                        setProviderName(fetchedName);
-                    } else {
-                        setProviderName('Provider');
-                    }
-
-                    // --- Fetch Real Appointments ---
-                    try {
-                        const { collection, query, where, onSnapshot } = await import('firebase/firestore');
-                        if (db) {
-                            // --- Fetch Global Waiting Bucket ---
-                            const bucketQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
-                            const unsubBucket = onSnapshot(bucketQuery, async (snapshot) => {
-                                // For each appointment, try to enrich with consultation data
-                                const bucketAppts = await Promise.all(snapshot.docs.map(async (docSnap) => {
-                                    const data = docSnap.data();
-                                    const apptId = docSnap.id;
-
-                                    // Safely parse createdAt
-                                    let dateObj: Date;
-                                    if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
-                                    else if (data.createdAt instanceof Date) dateObj = data.createdAt;
-                                    else if (data.updatedAt?.toDate) dateObj = data.updatedAt.toDate();
-                                    else dateObj = new Date();
-
-                                    // Fetch linked consultation to get patient name, email, service, intake
-                                    let patientName = data.patient || data.patientName || 'Unknown Patient';
-                                    let patientEmail = data.patientEmail || '';
-                                    let patientUid = data.patientId || data.uid || '';
-                                    let serviceKey = data.serviceKey || data.service || 'New Intake';
-                                    let intakeAnswers: Record<string, any> = {};
-
-                                    try {
-                                        const { doc: docRef, getDoc: getDocFn } = await import('firebase/firestore');
-                                        // Try to read from consultations collection (same doc ID)
-                                        const consultSnap = await getDocFn(docRef(db, 'consultations', apptId));
-                                        if (consultSnap.exists()) {
-                                            const cd = consultSnap.data();
-                                            intakeAnswers = cd.intake || {};
-                                            serviceKey = cd.serviceKey || serviceKey;
-                                            patientUid = cd.uid || patientUid;
-                                            // Try to get patient name from intake
-                                            if (cd.intake?.firstName || cd.intake?.lastName) {
-                                                patientName = `${cd.intake.firstName || ''} ${cd.intake.lastName || ''}`.trim();
-                                            }
-                                            if (cd.intake?.email) patientEmail = cd.intake.email;
-                                        }
-
-                                        // If we have a patientUid, also try to look up their profile
-                                        if (patientUid && patientName === 'Unknown Patient') {
-                                            const userSnap = await getDocFn(docRef(db, 'users', patientUid));
-                                            if (userSnap.exists()) {
-                                                const ud = userSnap.data();
-                                                patientName = ud.displayName || ud.name || `${ud.firstName || ''} ${ud.lastName || ''}`.trim() || patientName;
-                                                patientEmail = patientEmail || ud.email || '';
-                                            }
-                                        }
-                                    } catch (e) {
-                                        console.log('Could not enrich appointment from consultation:', e);
-                                    }
-
-                                    return {
-                                        id: apptId as any,
-                                        patient: patientName,
-                                        patientEmail,
-                                        patientUid,
-                                        serviceKey,
-                                        time: dateObj.toISOString(),
-                                        displayTime: 'Awaiting',
-                                        type: serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-                                        status: 'Waitlist' as const,
-                                        intakeAnswers,
-                                        createdAt: dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
-                                        notes: data.reason,
-                                        raw: data
-                                    } as Appointment;
-                                }));
-
-                                // Merge bucket appointments with provider's own appointments
-                                setAppointments(prev => {
-                                    const nonBucket = prev.filter(a => a.status !== 'Waitlist');
-                                    return [...nonBucket, ...bucketAppts].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-                                });
-                            });
-
-                            const q = query(collection(db, 'appointments'), where('providerId', '==', user.uid));
-                            const unsubAppts = onSnapshot(q, (snapshot) => {
-                                const newAppts = snapshot.docs.map(docSnap => {
-                                    const data = docSnap.data();
-                                    // FIX: safely convert date field (may be Timestamp, Date, string 'YYYY-MM-DD', or undefined)
-                                    let dateObj: Date;
-                                    if (data.date?.toDate) dateObj = data.date.toDate();
-                                    else if (data.date instanceof Date) dateObj = data.date;
-                                    else if (typeof data.date === 'string' && data.time) {
-                                        dateObj = new Date(`${data.date}T${data.time}:00`);
-                                    } else if (typeof data.date === 'string') {
-                                        dateObj = new Date(data.date);
-                                    } else {
-                                        dateObj = new Date();
-                                    }
-                                    if (isNaN(dateObj.getTime())) dateObj = new Date();
-
-                                    let dt = 'TBD';
-                                    try {
-                                        dt = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric' }).format(dateObj);
-                                    } catch (e) { }
-
-                                    let activeStatus = data.status || 'Upcoming';
-                                    if (activeStatus === 'scheduled') activeStatus = 'Upcoming';
-                                    if (activeStatus === 'completed') activeStatus = 'Completed';
-                                    if (activeStatus === 'cancelled') activeStatus = 'Cancelled';
-                                    if (activeStatus === 'paid' || activeStatus === 'PENDING_SCHEDULING') activeStatus = 'Waitlist';
-
-                                    return {
-                                        id: docSnap.id as any,
-                                        patient: data.patientName || data.patient || 'Unknown Patient',
-                                        time: dateObj.toISOString(),
-                                        displayTime: dt,
-                                        type: data.type || data.service || 'Consultation',
-                                        status: activeStatus as any,
-                                        notes: data.reason
-                                    } as Appointment;
-                                });
-
-                                setAppointments(prev => {
-                                    const bucket = prev.filter(a => a.status === 'Waitlist');
-                                    return [...newAppts, ...bucket].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-                                });
-                            });
-                        }
-                    } catch (e) {
-                        console.error('Failed to grab appointments', e);
+                    patientEmail = patientEmail || ud.email || '';
+                }
+                if (!patientEmail) {
+                    // Try Firebase Auth display name via patients collection
+                    const patSnap = await getDoc(doc(db, 'patients', patientUid));
+                    if (patSnap.exists()) {
+                        const pd = patSnap.data();
+                        patientName = patientName !== 'Unknown Patient' ? patientName : (pd.name || pd.displayName || patientName);
+                        patientEmail = patientEmail || pd.email || '';
                     }
                 }
-            });
-            return () => unsubscribe();
-        }).catch(err => console.log('Auth disabled on this page instance'));
+            } catch (e) { /* silent */ }
+        }
+
+        return { patientName, patientEmail, patientUid, serviceKey, intakeAnswers, meetingUrl };
+    };
+
+    // --- Data fetch ---
+    React.useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) return;
+            setProviderUid(user.uid);
+
+            // Get provider name
+            try {
+                const userSnap = await getDoc(doc(db, 'users', user.uid));
+                if (userSnap.exists()) {
+                    const ud = userSnap.data();
+                    setProviderName(ud.displayName || ud.name || user.displayName || 'Provider');
+                } else {
+                    setProviderName(user.displayName || 'Provider');
+                }
+            } catch (e) { setProviderName(user.displayName || 'Provider'); }
+
+            // --- Waitlist appointments (PENDING_SCHEDULING) ---
+            const bucketUnsub = onSnapshot(
+                query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING')),
+                async (snap) => {
+                    const enriched = await Promise.all(snap.docs.map(async (docSnap) => {
+                        const data = docSnap.data();
+                        const apptId = docSnap.id;
+                        let dateObj: Date;
+                        if (data.updatedAt?.toDate) dateObj = data.updatedAt.toDate();
+                        else if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
+                        else dateObj = new Date();
+
+                        const enriched = await enrichFromConsultation(apptId, data);
+                        const svcLabel = enriched.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+
+                        return {
+                            id: apptId,
+                            patient: enriched.patientName,
+                            patientEmail: enriched.patientEmail,
+                            patientUid: enriched.patientUid,
+                            serviceKey: enriched.serviceKey,
+                            time: dateObj.toISOString(),
+                            displayTime: 'Awaiting',
+                            displayDate: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                            type: svcLabel,
+                            status: 'Waitlist' as const,
+                            intakeAnswers: enriched.intakeAnswers,
+                            createdAt: dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+                            meetingUrl: enriched.meetingUrl,
+                        };
+                    }));
+
+                    setAppointments(prev => {
+                        const nonWaitlist = prev.filter(a => a.status !== 'Waitlist');
+                        return [...nonWaitlist, ...enriched].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+                    });
+                }
+            );
+
+            // --- Provider scheduled appointments ---
+            const provUnsub = onSnapshot(
+                query(collection(db, 'appointments'), where('providerId', '==', user.uid)),
+                async (snap) => {
+                    const enriched = await Promise.all(snap.docs.map(async (docSnap) => {
+                        const data = docSnap.data();
+                        const apptId = docSnap.id;
+
+                        let dateObj: Date;
+                        if (data.startTime?.toDate) dateObj = data.startTime.toDate();
+                        else if (data.scheduledAt?.toDate) dateObj = data.scheduledAt.toDate();
+                        else if (data.date && data.time) dateObj = new Date(`${data.date}T${data.time}:00`);
+                        else if (data.date?.toDate) dateObj = data.date.toDate();
+                        else if (typeof data.date === 'string') dateObj = new Date(data.date);
+                        else dateObj = new Date();
+                        if (isNaN(dateObj.getTime())) dateObj = new Date();
+
+                        let apptStatus = data.status || 'Upcoming';
+                        if (apptStatus === 'scheduled') apptStatus = 'Upcoming';
+                        if (apptStatus === 'completed') apptStatus = 'Completed';
+                        if (apptStatus === 'cancelled') apptStatus = 'Cancelled';
+                        if (apptStatus === 'PENDING_SCHEDULING' || apptStatus === 'waitlist') apptStatus = 'Waitlist';
+
+                        if (apptStatus === 'Waitlist') return null; // handled by bucket listener
+
+                        const enrichedData = await enrichFromConsultation(apptId, data);
+
+                        return {
+                            id: apptId,
+                            patient: data.patientName || enrichedData.patientName,
+                            patientEmail: data.patientEmail || enrichedData.patientEmail,
+                            patientUid: data.patientId || enrichedData.patientUid,
+                            serviceKey: enrichedData.serviceKey,
+                            time: dateObj.toISOString(),
+                            displayTime: dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+                            displayDate: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                            type: data.service || data.type || enrichedData.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                            status: apptStatus as Appointment['status'],
+                            intakeAnswers: enrichedData.intakeAnswers,
+                            createdAt: dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+                            meetingUrl: data.meetingUrl || enrichedData.meetingUrl,
+                        } as Appointment;
+                    }));
+
+                    const valid = enriched.filter(Boolean) as Appointment[];
+                    setAppointments(prev => {
+                        const waitlist = prev.filter(a => a.status === 'Waitlist');
+                        return [...valid, ...waitlist].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+                    });
+
+                    // Build weekly volume from this week's scheduled appointments
+                    const now = new Date();
+                    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+                    const startOfWeek = new Date(now);
+                    startOfWeek.setDate(now.getDate() - ((dayOfWeek + 6) % 7)); // Monday start
+                    startOfWeek.setHours(0, 0, 0, 0);
+
+                    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+                    valid.forEach(a => {
+                        const d = new Date(a.time);
+                        const diff = Math.floor((d.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diff >= 0 && diff < 7) dayCounts[diff]++;
+                    });
+                    setWeekData([
+                        { name: 'M', visits: dayCounts[0] }, { name: 'T', visits: dayCounts[1] },
+                        { name: 'W', visits: dayCounts[2] }, { name: 'T', visits: dayCounts[3] },
+                        { name: 'F', visits: dayCounts[4] }, { name: 'S', visits: dayCounts[5] },
+                        { name: 'S', visits: dayCounts[6] },
+                    ]);
+                }
+            );
+
+            // --- Real messages from threads ---
+            const msgsUnsub = onSnapshot(
+                query(collection(db, 'threads'), where('providerId', '==', user.uid), limit(10)),
+                (snap) => {
+                    const msgs = snap.docs.map(d => {
+                        const data = d.data();
+                        const ts = data.lastMessageAt?.toDate ? data.lastMessageAt.toDate() : new Date();
+                        const diffMs = Date.now() - ts.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const timeStr = diffMins < 60 ? `${diffMins}m ago` : diffMins < 1440 ? `${Math.floor(diffMins / 60)}h ago` : `${Math.floor(diffMins / 1440)}d ago`;
+                        return {
+                            id: d.id,
+                            sender: data.patientName || 'Patient',
+                            preview: data.lastMessage?.text || data.lastMessage || 'New message',
+                            time: timeStr,
+                            unread: (data.providerUnreadCount || 0) > 0,
+                            patientId: data.patientId,
+                        } as Message;
+                    }).sort((a, b) => (b.unread ? 1 : 0) - (a.unread ? 1 : 0)).slice(0, 4);
+                    setMessages(msgs);
+                },
+                (err) => console.error('Messages listener error:', err)
+            );
+
+            return () => {
+                bucketUnsub();
+                provUnsub();
+                msgsUnsub();
+            };
+        });
+        return () => unsubscribe();
     }, []);
 
     // --- Actions ---
-    const scrollToSchedule = () => {
-        setActiveTab('Upcoming');
-        scheduleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    const scrollToInbox = () => {
-        inboxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    };
-
-    const handleUpdateStatus = async (id: number | string, newStatus: Appointment['status']) => {
+    const handleUpdateStatus = async (id: string, newStatus: Appointment['status']) => {
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
         setMenuOpenId(null);
-
         try {
-            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
-            const { db } = await import('@/lib/firebase');
-            if (db) {
-                const apptRef = doc(db, 'appointments', id.toString());
-                const statusMap: Record<string, string> = {
-                    'Upcoming': 'scheduled',
-                    'Completed': 'completed',
-                    'Cancelled': 'cancelled',
-                    'Confirmed': 'scheduled',
-                };
-
-                await updateDoc(apptRef, {
-                    status: statusMap[newStatus] || newStatus.toLowerCase(),
-                    updatedAt: serverTimestamp()
-                });
-            }
-        } catch (e) {
-            console.error('Failed to update status in Firestore', e);
-        }
+            const statusMap: Record<string, string> = {
+                'Upcoming': 'scheduled', 'Completed': 'completed',
+                'Cancelled': 'cancelled', 'Confirmed': 'scheduled', 'Checked In': 'checked_in',
+            };
+            await updateDoc(doc(db, 'appointments', id), {
+                status: statusMap[newStatus] || newStatus.toLowerCase(),
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) { console.error('Failed to update status', e); }
     };
 
     const handleJoinCall = (appt: Appointment) => {
-        alert(`Starting secure video session with ${appt.patient}...`);
-        // In real app: router.push(/telehealth/${appt.id})
+        const url = appt.meetingUrl || 'https://doxy.me/patriotictelehealth';
+        window.open(url, '_blank');
     };
 
     const handleReviewSchedule = (appt: Appointment) => {
         setReviewAppt(appt);
-        // Default to tomorrow 10 AM
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         setScheduleDate(tomorrow.toISOString().split('T')[0]);
@@ -312,65 +325,51 @@ export default function EmrDashboard() {
         if (!reviewAppt || !scheduleDate || !scheduleTime) return;
         setIsScheduling(true);
         try {
-            const { doc, updateDoc, serverTimestamp, Timestamp, setDoc } = await import('firebase/firestore');
-            const { db } = await import('@/lib/firebase');
-            if (db) {
-                const apptRef = doc(db, 'appointments', reviewAppt.id.toString());
-                const fullDate = new Date(`${scheduleDate}T${scheduleTime}:00`);
-                const scheduledAt = Timestamp.fromDate(fullDate);
+            const fullDate = new Date(`${scheduleDate}T${scheduleTime}:00`);
+            const scheduledAt = Timestamp.fromDate(fullDate);
+            const displayTime = fullDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            const displayDate = fullDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-                const updatePayload = {
-                    status: 'scheduled',
-                    date: scheduleDate,
-                    time: scheduleTime,
-                    startTime: scheduledAt,
-                    scheduledAt: scheduledAt,
-                    providerId: auth.currentUser?.uid,
-                    providerName: providerName,
-                    patientId: reviewAppt.patientUid || reviewAppt.id?.toString(),
-                    patientName: reviewAppt.patient,
-                    type: 'Telehealth',
-                    service: reviewAppt.type || 'Consultation',
-                    updatedAt: serverTimestamp()
-                };
+            const apptRef = doc(db, 'appointments', reviewAppt.id);
+            await updateDoc(apptRef, {
+                status: 'scheduled',
+                date: scheduleDate,
+                time: scheduleTime,
+                startTime: scheduledAt,
+                scheduledAt,
+                providerId: auth.currentUser?.uid,
+                providerName,
+                patientId: reviewAppt.patientUid || reviewAppt.id,
+                patientName: reviewAppt.patient,
+                type: 'Telehealth',
+                service: reviewAppt.type,
+                updatedAt: serverTimestamp()
+            });
 
-                // 1. Update top-level appointments doc
-                await updateDoc(apptRef, updatePayload);
+            // Update consultations doc
+            try {
+                await updateDoc(doc(db, 'consultations', reviewAppt.id), {
+                    status: 'scheduled', scheduledAt, providerName,
+                    providerId: auth.currentUser?.uid, updatedAt: serverTimestamp()
+                });
+            } catch (e) { /* may not exist */ }
 
-                // 2. Update consultations doc so it shows 'scheduled' status
+            // Update patient sub-collection
+            if (reviewAppt.patientUid) {
                 try {
-                    const consultRef = doc(db, 'consultations', reviewAppt.id.toString());
-                    await updateDoc(consultRef, {
-                        status: 'scheduled',
-                        scheduledAt: scheduledAt,
-                        providerName: providerName,
-                        providerId: auth.currentUser?.uid,
-                        updatedAt: serverTimestamp()
-                    });
-                } catch (e) { console.log('Consultations update skipped', e); }
-
-                // 3. Update patients/{uid}/appointments sub-collection so patient sees the scheduled time
-                if (reviewAppt.patientUid) {
-                    try {
-                        const subRef = doc(db, 'patients', reviewAppt.patientUid, 'appointments', reviewAppt.id.toString());
-                        await setDoc(subRef, {
-                            status: 'scheduled',
-                            scheduledAt: scheduledAt,
-                            providerName: providerName,
-                            providerId: auth.currentUser?.uid,
-                            updatedAt: serverTimestamp()
-                        }, { merge: true });
-                    } catch (e) { console.log('Patient sub-appt update skipped', e); }
-                }
-
-                setReviewAppt(null);
-                setAppointments(prev => prev.map(a =>
-                    a.id === reviewAppt.id ? { ...a, status: 'Upcoming', displayTime: scheduleTime } : a
-                ));
-                alert('Appointment scheduled! The patient will see the confirmed date and time.');
+                    await setDoc(doc(db, 'patients', reviewAppt.patientUid, 'appointments', reviewAppt.id),
+                        { status: 'scheduled', scheduledAt, providerName, providerId: auth.currentUser?.uid, updatedAt: serverTimestamp() },
+                        { merge: true }
+                    );
+                } catch (e) { /* silent */ }
             }
+
+            setReviewAppt(null);
+            setAppointments(prev => prev.map(a =>
+                a.id === reviewAppt.id ? { ...a, status: 'Upcoming', displayTime, displayDate } : a
+            ));
         } catch (e) {
-            console.error('Failed to schedule appointment', e);
+            console.error('Failed to schedule', e);
             alert('Scheduling failed. Please try again.');
         } finally {
             setIsScheduling(false);
@@ -381,30 +380,24 @@ export default function EmrDashboard() {
         <div className="flex flex-col gap-8 animate-fade-in-up pb-10">
 
             {/* HERO BANNER */}
-            <section className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 p-8 relative overflow-hidden shadow-sm group hover:shadow-md transition-shadow">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
-                <div className="absolute bottom-0 right-20 w-32 h-32 bg-purple-100/50 rounded-full blur-2xl -mb-10 pointer-events-none group-hover:scale-125 transition-transform duration-700 delay-100"></div>
-
+            <section className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 p-8 relative overflow-hidden shadow-sm">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
                 <div className="relative z-10 max-w-2xl">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                        Welcome back, {providerName}
-                    </h2>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Welcome back, {providerName}</h2>
                     <p className="text-slate-500 mb-6 max-w-lg leading-relaxed">
-                        You have <button onClick={scrollToSchedule} className="font-bold text-brand hover:underline cursor-pointer">{upcomingCount} appointments</button> today and <button onClick={scrollToInbox} className="font-bold text-brand hover:underline cursor-pointer">{unreadCount} unread messages</button>.
-                        Your telehealth waiting room is active.
+                        You have <strong className="text-brand">{counts.Upcoming} upcoming</strong> and{' '}
+                        <strong className="text-purple-600">{counts.Waitlist} waiting</strong> for scheduling.
                     </p>
-
                     <div className="flex gap-3">
-                        <Link
-                            href="/telehealth"
+                        <button
+                            onClick={() => window.open('https://doxy.me/patriotictelehealth', '_blank')}
                             className="bg-brand hover:bg-brand-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95"
                         >
-                            <Video className="w-4 h-4" />
-                            Open Waiting Room
-                        </Link>
+                            <Video className="w-4 h-4" /> Open Waiting Room
+                        </button>
                         <button
-                            onClick={scrollToSchedule}
-                            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-lg font-medium text-sm transition-colors hover:border-slate-300 shadow-sm"
+                            onClick={() => { setActiveTab('Upcoming'); scheduleRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm"
                         >
                             View Schedule
                         </button>
@@ -415,19 +408,17 @@ export default function EmrDashboard() {
             {/* TABS */}
             <div className="border-b border-slate-200">
                 <div className="flex gap-8">
-                    {['Upcoming', 'Completed', 'Cancelled', 'Waitlist'].map(tab => (
-                        <Tab
+                    {(['Upcoming', 'Completed', 'Cancelled', 'Waitlist'] as const).map(tab => (
+                        <button
                             key={tab}
-                            label={tab}
-                            active={activeTab === tab}
                             onClick={() => setActiveTab(tab)}
-                            count={
-                                tab === 'Upcoming' ? upcomingCount :
-                                    tab === 'Completed' ? appointments.filter(a => a.status === 'Completed').length :
-                                        tab === 'Cancelled' ? appointments.filter(a => a.status === 'Cancelled').length :
-                                            appointments.filter(a => a.status === 'Waitlist').length
-                            }
-                        />
+                            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === tab ? 'border-brand text-brand' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {tab}
+                            {counts[tab] > 0 && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === tab ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600'}`}>{counts[tab]}</span>
+                            )}
+                        </button>
                     ))}
                 </div>
             </div>
@@ -442,9 +433,30 @@ export default function EmrDashboard() {
                             {activeTab} Schedule <span className="text-slate-400 font-normal text-sm ml-2">({filteredAppointments.length})</span>
                         </h3>
                         {activeTab === 'Upcoming' && (
-                            <button className="text-xs font-semibold text-slate-500 flex items-center gap-1 hover:text-brand transition-colors bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
-                                <Filter className="w-3 h-3" /> Filter
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setFilterOpen(!filterOpen)}
+                                    className="text-xs font-semibold text-slate-500 flex items-center gap-1 hover:text-brand transition-colors bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-brand/30"
+                                >
+                                    <Filter className="w-3 h-3" /> Filter
+                                    {filterStatus !== 'all' && <span className="w-1.5 h-1.5 bg-brand rounded-full" />}
+                                    <ChevronDown className="w-3 h-3" />
+                                </button>
+                                {filterOpen && (
+                                    <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+                                        <div className="px-3 py-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filter by status</div>
+                                        {['all', 'upcoming', 'checked in', 'confirmed', 'pending'].map(s => (
+                                            <button
+                                                key={s}
+                                                onClick={() => { setFilterStatus(s); setFilterOpen(false); }}
+                                                className={`w-full text-left px-4 py-2 text-xs font-medium capitalize hover:bg-slate-50 ${filterStatus === s ? 'text-brand font-bold bg-brand-50' : 'text-slate-700'}`}
+                                            >
+                                                {s === 'all' ? 'All Upcoming' : s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -464,6 +476,7 @@ export default function EmrDashboard() {
                                     onStatusChange={handleUpdateStatus}
                                     onJoin={() => handleJoinCall(appt)}
                                     onReviewSchedule={() => handleReviewSchedule(appt)}
+                                    onViewDetail={() => setDetailAppt(appt)}
                                 />
                             ))
                         )}
@@ -476,11 +489,14 @@ export default function EmrDashboard() {
                     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-slate-800 text-sm">Weekly Volume</h3>
-                            <span className="text-xs text-brand font-medium bg-brand-50 px-2 py-1 rounded-full">+12%</span>
+                            <span className="text-xs text-brand font-medium bg-brand-50 px-2 py-1 rounded-full flex items-center gap-1">
+                                <Activity className="w-3 h-3" />
+                                {counts.Upcoming + counts.Completed} this week
+                            </span>
                         </div>
                         <div className="h-32 w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData}>
+                                <AreaChart data={weekData}>
                                     <defs>
                                         <linearGradient id="colorBrand" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.2} />
@@ -490,7 +506,7 @@ export default function EmrDashboard() {
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                     <Tooltip
                                         cursor={{ stroke: '#e2e8f0' }}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }}
                                     />
                                     <Area type="monotone" dataKey="visits" stroke="#4F46E5" strokeWidth={2} fillOpacity={1} fill="url(#colorBrand)" />
                                 </AreaChart>
@@ -499,29 +515,44 @@ export default function EmrDashboard() {
                     </div>
 
                     {/* Inbox Widget */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow" ref={inboxRef}>
-                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-25/50">
-                            <h3 className="font-bold text-slate-800 text-sm">Recent Messages <span className="text-slate-400 font-normal">({unreadCount})</span></h3>
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="p-4 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="font-bold text-slate-800 text-sm">
+                                Recent Messages <span className="text-slate-400 font-normal">({messages.filter(m => m.unread).length})</span>
+                            </h3>
                             <Link href="/inbox" className="text-xs font-semibold text-brand hover:underline">View All</Link>
                         </div>
                         <div>
-                            {messages.map(msg => (
-                                <InboxItem key={msg.id} message={msg} />
-                            ))}
+                            {messages.length > 0 ? messages.map(msg => (
+                                <Link href="/inbox" key={msg.id} className={`block p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 flex items-start gap-3 group transition-colors ${msg.unread ? 'bg-indigo-50/30' : ''}`}>
+                                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0">
+                                        {msg.sender.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-baseline mb-0.5">
+                                            <h4 className={`text-sm truncate ${msg.unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>{msg.sender}</h4>
+                                            <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-2">{msg.time}</span>
+                                        </div>
+                                        <p className={`text-xs truncate ${msg.unread ? 'text-slate-600 font-medium' : 'text-slate-500'}`}>{msg.preview}</p>
+                                    </div>
+                                    {msg.unread && <div className="w-2 h-2 rounded-full bg-brand mt-1.5 shrink-0" />}
+                                </Link>
+                            )) : (
+                                <div className="p-8 text-center text-slate-400 text-sm italic">No messages yet.</div>
+                            )}
                         </div>
                     </div>
                 </div>
-
             </div>
 
             {/* REVIEW & SCHEDULE MODAL */}
             {reviewAppt && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
+                <ModalOverlay onClose={() => setReviewAppt(null)}>
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-800">Review & Schedule</h2>
-                                <p className="text-slate-500 text-sm">Review intake and assign a time for {reviewAppt.patient}</p>
+                                <h2 className="text-2xl font-bold text-slate-800">Review &amp; Schedule</h2>
+                                <p className="text-slate-500 text-sm">Intake for <strong>{reviewAppt.patient}</strong></p>
                             </div>
                             <button onClick={() => setReviewAppt(null)} className="p-2 hover:bg-white rounded-full transition-colors">
                                 <X className="w-6 h-6 text-slate-400" />
@@ -529,97 +560,69 @@ export default function EmrDashboard() {
                         </div>
 
                         <div className="p-8 overflow-y-auto space-y-8">
-                            {/* Patient Info Section */}
-                            <section className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Patient Information</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Patient Name</p>
-                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.patient || 'Unknown'}</p>
-                                    </div>
-                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
-                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.patientEmail || 'Not provided'}</p>
-                                    </div>
-                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Service Requested</p>
-                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.type || 'Not specified'}</p>
-                                    </div>
-                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Submitted At</p>
-                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.createdAt || 'Unknown'}</p>
-                                    </div>
-                                </div>
-                            </section>
+                            {/* Patient Info */}
+                            <PatientInfoSection appt={reviewAppt} />
 
-                            {/* Intake Section */}
-                            <section>
-                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">Patient Intake Q&amp;A</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {reviewAppt.intakeAnswers && Object.keys(reviewAppt.intakeAnswers).length > 0 ? (
-                                        Object.entries(reviewAppt.intakeAnswers).map(([k, v]: any) => (
-                                            <div key={k} className="bg-white p-4 rounded-xl border border-slate-100">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                                                    {k.replace(/([A-Z])/g, ' $1').replace(/^./, (s: string) => s.toUpperCase())}
-                                                </p>
-                                                <p className="text-sm font-semibold text-slate-800">
-                                                    {typeof v === 'boolean' ? (v ? '✅ Yes' : '❌ No') : v}
-                                                </p>
-                                            </div>
-                                        ))
-                                    ) : reviewAppt.notes ? (
-                                        <div className="col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                            <p className="text-sm text-slate-700 leading-relaxed font-medium">{reviewAppt.notes}</p>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-slate-400 italic col-span-2">No detailed intake provided.</p>
-                                    )}
-                                </div>
-                            </section>
+                            {/* Intake Q&A */}
+                            <IntakeSection intakeAnswers={reviewAppt.intakeAnswers} />
 
-                            {/* Scheduling Section */}
+                            {/* Set Time */}
                             <section className="bg-indigo-50/20 p-6 rounded-2xl border border-indigo-100/50">
                                 <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Set Appointment Time</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-slate-500 ml-1">Date</label>
-                                        <input
-                                            type="date"
-                                            value={scheduleDate}
-                                            onChange={(e) => setScheduleDate(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none"
-                                        />
+                                        <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-slate-500 ml-1">Time</label>
-                                        <input
-                                            type="time"
-                                            value={scheduleTime}
-                                            onChange={(e) => setScheduleTime(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none"
-                                        />
+                                        <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
                                     </div>
                                 </div>
                             </section>
                         </div>
 
                         <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                            <button
-                                onClick={() => setReviewAppt(null)}
-                                className="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:bg-white rounded-lg transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleConfirmSchedule}
-                                disabled={isScheduling}
-                                className="bg-brand text-white px-8 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-brand/20 hover:bg-brand-600 transition-all disabled:opacity-50 flex items-center gap-2"
-                            >
+                            <button onClick={() => setReviewAppt(null)} className="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:bg-white rounded-lg transition-colors">Cancel</button>
+                            <button onClick={handleConfirmSchedule} disabled={isScheduling}
+                                className="bg-brand text-white px-8 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-brand/20 hover:bg-brand-600 transition-all disabled:opacity-50 flex items-center gap-2">
+                                {isScheduling ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
                                 {isScheduling ? 'Scheduling...' : 'Finalize & Schedule'}
                             </button>
                         </div>
                     </div>
-                </div>
+                </ModalOverlay>
+            )}
+
+            {/* DETAIL MODAL (Upcoming card click) */}
+            {detailAppt && (
+                <ModalOverlay onClose={() => setDetailAppt(null)}>
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800">Appointment Details</h2>
+                                <p className="text-slate-500 text-sm">{detailAppt.displayDate} at {detailAppt.displayTime}</p>
+                            </div>
+                            <button onClick={() => setDetailAppt(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-y-auto space-y-8">
+                            <PatientInfoSection appt={detailAppt} />
+                            <IntakeSection intakeAnswers={detailAppt.intakeAnswers} />
+                            {detailAppt.meetingUrl && (
+                                <button
+                                    onClick={() => window.open(detailAppt.meetingUrl, '_blank')}
+                                    className="w-full bg-brand text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-600 transition-all shadow-md"
+                                >
+                                    <Video className="w-4 h-4" /> Join Telehealth Session
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </ModalOverlay>
             )}
         </div>
     );
@@ -627,27 +630,70 @@ export default function EmrDashboard() {
 
 // --- Sub-Components ---
 
-function Tab({ label, active, onClick, count }: any) {
+function ModalOverlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
     return (
-        <button
-            onClick={onClick}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${active
-                ? 'border-brand text-brand'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                }`}
-        >
-            {label}
-            {count > 0 && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600'}`}>{count}</span>}
-        </button>
-    )
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="animate-in zoom-in duration-200">{children}</div>
+        </div>
+    );
 }
 
-function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, onJoin, onReviewSchedule }: any) {
-    const { time, displayTime, patient, type, status } = appointment;
-    const isActionable = ['Upcoming', 'Checked In'].includes(status);
+function PatientInfoSection({ appt }: { appt: Appointment }) {
+    return (
+        <section className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Patient Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                    { icon: User, label: 'Patient Name', value: appt.patient },
+                    { icon: Mail, label: 'Email', value: appt.patientEmail || 'Not provided' },
+                    { icon: Calendar, label: 'Service Requested', value: appt.type },
+                    { icon: Clock, label: 'Submitted', value: appt.createdAt },
+                ].map(({ icon: Icon, label, value }) => (
+                    <div key={label} className="bg-white p-4 rounded-xl border border-slate-100 flex items-start gap-3">
+                        <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
+                            <Icon className="w-4 h-4 text-brand" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
+                            <p className="text-sm font-bold text-slate-800">{value || '—'}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
 
-    // Status color map
-    const statusColors = {
+function IntakeSection({ intakeAnswers }: { intakeAnswers: Record<string, any> }) {
+    const entries = Object.entries(intakeAnswers || {});
+    return (
+        <section>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">Patient Intake Q&amp;A</h3>
+            {entries.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {entries.map(([k, v]) => (
+                        <div key={k} className="bg-white p-4 rounded-xl border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                {k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}
+                            </p>
+                            <p className="text-sm font-semibold text-slate-800">
+                                {typeof v === 'boolean' ? (v ? '✅ Yes' : '❌ No') : String(v)}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="text-sm text-slate-400 italic">No detailed intake provided.</p>
+            )}
+        </section>
+    );
+}
+
+function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, onJoin, onReviewSchedule, onViewDetail }: any) {
+    const { displayTime, displayDate, patient, type, status } = appointment;
+    const isActionable = ['Upcoming', 'Checked In', 'Confirmed'].includes(status);
+
+    const statusColors: Record<string, string> = {
         'Upcoming': 'bg-slate-50 text-slate-600 border-slate-100',
         'Checked In': 'bg-emerald-50 text-emerald-700 border-emerald-100',
         'Confirmed': 'bg-blue-50 text-blue-700 border-blue-100',
@@ -658,11 +704,21 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
     };
 
     return (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between group cursor-pointer hover:border-brand/30 relative">
+        <div
+            onClick={status !== 'Waitlist' ? onViewDetail : undefined}
+            className={`bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between group relative ${status !== 'Waitlist' ? 'cursor-pointer hover:border-brand/30' : ''}`}
+        >
             <div className="flex items-center gap-4">
-                <div className={`flex flex-col items-center justify-center w-14 h-14 bg-slate-50 rounded-lg border border-slate-100 text-slate-600 font-mono group-hover:bg-brand-50 group-hover:text-brand transition-colors`}>
-                    <span className="text-xs font-bold uppercase">{displayTime.split(' ')[1] || ''}</span>
-                    <span className="text-lg font-bold">{displayTime.split(' ')[0]}</span>
+                <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-50 rounded-lg border border-slate-100 text-slate-600 font-mono group-hover:bg-brand-50 group-hover:text-brand transition-colors shrink-0">
+                    {status === 'Waitlist' ? (
+                        <span className="text-[9px] font-bold text-purple-500 uppercase">Wait</span>
+                    ) : (
+                        <>
+                            <span className="text-[10px] font-bold uppercase">{displayTime.split(' ')[1] || ''}</span>
+                            <span className="text-base font-bold leading-tight">{displayTime.split(' ')[0]}</span>
+                            <span className="text-[9px] text-slate-400">{displayDate}</span>
+                        </>
+                    )}
                 </div>
                 <div>
                     <h4 className="font-bold text-slate-900 text-sm group-hover:text-brand transition-colors">{patient}</h4>
@@ -671,38 +727,25 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
             </div>
 
             <div className="flex items-center gap-3">
-                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusColors[status as keyof typeof statusColors] || 'bg-slate-50'}`}>
-                    {status}
-                </span>
+                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusColors[status] || 'bg-slate-50'}`}>{status}</span>
 
                 {status === 'Waitlist' && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onReviewSchedule();
-                        }}
-                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1"
-                    >
-                        <Calendar className="w-3 h-3" />
-                        Review & Schedule
+                    <button onClick={e => { e.stopPropagation(); onReviewSchedule(); }}
+                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> Review &amp; Schedule
                     </button>
                 )}
 
                 {isActionable && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onJoin(); }}
-                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1"
-                    >
-                        <Video className="w-3 h-3" />
-                        Join
+                    <button onClick={e => { e.stopPropagation(); onJoin(); }}
+                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1">
+                        <Video className="w-3 h-3" /> Join
                     </button>
                 )}
 
                 <div className="relative">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
-                        className={`text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors ${isMenuOpen ? 'bg-slate-100 text-slate-600' : ''}`}
-                    >
+                    <button onClick={e => { e.stopPropagation(); onToggleMenu(); }}
+                        className={`text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors ${isMenuOpen ? 'bg-slate-100' : ''}`}>
                         <MoreHorizontal className="w-4 h-4" />
                     </button>
 
@@ -711,11 +754,8 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
                             <div className="py-1">
                                 <div className="px-3 py-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Update Status</div>
                                 {['Checked In', 'Completed', 'Cancelled', 'Upcoming'].map(s => (
-                                    <button
-                                        key={s}
-                                        onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, s); }}
-                                        className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 ${s === status ? 'text-brand font-bold bg-brand-50' : 'text-slate-700'}`}
-                                    >
+                                    <button key={s} onClick={e => { e.stopPropagation(); onStatusChange(appointment.id, s); }}
+                                        className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 ${s === status ? 'text-brand font-bold bg-brand-50' : 'text-slate-700'}`}>
                                         {s === 'Checked In' && <CheckCircle className="w-3 h-3 text-emerald-500" />}
                                         {s === 'Completed' && <CheckCircle className="w-3 h-3 text-indigo-500" />}
                                         {s === 'Cancelled' && <XCircle className="w-3 h-3 text-red-500" />}
@@ -729,23 +769,5 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
                 </div>
             </div>
         </div>
-    )
-}
-
-function InboxItem({ message }: { message: Message }) {
-    return (
-        <Link href="/inbox" className={`block p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer flex items-start gap-3 group transition-colors ${message.unread ? 'bg-indigo-50/30' : ''}`}>
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0 group-hover:bg-indigo-200 transition-colors">
-                {message.sender.charAt(0)}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline mb-0.5">
-                    <h4 className={`text-sm truncate ${message.unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>{message.sender}</h4>
-                    <span className="text-[10px] text-slate-400 font-medium">{message.time}</span>
-                </div>
-                <p className={`text-xs truncate ${message.unread ? 'text-slate-600 font-medium' : 'text-slate-500'}`}>{message.preview}</p>
-            </div>
-            {message.unread && <div className="w-2 h-2 rounded-full bg-brand mt-1.5"></div>}
-        </Link>
-    )
+    );
 }
