@@ -10712,25 +10712,63 @@
       currentConsultId = consultationId; // Assign to global variable
 
       try {
-        // 1. Update status in Firestore to ensure it appears in EMR Waitlists
-        // We update both 'consultations' (Legacy React EMR) and 'appointments' (New Next.js EMR)
         const updateTasks = [];
 
         if (typeof db !== 'undefined' && consultationId) {
           const ts = firebase.firestore.FieldValue.serverTimestamp();
           const uid = (auth && auth.currentUser) ? auth.currentUser.uid : null;
 
+          // 1. Read the existing consultation to get serviceKey + intake data
+          let serviceKey = null;
+          let intakeData = {};
+          try {
+            const consultDoc = await db.collection('consultations').doc(consultationId).get();
+            if (consultDoc.exists) {
+              serviceKey = consultDoc.data().serviceKey || null;
+              intakeData = consultDoc.data().intake || {};
+            }
+          } catch (e) {
+            console.log("Could not read consultation doc:", e.message);
+          }
+
+          // 2. Update consultations doc — MUST include uid so EMR query works
           updateTasks.push(
             db.collection('consultations').doc(consultationId).set({
               status: 'waitlist',
               paymentStatus: 'paid',
+              uid: uid,           // ← critical: EMR queries by this field
               updatedAt: ts
             }, { merge: true }).catch(e => console.log("Consultations sync skipped:", e.message))
           );
 
+          // 3. Write to patients/{uid}/appointments sub-collection — the EMR dashboard + My Appointments page listens here
+          if (uid) {
+            const subApptData = {
+              consultationId: consultationId,
+              patientUid: uid,
+              status: 'PENDING_SCHEDULING',
+              paymentStatus: 'paid',
+              serviceKey: serviceKey || selSvc || null,
+              intakeAnswers: intakeData,
+              providerName: 'Patriotic Provider',
+              type: 'Telehealth',
+              meetingUrl: 'https://doxy.me/patriotictelehealth',
+              createdAt: ts,
+              updatedAt: ts
+            };
+
+            updateTasks.push(
+              db.collection('patients').doc(uid).collection('appointments').doc(consultationId)
+                .set(subApptData, { merge: true })
+                .catch(e => console.log("Patient sub-appt sync skipped:", e.message))
+            );
+          }
+
+          // 4. Also update top-level appointments collection
           const apptData = {
             status: 'PENDING_SCHEDULING',
             paymentStatus: 'paid',
+            serviceKey: serviceKey || selSvc || null,
             updatedAt: ts
           };
           if (uid) apptData.patientId = uid;
@@ -10742,8 +10780,9 @@
         }
 
         await Promise.all(updateTasks);
+        console.log("✅ Appointment written to all EMR collections successfully.");
 
-        // 2. Show the professional success modal immediately
+        // Show the professional success modal
         showBookingSuccess();
 
       } catch (err) {
@@ -10759,6 +10798,7 @@
         window.location.pathname,
       );
     }
+
 
     function switchAdminTab(tab) {
       document.getElementById("view-admin-consults").style.display = "none";
