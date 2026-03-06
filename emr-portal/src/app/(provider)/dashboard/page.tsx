@@ -9,13 +9,19 @@ import { doc, getDoc } from 'firebase/firestore';
 
 // --- Types ---
 interface Appointment {
-    id: number;
+    id: number | string;
     patient: string;
-    time: string; // "YYYY-MM-DD HH:mm" for sorting, but we'll stick to string for display demo
+    patientEmail?: string;
+    patientUid?: string;
+    serviceKey?: string;
+    time: string;
     displayTime: string;
     type: string;
     status: 'Upcoming' | 'Checked In' | 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'Waitlist';
     notes?: string;
+    intakeAnswers?: Record<string, any>;
+    createdAt?: string; // ISO string for display
+    raw?: Record<string, any>;
 }
 
 interface Message {
@@ -61,7 +67,7 @@ export default function EmrDashboard() {
     const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
     const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
     const [activeTab, setActiveTab] = useState('Upcoming');
-    const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+    const [menuOpenId, setMenuOpenId] = useState<number | string | null>(null);
     const [providerName, setProviderName] = useState('Dr. Smith'); // Default fallback
     const [reviewAppt, setReviewAppt] = useState<Appointment | any>(null);
     const [scheduleDate, setScheduleDate] = useState('');
@@ -125,24 +131,72 @@ export default function EmrDashboard() {
                         if (db) {
                             // --- Fetch Global Waiting Bucket ---
                             const bucketQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
-                            const unsubBucket = onSnapshot(bucketQuery, (snapshot) => {
-                                const bucketAppts = snapshot.docs.map(docSnap => {
+                            const unsubBucket = onSnapshot(bucketQuery, async (snapshot) => {
+                                // For each appointment, try to enrich with consultation data
+                                const bucketAppts = await Promise.all(snapshot.docs.map(async (docSnap) => {
                                     const data = docSnap.data();
-                                    // FIX: safely convert createdAt (may be Timestamp, Date, or string)
+                                    const apptId = docSnap.id;
+
+                                    // Safely parse createdAt
                                     let dateObj: Date;
                                     if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
                                     else if (data.createdAt instanceof Date) dateObj = data.createdAt;
+                                    else if (data.updatedAt?.toDate) dateObj = data.updatedAt.toDate();
                                     else dateObj = new Date();
+
+                                    // Fetch linked consultation to get patient name, email, service, intake
+                                    let patientName = data.patient || data.patientName || 'Unknown Patient';
+                                    let patientEmail = data.patientEmail || '';
+                                    let patientUid = data.patientId || data.uid || '';
+                                    let serviceKey = data.serviceKey || data.service || 'New Intake';
+                                    let intakeAnswers: Record<string, any> = {};
+
+                                    try {
+                                        const { doc: docRef, getDoc: getDocFn } = await import('firebase/firestore');
+                                        // Try to read from consultations collection (same doc ID)
+                                        const consultSnap = await getDocFn(docRef(db, 'consultations', apptId));
+                                        if (consultSnap.exists()) {
+                                            const cd = consultSnap.data();
+                                            intakeAnswers = cd.intake || {};
+                                            serviceKey = cd.serviceKey || serviceKey;
+                                            patientUid = cd.uid || patientUid;
+                                            // Try to get patient name from intake
+                                            if (cd.intake?.firstName || cd.intake?.lastName) {
+                                                patientName = `${cd.intake.firstName || ''} ${cd.intake.lastName || ''}`.trim();
+                                            }
+                                            if (cd.intake?.email) patientEmail = cd.intake.email;
+                                        }
+
+                                        // If we have a patientUid, also try to look up their profile
+                                        if (patientUid && patientName === 'Unknown Patient') {
+                                            const userSnap = await getDocFn(docRef(db, 'users', patientUid));
+                                            if (userSnap.exists()) {
+                                                const ud = userSnap.data();
+                                                patientName = ud.displayName || ud.name || `${ud.firstName || ''} ${ud.lastName || ''}`.trim() || patientName;
+                                                patientEmail = patientEmail || ud.email || '';
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.log('Could not enrich appointment from consultation:', e);
+                                    }
+
                                     return {
-                                        id: docSnap.id as any,
-                                        patient: data.patient || data.patientName || 'Unknown Patient',
+                                        id: apptId as any,
+                                        patient: patientName,
+                                        patientEmail,
+                                        patientUid,
+                                        serviceKey,
                                         time: dateObj.toISOString(),
                                         displayTime: 'Awaiting',
-                                        type: data.service || 'New Intake',
-                                        status: 'Waitlist',
-                                        notes: data.reason
+                                        type: serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                                        status: 'Waitlist' as const,
+                                        intakeAnswers,
+                                        createdAt: dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+                                        notes: data.reason,
+                                        raw: data
                                     } as Appointment;
-                                });
+                                }));
+
                                 // Merge bucket appointments with provider's own appointments
                                 setAppointments(prev => {
                                     const nonBucket = prev.filter(a => a.status !== 'Waitlist');
@@ -258,35 +312,62 @@ export default function EmrDashboard() {
         if (!reviewAppt || !scheduleDate || !scheduleTime) return;
         setIsScheduling(true);
         try {
-            const { doc, updateDoc, serverTimestamp, Timestamp } = await import('firebase/firestore');
+            const { doc, updateDoc, serverTimestamp, Timestamp, setDoc } = await import('firebase/firestore');
             const { db } = await import('@/lib/firebase');
             if (db) {
                 const apptRef = doc(db, 'appointments', reviewAppt.id.toString());
                 const fullDate = new Date(`${scheduleDate}T${scheduleTime}:00`);
+                const scheduledAt = Timestamp.fromDate(fullDate);
 
-                // FIX: Write date as plain 'YYYY-MM-DD' string and time as 'HH:mm' string.
-                // The calendar page reads appt.date as a string and does new Date(appt.date + 'T' + appt.time + ':00')
-                // Writing a JS Date object here causes a Firestore Timestamp that breaks the calendar.
-                await updateDoc(apptRef, {
+                const updatePayload = {
                     status: 'scheduled',
-                    date: scheduleDate,           // 'YYYY-MM-DD' string âœ…
-                    time: scheduleTime,           // 'HH:mm' string âœ…
-                    startTime: Timestamp.fromDate(fullDate), // Firestore Timestamp for ordering âœ…
+                    date: scheduleDate,
+                    time: scheduleTime,
+                    startTime: scheduledAt,
+                    scheduledAt: scheduledAt,
                     providerId: auth.currentUser?.uid,
                     providerName: providerName,
-                    patientId: reviewAppt.patientId || reviewAppt.id?.toString(),
+                    patientId: reviewAppt.patientUid || reviewAppt.id?.toString(),
                     patientName: reviewAppt.patient,
                     type: 'Telehealth',
                     service: reviewAppt.type || 'Consultation',
                     updatedAt: serverTimestamp()
-                });
+                };
+
+                // 1. Update top-level appointments doc
+                await updateDoc(apptRef, updatePayload);
+
+                // 2. Update consultations doc so it shows 'scheduled' status
+                try {
+                    const consultRef = doc(db, 'consultations', reviewAppt.id.toString());
+                    await updateDoc(consultRef, {
+                        status: 'scheduled',
+                        scheduledAt: scheduledAt,
+                        providerName: providerName,
+                        providerId: auth.currentUser?.uid,
+                        updatedAt: serverTimestamp()
+                    });
+                } catch (e) { console.log('Consultations update skipped', e); }
+
+                // 3. Update patients/{uid}/appointments sub-collection so patient sees the scheduled time
+                if (reviewAppt.patientUid) {
+                    try {
+                        const subRef = doc(db, 'patients', reviewAppt.patientUid, 'appointments', reviewAppt.id.toString());
+                        await setDoc(subRef, {
+                            status: 'scheduled',
+                            scheduledAt: scheduledAt,
+                            providerName: providerName,
+                            providerId: auth.currentUser?.uid,
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    } catch (e) { console.log('Patient sub-appt update skipped', e); }
+                }
 
                 setReviewAppt(null);
-                // Update local state so card moves from Waitlist to Upcoming
                 setAppointments(prev => prev.map(a =>
                     a.id === reviewAppt.id ? { ...a, status: 'Upcoming', displayTime: scheduleTime } : a
                 ));
-                alert('Appointment scheduled successfully! It will now appear on the calendar.');
+                alert('Appointment scheduled! The patient will see the confirmed date and time.');
             }
         } catch (e) {
             console.error('Failed to schedule appointment', e);
@@ -448,26 +529,51 @@ export default function EmrDashboard() {
                         </div>
 
                         <div className="p-8 overflow-y-auto space-y-8">
+                            {/* Patient Info Section */}
+                            <section className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Patient Information</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Patient Name</p>
+                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.patient || 'Unknown'}</p>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.patientEmail || 'Not provided'}</p>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Service Requested</p>
+                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.type || 'Not specified'}</p>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-xl border border-slate-100">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Submitted At</p>
+                                        <p className="text-sm font-bold text-slate-800">{reviewAppt.createdAt || 'Unknown'}</p>
+                                    </div>
+                                </div>
+                            </section>
+
                             {/* Intake Section */}
                             <section>
-                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">Patient Intake Q&A</h3>
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">Patient Intake Q&amp;A</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {reviewAppt.notes ? (
+                                    {reviewAppt.intakeAnswers && Object.keys(reviewAppt.intakeAnswers).length > 0 ? (
+                                        Object.entries(reviewAppt.intakeAnswers).map(([k, v]: any) => (
+                                            <div key={k} className="bg-white p-4 rounded-xl border border-slate-100">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                                    {k.replace(/([A-Z])/g, ' $1').replace(/^./, (s: string) => s.toUpperCase())}
+                                                </p>
+                                                <p className="text-sm font-semibold text-slate-800">
+                                                    {typeof v === 'boolean' ? (v ? '✅ Yes' : '❌ No') : v}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : reviewAppt.notes ? (
                                         <div className="col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                            <p className="text-sm text-slate-700 leading-relaxed font-medium capitalize">
-                                                {reviewAppt.notes}
-                                            </p>
+                                            <p className="text-sm text-slate-700 leading-relaxed font-medium">{reviewAppt.notes}</p>
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-slate-400 italic">No detailed intake provided.</p>
+                                        <p className="text-sm text-slate-400 italic col-span-2">No detailed intake provided.</p>
                                     )}
-                                    {/* Real data fields if available in raw object */}
-                                    {reviewAppt.raw?.intakeAnswers && Object.entries(reviewAppt.raw.intakeAnswers).map(([k, v]: any) => (
-                                        <div key={k} className="bg-white p-3 rounded-lg border border-slate-100">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{k.replace(/([A-Z])/g, ' $1')}</p>
-                                            <p className="text-sm text-slate-800 font-semibold">{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</p>
-                                        </div>
-                                    ))}
                                 </div>
                             </section>
 
