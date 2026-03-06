@@ -9459,10 +9459,14 @@
       const g = document.getElementById("svcGrid");
       if (!g) return;
       const list = f === "all" ? svcs : svcs.filter((s) => s.cat.includes(f));
+      const dict = i18n[currentLang] || i18n.en;
       g.innerHTML = list
         .map(
-          (s) =>
-            `<div class="svc" data-c="${s.c}" onclick="startSvc('${s.k}')"><div class="svc-ic ${s.ic}">${s.icon}</div><h3>${s.name}</h3><p>${s.desc}</p><div class="svc-bot"><div class="svc-pr">$${s.price} <span>${s.priceSuffix || "/ visit"}</span></div></div></div>`,
+          (s) => {
+            const name = dict[`svc-${s.k}-name`] || s.name;
+            const desc = dict[`svc-${s.k}-desc`] || s.desc;
+            return `<div class="svc" data-c="${s.c}" onclick="startSvc('${s.k}')"><div class="svc-ic ${s.ic}">${s.icon}</div><h3>${name}</h3><p>${desc}</p><div class="svc-bot"><div class="svc-pr">$${s.price} <span>${s.priceSuffix || "/ visit"}</span></div></div></div>`;
+          }
         )
         .join("");
     }
@@ -12279,6 +12283,47 @@
         'footer-privacy': 'Política de Privacidad',
         'footer-copy': '© 2026 Patriotic Virtual Telehealth. Todos los derechos reservados.',
         'footer-badges': 'Compatible con HIPAA · Licencia en FL · Basado en Protocolos · Encriptado',
+        // Services
+        'svc-imaging_video-name': 'Imágenes + Consulta por Video',
+        'svc-imaging_video-desc': 'Revisión completa de imágenes más una consulta segura por video de 30 a 60 minutos para analizar los hallazgos directamente con un especialista.',
+        'svc-erectile_dysfunction-name': 'Disfunción Eréctil',
+        'svc-erectile_dysfunction-desc': 'Sildenafil, tadalafil y compuestos personalizados — entregados discretamente después de una evaluación de seguridad cardiovascular.',
+        'svc-membership_elite-name': 'Acceso Total — Elite',
+        'svc-membership_elite-desc': 'Todo incluido: visitas de telesalud, programas especializados, herramientas de IA para la salud, imágenes con IA y programación prioritaria.',
+        'svc-digital_platform-name': 'Plataforma de Salud Digital',
+        'svc-digital_platform-desc': 'Acceso mensual a herramientas de salud digital, contenido educativo y funciones de navegación impulsadas por IA. Sin servicios clínicos.',
+        'svc-weight_loss-name': 'GLP-1 y Pérdida de Peso',
+        'svc-weight_loss-desc': 'Evaluación médica integral de pérdida de peso. Detección para elegibilidad de GLP-1, titulación personalizada, orientación dietética. Costo del medicamento por separado.',
+        'svc-premature_ejaculation-name': 'Eyaculación Precoz',
+        'svc-premature_ejaculation-desc': 'Sertralina (terapia ISRS), agentes tópicos anestésicos y técnicas conductuales. Basado en evidencia, enviado discretamente.',
+        'svc-testosterone_hrt-name': 'Testosterona / TRH',
+        'svc-testosterone_hrt-desc': 'Evaluación hormonal integral para hombres y mujeres — testosterona, estrógeno, progesterona, DHEA, apoyo tiroideo y péptidos.',
+        'svc-ai_imaging-name': 'Análisis de Imágenes con IA',
+        'svc-ai_imaging-desc': 'Interpretación de informes de radiología con IA supervisada por médicos. Herramientas educativas para ayudarle a comprender los hallazgos.',
+        'svc-report_interpretation-name': 'Interpretación de Informes',
+        'svc-report_interpretation-desc': 'Análisis experto de su informe de radiología existente. Traducimos el lenguaje médico complejo a un lenguaje sencillo.',
+        'svc-standard_imaging-name': 'Revisión de Imágenes Estándar',
+        'svc-standard_imaging-desc': 'Segunda revisión completa de sus imágenes de rayos X, ultrasonido, TC o resonancia magnética por un radiólogo certificado.',
+        'svc-diagnostic_single-name': 'Lectura de Estudio Individual',
+        'svc-diagnostic_single-desc': 'Informe de diagnóstico oficial para un estudio (TC, RX, US). Tiempo de entrega menor a 24-48 horas.',
+        'svc-diagnostic_second-name': 'Segunda Opinión Diagnóstica',
+        'svc-diagnostic_second-desc': 'Revisión diagnóstica completa + opinión escrita + resumen para el paciente para TC, RX o US.',
+        'svc-diagnostic_facility-name': 'Contratos para Instalaciones',
+        'svc-diagnostic_facility-desc': 'Contratos para Urgencias y Ambulatorio. Lecturas ilimitadas, garantías de nivel de servicio y enlace de carga dedicado.',
+        'svc-ai_assistant-name': 'Asistente de Salud con IA',
+        'svc-ai_assistant-desc': 'Educación en salud impulsada por IA, orientación sobre síntomas y navegación de atención. No sustituye el consejo médico profesional.',
+        'svc-general_visit-name': 'Visita General',
+        'svc-general_visit-desc': 'Visitas virtuales para problemas de salud no urgentes — manejo de medicamentos, controles de bienestar, asesoramiento de salud. Atención conveniente desde casa.',
+        'svc-membership_plus-name': 'Acceso Total — Plus',
+        'svc-membership_plus-desc': 'Visitas de telesalud, asistente de salud con IA, herramientas de imágenes con IA y programación prioritaria en una suscripción.',
+        'svc-membership_core-name': 'Acceso Total — Core',
+        'svc-membership_core-desc': 'Telesalud general, asistente de salud con IA, herramientas de imágenes con IA y programación. Excelente membresía inicial.',
+        'svc-telehealth_premium-name': 'Telesalud Premium',
+        'svc-telehealth_premium-desc': 'Acceso ilimitado/prioritario a telesalud general para problemas no urgentes, visitas clínicas y soporte digital.',
+        'svc-telehealth_standard-name': 'Telesalud Estándar',
+        'svc-telehealth_standard-desc': '1 visita/mes a telesalud general para problemas médicos no urgentes, más visitas clínicas y soporte digital.',
+        'svc-telehealth_basic-name': 'Telesalud Básica',
+        'svc-telehealth_basic-desc': 'IA + visitas limitadas para telesalud general. Soporte digital y navegación de atención para problemas no urgentes.',
       }
     };
 
@@ -12291,6 +12336,7 @@
       btn.title = currentLang === 'en' ? 'Switch to Spanish' : 'Switch to English';
       btn.style.opacity = currentLang === 'es' ? '1' : '0.7';
       applyLanguage(currentLang);
+      renderSvc('popular'); // re-render service cards in new language
     }
 
     function applyLanguage(lang) {
