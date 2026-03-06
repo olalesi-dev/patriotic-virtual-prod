@@ -23,7 +23,22 @@ const PORT = process.env.PORT || 8080;
 
 // Security & Metrics
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL })); // Strict CORS
+
+const allowedOrigins = [
+    'https://patriotic-virtual-emr.web.app',
+    'https://patriotictelehealth.com',
+    'http://localhost:3000',
+    'http://localhost:5173',
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+}));
+
+app.options('*', cors());
 app.use(morgan('combined'));
 app.use(express.json());
 
