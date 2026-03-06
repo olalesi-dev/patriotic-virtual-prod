@@ -6269,19 +6269,29 @@
         <img src="assets/logomarkdark.png" alt="Patriotic Virtual Telehealth" class="brand-logo-img brand-logo-dark" />
       </a>
       <div class="nav-links">
-        <a href="#" onclick="openAboutUs()">About Us</a><a href="#services">Services</a><a href="#how-it-works">How It
-          Works</a><a href="#radiology">Radiology Education</a><a href="#clinicians">For Clinicians and Facilities</a><a
-          href="#testimonials">Reviews</a>
+        <a href="#" onclick="openAboutUs()" data-i18n="nav-about">About Us</a><a href="#services"
+          data-i18n="nav-services">Services</a><a href="#how-it-works" data-i18n="nav-how">How It Works</a><a
+          href="#radiology" data-i18n="nav-radiology">Radiology Education</a><a href="#clinicians"
+          data-i18n="nav-clinicians">For Clinicians and Facilities</a><a href="#testimonials"
+          data-i18n="nav-reviews">Reviews</a>
       </div>
       <div class="nav-actions">
-        <a class="btn btn-ghost" id="loginBtn" href="https://patriotic-virtual-emr.web.app/login">Log In</a>
-        <a class="btn btn-primary" id="signupBtn" href="https://patriotic-virtual-emr.web.app/signup">Get Started</a>
-        <a class="btn btn-ghost hidden" id="dashBtn" href="https://patriotic-virtual-emr.web.app/patient">Dashboard</a>
+        <a class="btn btn-ghost" id="loginBtn" href="https://patriotic-virtual-emr.web.app/login"
+          data-i18n="nav-login">Log In</a>
+        <a class="btn btn-primary" id="signupBtn" href="https://patriotic-virtual-emr.web.app/signup"
+          data-i18n="nav-get-started">Get Started</a>
+        <a class="btn btn-ghost hidden" id="dashBtn" href="https://patriotic-virtual-emr.web.app/patient"
+          data-i18n="nav-dashboard">Dashboard</a>
         <button class="btn btn-ghost" id="themeBtn" onclick="toggleTheme()"
           style="font-size: 18px; padding: 6px 12px; border-radius: 12px" title="Switch to Light Mode">
           ☀️
         </button>
-        <button class="btn btn-outline hidden" id="logoutBtn" onclick="logout()">
+        <button class="btn btn-ghost" id="langBtn" onclick="toggleLanguage()"
+          style="font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 12px; letter-spacing: 0.5px"
+          title="Switch to Spanish">
+          ES
+        </button>
+        <button class="btn btn-outline hidden" id="logoutBtn" onclick="logout()" data-i18n="nav-logout">
           Log Out
         </button>
       </div>
@@ -6308,7 +6318,7 @@
           <div class="hero-copy">
             <div class="hero-badge">
               <div class="bdot"></div>
-              Board-Certified Physicians Online Now
+              <span data-i18n="hero-badge">Board-Certified Physicians Online Now</span>
             </div>
             <h1>
               Healthcare<br />that comes<br />to <span class="gt">you.</span>
@@ -6495,19 +6505,19 @@
         <div class="sb-inner">
           <div class="sb-item">
             <div class="sb-icon" style="background: var(--emerald)">✓</div>
-            Evidence-Based Protocols
+            <span data-i18n="safety-1">Evidence-Based Protocols</span>
           </div>
           <div class="sb-item">
             <div class="sb-icon" style="background: var(--blue)">✓</div>
-            Automated Safety Screening
+            <span data-i18n="safety-2">Automated Safety Screening</span>
           </div>
           <div class="sb-item">
             <div class="sb-icon" style="background: var(--amber)">✓</div>
-            Contraindication Checks
+            <span data-i18n="safety-3">Contraindication Checks</span>
           </div>
           <div class="sb-item">
             <div class="sb-icon" style="background: var(--violet)">✓</div>
-            Board-Certified Review
+            <span data-i18n="safety-4">Board-Certified Review</span>
           </div>
         </div>
       </div>
@@ -6550,30 +6560,27 @@
           <div class="proto-left">
             <div class="sec-eye eye-em" style="margin-bottom: 20px">
               <div class="eye-line"></div>
-              <div class="eye-text" style="color: white">Our Approach</div>
+              <div class="eye-text" style="color: white" data-i18n="proto-eyebrow">Our Approach</div>
             </div>
-            <h2>Protocol-driven care.<br />No exceptions.</h2>
-            <p>
-              Every prescription, every consultation, every imaging read
-              follows strict clinical protocols. Our automated screening
-              catches contraindications before they become problems.
-            </p>
+            <h2 data-i18n="proto-title">Protocol-driven care.<br />No exceptions.</h2>
+            <p data-i18n="proto-sub">Every prescription, every consultation, every imaging read follows strict clinical
+              protocols. Our automated screening catches contraindications before they become problems.</p>
             <div class="proto-pills">
               <div class="pp">
                 <div class="pp-ic c1">🛡</div>
-                Automated contraindication screening on every visit
+                <span data-i18n="proto-pill1">Automated contraindication screening on every visit</span>
               </div>
               <div class="pp">
                 <div class="pp-ic c2">📋</div>
-                Evidence-based treatment protocols for all services
+                <span data-i18n="proto-pill2">Evidence-based treatment protocols for all services</span>
               </div>
               <div class="pp">
                 <div class="pp-ic c3">⚕️</div>
-                Board-certified physician review required for every Rx
+                <span data-i18n="proto-pill3">Board-certified physician review required for every Rx</span>
               </div>
               <div class="pp">
                 <div class="pp-ic c4">🔒</div>
-                HIPAA-compliant platform with full audit logging
+                <span data-i18n="proto-pill4">HIPAA-compliant platform with full audit logging</span>
               </div>
             </div>
           </div>
@@ -6604,51 +6611,39 @@
       <div class="container">
         <div class="sec-eye eye-coral">
           <div class="eye-line"></div>
-          How It Works
+          <span data-i18n="how-eyebrow">How It Works</span>
         </div>
-        <h2 class="sec-title">Care in four<br />simple steps.</h2>
-        <p class="sec-sub">
-          From first click to treatment at your door — protocol-driven at
-          every step.
-        </p>
+        <h2 class="sec-title" data-i18n="how-title">Care in four<br />simple steps.</h2>
+        <p class="sec-sub" data-i18n="how-sub">From first click to treatment at your door — protocol-driven at every
+          step.</p>
         <div class="steps-grid">
           <div class="step">
             <div class="step-acc"></div>
             <div class="step-num">01</div>
-            <h3>Pick Your Service</h3>
-            <p>
-              Choose from clinical visits, AI tools, and membership plans —
-              general telehealth, weight loss, sexual health, hormone therapy,
-              AI imaging, and much more.
-            </p>
+            <h3 data-i18n="step1-title">Pick Your Service</h3>
+            <p data-i18n="step1-desc">Choose from clinical visits, AI tools, and membership plans — general telehealth,
+              weight loss, sexual health, hormone therapy, AI imaging, and much more.</p>
           </div>
           <div class="step">
             <div class="step-acc"></div>
             <div class="step-num">02</div>
-            <h3>Safety Screening</h3>
-            <p>
-              Complete a secure intake. Our system automatically screens for
-              contraindications to ensure safe, protocol-based treatment.
-            </p>
+            <h3 data-i18n="step2-title">Safety Screening</h3>
+            <p data-i18n="step2-desc">Complete a secure intake. Our system automatically screens for contraindications
+              to ensure safe, protocol-based treatment.</p>
           </div>
           <div class="step">
             <div class="step-acc"></div>
             <div class="step-num">03</div>
-            <h3>Provider Reviews</h3>
-            <p>
-              A board-certified physician or radiologist reviews your case
-              against clinical protocols and creates a personalized plan.
-            </p>
+            <h3 data-i18n="step3-title">Provider Reviews</h3>
+            <p data-i18n="step3-desc">A board-certified physician or radiologist reviews your case against clinical
+              protocols and creates a personalized plan.</p>
           </div>
           <div class="step">
             <div class="step-acc"></div>
             <div class="step-num">04</div>
-            <h3>Get Treated</h3>
-            <p>
-              Prescriptions ship to your door. Radiology reports delivered
-              digitally. Video consults from anywhere. Ongoing support
-              included.
-            </p>
+            <h3 data-i18n="step4-title">Get Treated</h3>
+            <p data-i18n="step4-desc">Prescriptions ship to your door. Radiology reports delivered digitally. Video
+              consults from anywhere. Ongoing support included.</p>
           </div>
         </div>
       </div>
@@ -6817,13 +6812,11 @@
       <div class="container">
         <div class="sec-eye eye-amber">
           <div class="eye-line"></div>
-          Reviews
+          <span data-i18n="reviews-eyebrow">Reviews</span>
         </div>
-        <h2 class="sec-title">Real results,<br />real people.</h2>
-        <p class="sec-sub">
-          Hear from Florida patients who transformed their health with
-          Patriotic Virtual Telehealth.
-        </p>
+        <h2 class="sec-title" data-i18n="reviews-title">Real results,<br />real people.</h2>
+        <p class="sec-sub" data-i18n="reviews-sub">Hear from Florida patients who transformed their health with
+          Patriotic Virtual Telehealth.</p>
         <div class="test-grid">
           <div class="tc">
             <div class="tc-stars">★★★★★</div>
@@ -6878,15 +6871,11 @@
     <section class="cta-section">
       <div class="container">
         <div class="cta-box">
-          <h2>Your health, your schedule.</h2>
-          <p>
-            Protocol-driven care from board-certified physicians and
-            radiologists — entirely online, entirely safe. Now available in
-            Florida.
-          </p>
-          <button class="btn btn-white btn-large" onclick="openModal('register')">
-            Start Your Free Visit →
-          </button>
+          <h2 data-i18n="cta-title">Your health, your schedule.</h2>
+          <p data-i18n="cta-desc">Protocol-driven care from board-certified physicians and radiologists — entirely
+            online, entirely safe. Now available in Florida.</p>
+          <button class="btn btn-white btn-large" onclick="openModal('register')" data-i18n="cta-btn">Start Your Free
+            Visit →</button>
         </div>
       </div>
     </section>
@@ -6901,30 +6890,28 @@
               <img src="assets/logomarkdark.png" alt="Patriotic Virtual Telehealth"
                 class="brand-logo-img brand-logo-dark" />
             </a>
-            <p class="footer-brand-text">
-              Board-certified telehealth and radiology services.
-              Protocol-driven care, delivered to your door. Currently serving
-              Florida.
-            </p>
+            <p class="footer-brand-text" data-i18n="footer-brand">Board-certified telehealth and radiology services.
+              Protocol-driven care, delivered to your door. Currently serving Florida.</p>
           </div>
 
           <div class="footer-col">
-            <h4>Company</h4>
-            <a href="javascript:void(0)" onclick="openAboutUs()">About Us</a><a href="javascript:void(0)"
-              onclick="toast('Careers page coming soon!')">Careers</a><a href="javascript:void(0)"
-              onclick="toast('Press page coming soon!')">Press</a>
+            <h4 data-i18n="footer-company">Company</h4>
+            <a href="javascript:void(0)" onclick="openAboutUs()" data-i18n="footer-about">About Us</a><a
+              href="javascript:void(0)" onclick="toast('Careers page coming soon!')"
+              data-i18n="footer-careers">Careers</a><a href="javascript:void(0)"
+              onclick="toast('Press page coming soon!')" data-i18n="footer-press">Press</a>
           </div>
           <div class="footer-col">
-            <h4>Support</h4>
-            <a href="javascript:void(0)" onclick="toast('FAQ coming soon!')">FAQ</a><a href="javascript:void(0)"
-              onclick="
-                  toast('Contact support: support@patriotictelehealth.com')
-                ">Contact</a><a href="javascript:void(0)" onclick="openConsent()">Privacy Policy</a>
+            <h4 data-i18n="footer-support">Support</h4>
+            <a href="javascript:void(0)" onclick="toast('FAQ coming soon!')" data-i18n="footer-faq">FAQ</a><a
+              href="javascript:void(0)" onclick="toast('Contact support: support@patriotictelehealth.com')"
+              data-i18n="footer-contact">Contact</a><a href="javascript:void(0)" onclick="openConsent()"
+              data-i18n="footer-privacy">Privacy Policy</a>
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 Patriotic Virtual Telehealth. All rights reserved.</span><span>HIPAA Compliant · FL-Licensed ·
-            Protocol-Based · Encrypted</span>
+          <span data-i18n="footer-copy">© 2026 Patriotic Virtual Telehealth. All rights reserved.</span><span
+            data-i18n="footer-badges">HIPAA Compliant · FL-Licensed · Protocol-Based · Encrypted</span>
         </div>
       </div>
     </footer>
@@ -12171,6 +12158,151 @@
         t1.style.color = "var(--g500)";
       }
     }
+    /* --- LANGUAGE TOGGLE --- */
+    const i18n = {
+      en: {
+        // Nav
+        'nav-about': 'About Us',
+        'nav-services': 'Services',
+        'nav-how': 'How It Works',
+        'nav-radiology': 'Radiology Education',
+        'nav-clinicians': 'For Clinicians and Facilities',
+        'nav-reviews': 'Reviews',
+        'nav-login': 'Log In',
+        'nav-get-started': 'Get Started',
+        'nav-dashboard': 'Dashboard',
+        'nav-logout': 'Log Out',
+        // Hero
+        'hero-badge': 'Board-Certified Physicians Online Now',
+        // Safety bar
+        'safety-1': 'Evidence-Based Protocols',
+        'safety-2': 'Automated Safety Screening',
+        'safety-3': 'Contraindication Checks',
+        'safety-4': 'Board-Certified Review',
+        // Protocol
+        'proto-eyebrow': 'Our Approach',
+        'proto-title': 'Protocol-driven care.<br />No exceptions.',
+        'proto-sub': 'Every prescription, every consultation, every imaging read follows strict clinical protocols. Our automated screening catches contraindications before they become problems.',
+        'proto-pill1': 'Automated contraindication screening on every visit',
+        'proto-pill2': 'Evidence-based treatment protocols for all services',
+        'proto-pill3': 'Board-certified physician review required for every Rx',
+        'proto-pill4': 'HIPAA-compliant platform with full audit logging',
+        // How It Works
+        'how-eyebrow': 'How It Works',
+        'how-title': 'Care in four<br />simple steps.',
+        'how-sub': 'From first click to treatment at your door — protocol-driven at every step.',
+        'step1-title': 'Pick Your Service',
+        'step1-desc': 'Choose from clinical visits, AI tools, and membership plans — general telehealth, weight loss, sexual health, hormone therapy, AI imaging, and much more.',
+        'step2-title': 'Safety Screening',
+        'step2-desc': 'Complete a secure intake. Our system automatically screens for contraindications to ensure safe, protocol-based treatment.',
+        'step3-title': 'Provider Reviews',
+        'step3-desc': 'A board-certified physician or radiologist reviews your case against clinical protocols and creates a personalized plan.',
+        'step4-title': 'Get Treated',
+        'step4-desc': 'Prescriptions ship to your door. Radiology reports delivered digitally. Video consults from anywhere. Ongoing support included.',
+        // Reviews
+        'reviews-eyebrow': 'Reviews',
+        'reviews-title': 'Real results,<br />real people.',
+        'reviews-sub': 'Hear from Florida patients who transformed their health with Patriotic Virtual Telehealth.',
+        // CTA
+        'cta-title': 'Your health, your schedule.',
+        'cta-desc': 'Protocol-driven care from board-certified physicians and radiologists — entirely online, entirely safe. Now available in Florida.',
+        'cta-btn': 'Start Your Free Visit →',
+        // Footer
+        'footer-brand': 'Board-certified telehealth and radiology services. Protocol-driven care, delivered to your door. Currently serving Florida.',
+        'footer-company': 'Company',
+        'footer-about': 'About Us',
+        'footer-careers': 'Careers',
+        'footer-press': 'Press',
+        'footer-support': 'Support',
+        'footer-faq': 'FAQ',
+        'footer-contact': 'Contact',
+        'footer-privacy': 'Privacy Policy',
+        'footer-copy': '© 2026 Patriotic Virtual Telehealth. All rights reserved.',
+        'footer-badges': 'HIPAA Compliant · FL-Licensed · Protocol-Based · Encrypted',
+      },
+      es: {
+        // Nav
+        'nav-about': 'Sobre Nosotros',
+        'nav-services': 'Servicios',
+        'nav-how': 'Cómo Funciona',
+        'nav-radiology': 'Educación en Radiología',
+        'nav-clinicians': 'Para Clínicos e Instalaciones',
+        'nav-reviews': 'Opiniones',
+        'nav-login': 'Iniciar Sesión',
+        'nav-get-started': 'Comenzar',
+        'nav-dashboard': 'Panel',
+        'nav-logout': 'Cerrar Sesión',
+        // Hero
+        'hero-badge': 'Médicos Certificados en Línea Ahora',
+        // Safety bar
+        'safety-1': 'Protocolos Basados en Evidencia',
+        'safety-2': 'Detección de Seguridad Automatizada',
+        'safety-3': 'Verificación de Contraindicaciones',
+        'safety-4': 'Revisión por Médico Certificado',
+        // Protocol
+        'proto-eyebrow': 'Nuestro Enfoque',
+        'proto-title': 'Atención guiada por protocolos.<br />Sin excepciones.',
+        'proto-sub': 'Cada receta, cada consulta, cada lectura de imagen sigue protocolos clínicos estrictos. Nuestra detección automatizada capta contraindicaciones antes de que se conviertan en problemas.',
+        'proto-pill1': 'Detección automática de contraindicaciones en cada visita',
+        'proto-pill2': 'Protocolos de tratamiento basados en evidencia para todos los servicios',
+        'proto-pill3': 'Revisión médica certificada requerida para cada receta',
+        'proto-pill4': 'Plataforma compatible con HIPAA con registro de auditoría completo',
+        // How It Works
+        'how-eyebrow': 'Cómo Funciona',
+        'how-title': 'Atención en cuatro<br />pasos sencillos.',
+        'how-sub': 'Desde el primer clic hasta el tratamiento en su puerta — guiado por protocolos en cada paso.',
+        'step1-title': 'Elige Tu Servicio',
+        'step1-desc': 'Elige entre consultas clínicas, herramientas de IA y planes de membresía — telesalud general, pérdida de peso, salud sexual, terapia hormonal, imágenes con IA y mucho más.',
+        'step2-title': 'Evaluación de Seguridad',
+        'step2-desc': 'Completa un registro seguro. Nuestro sistema detecta automáticamente contraindicaciones para garantizar un tratamiento seguro basado en protocolos.',
+        'step3-title': 'Revisión del Proveedor',
+        'step3-desc': 'Un médico o radiólogo certificado revisa su caso según protocolos clínicos y crea un plan personalizado.',
+        'step4-title': 'Recibe Atención',
+        'step4-desc': 'Las recetas llegan a su puerta. Informes de radiología entregados digitalmente. Consultas por video desde cualquier lugar. Soporte continuo incluido.',
+        // Reviews
+        'reviews-eyebrow': 'Opiniones',
+        'reviews-title': 'Resultados reales,<br />personas reales.',
+        'reviews-sub': 'Escuche a pacientes de Florida que transformaron su salud con Patriotic Virtual Telehealth.',
+        // CTA
+        'cta-title': 'Tu salud, tu horario.',
+        'cta-desc': 'Atención guiada por protocolos de médicos y radiólogos certificados — completamente en línea, completamente segura. Ahora disponible en Florida.',
+        'cta-btn': 'Comienza Tu Visita Gratis →',
+        // Footer
+        'footer-brand': 'Servicios de telesalud y radiología certificados. Atención guiada por protocolos, entregada a su puerta. Actualmente atendiendo a Florida.',
+        'footer-company': 'Empresa',
+        'footer-about': 'Sobre Nosotros',
+        'footer-careers': 'Empleos',
+        'footer-press': 'Prensa',
+        'footer-support': 'Soporte',
+        'footer-faq': 'Preguntas Frecuentes',
+        'footer-contact': 'Contacto',
+        'footer-privacy': 'Política de Privacidad',
+        'footer-copy': '© 2026 Patriotic Virtual Telehealth. Todos los derechos reservados.',
+        'footer-badges': 'Compatible con HIPAA · Licencia en FL · Basado en Protocolos · Encriptado',
+      }
+    };
+
+    let currentLang = 'en';
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'en' ? 'es' : 'en';
+      const btn = document.getElementById('langBtn');
+      btn.textContent = currentLang === 'en' ? 'ES' : 'EN';
+      btn.title = currentLang === 'en' ? 'Switch to Spanish' : 'Switch to English';
+      btn.style.opacity = currentLang === 'es' ? '1' : '0.7';
+      applyLanguage(currentLang);
+    }
+
+    function applyLanguage(lang) {
+      const dict = i18n[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key] !== undefined) {
+          el.innerHTML = dict[key];
+        }
+      });
+    }
+
     /* --- PATIENT MESSAGING --- */
     async function openPatientMessage() {
       console.log("openPatientMessage called");
