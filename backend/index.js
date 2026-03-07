@@ -244,10 +244,10 @@ app.post('/api/v1/consultations', async (req, res) => {
         const uid = decodedToken.uid;
 
         const consultRef = await db.collection('consultations').add({
-            uid,
-            serviceKey,
-            intake,
-            stripeProductId,
+            uid: uid || null,
+            serviceKey: serviceKey || 'unknown',
+            intake: intake || {},
+            stripeProductId: stripeProductId || null,
             status: 'pending',
             paymentStatus: 'unpaid',
             createdAt: admin.firestore.FieldValue.serverTimestamp()
