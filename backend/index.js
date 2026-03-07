@@ -159,6 +159,78 @@ app.patch('/api/v1/emr/consultations/:id/schedule', requireEmrKey, async (req, r
     }
 });
 
+// 0. Auth: Get Current User Profile
+app.get('/api/v1/auth/me', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).send('Unauthorized');
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const patientDoc = await db.collection('patients').doc(uid).get();
+        if (patientDoc.exists) {
+            res.json(patientDoc.data());
+        } else {
+            // Check auth user as fallback
+            const authUser = await admin.auth().getUser(uid);
+            res.json({
+                uid,
+                email: authUser.email,
+                firstName: authUser.displayName ? authUser.displayName.split(' ')[0] : 'Unknown',
+                lastName: authUser.displayName ? authUser.displayName.split(' ').slice(1).join(' ') : '',
+                role: 'patient'
+            });
+        }
+    } catch (error) {
+        console.error('Auth /me error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 0.5 Auth: Sync Firebase Registration
+app.post('/api/v1/auth/firebase-register', async (req, res) => {
+    try {
+        const { firstName, lastName, state, dateOfBirth, gender, role, firebaseUid, email } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).send('Unauthorized');
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        if (uid !== firebaseUid) return res.status(403).send('Forbidden: UID mismatch');
+
+        const userData = {
+            uid,
+            firstName: firstName || '',
+            lastName: lastName || '',
+            name: `${firstName || ''} ${lastName || ''}`.trim(),
+            email: email || decodedToken.email || '',
+            state: state || '',
+            dob: dateOfBirth || '',
+            gender: gender || '',
+            role: role || 'patient',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        };
+
+        await db.collection('patients').doc(uid).set(userData, { merge: true });
+
+        // Optionally update custom claims
+        await admin.auth().setCustomUserClaims(uid, { role: userData.role });
+
+        res.json(userData);
+    } catch (error) {
+        console.error('Auth register error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 1. Consultation Intake
 app.post('/api/v1/consultations', async (req, res) => {
     try {
