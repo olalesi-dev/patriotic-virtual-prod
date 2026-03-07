@@ -100,8 +100,9 @@ const notifyWaitlist = async (patientData, serviceName) => {
 
     // 3. Notify Admin via Email
     if (ADMIN_EMAIL) {
-        await sendEmail(
-            ADMIN_EMAIL,
+        const emails = ADMIN_EMAIL.split(',').map(e => e.trim()).filter(e => e);
+        const emailPromises = emails.map(email => sendEmail(
+            email,
             `New Patient Visit Submitted: ${serviceName}`,
             `<h3>New Visit Request (Waitlist)</h3>
              <p><b>Patient:</b> ${pName}</p>
@@ -109,15 +110,18 @@ const notifyWaitlist = async (patientData, serviceName) => {
              <p><b>Email:</b> ${patientData.email || 'N/A'}</p>
              <p><b>Phone:</b> ${patientData.phone || 'N/A'}</p>
              <p>Please log in to the Provider Portal to review & schedule this clinical visit.</p>`
-        );
+        ));
+        await Promise.all(emailPromises);
     }
 
     // 4. Notify Admin via SMS
     if (ADMIN_PHONE) {
-        await sendSMS(
-            ADMIN_PHONE,
+        const phones = ADMIN_PHONE.split(',').map(p => p.trim()).filter(p => p);
+        const phonePromises = phones.map(phone => sendSMS(
+            phone,
             `New Visit: ${pName} requested ${serviceName}. Pending review in the Provider Portal.`
-        );
+        ));
+        await Promise.all(phonePromises);
     }
 };
 
