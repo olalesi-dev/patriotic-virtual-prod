@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const admin = require('firebase-admin');
 const dotenv = require('dotenv');
+const { notifyWaitlist } = require('./notifications');
 
 dotenv.config();
 
@@ -843,11 +844,42 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
 
             // Auto-complete payment in DB for mock flow so backend state is consistent
             if (consultationId) {
-                await db.collection('consultations').doc(consultationId).update({
+                const consultRef = db.collection('consultations').doc(consultationId);
+                const mockSessionId = 'mock_session_' + Date.now();
+
+                await consultRef.update({
                     paymentStatus: 'paid',
-                    stripeSessionId: 'mock_session_' + Date.now(),
+                    status: 'waitlist',
+                    stripeSessionId: mockSessionId,
                     updatedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
+
+                const consultSnap = await consultRef.get();
+                const consultData = consultSnap.exists ? consultSnap.data() : {};
+                const uid = consultData.uid;
+
+                if (uid) {
+                    const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
+                    await apptRef.set({
+                        providerName: "Patriotic Provider",
+                        providerId: "dr-o-admin-uid",
+                        type: "Telehealth",
+                        status: "waitlist",
+                        scheduledAt: null,
+                        meetingUrl: "https://doxy.me/patriotictelehealth",
+                        consultationId: consultationId,
+                        serviceKey: consultData.serviceKey || 'general_consultation',
+                        intakeAnswers: consultData.intake || {},
+                        patientUid: uid,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
+                    const patientSnap = await db.collection('patients').doc(uid).get();
+                    if (patientSnap.exists) {
+                        await notifyWaitlist(patientSnap.data(), serviceName).catch(console.error);
+                    }
+                }
             }
 
             // Return success URL immediately
@@ -1005,6 +1037,15 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             }
 
             await batch.commit();
+
+            // 4. Notify Patient & Admin
+            if (uid && consultData && consultData.serviceKey) {
+                const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
+                const patientSnap = await db.collection('patients').doc(uid).get();
+                if (patientSnap.exists) {
+                    await notifyWaitlist(patientSnap.data(), serviceName).catch(console.error);
+                }
+            }
         }
 
         if (paymentType === 'balance_payment' && uid) {
