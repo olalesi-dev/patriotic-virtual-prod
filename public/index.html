@@ -12704,6 +12704,11 @@
       // 2. Check Payment Status
       checkPaymentStatus();
 
+      // 3. Check for Privacy Policy direct link
+      if (window.location.hash === '#privacy' || window.location.hash === '#consent') {
+        openConsent();
+      }
+
       // 3. Event Delegation for Patient Links
       document.body.addEventListener("click", (e) => {
         // console.log('Body clicked:', e.target); // Too noisy
