@@ -45,16 +45,8 @@ app.use(express.json());
 // Public Routes (No Auth)
 app.use('/health', healthRoutes);
 
-// Protected EMR Routes (Require Auth + MFA)
-app.use('/api', verifyFirebaseToken, loadUserContext, enforceMfaForStaff); // Global MFA Gate
-
-// Routes
-app.use('/api/patients', patientRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/notifications', notificationRoutes);
-
-// DoseSpot Routes
-app.get('/api/v1/dosespot/sso-url', async (req, res) => {
+// DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
+app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
     try {
         const uid = req['user']?.uid;
         if (!uid) {
@@ -85,7 +77,7 @@ app.get('/api/v1/dosespot/sso-url', async (req, res) => {
     }
 });
 
-app.get('/api/v1/dosespot/notification-count', async (req, res) => {
+app.get('/api/v1/dosespot/notification-count', verifyFirebaseToken, async (req, res) => {
     try {
         const uid = req['user']?.uid;
         if (!uid) {
@@ -135,14 +127,11 @@ app.get('/api/v1/dosespot/notification-count', async (req, res) => {
 });
 
 // Admin User Extension Route
-// If standard /api/v1/admin/users is missing from backend, implement it here to update firestore
-app.post('/api/v1/admin/users', async (req, res) => {
+app.post('/api/v1/admin/users', verifyFirebaseToken, async (req, res) => {
     try {
-        // In real system, verify caller is admin here. Assuming verifyFirebaseToken has loaded.
         const doseSpotClinicianId = req.body.doseSpotClinicianId;
-        const targetUid = req.body.uid; // Optional: who to update
+        const targetUid = req.body.uid;
 
-        // Ensure we know who we are updating: 
         const userToUpdate = targetUid || req['user']?.uid;
         if (!userToUpdate) {
             return res.status(400).json({ error: 'Missing uid' });
@@ -160,6 +149,16 @@ app.post('/api/v1/admin/users', async (req, res) => {
         return res.status(500).json({ error: 'Failed to update user' });
     }
 });
+
+// Protected EMR Routes (Require Auth + MFA)
+app.use('/api', verifyFirebaseToken, loadUserContext, enforceMfaForStaff); // Global MFA Gate
+
+// Routes
+app.use('/api/patients', patientRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+
 
 // Error Handling
 app.use(errorHandler);
