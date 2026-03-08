@@ -591,7 +591,7 @@ export default function CalendarPage() {
             try {
                 const { auth } = await import('@/lib/firebase');
                 const tok = await auth.currentUser?.getIdToken();
-                const API = process.env.NEXT_PUBLIC_API_URL || '';
+                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
                 await fetch(`${API}/api/v1/trigger/schedule-notification`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
@@ -635,8 +635,12 @@ export default function CalendarPage() {
         if (!apptForm.patientName) { alert('Please select a patient.'); return; }
         try {
             const startDate = new Date(`${apptForm.date}T${apptForm.time}:00`);
-            await addDoc(collection(db, 'appointments'), {
+            const pat = patients.find(p => p.name === apptForm.patientName);
+            const patId = pat ? pat.id : '';
+
+            const newRef = await addDoc(collection(db, 'appointments'), {
                 patient: apptForm.patientName, patientName: apptForm.patientName,
+                patientId: patId, patientUid: patId,
                 date: apptForm.date, time: apptForm.time,
                 startTime: Timestamp.fromDate(startDate),
                 type: apptForm.type, notes: apptForm.notes,
@@ -646,6 +650,21 @@ export default function CalendarPage() {
                 doctor: teamMembers[0]?.name || 'Provider',
                 service: apptForm.type === 'video' ? 'Follow-up (Video)' : 'Initial Consultation'
             });
+
+            // TRIGGER BACKEND NOTIFICATION
+            try {
+                const { auth } = await import('@/lib/firebase');
+                const tok = await auth.currentUser?.getIdToken();
+                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
+                await fetch(`${API}/api/v1/trigger/schedule-notification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+                    body: JSON.stringify({ apptId: newRef.id, scheduledAt: startDate.toISOString() })
+                });
+            } catch (err) {
+                console.error("Notification error:", err);
+            }
+
             setIsModalOpen(false);
             setApptForm({ patientName: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', type: 'video', notes: '' });
             showToast('Appointment scheduled!');
