@@ -15,8 +15,7 @@ import {
     History,
     X,
     Send,
-    ShieldCheck,
-    Video
+    ShieldCheck
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -318,10 +317,11 @@ export default function PatientDashboard() {
                 </div>
             </div>
 
+            {/* QUICK ACTIONS */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <QuickActionButton icon={Calendar} label="Schedule Visit" color="bg-[#0EA5E9]" onClick={() => router.push('/book')} />
                 <QuickActionButton icon={MessageSquare} label="Message Doctor" color="bg-indigo-500" onClick={() => setIsMessagingOpen(true)} />
-                <QuickActionButton icon={Video} label="Start Video Call" color="bg-rose-500" onClick={() => window.open('https://PVT.doxy.me/patrioticvirtualtelehealth', '_blank')} />
+                <QuickActionButton icon={Pill} label="Request Refill" color="bg-emerald-500" onClick={() => router.push('/my-health/medications')} />
             </div>
 
             {/* DASHBOARD GRID */}
@@ -419,14 +419,7 @@ export default function PatientDashboard() {
                         title="My Medications"
                         icon={Pill}
                         badge={medications.length.toString()}
-                        footer={
-                            <Link
-                                href="/my-health/medications"
-                                className="block w-full bg-[#F0F9FF] text-[#0EA5E9] py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-[#0EA5E9] hover:text-white transition-all text-center"
-                            >
-                                Manage Prescriptions
-                            </Link>
-                        }
+                        footer={<Link href="/my-health/medications" className="text-[#0EA5E9] font-black text-xs uppercase tracking-widest hover:underline">Manage Prescriptions</Link>}
                     >
                         {medications.length > 0 ? (
                             <div className="space-y-4">
