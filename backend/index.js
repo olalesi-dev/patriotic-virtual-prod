@@ -4,10 +4,41 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const admin = require('firebase-admin');
 const dotenv = require('dotenv');
-const { notifyWaitlist } = require('./notifications');
+const { notifyWaitlist, notifyScheduled } = require('./notifications');
 
 dotenv.config();
 
+async function triggerScheduledNotifications(uid, consultData, apptData, scheduledDate) {
+    if (!uid || !consultData) return;
+    const serviceName = (typeof CATALOG !== 'undefined' && CATALOG[consultData.serviceKey]?.name)
+        || consultData.serviceKey
+        || 'Telehealth Visit';
+
+    let pData = { uid };
+    try {
+        const patientSnap = await db.collection('patients').doc(uid).get();
+        if (patientSnap.exists) pData = { ...pData, ...patientSnap.data() };
+        const userRecord = await admin.auth().getUser(uid);
+        pData.email = pData.email || userRecord.email;
+        pData.phone = pData.phone || userRecord.phoneNumber;
+        if (!pData.firstName || pData.firstName === 'Unknown') {
+            if (userRecord.displayName) {
+                const parts = userRecord.displayName.split(' ');
+                pData.firstName = parts[0];
+                pData.lastName = parts.slice(1).join(' ');
+            }
+        }
+    } catch (e) {
+        console.error("Auth fetch error for schedule notification:", e);
+    }
+
+    const meetingUrl = (apptData && apptData.meetingUrl) ? apptData.meetingUrl : "https://doxy.me/patriotictelehealth";
+    const intakeParams = consultData.intake || {};
+
+    if (Object.keys(pData).length > 0) {
+        await notifyScheduled(pData, serviceName, scheduledDate, meetingUrl, intakeParams).catch(console.error);
+    }
+}
 // Initialize Firebase Admin
 if (!admin.apps.length) {
     admin.initializeApp({
@@ -144,11 +175,15 @@ app.patch('/api/v1/emr/consultations/:id/schedule', requireEmrKey, async (req, r
                     .where('consultationId', '==', id)
                     .limit(1).get();
                 if (!apptSnap.empty) {
-                    await apptSnap.docs[0].ref.update({
+                    const apptDoc = apptSnap.docs[0];
+                    await apptDoc.ref.update({
                         status: 'scheduled',
                         scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
                         updatedAt: admin.firestore.FieldValue.serverTimestamp()
                     });
+
+                    // Trigger notification
+                    await triggerScheduledNotifications(uid, consultSnap.data(), apptDoc.data(), scheduledDate);
                 }
             }
         }
@@ -753,11 +788,15 @@ app.patch('/api/v1/consultations/:id/schedule', async (req, res) => {
                     .where('consultationId', '==', id)
                     .limit(1).get();
                 if (!apptSnap.empty) {
-                    await apptSnap.docs[0].ref.update({
+                    const apptDoc = apptSnap.docs[0];
+                    await apptDoc.ref.update({
                         status: 'scheduled',
                         scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
                         updatedAt: admin.firestore.FieldValue.serverTimestamp()
                     });
+
+                    // Trigger notification
+                    await triggerScheduledNotifications(uid, consultSnap.data(), apptDoc.data(), scheduledDate);
                 }
             }
         }
