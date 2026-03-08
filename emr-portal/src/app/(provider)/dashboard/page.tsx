@@ -43,7 +43,7 @@ export default function EmrDashboard() {
         { name: 'M', visits: 0 }, { name: 'T', visits: 0 }, { name: 'W', visits: 0 },
         { name: 'T', visits: 0 }, { name: 'F', visits: 0 }, { name: 'S', visits: 0 }, { name: 'S', visits: 0 },
     ]);
-    const [activeTab, setActiveTab] = useState('Upcoming');
+    const [activeTab, setActiveTab] = useState('Waitlist');
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [providerName, setProviderName] = useState('Provider');
     const [providerUid, setProviderUid] = useState('');
@@ -435,7 +435,7 @@ export default function EmrDashboard() {
             {/* TABS */}
             <div className="border-b border-slate-200">
                 <div className="flex gap-8">
-                    {(['Upcoming', 'Completed', 'Cancelled', 'Waitlist'] as const).map(tab => (
+                    {(['Waitlist', 'Upcoming', 'Completed', 'Cancelled'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
