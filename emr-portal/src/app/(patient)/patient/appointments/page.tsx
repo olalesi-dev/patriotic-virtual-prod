@@ -476,12 +476,12 @@ export default function AppointmentsPage() {
                     // FIX: Compute safe date once per card â€” never call .toDate() directly
                     const apptDate = toSafeDate(appt.date);
                     return (
-                        <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${appt.status === 'PENDING_SCHEDULING' ? 'border-amber-100 dark:border-amber-900/50' : 'border-slate-50 dark:border-slate-700/50'} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
-                            <div className={`w-20 h-20 ${appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-[#F8FAFC] dark:bg-slate-900'} rounded-3xl flex flex-col items-center justify-center shrink-0 border border-slate-50 dark:border-slate-700/50`}>
+                        <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${appt.status === 'PENDING_SCHEDULING' ? 'border-amber-100 shadow-sm dark:border-amber-900/50' : 'border-slate-50 dark:border-slate-700/50'} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
+                            <div className={`w-20 h-20 ${appt.status === 'PENDING_SCHEDULING' ? 'bg-[#FFFBF0] dark:bg-amber-900/20' : 'bg-[#F8FAFC] dark:bg-slate-900'} rounded-[24px] flex flex-col items-center justify-center shrink-0 border border-slate-50 dark:border-slate-700/50`}>
                                 {apptDate ? (
                                     <>
-                                        <span className={`text-[10px] font-black uppercase ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-500 dark:text-amber-400' : 'text-[#0EA5E9] dark:text-sky-400'}`}>{format(apptDate, 'MMM')}</span>
-                                        <span className={`text-2xl font-black ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-700 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>{format(apptDate, 'dd')}</span>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-500 dark:text-amber-400' : 'text-[#0EA5E9] dark:text-sky-400'}`}>{format(apptDate, 'MMM')}</span>
+                                        <span className={`text-2xl font-black mt-0.5 ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-800 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>{format(apptDate, 'dd')}</span>
                                     </>
                                 ) : (
                                     <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase">TBD</span>
@@ -491,29 +491,29 @@ export default function AppointmentsPage() {
                             <div className="flex-1 text-center md:text-left space-y-2 min-w-0">
                                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
                                     <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight truncate">{appt.providerName}</h3>
-                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${appt.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100 dark:bg-sky-900/30 dark:border-sky-800/50' :
-                                        appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse dark:bg-amber-900/30 dark:border-amber-800/50' :
+                                    <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${appt.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100 dark:bg-sky-900/30 dark:border-sky-800/50' :
+                                        appt.status === 'PENDING_SCHEDULING' ? 'bg-transparent text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800/50' :
                                             appt.status === 'cancelled' ? 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/30 dark:border-rose-800/50' :
                                                 'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-700/50 dark:border-slate-600'
                                         }`}>
-                                        {appt.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider' : appt.status}
+                                        {appt.status === 'PENDING_SCHEDULING' ? 'AWAITING PROVIDER' : appt.status}
                                     </span>
                                 </div>
                                 {appt.status === 'PENDING_SCHEDULING' ? (
-                                    <div className="space-y-2 pt-1 pb-1">
-                                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-amber-700/70 dark:text-amber-400 font-bold text-[10px] uppercase tracking-widest">
+                                    <div className="space-y-3 pt-1 pb-1">
+                                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-amber-700/60 dark:text-amber-400 font-bold text-[10px] uppercase tracking-widest">
                                             <span>Time Submitted</span>
                                             {apptDate && (
                                                 <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
                                             )}
-                                            <div className="flex items-center gap-1.5 opacity-60">
+                                            <div className="flex items-center gap-1.5 opacity-80">
                                                 {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
                                                 {appt.type}
                                             </div>
                                         </div>
-                                        <div className="inline-flex bg-amber-50/50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg items-center gap-2">
+                                        <div className="inline-flex bg-transparent dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg items-center gap-2">
                                             <AlertCircle className="w-4 h-4 shrink-0" />
-                                            A provider will finalize scheduling within 24 hours
+                                            A PROVIDER WILL FINALIZE SCHEDULING WITHIN 24 HOURS
                                         </div>
                                     </div>
                                 ) : (
@@ -527,7 +527,7 @@ export default function AppointmentsPage() {
                                         </div>
                                     </div>
                                 )}
-                                <p className="text-slate-500 dark:text-slate-400 text-sm italic line-clamp-1">{appt.reason}</p>
+                                <p className="text-slate-400 dark:text-slate-500 text-sm italic line-clamp-1 py-1">{appt.reason}</p>
                             </div>
 
                             <div className="shrink-0 w-full md:w-auto flex flex-col gap-2">
@@ -541,18 +541,18 @@ export default function AppointmentsPage() {
                                                 <Video className="w-4 h-4" /> Join Now
                                             </button>
                                         ) : (
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 justify-end w-full md:w-auto">
                                                 {appt.status === 'scheduled' && canCancel(appt.date) && (
                                                     <button
                                                         onClick={() => handleCancel(appt.id)}
-                                                        className="flex-1 md:w-24 bg-white dark:bg-slate-800 text-rose-500 border border-rose-100 dark:border-rose-900/50 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all"
+                                                        className="flex-1 md:w-auto bg-white dark:bg-slate-800 text-rose-500 border border-rose-100 dark:border-rose-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all"
                                                     >
                                                         Cancel
                                                     </button>
                                                 )}
                                                 <button
                                                     onClick={() => setIntakeDetail(appt)}
-                                                    className="flex-1 md:w-24 bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm"
+                                                    className="flex-1 md:w-auto bg-white dark:bg-slate-800 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm"
                                                 >
                                                     View Intake
                                                 </button>
@@ -780,60 +780,60 @@ export default function AppointmentsPage() {
 
             {/* INTAKE DETAIL MODAL — shown when patient clicks View Intake */}
             {intakeDetail && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
-                        <div className="bg-gradient-to-br from-[#0EA5E9] to-indigo-500 p-10 text-white shrink-0 relative overflow-hidden">
-                            <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full" />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+                        <div className="bg-gradient-to-br from-sky-400 to-indigo-500 p-8 md:p-10 text-white shrink-0 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="flex justify-between items-start relative z-10">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <ClipboardCheck className="w-5 h-5 opacity-80" />
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Appointment Detail</span>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <ClipboardCheck className="w-4 h-4 opacity-90" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white/90">Appointment Detail</span>
                                     </div>
                                     <h2 className="text-3xl font-black tracking-tight leading-none">
                                         {intakeDetail.reason || 'Telehealth Visit'}
                                     </h2>
-                                    <p className="text-white/70 text-xs font-bold mt-2 uppercase tracking-widest">
+                                    <p className="text-white font-black text-[10px] uppercase tracking-widest mt-1">
                                         {intakeDetail.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider Scheduling' : 'Confirmed'}
                                     </p>
                                 </div>
-                                <button onClick={() => setIntakeDetail(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
-                                    <X className="w-5 h-5" />
+                                <button onClick={() => setIntakeDetail(null)} className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                                    <X className="w-4 h-4 text-white" />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                        <div className="p-8 space-y-4 overflow-y-auto flex-1 bg-white custom-scrollbar text-slate-800">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Provider</p>
+                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Provider</p>
                                     <p className="text-sm font-bold text-slate-800">{intakeDetail.providerName || 'Patriotic Provider'}</p>
                                 </div>
-                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Visit Type</p>
+                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Visit Type</p>
                                     <p className="text-sm font-bold text-slate-800">{intakeDetail.type || 'Telehealth'}</p>
                                 </div>
-                                <div className="col-span-2 bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Scheduled Date & Time</p>
+                                <div className="col-span-2 bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Scheduled Date & Time</p>
                                     <p className="text-sm font-bold text-slate-800">
-                                        {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)
+                                        {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date) && intakeDetail.status === 'scheduled'
                                             ? format(toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)!, 'PPPP p')
                                             : 'TBD — Provider will confirm within 24–48 hours'}
                                     </p>
                                 </div>
-                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
-                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${intakeDetail.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Status</p>
+                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${intakeDetail.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' : 'bg-transparent text-amber-600 border-amber-200'
                                         }`}>
-                                        {intakeDetail.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider' : intakeDetail.status}
+                                        {intakeDetail.status === 'PENDING_SCHEDULING' ? 'AWAITING PROVIDER' : intakeDetail.status}
                                     </span>
                                 </div>
-                                <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Service</p>
+                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Service</p>
                                     <p className="text-sm font-bold text-slate-800">{intakeDetail.serviceKey?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Consultation'}</p>
                                 </div>
-                                {intakeDetail.meetingUrl && (
-                                    <div className="col-span-2 bg-sky-50 p-5 rounded-3xl border border-sky-100">
+                                {intakeDetail.meetingUrl && intakeDetail.status === 'scheduled' && (
+                                    <div className="col-span-2 bg-sky-50/50 p-5 rounded-[24px] border border-sky-100/60">
                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Video Visit Link</p>
                                         <a href={intakeDetail.meetingUrl} target="_blank" rel="noopener noreferrer"
                                             className="flex items-center gap-2 text-sm font-bold text-[#0EA5E9] hover:underline break-all">
@@ -843,47 +843,27 @@ export default function AppointmentsPage() {
                                 )}
                             </div>
 
-                            {(intakeDetail.patientName || intakeDetail.patientEmail) && (
-                                <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-100">
-                                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-4">Patient Information</p>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {intakeDetail.patientName && (
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Name</p>
-                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.patientName}</p>
-                                            </div>
-                                        )}
-                                        {intakeDetail.patientEmail && (
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Email</p>
-                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.patientEmail}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
                             {(() => {
                                 const answers = intakeDetail.intakeAnswers || intakeDetail.intake || {};
                                 const entries = Object.entries(answers);
                                 if (entries.length === 0) return null;
                                 return (
-                                    <div className="p-6 rounded-[2rem] border bg-slate-50 border-slate-100">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="w-8 h-8 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center border border-indigo-100">
-                                                <ClipboardCheck className="w-4 h-4" />
+                                    <div className="p-6 rounded-[32px] border bg-slate-50/50 border-slate-100/60 mt-4">
+                                        <div className="flex items-center gap-2 mb-6 text-slate-400">
+                                            <div className="w-6 h-6 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center border border-indigo-100">
+                                                <ClipboardCheck className="w-3 h-3" />
                                             </div>
-                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Clinical Intake Record</h4>
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Clinical Intake Record</h4>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                                             {entries.map(([k, v]) => {
                                                 const question = (iQs[intakeDetail.serviceKey as keyof typeof iQs] || []).find((q: any) => q.k === k);
                                                 return (
-                                                    <div key={k} className="space-y-1.5">
+                                                    <div key={k} className="space-y-2">
                                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">
                                                             {question?.l || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}
                                                         </p>
-                                                        <div className="text-sm font-bold text-slate-800 bg-white p-3 rounded-2xl border border-slate-200/50">
+                                                        <div className="text-sm font-bold text-slate-800 bg-white p-4 rounded-2xl border border-slate-100">
                                                             {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v || '—')}
                                                         </div>
                                                     </div>
@@ -895,11 +875,11 @@ export default function AppointmentsPage() {
                             })()}
 
                             {intakeDetail.status === 'PENDING_SCHEDULING' && (
-                                <div className="flex items-start gap-3 p-5 bg-amber-50 text-amber-700 rounded-2xl border border-amber-100">
+                                <div className="flex items-start gap-4 p-6 bg-[#FFFBF0] text-amber-700/80 rounded-[24px] border border-amber-100/60 mt-4">
                                     <Info className="w-5 h-5 mt-0.5 shrink-0" />
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1">In Provider Queue</p>
-                                        <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong>24–48 hours</strong> to confirm your appointment time.</p>
+                                        <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2">In Provider Queue</p>
+                                        <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800">24–48 hours</strong> to confirm your appointment time.</p>
                                     </div>
                                 </div>
                             )}
