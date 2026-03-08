@@ -138,10 +138,12 @@ export default function AppointmentsPage() {
     useEffect(() => {
         let unsubConsult: (() => void) | null = null;
         let unsubSubAppt: (() => void) | null = null;
+        let unsubTopAppt: (() => void) | null = null;
 
         const unsubAuth = auth.onAuthStateChanged((user) => {
             unsubConsult?.();
             unsubSubAppt?.();
+            unsubTopAppt?.();
 
             if (!user) {
                 setAppointments([]);
@@ -153,6 +155,7 @@ export default function AppointmentsPage() {
 
             let consultData: Appointment[] = [];
             let subApptData: Appointment[] = [];
+            let topApptData: Appointment[] = []; // top-level appointments collection (written by provider schedule action)
 
             // Status rank: higher = more advanced in the workflow.
             // When merging two sources, we always keep the higher-ranked status.
@@ -165,27 +168,15 @@ export default function AppointmentsPage() {
             };
             const statusRank = (s: string) => STATUS_RANK[s] ?? 0;
 
-            const merge = () => {
-                const byKey = new Map<string, Appointment>();
-
-                // First pass: load consultations as the base
-                consultData.forEach(c => byKey.set(c.id, c));
-
-                // Second pass: sub-collection records hold latest scheduling details
-                // (scheduledAt, meetingUrl, etc.) but we MUST NOT let an un-updated
-                // sub-collection status (e.g. 'waitlist') overwrite a consultation
-                // that has already moved to 'scheduled'. Always pick the higher status.
-                subApptData.forEach(a => {
+            // Helper to merge a new source into the running map, always keeping higher-ranked status
+            const mergeInto = (map: Map<string, Appointment>, items: Appointment[]) => {
+                items.forEach(a => {
                     const key = a.consultationId || a.id;
-                    const existing = byKey.get(key);
+                    const existing = map.get(key);
                     if (existing) {
-                        // Merge: sub-collection fields win EXCEPT status — take the higher one
-                        const betterStatus = statusRank(a.status) >= statusRank(existing.status)
-                            ? a.status
-                            : existing.status;
-                        // Prefer scheduledAt from sub-collection (set by backend schedule endpoint)
+                        const betterStatus = statusRank(a.status) >= statusRank(existing.status) ? a.status : existing.status;
                         const betterScheduledAt = a.scheduledAt || existing.scheduledAt;
-                        byKey.set(key, {
+                        map.set(key, {
                             ...existing,
                             ...a,
                             status: betterStatus,
@@ -193,9 +184,20 @@ export default function AppointmentsPage() {
                             date: betterScheduledAt || a.date || existing.date,
                         });
                     } else {
-                        byKey.set(key, a);
+                        map.set(key, a);
                     }
                 });
+            };
+
+            const merge = () => {
+                const byKey = new Map<string, Appointment>();
+                // Layer 1: consultations (base — has intake, serviceKey, paymentStatus)
+                consultData.forEach(c => byKey.set(c.id, c));
+                // Layer 2: patients/{uid}/appointments sub-collection (webhook-written)
+                mergeInto(byKey, subApptData);
+                // Layer 3: top-level appointments collection (provider-written on scheduling)
+                // This is THE source of truth for scheduled status + scheduledAt
+                mergeInto(byKey, topApptData);
 
                 const merged = Array.from(byKey.values());
                 merged.sort((a, b) => {
@@ -276,20 +278,17 @@ export default function AppointmentsPage() {
 
 
 
-            // Listener 2: patients/{uid}/appointments sub-collection
-            // Written by Stripe webhook & updated by the scheduling endpoint
+            // Listener 2: patients/{uid}/appointments sub-collection (written by Stripe webhook)
             const subApptQ = query(collection(db, 'patients', user.uid, 'appointments'));
             unsubSubAppt = onSnapshot(subApptQ, (snap) => {
                 subApptData = snap.docs.map(d => {
                     const raw = d.data();
                     const rawStatus = (raw.status || '').toLowerCase().trim();
-                    // Explicitly map every known status, default unknown → PENDING_SCHEDULING
                     let normalizedStatus: string;
                     if (rawStatus === 'scheduled') normalizedStatus = 'scheduled';
                     else if (rawStatus === 'completed') normalizedStatus = 'completed';
                     else if (rawStatus === 'cancelled') normalizedStatus = 'cancelled';
-                    else normalizedStatus = 'PENDING_SCHEDULING'; // waitlist / pending / unknown
-
+                    else normalizedStatus = 'PENDING_SCHEDULING';
                     return {
                         ...raw,
                         id: d.id,
@@ -298,7 +297,6 @@ export default function AppointmentsPage() {
                         status: normalizedStatus as Appointment['status'],
                         reason: raw.serviceKey || raw.reason || 'Consultation',
                         type: 'Telehealth',
-                        // Prefer scheduledAt (Timestamp set by provider) over createdAt
                         date: raw.scheduledAt || raw.date || raw.createdAt,
                         scheduledAt: raw.scheduledAt || null,
                         providerName: raw.providerName || 'Patriotic Provider',
@@ -311,12 +309,58 @@ export default function AppointmentsPage() {
                 });
                 merge();
             }, (err) => console.error('SubAppt listener error:', err));
+
+            // Listener 3: top-level appointments collection — THIS is where the provider
+            // dashboard writes status:'scheduled' + scheduledAt when they confirm an appointment.
+            // Without this listener the patient portal never sees the scheduled status.
+            const topApptQ = query(
+                collection(db, 'appointments'),
+                where('patientId', '==', user.uid)
+            );
+            unsubTopAppt = onSnapshot(topApptQ, (snap) => {
+                topApptData = snap.docs.map(d => {
+                    const raw = d.data();
+                    const rawStatus = (raw.status || '').toLowerCase().trim();
+                    let normalizedStatus: string;
+                    if (rawStatus === 'scheduled') normalizedStatus = 'scheduled';
+                    else if (rawStatus === 'completed') normalizedStatus = 'completed';
+                    else if (rawStatus === 'cancelled') normalizedStatus = 'cancelled';
+                    else if (rawStatus === 'pending_scheduling' || rawStatus === 'waitlist' || rawStatus === 'pending') normalizedStatus = 'PENDING_SCHEDULING';
+                    else normalizedStatus = 'PENDING_SCHEDULING';
+
+                    // The top-level doc's ID IS the consultation ID (set during Stripe webhook)
+                    const consultationId = raw.consultationId || d.id;
+                    const scheduledAt = raw.scheduledAt || raw.startTime || null;
+
+                    return {
+                        ...raw,
+                        id: d.id,
+                        consultationId,
+                        uid: raw.patientId || raw.patientUid || user.uid,
+                        status: normalizedStatus as Appointment['status'],
+                        reason: raw.serviceKey || raw.service || raw.type || raw.reason || 'Consultation',
+                        type: 'Telehealth',
+                        date: scheduledAt || raw.date || raw.createdAt,
+                        scheduledAt,
+                        providerName: raw.providerName || 'Patriotic Provider',
+                        providerId: raw.providerId || '',
+                        intakeAnswers: raw.intakeAnswers || raw.intake || {},
+                        intake: raw.intakeAnswers || raw.intake || {},
+                        serviceKey: raw.serviceKey || raw.service,
+                        meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                        patientName: raw.patientName || '',
+                        patientEmail: raw.patientEmail || '',
+                    } as Appointment;
+                });
+                merge();
+            }, (err) => console.error('TopAppt listener error:', err));
         });
 
         return () => {
             unsubAuth();
             unsubConsult?.();
             unsubSubAppt?.();
+            unsubTopAppt?.();
         };
     }, []);
 
