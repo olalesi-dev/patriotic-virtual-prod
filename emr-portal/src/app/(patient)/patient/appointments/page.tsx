@@ -186,11 +186,17 @@ export default function AppointmentsPage() {
 
             const mapConsultDoc = (d: any): Appointment => {
                 const raw = d.data();
+                const rawStatus = (raw.status || '').toLowerCase();
+                let normalizedStatus = 'PENDING_SCHEDULING';
+                if (rawStatus === 'scheduled') normalizedStatus = 'scheduled';
+                else if (rawStatus === 'completed') normalizedStatus = 'completed';
+                else if (rawStatus === 'cancelled') normalizedStatus = 'cancelled';
+                // waitlist maps to PENDING_SCHEDULING
+
                 return {
                     id: d.id,
                     uid: raw.uid || raw.patientId,
-                    status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
-                        raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
+                    status: normalizedStatus as Appointment['status'],
                     paymentStatus: raw.paymentStatus,
                     reason: raw.serviceKey || raw.reason || 'Consultation',
                     type: 'Telehealth',
@@ -204,7 +210,7 @@ export default function AppointmentsPage() {
                     meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
                     patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
                     patientEmail: raw.intake?.email || '',
-                } as Appointment;
+                };
             };
 
             let consultByUid: Appointment[] = [];
@@ -238,11 +244,15 @@ export default function AppointmentsPage() {
             unsubSubAppt = onSnapshot(subApptQ, (snap) => {
                 subApptData = snap.docs.map(d => {
                     const raw = d.data();
+                    const rawStatus = (raw.status || '').toLowerCase();
+                    let normalizedStatus = rawStatus === 'waitlist' ? 'PENDING_SCHEDULING' : (rawStatus || 'PENDING_SCHEDULING');
+
                     return {
+                        ...raw,
                         id: d.id,
                         consultationId: raw.consultationId,
                         uid: raw.patientUid || user.uid,
-                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' : (raw.status || 'PENDING_SCHEDULING'),
+                        status: normalizedStatus as Appointment['status'],
                         reason: raw.serviceKey || 'Consultation',
                         type: 'Telehealth',
                         date: raw.scheduledAt || raw.createdAt,
@@ -253,7 +263,6 @@ export default function AppointmentsPage() {
                         intake: raw.intakeAnswers || {},
                         serviceKey: raw.serviceKey,
                         meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
-                        ...raw,
                     } as Appointment;
                 });
                 merge();
