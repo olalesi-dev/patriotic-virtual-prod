@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Calendar, Clock, User, CreditCard, ChevronRight, CheckCircle2, ShieldCheck, Stethoscope, ChevronLeft } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, getDoc, doc } from 'firebase/firestore';
+import { useSearchParams } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_mock');
 
@@ -68,6 +69,8 @@ const INTAKE_QUESTIONS: any = {
 };
 
 export default function BookingPage() {
+    const searchParams = useSearchParams();
+    const preselectedService = searchParams.get('service');
     const [step, setStep] = useState(1);
     const [selectedService, setSelectedService] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'popular' | 'all' | 'telehealth' | 'imaging' | 'memberships'>('popular');
@@ -89,6 +92,25 @@ export default function BookingPage() {
     };
 
     const visibleServices = getTabServices();
+
+    useEffect(() => {
+        if (!preselectedService) {
+            return;
+        }
+
+        const matched = SERVICES.find((service) =>
+            service.k === preselectedService || service.id === preselectedService,
+        );
+
+        if (!matched) {
+            return;
+        }
+
+        setSelectedService(matched);
+        setIntakeAnswers({});
+        setActiveTab('popular');
+        setStep(2);
+    }, [preselectedService]);
 
     const handleBooking = async () => {
         setLoading(true);
