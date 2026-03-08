@@ -413,18 +413,25 @@ export default function AppointmentsPage() {
     };
 
     // FIX: Use toSafeDate() in filter â€” was crashing with .toDate() on undefined
-    const waitlist = appointments.filter(a => a.status === 'PENDING_SCHEDULING' || a.status === 'waitlist');
+    const parsedStatus = (s: string | undefined | null) => (s || '').toLowerCase();
+
+    const waitlist = appointments.filter(a => {
+        const s = parsedStatus(a.status);
+        return s === 'pending_scheduling' || s === 'waitlist';
+    });
 
     const upcoming = appointments.filter(a => {
+        const s = parsedStatus(a.status);
         const d = toSafeDate(a.date);
-        return a.status === 'scheduled' &&
+        return s === 'scheduled' &&
             (d ? isAfter(d, subMinutes(new Date(), 60)) : true);
     });
 
     const past = appointments.filter(a => {
+        const s = parsedStatus(a.status);
         const d = toSafeDate(a.date);
-        return a.status === 'completed' || a.status === 'cancelled' ||
-            (d && a.status === 'scheduled' ? isBefore(d, subMinutes(new Date(), 60)) : false);
+        return s === 'completed' || s === 'cancelled' ||
+            (d && s === 'scheduled' ? isBefore(d, subMinutes(new Date(), 60)) : false);
     });
 
     const filteredAppts = activeTab === 'waitlist' ? waitlist : activeTab === 'upcoming' ? upcoming : past;
@@ -473,15 +480,19 @@ export default function AppointmentsPage() {
             {/* List */}
             <div className="space-y-4">
                 {filteredAppts.length > 0 ? filteredAppts.map((appt) => {
-                    // FIX: Compute safe date once per card â€” never call .toDate() directly
                     const apptDate = toSafeDate(appt.date);
+                    const isWaitlist = ['pending_scheduling', 'waitlist'].includes(parsedStatus(appt.status));
+                    const isScheduled = parsedStatus(appt.status) === 'scheduled';
+                    const isCompleted = parsedStatus(appt.status) === 'completed';
+                    const isCancelled = parsedStatus(appt.status) === 'cancelled';
+
                     return (
-                        <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${appt.status === 'PENDING_SCHEDULING' ? 'border-amber-100 shadow-sm dark:border-amber-900/50' : 'border-slate-50 dark:border-slate-700/50'} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
-                            <div className={`w-20 h-20 ${appt.status === 'PENDING_SCHEDULING' ? 'bg-[#FFFBF0] dark:bg-amber-900/20' : 'bg-[#F8FAFC] dark:bg-slate-900'} rounded-[24px] flex flex-col items-center justify-center shrink-0 border border-slate-50 dark:border-slate-700/50`}>
+                        <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${isWaitlist ? 'border-amber-100 shadow-sm dark:border-amber-900/50' : 'border-slate-50 dark:border-slate-700/50'} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
+                            <div className={`w-20 h-20 ${isWaitlist ? 'bg-[#FFFBF0] dark:bg-amber-900/20' : 'bg-[#F8FAFC] dark:bg-slate-900'} rounded-[24px] flex flex-col items-center justify-center shrink-0 border border-slate-50 dark:border-slate-700/50`}>
                                 {apptDate ? (
                                     <>
-                                        <span className={`text-[10px] font-black uppercase tracking-widest ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-500 dark:text-amber-400' : 'text-[#0EA5E9] dark:text-sky-400'}`}>{format(apptDate, 'MMM')}</span>
-                                        <span className={`text-2xl font-black mt-0.5 ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-800 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>{format(apptDate, 'dd')}</span>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${isWaitlist ? 'text-amber-500 dark:text-amber-400' : 'text-[#0EA5E9] dark:text-sky-400'}`}>{format(apptDate, 'MMM')}</span>
+                                        <span className={`text-2xl font-black mt-0.5 ${isWaitlist ? 'text-amber-800 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>{format(apptDate, 'dd')}</span>
                                     </>
                                 ) : (
                                     <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase">TBD</span>
@@ -491,15 +502,15 @@ export default function AppointmentsPage() {
                             <div className="flex-1 text-center md:text-left space-y-2 min-w-0">
                                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
                                     <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight truncate">{appt.providerName}</h3>
-                                    <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${appt.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100 dark:bg-sky-900/30 dark:border-sky-800/50' :
-                                        appt.status === 'PENDING_SCHEDULING' ? 'bg-transparent text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800/50' :
-                                            appt.status === 'cancelled' ? 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/30 dark:border-rose-800/50' :
+                                    <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isScheduled ? 'bg-sky-50 text-[#0EA5E9] border-sky-100 dark:bg-sky-900/30 dark:border-sky-800/50' :
+                                        isWaitlist ? 'bg-transparent text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800/50' :
+                                            isCancelled ? 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/30 dark:border-rose-800/50' :
                                                 'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-700/50 dark:border-slate-600'
                                         }`}>
-                                        {appt.status === 'PENDING_SCHEDULING' ? 'AWAITING PROVIDER' : appt.status}
+                                        {isWaitlist ? 'AWAITING PROVIDER' : appt.status}
                                     </span>
                                 </div>
-                                {appt.status === 'PENDING_SCHEDULING' ? (
+                                {isWaitlist ? (
                                     <div className="space-y-3 pt-1 pb-1">
                                         <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-amber-700/60 dark:text-amber-400 font-bold text-[10px] uppercase tracking-widest">
                                             <span>Time Submitted</span>
@@ -507,8 +518,8 @@ export default function AppointmentsPage() {
                                                 <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
                                             )}
                                             <div className="flex items-center gap-1.5 opacity-80">
-                                                {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                                                {appt.type}
+                                                {appt.type === 'Telehealth' || appt.type?.toLowerCase().includes('tele') ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                                                {appt.type || 'Telehealth'}
                                             </div>
                                         </div>
                                         <div className="inline-flex bg-transparent dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg items-center gap-2">
@@ -522,8 +533,8 @@ export default function AppointmentsPage() {
                                             <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
                                         )}
                                         <div className="flex items-center gap-1.5">
-                                            {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                                            {appt.type}
+                                            {appt.type === 'Telehealth' || appt.type?.toLowerCase().includes('tele') ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                                            {appt.type || 'Telehealth'}
                                         </div>
                                     </div>
                                 )}
@@ -531,9 +542,9 @@ export default function AppointmentsPage() {
                             </div>
 
                             <div className="shrink-0 w-full md:w-auto flex flex-col gap-2">
-                                {(appt.status === 'scheduled' || appt.status === 'PENDING_SCHEDULING') && (
+                                {(isScheduled || isWaitlist) && (
                                     <>
-                                        {appt.status === 'scheduled' && isJoinable(appt.date) ? (
+                                        {isScheduled && isJoinable(appt.date) ? (
                                             <button
                                                 onClick={() => setJoiningAppt(appt)}
                                                 className="w-full md:w-48 bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-sky-100 dark:shadow-none hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse"
@@ -542,7 +553,7 @@ export default function AppointmentsPage() {
                                             </button>
                                         ) : (
                                             <div className="flex gap-2 justify-end w-full md:w-auto">
-                                                {appt.status === 'scheduled' && canCancel(appt.date) && (
+                                                {isScheduled && canCancel(appt.date) && (
                                                     <button
                                                         onClick={() => handleCancel(appt.id)}
                                                         className="flex-1 md:w-auto bg-white dark:bg-slate-800 text-rose-500 border border-rose-100 dark:border-rose-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all"
@@ -560,7 +571,7 @@ export default function AppointmentsPage() {
                                         )}
                                     </>
                                 )}
-                                {appt.status === 'completed' && (
+                                {isCompleted && (
                                     <button
                                         onClick={() => handleViewSummary(appt)}
                                         className="w-full md:w-48 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 py-4 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-100 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 hover:text-[#0EA5E9] transition-all flex items-center justify-center gap-2"
@@ -804,85 +815,94 @@ export default function AppointmentsPage() {
                         </div>
 
                         <div className="p-8 space-y-4 overflow-y-auto flex-1 bg-white custom-scrollbar text-slate-800">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Provider</p>
-                                    <p className="text-sm font-bold text-slate-800">{intakeDetail.providerName || 'Patriotic Provider'}</p>
-                                </div>
-                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Visit Type</p>
-                                    <p className="text-sm font-bold text-slate-800">{intakeDetail.type || 'Telehealth'}</p>
-                                </div>
-                                <div className="col-span-2 bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Scheduled Date & Time</p>
-                                    <p className="text-sm font-bold text-slate-800">
-                                        {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date) && intakeDetail.status === 'scheduled'
-                                            ? format(toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)!, 'PPPP p')
-                                            : 'TBD — Provider will confirm within 24–48 hours'}
-                                    </p>
-                                </div>
-                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Status</p>
-                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${intakeDetail.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' : 'bg-transparent text-amber-600 border-amber-200'
-                                        }`}>
-                                        {intakeDetail.status === 'PENDING_SCHEDULING' ? 'AWAITING PROVIDER' : intakeDetail.status}
-                                    </span>
-                                </div>
-                                <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Service</p>
-                                    <p className="text-sm font-bold text-slate-800">{intakeDetail.serviceKey?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Consultation'}</p>
-                                </div>
-                                {intakeDetail.meetingUrl && intakeDetail.status === 'scheduled' && (
-                                    <div className="col-span-2 bg-sky-50/50 p-5 rounded-[24px] border border-sky-100/60">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Video Visit Link</p>
-                                        <a href={intakeDetail.meetingUrl} target="_blank" rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-sm font-bold text-[#0EA5E9] hover:underline break-all">
-                                            <Video className="w-4 h-4 shrink-0" /> {intakeDetail.meetingUrl}
-                                        </a>
-                                    </div>
-                                )}
-                            </div>
-
                             {(() => {
-                                const answers = intakeDetail.intakeAnswers || intakeDetail.intake || {};
-                                const entries = Object.entries(answers);
-                                if (entries.length === 0) return null;
+                                const isWaitlistDetail = ['pending_scheduling', 'waitlist'].includes(parsedStatus(intakeDetail.status));
+                                const isScheduledDetail = parsedStatus(intakeDetail.status) === 'scheduled';
+
                                 return (
-                                    <div className="p-6 rounded-[32px] border bg-slate-50/50 border-slate-100/60 mt-4">
-                                        <div className="flex items-center gap-2 mb-6 text-slate-400">
-                                            <div className="w-6 h-6 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center border border-indigo-100">
-                                                <ClipboardCheck className="w-3 h-3" />
+                                    <>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Provider</p>
+                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.providerName || 'Patriotic Provider'}</p>
                                             </div>
-                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Clinical Intake Record</h4>
+                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Visit Type</p>
+                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.type || 'Telehealth'}</p>
+                                            </div>
+                                            <div className="col-span-2 bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Scheduled Date & Time</p>
+                                                <p className="text-sm font-bold text-slate-800">
+                                                    {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date) && isScheduledDetail
+                                                        ? format(toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)!, 'PPPP p')
+                                                        : 'TBD — Provider will confirm within 24–48 hours'}
+                                                </p>
+                                            </div>
+                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Status</p>
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${isScheduledDetail ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' : 'bg-transparent text-amber-600 border-amber-200'
+                                                    }`}>
+                                                    {isWaitlistDetail ? 'AWAITING PROVIDER' : intakeDetail.status}
+                                                </span>
+                                            </div>
+                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Service</p>
+                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.serviceKey?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Consultation'}</p>
+                                            </div>
+                                            {intakeDetail.meetingUrl && isScheduledDetail && (
+                                                <div className="col-span-2 bg-sky-50/50 p-5 rounded-[24px] border border-sky-100/60">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Video Visit Link</p>
+                                                    <a href={intakeDetail.meetingUrl} target="_blank" rel="noopener noreferrer"
+                                                        className="flex items-center gap-2 text-sm font-bold text-[#0EA5E9] hover:underline break-all">
+                                                        <Video className="w-4 h-4 shrink-0" /> {intakeDetail.meetingUrl}
+                                                    </a>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                                            {entries.map(([k, v]) => {
-                                                const question = (iQs[intakeDetail.serviceKey as keyof typeof iQs] || []).find((q: any) => q.k === k);
-                                                return (
-                                                    <div key={k} className="space-y-2">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">
-                                                            {question?.l || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}
-                                                        </p>
-                                                        <div className="text-sm font-bold text-slate-800 bg-white p-4 rounded-2xl border border-slate-100">
-                                                            {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v || '—')}
+
+                                        {(() => {
+                                            const answers = intakeDetail.intakeAnswers || intakeDetail.intake || {};
+                                            const entries = Object.entries(answers);
+                                            if (entries.length === 0) return null;
+                                            return (
+                                                <div className="p-6 rounded-[32px] border bg-slate-50/50 border-slate-100/60 mt-4">
+                                                    <div className="flex items-center gap-2 mb-6 text-slate-400">
+                                                        <div className="w-6 h-6 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center border border-indigo-100">
+                                                            <ClipboardCheck className="w-3 h-3" />
                                                         </div>
+                                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Clinical Intake Record</h4>
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                                                        {entries.map(([k, v]) => {
+                                                            const question = (iQs[intakeDetail.serviceKey as keyof typeof iQs] || []).find((q: any) => q.k === k);
+                                                            return (
+                                                                <div key={k} className="space-y-2">
+                                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">
+                                                                        {question?.l || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}
+                                                                    </p>
+                                                                    <div className="text-sm font-bold text-slate-800 bg-white p-4 rounded-2xl border border-slate-100">
+                                                                        {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v || '—')}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {isWaitlistDetail && (
+                                            <div className="flex items-start gap-4 p-6 bg-[#FFFBF0] text-amber-700/80 rounded-[24px] border border-amber-100/60 mt-4">
+                                                <Info className="w-5 h-5 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2">In Provider Queue</p>
+                                                    <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800">24–48 hours</strong> to confirm your appointment time.</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 );
                             })()}
-
-                            {intakeDetail.status === 'PENDING_SCHEDULING' && (
-                                <div className="flex items-start gap-4 p-6 bg-[#FFFBF0] text-amber-700/80 rounded-[24px] border border-amber-100/60 mt-4">
-                                    <Info className="w-5 h-5 mt-0.5 shrink-0" />
-                                    <div>
-                                        <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2">In Provider Queue</p>
-                                        <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800">24–48 hours</strong> to confirm your appointment time.</p>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
