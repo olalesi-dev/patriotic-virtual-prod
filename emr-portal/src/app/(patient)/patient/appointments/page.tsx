@@ -154,11 +154,48 @@ export default function AppointmentsPage() {
             let consultData: Appointment[] = [];
             let subApptData: Appointment[] = [];
 
+            // Status rank: higher = more advanced in the workflow.
+            // When merging two sources, we always keep the higher-ranked status.
+            const STATUS_RANK: Record<string, number> = {
+                PENDING_SCHEDULING: 0,
+                waitlist: 0,
+                scheduled: 1,
+                completed: 2,
+                cancelled: 3,
+            };
+            const statusRank = (s: string) => STATUS_RANK[s] ?? 0;
+
             const merge = () => {
-                // Sub-collection records override consultations (more up-to-date status)
                 const byKey = new Map<string, Appointment>();
+
+                // First pass: load consultations as the base
                 consultData.forEach(c => byKey.set(c.id, c));
-                subApptData.forEach(a => byKey.set(a.consultationId || a.id, a));
+
+                // Second pass: sub-collection records hold latest scheduling details
+                // (scheduledAt, meetingUrl, etc.) but we MUST NOT let an un-updated
+                // sub-collection status (e.g. 'waitlist') overwrite a consultation
+                // that has already moved to 'scheduled'. Always pick the higher status.
+                subApptData.forEach(a => {
+                    const key = a.consultationId || a.id;
+                    const existing = byKey.get(key);
+                    if (existing) {
+                        // Merge: sub-collection fields win EXCEPT status — take the higher one
+                        const betterStatus = statusRank(a.status) >= statusRank(existing.status)
+                            ? a.status
+                            : existing.status;
+                        // Prefer scheduledAt from sub-collection (set by backend schedule endpoint)
+                        const betterScheduledAt = a.scheduledAt || existing.scheduledAt;
+                        byKey.set(key, {
+                            ...existing,
+                            ...a,
+                            status: betterStatus,
+                            scheduledAt: betterScheduledAt,
+                            date: betterScheduledAt || a.date || existing.date,
+                        });
+                    } else {
+                        byKey.set(key, a);
+                    }
+                });
 
                 const merged = Array.from(byKey.values());
                 merged.sort((a, b) => {
@@ -167,8 +204,9 @@ export default function AppointmentsPage() {
                     return aMs - bMs;
                 });
                 setAppointments(merged);
-                setLoading(false); // always resolve — even if empty
+                setLoading(false);
             };
+
 
 
 

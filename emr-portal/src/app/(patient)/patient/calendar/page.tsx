@@ -195,8 +195,8 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-xs uppercase tracking-widest font-black transition-all ${joinActive
-                                    ? 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-xl shadow-sky-200 hover:scale-[1.02] active:scale-95'
-                                    : 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-sm'
+                                ? 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-xl shadow-sky-200 hover:scale-[1.02] active:scale-95'
+                                : 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-sm'
                                 }`}
                         >
                             <Video size={16} />
@@ -232,14 +232,30 @@ export default function PatientCalendarPage() {
             let consultData: any[] = [];
             let subApptData: any[] = [];
 
+            const STATUS_RANK: Record<string, number> = {
+                PENDING_SCHEDULING: 0, waitlist: 0,
+                scheduled: 1, completed: 2, cancelled: 3,
+            };
+            const rankOf = (s: string) => STATUS_RANK[s] ?? 0;
+
             const merge = () => {
                 const byKey = new Map<string, any>();
                 consultData.forEach(c => byKey.set(c.id, c));
-                // sub-collection wins (has updated status + scheduledAt)
-                subApptData.forEach(a => byKey.set(a.consultationId || a.id, a));
+                subApptData.forEach(a => {
+                    const key = a.consultationId || a.id;
+                    const existing = byKey.get(key);
+                    if (existing) {
+                        const betterStatus = rankOf(a.status) >= rankOf(existing.status) ? a.status : existing.status;
+                        const betterDate = a.scheduledAt || existing.scheduledAt;
+                        byKey.set(key, { ...existing, ...a, status: betterStatus, scheduledAt: betterDate, date: betterDate || a.date || existing.date });
+                    } else {
+                        byKey.set(key, a);
+                    }
+                });
                 setAppointments(Array.from(byKey.values()));
                 setLoading(false);
             };
+
 
             const mapConsult = (d: any) => {
                 const raw = d.data();
