@@ -82,9 +82,13 @@ const notifyWaitlist = async (patientData, serviceName) => {
         await sendEmail(
             patientData.email,
             'Your Visit Request has been Submitted - Patriotic Telehealth',
-            `<h3>Hi ${patientData.firstName || 'there'},</h3>
+            `<div style="text-align: center; margin-bottom: 20px;">
+               <img src="https://patriotictelehealth.com/assets/logo.png" alt="Patriotic Virtual Telehealth" width="200" style="max-width: 100%; height: auto;">
+             </div>
+             <h3>Hi ${patientData.firstName || 'there'},</h3>
              <p>Your request for <b>${serviceName}</b> has been received and you are currently on our waitlist. Our clinical team is reviewing your intake details.</p>
-             <p>You can track the status by logging into your Patient Dashboard.</p>
+             <p>You can track the status by logging into your Patient Dashboard:</p>
+             <p><a href="https://patriotictelehealth.com/#patient" style="display:inline-block;padding:10px 20px;background-color:#0a2540;color:white;text-decoration:none;border-radius:5px;font-weight:bold;">Log in to Patient Dashboard</a></p>
              <br/>
              <p>Thank you,<br/>Patriotic Virtual Telehealth Team</p>`
         );
@@ -104,12 +108,16 @@ const notifyWaitlist = async (patientData, serviceName) => {
         const emailPromises = emails.map(email => sendEmail(
             email,
             `New Patient Visit Submitted: ${serviceName}`,
-            `<h3>New Visit Request (Waitlist)</h3>
+            `<div style="text-align: center; margin-bottom: 20px;">
+               <img src="https://patriotictelehealth.com/assets/logo.png" alt="Patriotic Virtual Telehealth" width="200" style="max-width: 100%; height: auto;">
+             </div>
+             <h3>New Visit Request (Waitlist)</h3>
              <p><b>Patient:</b> ${pName}</p>
              <p><b>Service:</b> ${serviceName}</p>
              <p><b>Email:</b> ${patientData.email || 'N/A'}</p>
              <p><b>Phone:</b> ${patientData.phone || 'N/A'}</p>
-             <p>Please log in to the Provider Portal to review & schedule this clinical visit.</p>`
+             <p>Please log in to the Provider Portal to review & schedule this clinical visit.</p>
+             <p><a href="https://patriotictelehealth.com/#provider" style="display:inline-block;padding:10px 20px;background-color:#0a2540;color:white;text-decoration:none;border-radius:5px;font-weight:bold;">Log in to Provider Portal</a></p>`
         ));
         await Promise.all(emailPromises);
     }
