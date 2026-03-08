@@ -594,9 +594,9 @@ function DashboardCard({ title, icon: Icon, children, badge, footer }: any) {
     );
 }
 
-function QuickActionButton({ icon: Icon, label, color }: any) {
+function QuickActionButton({ icon: Icon, label, color, onClick }: any) {
     return (
-        <button className="flex items-center gap-4 bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all text-left">
+        <button onClick={onClick} className="flex items-center gap-4 bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all text-left">
             <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-100`}>
                 <Icon className="w-5 h-5" />
             </div>
