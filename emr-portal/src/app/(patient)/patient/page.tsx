@@ -12,7 +12,10 @@ import {
     FileText,
     AlertCircle,
     CheckCircle2,
-    History
+    History,
+    X,
+    Send,
+    ShieldCheck
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -22,10 +25,14 @@ import {
     limit,
     onSnapshot,
     Timestamp,
+    getDocs,
+    addDoc,
+    serverTimestamp
 } from 'firebase/firestore';
 import { format, isSameDay, isAfter, subMinutes, addMinutes } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 // --- Types ---
 interface Appointment {
@@ -72,11 +79,41 @@ export default function PatientDashboard() {
     const [medications, setMedications] = useState<Medication[]>([]);
     const [labResults, setLabResults] = useState<LabResult[]>([]);
 
+    // Compose Messaging State
+    const [isMessagingOpen, setIsMessagingOpen] = useState(false);
+    const [providers, setProviders] = useState<any[]>([]);
+    const [composeData, setComposeData] = useState({
+        recipientId: '',
+        recipientName: '',
+        subject: '',
+        category: 'General',
+        body: ''
+    });
+    const [isSendingMsg, setIsSendingMsg] = useState(false);
+
+    const fetchProvidersForMessaging = async () => {
+        try {
+            const q = query(collection(db, 'users'), where('role', 'in', ['provider', 'doctor', 'admin']));
+            const snip = await getDocs(q);
+            setProviders(snip.docs.map(d => {
+                const data = d.data();
+                return {
+                    id: d.id,
+                    name: data.name || data.displayName || 'Unnamed Provider',
+                    specialty: data.specialty || (data.role === 'admin' ? 'Systems Administrator' : 'Clinical Provider')
+                };
+            }));
+        } catch (e) {
+            console.error('Error fetching providers:', e);
+        }
+    };
+
     useEffect(() => {
         const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
                 setupRealtimeListeners(currentUser.uid);
+                fetchProvidersForMessaging();
             } else {
                 setLoading(false);
             }
@@ -226,6 +263,42 @@ export default function PatientDashboard() {
         return isAfter(now, subMinutes(date, 15)) && !isAfter(now, addMinutes(date, 60));
     };
 
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!auth.currentUser || !composeData.recipientId) return;
+
+        setIsSendingMsg(true);
+        try {
+            const threadRef = await addDoc(collection(db, 'threads'), {
+                patientId: auth.currentUser.uid,
+                providerId: composeData.recipientId,
+                providerName: composeData.recipientName,
+                subject: composeData.subject,
+                category: composeData.category,
+                lastMessage: composeData.body,
+                lastMessageAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                unreadCount: 0
+            });
+
+            await addDoc(collection(db, 'threads', threadRef.id, 'messages'), {
+                senderId: auth.currentUser.uid,
+                senderType: 'patient',
+                body: composeData.body,
+                createdAt: serverTimestamp(),
+                read: false
+            });
+
+            setIsMessagingOpen(false);
+            setComposeData({ recipientId: '', recipientName: '', subject: '', category: 'General', body: '' });
+            toast.success('Message sent to provider');
+        } catch (error) {
+            toast.error('Failed to send message');
+        } finally {
+            setIsSendingMsg(false);
+        }
+    };
+
     if (loading) return <DashboardSkeleton />;
 
     return (
@@ -244,8 +317,8 @@ export default function PatientDashboard() {
 
             {/* QUICK ACTIONS */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <QuickActionButton icon={Calendar} label="Schedule Visit" color="bg-[#0EA5E9]" onClick={() => router.push('/patient/appointments')} />
-                <QuickActionButton icon={MessageSquare} label="Message Doctor" color="bg-indigo-500" onClick={() => router.push('/patient/messages')} />
+                <QuickActionButton icon={Calendar} label="Schedule Visit" color="bg-[#0EA5E9]" onClick={() => router.push('/book')} />
+                <QuickActionButton icon={MessageSquare} label="Message Doctor" color="bg-indigo-500" onClick={() => setIsMessagingOpen(true)} />
                 <QuickActionButton icon={Pill} label="Request Refill" color="bg-emerald-500" onClick={() => router.push('/my-health/medications')} />
             </div>
 
@@ -261,29 +334,43 @@ export default function PatientDashboard() {
                                     const apptDate = safeDate(appt.date);
                                     const isPending = (appt.status as any) === 'PENDING_SCHEDULING';
                                     return (
-                                        <div key={appt.id} className="p-5 rounded-2xl border border-slate-50 bg-[#F8FAFC] group hover:border-[#0EA5E9]/30 transition-all">
+                                        <div key={appt.id} className={`p-5 rounded-2xl border ${isPending ? 'border-amber-100 bg-amber-50/20' : 'border-slate-50 bg-[#F8FAFC]'} group hover:border-[#0EA5E9]/30 transition-all relative`}>
                                             <div className="flex justify-between items-start mb-4">
-                                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#0EA5E9] group-hover:scale-110 transition-transform">
-                                                    <History className="w-5 h-5" />
+                                                <div className={`w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center ${isPending ? 'text-amber-500' : 'text-[#0EA5E9]'} group-hover:scale-110 transition-transform`}>
+                                                    {isPending ? <Clock className="w-5 h-5" /> : <Calendar className="w-5 h-5" />}
                                                 </div>
-                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isPending ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-sky-50 text-[#0EA5E9] border-sky-100'
-                                                    }`}>
-                                                    {isPending ? 'Awaiting Provider' : appt.status}
+                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isPending ? 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' : 'bg-sky-50 text-[#0EA5E9] border-sky-100'}`}>
+                                                    {isPending ? 'AWAITING PROVIDER' : 'SCHEDULED'}
                                                 </span>
                                             </div>
                                             <h4 className="font-black text-slate-800 tracking-tight text-lg mb-1">{appt.providerName}</h4>
                                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">{appt.type}</p>
-                                            <div className="flex items-center gap-4 mb-6">
-                                                <div className="bg-white px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2">
-                                                    <Clock className="w-3.5 h-3.5 text-[#0EA5E9]" />
-                                                    <span className="text-xs font-black text-slate-600">
-                                                        {apptDate ? format(apptDate, 'h:mm a') : 'TBD'}
-                                                    </span>
+
+                                            {isPending ? (
+                                                <div className="mb-4">
+                                                    <p className="text-[10px] font-bold text-amber-700/70 uppercase tracking-widest mb-1">Requested On:</p>
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <span className="text-sm font-black text-slate-700">{apptDate ? format(apptDate, 'MMM do, yyyy') : 'Recently'}</span>
+                                                        <span className="text-xs font-bold text-slate-400">{apptDate ? format(apptDate, 'h:mm a') : ''}</span>
+                                                    </div>
+                                                    <div className="bg-amber-50/50 border border-amber-200 text-amber-700 text-[9px] font-black uppercase tracking-widest p-2 rounded-lg flex items-start gap-2">
+                                                        <AlertCircle className="w-4 h-4 shrink-0" />
+                                                        A provider will schedule this within 24 hours
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs font-bold text-slate-400">
-                                                    {apptDate ? format(apptDate, 'MMM do') : 'Date TBD'}
+                                            ) : (
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="bg-white px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2">
+                                                        <Clock className="w-3.5 h-3.5 text-[#0EA5E9]" />
+                                                        <span className="text-xs font-black text-slate-600">
+                                                            {apptDate ? format(apptDate, 'h:mm a') : 'TBD'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs font-bold text-slate-400">
+                                                        {apptDate ? format(apptDate, 'MMM do') : 'Date TBD'}
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
                                             {isJoinable(appt.date) ? (
                                                 <button className="w-full bg-[#0EA5E9] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-sky-100 hover:scale-[1.02] active:scale-95 transition-all text-xs">
                                                     Join Now
@@ -377,6 +464,102 @@ export default function PatientDashboard() {
                 </div>
 
             </div>
+
+            {/* SEND MESSAGE MODAL */}
+            {isMessagingOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+                        <div className="bg-[#0EA5E9] p-8 text-white flex justify-between items-center shrink-0 shadow-lg z-10 w-full relative">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                    <MessageSquare className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black tracking-tight leading-none text-white">Message Doctor</h2>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-sky-100 mt-1">Response typically &lt; 24 hrs</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsMessagingOpen(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-all text-white">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
+                            <form id="dashboard-compose-form" onSubmit={handleSendMessage} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Select Recipient</label>
+                                    <select
+                                        required
+                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                        onChange={(e) => {
+                                            const p = providers.find(prov => prov.id === e.target.value);
+                                            setComposeData({ ...composeData, recipientId: p?.id || '', recipientName: p?.name || '' });
+                                        }}
+                                        value={composeData.recipientId}
+                                    >
+                                        <option value="">Select a doctor...</option>
+                                        {providers.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name} ({p.specialty})</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Subject Line</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                            placeholder="e.g. Question about my labs"
+                                            value={composeData.subject}
+                                            onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</label>
+                                        <select
+                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                            value={composeData.category}
+                                            onChange={(e) => setComposeData({ ...composeData, category: e.target.value as any })}
+                                        >
+                                            {['General', 'Medication', 'Test Results', 'Appointment Request', 'Urgent'].map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Message</label>
+                                    <textarea
+                                        required
+                                        className="w-full bg-slate-50 border-none rounded-3xl p-6 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100 min-h-[150px] placeholder:text-slate-300"
+                                        placeholder="Type your message here..."
+                                        value={composeData.body}
+                                        onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
+                                    />
+                                </div>
+                            </form>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0 flex flex-col sm:flex-row items-center gap-4 justify-between">
+                            <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
+                                <ShieldCheck className="w-4 h-4" />
+                                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Encrypted & HIPAA-secure</span>
+                            </div>
+                            <button
+                                type="submit"
+                                form="dashboard-compose-form"
+                                disabled={isSendingMsg || !composeData.recipientId}
+                                className="w-full sm:w-auto bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isSendingMsg ? 'Sending...' : 'Send Message'} <Send className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
