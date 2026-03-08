@@ -225,6 +225,7 @@ export default function PatientCalendarPage() {
     useEffect(() => {
         let unsubConsult: (() => void) | null = null;
         let unsubSubAppt: (() => void) | null = null;
+        let unsubTopAppt: (() => void) | null = null;
 
         const unsubAuth = auth.onAuthStateChanged((user) => {
             if (!user) { setAppointments([]); setLoading(false); return; }
@@ -302,11 +303,49 @@ export default function PatientCalendarPage() {
                             providerName: raw.providerName || 'Patriotic Provider',
                             serviceKey: raw.serviceKey || raw.reason || 'Consultation',
                             type: raw.type || 'Telehealth',
-                            scheduledAt: apptDate,   // plain JS Date
-                            date: apptDate,          // plain JS Date
+                            scheduledAt: apptDate,
+                            date: apptDate,
                             meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
                         };
                     });
+                    merge();
+                });
+
+            // Listener 3: top-level appointments (provider-written on scheduling)
+            unsubTopAppt = onSnapshot(
+                query(collection(db, 'appointments'), where('patientId', '==', user.uid)),
+                snap => {
+                    const topData = snap.docs.map(d => {
+                        const raw = d.data();
+                        const apptDate = resolveDate(raw.scheduledAt) ?? resolveDate(raw.startTime) ?? resolveDate(raw.date) ?? null;
+                        const consultationId = raw.consultationId || d.id;
+                        return {
+                            id: d.id,
+                            consultationId,
+                            status: normalizeStatus(raw.status),
+                            providerName: raw.providerName || 'Patriotic Provider',
+                            serviceKey: raw.serviceKey || raw.service || raw.type || 'Consultation',
+                            type: 'Telehealth',
+                            scheduledAt: apptDate,
+                            date: apptDate,
+                            meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                        };
+                    });
+                    // Merge top-level appts into subApptData by best status
+                    const rankOf = (s: string) => ({ PENDING_SCHEDULING: 0, waitlist: 0, scheduled: 1, completed: 2, cancelled: 3 }[s] ?? 0);
+                    const merged = new Map<string, any>();
+                    subApptData.forEach(a => merged.set(a.consultationId || a.id, a));
+                    topData.forEach(a => {
+                        const key = a.consultationId || a.id;
+                        const ex = merged.get(key);
+                        if (ex) {
+                            const betterStatus = rankOf(a.status) >= rankOf(ex.status) ? a.status : ex.status;
+                            merged.set(key, { ...ex, ...a, status: betterStatus, scheduledAt: a.scheduledAt || ex.scheduledAt, date: a.scheduledAt || ex.scheduledAt || a.date });
+                        } else {
+                            merged.set(key, a);
+                        }
+                    });
+                    subApptData = Array.from(merged.values());
                     merge();
                 });
         });
@@ -315,6 +354,7 @@ export default function PatientCalendarPage() {
             unsubAuth();
             if (unsubConsult) unsubConsult();
             if (unsubSubAppt) unsubSubAppt();
+            if (unsubTopAppt) unsubTopAppt();
         };
     }, []);
 
