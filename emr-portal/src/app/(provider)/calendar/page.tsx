@@ -348,10 +348,10 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                                                     {formatKey(key)}
                                                 </p>
                                                 <p className={`text-sm font-semibold ${value === true || value === 'yes' || value === 'Yes'
-                                                        ? 'text-amber-700'
-                                                        : value === false || value === 'no' || value === 'No'
-                                                            ? 'text-emerald-700'
-                                                            : 'text-slate-800'
+                                                    ? 'text-amber-700'
+                                                    : value === false || value === 'no' || value === 'No'
+                                                        ? 'text-emerald-700'
+                                                        : 'text-slate-800'
                                                     }`}>
                                                     {typeof value === 'boolean'
                                                         ? (value ? 'âš ï¸ Yes' : 'âœ“ No')
@@ -586,6 +586,21 @@ export default function CalendarPage() {
                 startTime: Timestamp.fromDate(newStart),
                 updatedAt: Timestamp.now()
             });
+
+            // TRIGGER BACKEND NOTIFICATION
+            try {
+                const { auth } = await import('@/lib/firebase');
+                const tok = await auth.currentUser?.getIdToken();
+                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-4bd3b1a7-0e36-4e42-88f0-f9e4f509cc92.us-central1.run.app';
+                await fetch(`${API}/api/v1/trigger/schedule-notification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+                    body: JSON.stringify({ apptId: draggedAppt.id, scheduledAt: newStart.toISOString() })
+                });
+            } catch (err) {
+                console.error("Notification error:", err);
+            }
+
             showToast(`Appointment rescheduled to ${format(day, 'EEE MMM d')} at ${newTime}`);
         } catch (e) { showToast('Reschedule failed.'); }
         setDraggedAppt(null);

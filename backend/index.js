@@ -807,6 +807,48 @@ app.patch('/api/v1/consultations/:id/schedule', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// 1.7c Trigger Schedule Notifications Manually (from EMR frontend)
+app.post('/api/v1/trigger/schedule-notification', async (req, res) => {
+    try {
+        const { apptId, scheduledAt, meetingUrl } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+
+        if (!apptId || !scheduledAt) return res.status(400).json({ error: 'Missing apptId or scheduledAt' });
+
+        const scheduledDate = new Date(scheduledAt);
+        if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'Invalid scheduledAt' });
+
+        // Retrieve the data manually
+        let uid = null;
+        let consultData = {};
+        let apptData = { meetingUrl };
+
+        const consultSnap = await db.collection('consultations').doc(apptId).get();
+        if (consultSnap.exists) {
+            consultData = consultSnap.data();
+            uid = consultData.uid;
+        }
+
+        const apptSnap = await db.collection('appointments').doc(apptId).get();
+        if (apptSnap.exists) {
+            apptData = { ...apptData, ...apptSnap.data() };
+            if (!uid) uid = apptData.patientId || apptData.patientUid;
+            if (!consultData.serviceKey) consultData.serviceKey = apptData.service || apptData.type || 'Telehealth Visit';
+        }
+
+        if (!uid) {
+            return res.status(404).json({ error: 'Could not resolve patient UID' });
+        }
+
+        await triggerScheduledNotifications(uid, consultData, apptData, scheduledDate);
+        res.json({ success: true, message: 'Notification triggered' });
+    } catch (error) {
+        console.error('Trigger schedule notification error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // 1.7 ADMIN: Update Consultation Status
 app.patch('/api/v1/admin/consultations/:id', async (req, res) => {
