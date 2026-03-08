@@ -495,11 +495,19 @@ export default function AppointmentsPage() {
             {/* List */}
             <div className="space-y-4">
                 {filteredAppts.length > 0 ? filteredAppts.map((appt) => {
-                    const apptDate = toSafeDate(appt.date);
-                    const isWaitlist = ['pending_scheduling', 'waitlist'].includes(parsedStatus(appt.status));
-                    const isScheduled = parsedStatus(appt.status) === 'scheduled';
-                    const isCompleted = parsedStatus(appt.status) === 'completed';
-                    const isCancelled = parsedStatus(appt.status) === 'cancelled';
+                    const apptDate = toSafeDate(appt.scheduledAt || appt.date);
+                    const submittedDate = toSafeDate(appt.date); // createdAt for waitlist cards
+                    const isWaitlist = ['pending_scheduling', 'waitlist', 'PENDING_SCHEDULING'].includes(appt.status);
+                    const isScheduled = appt.status === 'scheduled';
+                    const isCompleted = appt.status === 'completed';
+                    const isCancelled = appt.status === 'cancelled';
+
+                    // Human-readable status label
+                    const statusLabel = isScheduled ? 'SCHEDULED' :
+                        isWaitlist ? 'AWAITING PROVIDER' :
+                            isCancelled ? 'CANCELLED' :
+                                isCompleted ? 'COMPLETED' :
+                                    (appt.status || 'UNKNOWN').toUpperCase();
 
                     return (
                         <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${isWaitlist ? 'border-amber-100 shadow-sm dark:border-amber-900/50' : 'border-slate-50 dark:border-slate-700/50'} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
@@ -522,15 +530,15 @@ export default function AppointmentsPage() {
                                             isCancelled ? 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/30 dark:border-rose-800/50' :
                                                 'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-700/50 dark:border-slate-600'
                                         }`}>
-                                        {isWaitlist ? 'AWAITING PROVIDER' : appt.status}
+                                        {statusLabel}
                                     </span>
                                 </div>
                                 {isWaitlist ? (
                                     <div className="space-y-3 pt-1 pb-1">
                                         <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-amber-700/60 dark:text-amber-400 font-bold text-[10px] uppercase tracking-widest">
                                             <span>Time Submitted</span>
-                                            {apptDate && (
-                                                <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
+                                            {submittedDate && (
+                                                <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(submittedDate, 'h:mm a')}</div>
                                             )}
                                             <div className="flex items-center gap-1.5 opacity-80">
                                                 {appt.type === 'Telehealth' || appt.type?.toLowerCase().includes('tele') ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
@@ -544,9 +552,14 @@ export default function AppointmentsPage() {
                                     </div>
                                 ) : (
                                     <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-400 dark:text-slate-300 font-bold text-xs uppercase tracking-widest">
-                                        {apptDate && (
+                                        {isScheduled && apptDate ? (
+                                            <div className="flex items-center gap-1.5 text-sky-500 dark:text-sky-400 font-black">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                Scheduled for {format(apptDate, 'MMM d, yyyy · h:mm a')}
+                                            </div>
+                                        ) : apptDate ? (
                                             <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
-                                        )}
+                                        ) : null}
                                         <div className="flex items-center gap-1.5">
                                             {appt.type === 'Telehealth' || appt.type?.toLowerCase().includes('tele') ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
                                             {appt.type || 'Telehealth'}
