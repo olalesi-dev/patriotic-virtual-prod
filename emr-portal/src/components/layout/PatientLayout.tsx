@@ -168,7 +168,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 
     const navigation = [
         { name: 'Dashboard', href: '/patient', icon: LayoutDashboard },
-        { name: 'My Appointments', href: '/patient/appointments', icon: Calendar },
+        { name: 'My Appointments', href: '/patient/appointments', icon: FileText }, // Changed icon to distinguish from Calendar
+        { name: 'Calendar', href: '/patient/calendar', icon: Calendar },
         { name: 'Messages', href: '/patient/messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount.toString() : undefined },
         { name: 'Medications', href: '/my-health/medications', icon: Pill },
         { name: 'Lab Results', href: '/my-health/labs', icon: Activity },
