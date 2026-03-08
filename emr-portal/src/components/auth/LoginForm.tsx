@@ -236,7 +236,7 @@ export function LoginForm() {
                     className="w-full space-y-8"
                 >
                     <div className="space-y-2">
-                        <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase">PATRIOTIC VIRTUAL EMR</h2>
+                        <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase">PATRIOTIC VIRTUAL EHR</h2>
                         <p className="text-slate-500 text-sm font-medium leading-relaxed">
                             Welcome back. Please authenticate to access your secure medical records and clinical updates.
                         </p>

@@ -201,13 +201,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 {/* Logo */}
-                <div className="h-20 flex items-center px-8 border-b border-slate-50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#0EA5E9] rounded-xl flex items-center justify-center shadow-lg shadow-sky-100">
-                            <span className="text-white font-black italic text-xl">P</span>
-                        </div>
-                        <span className="font-black text-slate-800 tracking-tight text-xl">Patriotic</span>
-                    </div>
+                <div className="h-20 flex items-center px-8 border-b border-slate-50 pt-2">
+                    <img src="/logo.png" alt="Patriotic EHR" className="h-10 w-auto object-contain" />
                 </div>
 
                 {/* Navigation */}

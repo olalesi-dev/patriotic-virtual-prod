@@ -32,7 +32,7 @@ export default function LoginPage() {
                                 <span className="text-2xl font-black text-brand italic">P</span>
                             </div>
                             <h1 className="text-white text-3xl font-black tracking-tighter">
-                                PATRIOTIC <span className="text-white/60 font-medium">VIRTUAL EMR</span>
+                                PATRIOTIC <span className="text-white/60 font-medium">VIRTUAL EHR</span>
                             </h1>
                         </div>
 
