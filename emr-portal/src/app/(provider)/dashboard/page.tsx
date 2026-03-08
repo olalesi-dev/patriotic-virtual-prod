@@ -322,7 +322,8 @@ export default function EmrDashboard() {
     };
 
     const handleJoinCall = (appt: Appointment) => {
-        const url = appt.meetingUrl || 'https://doxy.me/patriotictelehealth';
+        let url = appt.meetingUrl || 'https://doxy.me/patriotictelehealth';
+        if (url.includes('doxy.me')) url = 'https://doxy.me/sign-in';
         window.open(url, '_blank');
     };
 
@@ -416,7 +417,7 @@ export default function EmrDashboard() {
                     </p>
                     <div className="flex gap-3">
                         <button
-                            onClick={() => window.open('https://doxy.me/patriotictelehealth', '_blank')}
+                            onClick={() => window.open('https://doxy.me/sign-in', '_blank')}
                             className="bg-brand hover:bg-brand-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95"
                         >
                             <Video className="w-4 h-4" /> Open Waiting Room
@@ -640,7 +641,11 @@ export default function EmrDashboard() {
                             <IntakeSection intakeAnswers={detailAppt.intakeAnswers} />
                             {detailAppt.meetingUrl && (
                                 <button
-                                    onClick={() => window.open(detailAppt.meetingUrl, '_blank')}
+                                    onClick={() => {
+                                        let url = detailAppt.meetingUrl || '';
+                                        if (url.includes('doxy.me')) url = 'https://doxy.me/sign-in';
+                                        window.open(url, '_blank');
+                                    }}
                                     className="w-full bg-brand text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-600 transition-all shadow-md"
                                 >
                                     <Video className="w-4 h-4" /> Join Telehealth Session
