@@ -149,7 +149,7 @@ export default function MedicationsPage() {
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Manage your active medications and refills</p>
                 </div>
 
-                <div className="flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm grow-0">
+                <div className="flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
                     {(['active', 'inactive', 'all'] as const).map((t) => (
                         <button
                             key={t}
@@ -160,21 +160,6 @@ export default function MedicationsPage() {
                         </button>
                     ))}
                 </div>
-                <button
-                    onClick={() => {
-                        const activeMeds = medications.filter(m => m.status === 'active');
-                        if (activeMeds.length === 1) {
-                            handleRefillRequest(activeMeds[0]);
-                        } else if (activeMeds.length > 1) {
-                            toast('Please select a specific medication below to request a refill.', { icon: '💊' });
-                        } else {
-                            toast.error('No active medications found for refill.');
-                        }
-                    }}
-                    className="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                >
-                    <Pill className="w-3.5 h-3.5" /> Request New Refill
-                </button>
             </div>
 
             {/* Grid */}
