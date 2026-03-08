@@ -142,7 +142,7 @@ export default function PatientDashboard() {
             subApptData.forEach(a => byKey.set((a as any).consultationId || a.id, a));
 
             const merged = Array.from(byKey.values())
-                .filter(a => a.status !== 'cancelled' && a.status !== 'completed')
+                .filter(a => a.status !== 'cancelled' && a.status !== 'completed' && a.status !== 'PENDING_SCHEDULING')
                 .sort((a, b) => {
                     const aMs = toDate((a as any).scheduledAt || a.date)?.getTime() ?? 0;
                     const bMs = toDate((b as any).scheduledAt || b.date)?.getTime() ?? 0;
@@ -159,14 +159,15 @@ export default function PatientDashboard() {
                 consultData = snap.docs
                     .map(d => {
                         const raw = d.data();
+                        const rawStatus = (raw.status || '').toLowerCase();
                         // Only show paid consultations
                         if (raw.paymentStatus && raw.paymentStatus !== 'paid') return null;
                         return {
                             id: d.id,
                             providerName: raw.providerName || 'Patriotic Provider',
                             type: 'Telehealth',
-                            status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' :
-                                raw.status === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
+                            status: rawStatus === 'waitlist' ? 'PENDING_SCHEDULING' :
+                                rawStatus === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
                             // Use scheduledAt if available, fall back to createdAt
                             date: raw.scheduledAt || raw.createdAt,
                             meetingUrl: raw.meetingUrl,
@@ -184,12 +185,13 @@ export default function PatientDashboard() {
             (snap) => {
                 subApptData = snap.docs.map(d => {
                     const raw = d.data();
+                    const rawStatus = (raw.status || '').toLowerCase();
                     return {
                         id: d.id,
                         consultationId: raw.consultationId,
                         providerName: raw.providerName || 'Patriotic Provider',
                         type: raw.type || 'Telehealth',
-                        status: raw.status === 'waitlist' ? 'PENDING_SCHEDULING' : (raw.status || 'PENDING_SCHEDULING'),
+                        status: rawStatus === 'waitlist' ? 'PENDING_SCHEDULING' : (rawStatus || 'PENDING_SCHEDULING'),
                         date: raw.scheduledAt || raw.createdAt || raw.date,
                         meetingUrl: raw.meetingUrl,
                     } as Appointment;
