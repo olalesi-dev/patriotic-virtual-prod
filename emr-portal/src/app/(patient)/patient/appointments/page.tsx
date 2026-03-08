@@ -244,8 +244,13 @@ export default function AppointmentsPage() {
             unsubSubAppt = onSnapshot(subApptQ, (snap) => {
                 subApptData = snap.docs.map(d => {
                     const raw = d.data();
-                    const rawStatus = (raw.status || '').toLowerCase();
-                    let normalizedStatus = rawStatus === 'waitlist' ? 'PENDING_SCHEDULING' : (rawStatus || 'PENDING_SCHEDULING');
+                    const rawStatus = (raw.status || '').toLowerCase().trim();
+                    // Explicitly map every known status, default unknown → PENDING_SCHEDULING
+                    let normalizedStatus: string;
+                    if (rawStatus === 'scheduled') normalizedStatus = 'scheduled';
+                    else if (rawStatus === 'completed') normalizedStatus = 'completed';
+                    else if (rawStatus === 'cancelled') normalizedStatus = 'cancelled';
+                    else normalizedStatus = 'PENDING_SCHEDULING'; // waitlist / pending / unknown
 
                     return {
                         ...raw,
@@ -253,16 +258,17 @@ export default function AppointmentsPage() {
                         consultationId: raw.consultationId,
                         uid: raw.patientUid || user.uid,
                         status: normalizedStatus as Appointment['status'],
-                        reason: raw.serviceKey || 'Consultation',
+                        reason: raw.serviceKey || raw.reason || 'Consultation',
                         type: 'Telehealth',
-                        date: raw.scheduledAt || raw.createdAt,
+                        // Prefer scheduledAt (Timestamp set by provider) over createdAt
+                        date: raw.scheduledAt || raw.date || raw.createdAt,
                         scheduledAt: raw.scheduledAt || null,
                         providerName: raw.providerName || 'Patriotic Provider',
                         providerId: raw.providerId || '',
                         intakeAnswers: raw.intakeAnswers || {},
                         intake: raw.intakeAnswers || {},
                         serviceKey: raw.serviceKey,
-                        meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
+                        meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
                     } as Appointment;
                 });
                 merge();

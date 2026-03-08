@@ -231,17 +231,12 @@ function SlideOutPanel({ appt, onClose }: {
                     {appt.status === 'scheduled' && isVideo && (
                         <a
                             href={meetingUrl}
-                            target={joinActive ? "_blank" : "_self"}
+                            target="_blank"
                             rel="noopener noreferrer"
-                            onClick={(e) => {
-                                // If not active, prevent the click and alert or just do nothing
-                                // But if it's external link, we can just let them go to the waiting room early if they want, 
-                                // but the prompt said "make sure the patient can launch the doxy meeting from the calendar event popup".
-                                // Doxy.me waiting rooms can be joined anytime, so let's just make it active always or just highlight it.
-                            }}
                             className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-xs uppercase tracking-widest font-black transition-all ${joinActive
-                                ? 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-xl shadow-sky-200 hover:scale-[1.02] active:scale-95'
-                                : 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-sm'}`}
+                                    ? 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-xl shadow-sky-200 hover:scale-[1.02] active:scale-95'
+                                    : 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-sm'
+                                }`}
                         >
                             <Video size={16} />
                             {joinActive ? 'Join Telehealth Visit' : 'Enter Waiting Room'}
@@ -327,9 +322,19 @@ export default function PatientCalendarPage() {
             unsubSubAppt = onSnapshot(subApptQ, (snap) => {
                 subApptData = snap.docs.map(d => {
                     const raw = d.data();
-                    const rawStatus = (raw.status || '').toLowerCase();
-                    let normalizedStatus = rawStatus === 'waitlist' ? 'PENDING_SCHEDULING' : (rawStatus || 'PENDING_SCHEDULING');
-                    return { ...raw, id: d.id, status: normalizedStatus };
+                    const rawStatus = (raw.status || '').toLowerCase().trim();
+                    let normalizedStatus: string;
+                    if (rawStatus === 'scheduled') normalizedStatus = 'scheduled';
+                    else if (rawStatus === 'completed') normalizedStatus = 'completed';
+                    else if (rawStatus === 'cancelled') normalizedStatus = 'cancelled';
+                    else normalizedStatus = 'PENDING_SCHEDULING';
+                    return {
+                        ...raw,
+                        id: d.id,
+                        status: normalizedStatus,
+                        meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                        date: raw.scheduledAt || raw.date || raw.createdAt,
+                    };
                 });
                 merge();
             });
