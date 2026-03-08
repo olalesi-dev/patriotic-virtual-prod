@@ -512,9 +512,11 @@ export default function AppointmentsPage() {
     // FIX: Use toSafeDate() in filter â€” was crashing with .toDate() on undefined
     const parsedStatus = (s: string | undefined | null) => (s || '').toLowerCase();
 
+    // Waitlist tab: shows all submissions — pending AND newly scheduled.
+    // Appointments stay on this tab and update their card in real time.
     const waitlist = appointments.filter(a => {
         const s = parsedStatus(a.status);
-        return s === 'pending_scheduling' || s === 'waitlist';
+        return s === 'pending_scheduling' || s === 'waitlist' || s === 'scheduled';
     });
 
     const upcoming = appointments.filter(a => {
@@ -579,25 +581,38 @@ export default function AppointmentsPage() {
                 {filteredAppts.length > 0 ? filteredAppts.map((appt) => {
                     const apptDate = toSafeDate(appt.scheduledAt || appt.date);
                     const submittedDate = toSafeDate(appt.date); // createdAt for waitlist cards
-                    const isWaitlist = ['pending_scheduling', 'waitlist', 'PENDING_SCHEDULING'].includes(appt.status);
+                    const isWaitlistStatus = ['pending_scheduling', 'waitlist', 'PENDING_SCHEDULING'].includes(appt.status);
+                    const isWaitlist = isWaitlistStatus; // alias kept for compatibility
                     const isScheduled = appt.status === 'scheduled';
                     const isCompleted = appt.status === 'completed';
                     const isCancelled = appt.status === 'cancelled';
 
                     // Human-readable status label
                     const statusLabel = isScheduled ? 'SCHEDULED' :
-                        isWaitlist ? 'AWAITING PROVIDER' :
+                        isWaitlistStatus ? 'AWAITING PROVIDER' :
                             isCancelled ? 'CANCELLED' :
                                 isCompleted ? 'COMPLETED' :
                                     (appt.status || 'UNKNOWN').toUpperCase();
 
+                    // Card border + date badge colours — amber for pending, sky for scheduled
+                    const cardBorder = isScheduled
+                        ? 'border-sky-100 dark:border-sky-900/50'
+                        : isWaitlistStatus
+                            ? 'border-amber-100 dark:border-amber-900/50'
+                            : 'border-slate-50 dark:border-slate-700/50';
+                    const dateBadgeBg = isScheduled
+                        ? 'bg-sky-50 dark:bg-sky-900/20'
+                        : isWaitlistStatus
+                            ? 'bg-[#FFFBF0] dark:bg-amber-900/20'
+                            : 'bg-[#F8FAFC] dark:bg-slate-900';
+
                     return (
-                        <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${isWaitlist ? 'border-amber-100 shadow-sm dark:border-amber-900/50' : 'border-slate-50 dark:border-slate-700/50'} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
-                            <div className={`w-20 h-20 ${isWaitlist ? 'bg-[#FFFBF0] dark:bg-amber-900/20' : 'bg-[#F8FAFC] dark:bg-slate-900'} rounded-[24px] flex flex-col items-center justify-center shrink-0 border border-slate-50 dark:border-slate-700/50`}>
+                        <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${cardBorder} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
+                            <div className={`w-20 h-20 ${dateBadgeBg} rounded-[24px] flex flex-col items-center justify-center shrink-0 border border-slate-50 dark:border-slate-700/50`}>
                                 {apptDate ? (
                                     <>
-                                        <span className={`text-[10px] font-black uppercase tracking-widest ${isWaitlist ? 'text-amber-500 dark:text-amber-400' : 'text-[#0EA5E9] dark:text-sky-400'}`}>{format(apptDate, 'MMM')}</span>
-                                        <span className={`text-2xl font-black mt-0.5 ${isWaitlist ? 'text-amber-800 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>{format(apptDate, 'dd')}</span>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${isWaitlistStatus ? 'text-amber-500 dark:text-amber-400' : 'text-[#0EA5E9] dark:text-sky-400'}`}>{format(apptDate, 'MMM')}</span>
+                                        <span className={`text-2xl font-black mt-0.5 ${isWaitlistStatus ? 'text-amber-800 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>{format(apptDate, 'dd')}</span>
                                     </>
                                 ) : (
                                     <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase">TBD</span>
@@ -615,7 +630,8 @@ export default function AppointmentsPage() {
                                         {statusLabel}
                                     </span>
                                 </div>
-                                {isWaitlist ? (
+                                {/* Card body: show scheduled info if scheduled, waitlist messaging if pending */}
+                                {isWaitlistStatus ? (
                                     <div className="space-y-3 pt-1 pb-1">
                                         <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-amber-700/60 dark:text-amber-400 font-bold text-[10px] uppercase tracking-widest">
                                             <span>Time Submitted</span>
@@ -652,34 +668,44 @@ export default function AppointmentsPage() {
                             </div>
 
                             <div className="shrink-0 w-full md:w-auto flex flex-col gap-2">
-                                {(isScheduled || isWaitlist) && (
+                                {isScheduled && (
                                     <>
-                                        {isScheduled && isJoinable(appt.date) ? (
-                                            <button
-                                                onClick={() => setJoiningAppt(appt)}
-                                                className="w-full md:w-48 bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-sky-100 dark:shadow-none hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse"
+                                        {isJoinable(appt.scheduledAt || appt.date) ? (
+                                            <a
+                                                href={appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="w-full md:w-52 bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-sky-100 dark:shadow-none hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse"
                                             >
                                                 <Video className="w-4 h-4" /> Join Now
-                                            </button>
+                                            </a>
                                         ) : (
-                                            <div className="flex gap-2 justify-end w-full md:w-auto">
-                                                {isScheduled && canCancel(appt.date) && (
-                                                    <button
-                                                        onClick={() => handleCancel(appt.id)}
-                                                        className="flex-1 md:w-auto bg-white dark:bg-slate-800 text-rose-500 border border-rose-100 dark:border-rose-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                )}
+                                            <div className="flex flex-col gap-2">
+                                                <a
+                                                    href={appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full md:w-52 bg-sky-50 dark:bg-sky-900/30 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-800 py-3.5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-sky-100 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Video className="w-4 h-4" /> Start Video Call
+                                                </a>
                                                 <button
                                                     onClick={() => setIntakeDetail(appt)}
-                                                    className="flex-1 md:w-auto bg-white dark:bg-slate-800 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm"
+                                                    className="w-full md:w-52 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                                                 >
                                                     View Intake
                                                 </button>
                                             </div>
                                         )}
                                     </>
+                                )}
+                                {isWaitlistStatus && (
+                                    <button
+                                        onClick={() => setIntakeDetail(appt)}
+                                        className="w-full md:w-auto bg-white dark:bg-slate-800 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm"
+                                    >
+                                        View Intake
+                                    </button>
                                 )}
                                 {isCompleted && (
                                     <button
