@@ -279,8 +279,33 @@ app.post('/api/v1/consultations', async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
+        // EMR PHASE 1: Create/Update Patient Record
+        // 1) Fetch current user from Auth to guarantee we have their real name
+        let realFirst = '';
+        let realLast = '';
+        let realEmail = '';
+        try {
+            if (uid) {
+                const userRec = await admin.auth().getUser(uid);
+                realEmail = userRec.email || '';
+                if (userRec.displayName) {
+                    const parts = userRec.displayName.split(' ');
+                    realFirst = parts[0] || '';
+                    realLast = parts.slice(1).join(' ') || '';
+                }
+            }
+        } catch (e) {
+            console.error("Auth fetch failed in consults:", e);
+        }
+
+        const fName = intake.firstName || intake.first_name || realFirst || 'Patient';
+        const lName = intake.lastName || intake.last_name || realLast || '';
+        const email = intake.email || realEmail;
+
         const consultRef = await db.collection('consultations').add({
             uid: uid || null,
+            patient: `${fName} ${lName}`.trim(),
+            patientEmail: email,
             serviceKey: serviceKey || 'unknown',
             intake: intake || {},
             stripeProductId: stripeProductId || null,
@@ -289,13 +314,13 @@ app.post('/api/v1/consultations', async (req, res) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        // EMR PHASE 1: Create/Update Patient Record
         const patientRef = db.collection('patients').doc(uid);
         await patientRef.set({
             uid,
-            firstName: intake.firstName || 'Unknown',
-            lastName: intake.lastName || '',
-            email: intake.email || '',
+            firstName: fName,
+            lastName: lName,
+            name: `${fName} ${lName}`.trim(),
+            email: email,
             dob: intake.dateOfBirth || '',
             state: intake.state || '',
             lastVisit: admin.firestore.FieldValue.serverTimestamp(),

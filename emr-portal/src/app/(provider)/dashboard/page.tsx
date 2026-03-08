@@ -83,7 +83,11 @@ export default function EmrDashboard() {
 
     // --- Helper: enrich appointment from consultations doc ---
     const enrichFromConsultation = async (apptId: string, data: Record<string, any>) => {
-        let patientName = data.patient || data.patientName || 'Unknown Patient';
+        let ptNameStr = String(data.patient || data.patientName || '').trim();
+        if (!ptNameStr || ptNameStr.toLowerCase().includes('unknown') || ptNameStr === 'Patient') {
+            ptNameStr = 'Unknown Patient';
+        }
+        let patientName = ptNameStr;
         let patientEmail = data.patientEmail || '';
         let patientUid = data.patientId || data.uid || '';
         let serviceKey = data.serviceKey || data.service || data.type || 'Consultation';
@@ -98,34 +102,43 @@ export default function EmrDashboard() {
                 serviceKey = cd.serviceKey || serviceKey;
                 patientUid = cd.uid || cd.patientId || patientUid;
                 meetingUrl = cd.meetingUrl || meetingUrl;
+
+                const cdPtName = String(cd.patient || cd.patientName || '').trim();
+                if (cdPtName && !cdPtName.toLowerCase().includes('unknown') && cdPtName !== 'Patient') patientName = cdPtName;
+
                 if (cd.intake?.firstName || cd.intake?.lastName) {
-                    patientName = `${cd.intake.firstName || ''} ${cd.intake.lastName || ''}`.trim() || patientName;
+                    const iNm = `${cd.intake.firstName || ''} ${cd.intake.lastName || ''}`.trim();
+                    if (iNm && !iNm.toLowerCase().includes('unknown') && iNm !== 'Patient') patientName = iNm;
                 }
                 if (cd.intake?.email) patientEmail = cd.intake.email;
+                if (cd.patientEmail) patientEmail = cd.patientEmail;
             }
         } catch (e) { /* silent */ }
 
         // Lookup patient profile if still unknown
-        if (patientUid && (patientName === 'Unknown Patient' || !patientEmail)) {
+        if (patientUid && patientName === 'Unknown Patient') {
             try {
                 const userSnap = await getDoc(doc(db, 'users', patientUid));
                 if (userSnap.exists()) {
                     const ud = userSnap.data();
-                    if (patientName === 'Unknown Patient') {
-                        patientName = ud.displayName || `${ud.firstName || ''} ${ud.lastName || ''}`.trim() || ud.name || 'Unknown Patient';
-                    }
+                    const udNm = (ud.displayName || `${ud.firstName || ''} ${ud.lastName || ''}`.trim() || ud.name || '').trim();
+                    if (udNm && !udNm.toLowerCase().includes('unknown') && udNm !== 'Patient') patientName = udNm;
                     patientEmail = patientEmail || ud.email || '';
                 }
-                if (!patientEmail) {
-                    // Try Firebase Auth display name via patients collection
+                if (patientName === 'Unknown Patient') {
                     const patSnap = await getDoc(doc(db, 'patients', patientUid));
                     if (patSnap.exists()) {
                         const pd = patSnap.data();
-                        patientName = patientName !== 'Unknown Patient' ? patientName : (pd.name || pd.displayName || patientName);
+                        const pdNm = (pd.name || pd.displayName || `${pd.firstName || ''} ${pd.lastName || ''}`.trim() || '').trim();
+                        if (pdNm && !pdNm.toLowerCase().includes('unknown') && pdNm !== 'Patient') patientName = pdNm;
                         patientEmail = patientEmail || pd.email || '';
                     }
                 }
             } catch (e) { /* silent */ }
+        }
+
+        if (patientName === 'Unknown Patient' && patientEmail) {
+            patientName = patientEmail.split('@')[0]; // Final fallback: use email prefix instead of "Unknown Patient"
         }
 
         return { patientName, patientEmail, patientUid, serviceKey, intakeAnswers, meetingUrl };
@@ -367,7 +380,7 @@ export default function EmrDashboard() {
             // TRIGGER BACKEND NOTIFICATION
             try {
                 const tok = await auth.currentUser?.getIdToken();
-                const API = process.env.NEXT_PUBLIC_API_URL || '';
+                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
                 await fetch(`${API}/api/v1/trigger/schedule-notification`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
