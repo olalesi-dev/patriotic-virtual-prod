@@ -4,7 +4,15 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { multiFactor } from 'firebase/auth';
-import { MfaSetup } from './MfaSetup';
+
+const isPublicRoute = (pathname: string) =>
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/privacy' ||
+    pathname === '/terms' ||
+    pathname === '/forgot-password' ||
+    pathname.startsWith('/book');
 
 export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) => {
     const [isEnrolled, setIsEnrolled] = useState<boolean | null>(null);
@@ -14,6 +22,11 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
     const router = useRouter();
 
     useEffect(() => {
+        if (isPublicRoute(pathname)) {
+            setLoading(false);
+            return;
+        }
+
         console.log('MfaEnrollmentGate: Checking auth state...');
         // Local dev bypass check
         const isMockAuth = localStorage.getItem('emr_mock_auth') === 'true';
@@ -47,8 +60,7 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
         return () => unsubscribe();
     }, [pathname, router]);
 
-    // Skip all checks for the login page
-    if (pathname === '/login') {
+    if (isPublicRoute(pathname)) {
         return <>{children}</>;
     }
 
