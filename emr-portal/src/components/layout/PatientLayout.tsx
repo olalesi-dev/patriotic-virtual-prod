@@ -168,7 +168,9 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 
     const navigation = [
         { name: 'Dashboard', href: '/patient', icon: LayoutDashboard },
-        { name: 'My Appointments', href: '/patient/appointments', icon: Calendar },
+        { name: 'My Schedule', href: '/patient/scheduled', icon: CheckCircle2 },
+        { name: 'My Appointments', href: '/patient/appointments', icon: FileText },
+        { name: 'Calendar', href: '/patient/calendar', icon: Calendar },
         { name: 'Messages', href: '/patient/messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount.toString() : undefined },
         { name: 'Medications', href: '/my-health/medications', icon: Pill },
         { name: 'Lab Results', href: '/my-health/labs', icon: Activity },
@@ -176,6 +178,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
         { name: 'Billing', href: '/patient/billing', icon: CreditCard },
         { name: 'Settings', href: '/patient/settings', icon: Settings },
     ];
+
 
     if (profile.loading) {
         return (

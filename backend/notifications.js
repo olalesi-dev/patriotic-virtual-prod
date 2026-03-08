@@ -35,6 +35,7 @@ const sendEmail = async (to, subject, html, attachments = []) => {
         const msg = {
             to,
             from: SENDGRID_FROM_EMAIL,
+            replyTo: SENDGRID_FROM_EMAIL,
             subject,
             html,
         };

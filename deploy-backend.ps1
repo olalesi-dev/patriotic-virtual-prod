@@ -10,6 +10,9 @@ if (Test-Path $EnvFile) {
     # Read .env file, ignore comments and empty lines
     $content = Get-Content $EnvFile | Where-Object { $_ -notmatch '^\s*#' -and $_ -notmatch '^\s*$' }
     
+    # Escape commas inside values to prevent gcloud from parsing them as variable separators
+    $content = $content -replace ',', '^,'
+
     # Ensure variables are joined with commas and wrapped in quotes to prevent shell parsing issues
     $vars = $content -join ","
     
