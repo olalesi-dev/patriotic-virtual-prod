@@ -876,8 +876,21 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
 
                     const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
                     const patientSnap = await db.collection('patients').doc(uid).get();
-                    if (patientSnap.exists) {
-                        await notifyWaitlist(patientSnap.data(), serviceName).catch(console.error);
+                    let pData = patientSnap.exists ? patientSnap.data() : { uid };
+                    try {
+                        const userRecord = await admin.auth().getUser(uid);
+                        pData.email = pData.email || userRecord.email;
+                        pData.phone = pData.phone || userRecord.phoneNumber;
+                        if (!pData.firstName || pData.firstName === 'Unknown') {
+                            if (userRecord.displayName) {
+                                const parts = userRecord.displayName.split(' ');
+                                pData.firstName = parts[0];
+                                pData.lastName = parts.slice(1).join(' ');
+                            }
+                        }
+                    } catch (e) { console.error("Error fetching auth user for waitlist sync:", e); }
+                    if (Object.keys(pData).length > 0) {
+                        await notifyWaitlist(pData, serviceName).catch(console.error);
                     }
                 }
             }
@@ -1042,8 +1055,21 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             if (uid && consultData && consultData.serviceKey) {
                 const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
                 const patientSnap = await db.collection('patients').doc(uid).get();
-                if (patientSnap.exists) {
-                    await notifyWaitlist(patientSnap.data(), serviceName).catch(console.error);
+                let pData = patientSnap.exists ? patientSnap.data() : { uid };
+                try {
+                    const userRecord = await admin.auth().getUser(uid);
+                    pData.email = pData.email || userRecord.email;
+                    pData.phone = pData.phone || userRecord.phoneNumber;
+                    if (!pData.firstName || pData.firstName === 'Unknown') {
+                        if (userRecord.displayName) {
+                            const parts = userRecord.displayName.split(' ');
+                            pData.firstName = parts[0];
+                            pData.lastName = parts.slice(1).join(' ');
+                        }
+                    }
+                } catch (e) { console.error("Error fetching auth user for waitlist sync:", e); }
+                if (Object.keys(pData).length > 0) {
+                    await notifyWaitlist(pData, serviceName).catch(console.error);
                 }
             }
         }
