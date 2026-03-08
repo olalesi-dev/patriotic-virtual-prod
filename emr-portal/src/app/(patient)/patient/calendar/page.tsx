@@ -369,8 +369,9 @@ export default function PatientCalendarPage() {
     if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-sky-100 border-t-[#0EA5E9] rounded-full animate-spin"></div></div>;
 
     const visibleAppts = appointments.filter(a => {
+        if (a.status === 'PENDING_SCHEDULING') return false; // Hide waitlist completely from calendar
         const d = getApptDate(a);
-        if (!d) return a.status === 'PENDING_SCHEDULING' && viewType === 'week'; // PENDING show up safely somewhere, or hide? Let's hide pending that have no date in month view for cleanliness
+        if (!d) return false;
         return isWithinInterval(d, { start: startOfDay(viewStart), end: endOfDay(viewEnd) });
     });
 
@@ -435,10 +436,6 @@ export default function PatientCalendarPage() {
                                     return ad && isSameDay(ad, day);
                                 });
 
-                                // Include pending appointments without a date on today's column as an inbox
-                                const isTodaysCol = isToday(day);
-                                const pendingNoDate = isTodaysCol ? appointments.filter(a => !getApptDate(a) && a.status === 'PENDING_SCHEDULING') : [];
-
                                 return (
                                     <div key={day.toISOString()} className={`flex-1 min-w-[120px] ${idx < 6 ? 'border-r border-slate-100' : ''}`}>
                                         <div className={`p-3 text-center border-b border-slate-100 h-16 flex flex-col items-center justify-center ${isToday(day) ? 'bg-[#F0F9FF]' : 'bg-white'}`}>
@@ -455,17 +452,12 @@ export default function PatientCalendarPage() {
                                                 <div key={`grid-${h}`} className="absolute w-full border-t border-slate-50" style={{ top: (h - 7) * SLOT_HEIGHT, height: SLOT_HEIGHT }} />
                                             ))}
 
-                                            {/* Pending unassigned (render at top) */}
-                                            {pendingNoDate.map((appt, i) => (
-                                                <AppointmentCard
-                                                    key={appt.id}
-                                                    appt={appt}
-                                                    style={{ position: 'relative', height: '60px', marginTop: '4px', marginInline: '4px' }}
-                                                    onClickCard={setSelectedAppt}
-                                                />
-                                            ))}
-
                                             {/* Scheduled appts */}
+                                            {dayAppts.length === 0 && (
+                                                <div className="flex items-center justify-center h-full text-[10px] text-slate-300 font-bold uppercase tracking-widest pointer-events-none">
+
+                                                </div>
+                                            )}
                                             {dayAppts.map(appt => (
                                                 <AppointmentCard
                                                     key={appt.id}
@@ -489,53 +481,55 @@ export default function PatientCalendarPage() {
                     </div>
                 )}
 
-                {viewType === 'month' && (
-                    <div className="min-w-[800px] overflow-x-auto">
-                        <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                                <div key={d} className="p-3 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    {d}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-7 auto-rows-fr">
-                            {viewDays.map((day, i) => {
-                                const dayAppts = visibleAppts.filter(a => {
-                                    const ad = getApptDate(a);
-                                    return ad && isSameDay(ad, day);
-                                });
-                                const isCurrentMonth = format(day, 'M') === format(currentDate, 'M');
-                                return (
-                                    <div key={day.toISOString()} className={`min-h-[120px] p-2 border-r border-b border-slate-100 ${!isCurrentMonth ? 'bg-slate-50/50' : 'bg-white'}`}>
-                                        <div className={`text-xs font-black mb-2 text-right ${isToday(day) ? 'text-[#0EA5E9] bg-sky-50 w-6 h-6 rounded-full flex items-center justify-center ml-auto' : 'text-slate-400'}`}>
-                                            {format(day, 'd')}
-                                        </div>
-                                        <div className="space-y-1">
-                                            {dayAppts.slice(0, 3).map(appt => {
-                                                const typeConf = getTypeConfig(appt);
-                                                return (
-                                                    <div
-                                                        key={appt.id}
-                                                        onClick={() => setSelectedAppt(appt)}
-                                                        className={`text-[9px] font-bold p-1.5 rounded-lg truncate cursor-pointer hover:shadow-md transition-shadow ${typeConf.bg} ${typeConf.text} border ${typeConf.border}`}
-                                                    >
-                                                        {getApptDate(appt) ? format(getApptDate(appt)!, 'h:mm a') : 'TBD'} · {appt.providerName || 'Provider'}
-                                                    </div>
-                                                );
-                                            })}
-                                            {dayAppts.length > 3 && (
-                                                <div className="text-[10px] font-bold text-slate-400 text-center py-1 bg-slate-50 rounded-lg">
-                                                    +{dayAppts.length - 3} more
-                                                </div>
-                                            )}
-                                        </div>
+                {
+                    viewType === 'month' && (
+                        <div className="min-w-[800px] overflow-x-auto">
+                            <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                                    <div key={d} className="p-3 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        {d}
                                     </div>
-                                )
-                            })}
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 auto-rows-fr">
+                                {viewDays.map((day, i) => {
+                                    const dayAppts = visibleAppts.filter(a => {
+                                        const ad = getApptDate(a);
+                                        return ad && isSameDay(ad, day);
+                                    });
+                                    const isCurrentMonth = format(day, 'M') === format(currentDate, 'M');
+                                    return (
+                                        <div key={day.toISOString()} className={`min-h-[120px] p-2 border-r border-b border-slate-100 ${!isCurrentMonth ? 'bg-slate-50/50' : 'bg-white'}`}>
+                                            <div className={`text-xs font-black mb-2 text-right ${isToday(day) ? 'text-[#0EA5E9] bg-sky-50 w-6 h-6 rounded-full flex items-center justify-center ml-auto' : 'text-slate-400'}`}>
+                                                {format(day, 'd')}
+                                            </div>
+                                            <div className="space-y-1">
+                                                {dayAppts.slice(0, 3).map(appt => {
+                                                    const typeConf = getTypeConfig(appt);
+                                                    return (
+                                                        <div
+                                                            key={appt.id}
+                                                            onClick={() => setSelectedAppt(appt)}
+                                                            className={`text-[9px] font-bold p-1.5 rounded-lg truncate cursor-pointer hover:shadow-md transition-shadow ${typeConf.bg} ${typeConf.text} border ${typeConf.border}`}
+                                                        >
+                                                            {getApptDate(appt) ? format(getApptDate(appt)!, 'h:mm a') : 'TBD'} · {appt.providerName || 'Provider'}
+                                                        </div>
+                                                    );
+                                                })}
+                                                {dayAppts.length > 3 && (
+                                                    <div className="text-[10px] font-bold text-slate-400 text-center py-1 bg-slate-50 rounded-lg">
+                                                        +{dayAppts.length - 3} more
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )
+                }
+            </div >
 
             {selectedAppt && (
                 <SlideOutPanel
@@ -543,6 +537,6 @@ export default function PatientCalendarPage() {
                     onClose={() => setSelectedAppt(null)}
                 />
             )}
-        </div>
+        </div >
     );
 }
