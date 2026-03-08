@@ -2,7 +2,7 @@ import sgMail from '@sendgrid/mail';
 import { logger } from '../utils/logger';
 
 const apiKey = process.env.SENDGRID_API_KEY;
-const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'notifications@patriotic-virtual-emr.web.app';
+const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'waitlist@patriotictelehealth.com';
 
 if (apiKey) {
     sgMail.setApiKey(apiKey);
@@ -17,6 +17,7 @@ export const sendEmail = async (to: string, subject: string, text: string, html?
     const msg = {
         to,
         from: fromEmail,
+        replyTo: fromEmail,
         subject,
         text,
         html: html || text.replace(/\n/g, '<br>'),
