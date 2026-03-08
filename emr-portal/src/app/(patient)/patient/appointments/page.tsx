@@ -466,12 +466,12 @@ export default function AppointmentsPage() {
                     // FIX: Compute safe date once per card â€” never call .toDate() directly
                     const apptDate = toSafeDate(appt.date);
                     return (
-                        <div key={appt.id} className="bg-white rounded-[32px] border border-slate-50 shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 transition-all">
-                            <div className="w-20 h-20 bg-[#F8FAFC] rounded-3xl flex flex-col items-center justify-center shrink-0 border border-slate-50">
+                        <div key={appt.id} className={`bg-white rounded-[32px] border ${appt.status === 'PENDING_SCHEDULING' ? 'border-amber-100' : 'border-slate-50'} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 transition-all`}>
+                            <div className={`w-20 h-20 ${appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50' : 'bg-[#F8FAFC]'} rounded-3xl flex flex-col items-center justify-center shrink-0 border border-slate-50`}>
                                 {apptDate ? (
                                     <>
-                                        <span className="text-[10px] font-black text-[#0EA5E9] uppercase">{format(apptDate, 'MMM')}</span>
-                                        <span className="text-2xl font-black text-slate-800">{format(apptDate, 'dd')}</span>
+                                        <span className={`text-[10px] font-black uppercase ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-500' : 'text-[#0EA5E9]'}`}>{format(apptDate, 'MMM')}</span>
+                                        <span className={`text-2xl font-black ${appt.status === 'PENDING_SCHEDULING' ? 'text-amber-700' : 'text-slate-800'}`}>{format(apptDate, 'dd')}</span>
                                     </>
                                 ) : (
                                     <span className="text-[10px] font-black text-slate-300 uppercase">TBD</span>
@@ -482,22 +482,41 @@ export default function AppointmentsPage() {
                                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
                                     <h3 className="text-xl font-black text-slate-800 tracking-tight truncate">{appt.providerName}</h3>
                                     <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${appt.status === 'scheduled' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' :
-                                        appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse' :
+                                        appt.status === 'PENDING_SCHEDULING' ? 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' :
                                             appt.status === 'cancelled' ? 'bg-rose-50 text-rose-500 border-rose-100' :
                                                 'bg-slate-50 text-slate-400 border-slate-100'
                                         }`}>
                                         {appt.status === 'PENDING_SCHEDULING' ? 'Awaiting Provider' : appt.status}
                                     </span>
                                 </div>
-                                <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-400 font-bold text-xs uppercase tracking-widest">
-                                    {apptDate && (
-                                        <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
-                                    )}
-                                    <div className="flex items-center gap-1.5">
-                                        {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                                        {appt.type}
+                                {appt.status === 'PENDING_SCHEDULING' ? (
+                                    <div className="space-y-2 pt-1 pb-1">
+                                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-amber-700/70 font-bold text-[10px] uppercase tracking-widest">
+                                            <span>Requested Date</span>
+                                            {apptDate && (
+                                                <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
+                                            )}
+                                            <div className="flex items-center gap-1.5 opacity-60">
+                                                {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                                                {appt.type}
+                                            </div>
+                                        </div>
+                                        <div className="inline-flex bg-amber-50/50 border border-amber-200 text-amber-700 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg items-center gap-2">
+                                            <AlertCircle className="w-4 h-4 shrink-0" />
+                                            A provider will finalize scheduling within 24 hours
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-400 font-bold text-xs uppercase tracking-widest">
+                                        {apptDate && (
+                                            <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(apptDate, 'h:mm a')}</div>
+                                        )}
+                                        <div className="flex items-center gap-1.5">
+                                            {appt.type === 'Telehealth' ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                                            {appt.type}
+                                        </div>
+                                    </div>
+                                )}
                                 <p className="text-slate-500 text-sm italic line-clamp-1">{appt.reason}</p>
                             </div>
 
