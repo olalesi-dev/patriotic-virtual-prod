@@ -367,7 +367,7 @@ export default function EmrDashboard() {
             // TRIGGER BACKEND NOTIFICATION
             try {
                 const tok = await auth.currentUser?.getIdToken();
-                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-4bd3b1a7-0e36-4e42-88f0-f9e4f509cc92.us-central1.run.app';
+                const API = process.env.NEXT_PUBLIC_API_URL || '';
                 await fetch(`${API}/api/v1/trigger/schedule-notification`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
