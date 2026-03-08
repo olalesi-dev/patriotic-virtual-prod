@@ -79,11 +79,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             >
                 {/* Logo Area */}
                 <div className={`h-16 flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'px-6'} border-b border-sidebar-active/50 relative`}>
-                    <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shrink-0">
-                        <span className="font-bold text-lg text-white">P</span>
-                    </div>
-                    {!isSidebarCollapsed && (
-                        <span className="font-bold text-lg tracking-tight ml-3 whitespace-nowrap overflow-hidden transition-opacity duration-300">Patriotic EMR</span>
+                    {isSidebarCollapsed ? (
+                        <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center bg-gradient-to-br from-brand to-brand-600 shadow-lg shrink-0">
+                            <span className="font-bold text-lg text-white">P</span>
+                        </div>
+                    ) : (
+                        <div className="bg-white px-2 py-1.5 rounded-lg w-full max-w-[170px] flex items-center justify-center shadow-sm">
+                            <img src="/logo.png" alt="Patriotic EHR" className="h-7 w-auto object-contain transition-opacity duration-300" />
+                        </div>
                     )}
 
                     <button
