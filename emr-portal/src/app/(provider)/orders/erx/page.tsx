@@ -17,7 +17,7 @@ export default function ErxPage() {
                 if (!user) return;
 
                 const token = await user.getIdToken();
-                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
 
                 const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/dosespot/notification-count`, {
                     headers: {

@@ -48,7 +48,7 @@ export default function SuccessPage() {
                 }
 
                 // 3. Notify Providers
-                const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+                const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
                 if (apiBase) {
                     await fetch(`${apiBase}/api/notifications/appointment-bucket-alert`, {
                         method: 'POST',
