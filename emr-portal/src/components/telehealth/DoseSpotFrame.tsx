@@ -37,7 +37,7 @@ export function DoseSpotFrame({ patientDoseSpotId, refillsErrors, height = '100%
                 }
 
                 const queryStr = params.toString() ? `?${params.toString()}` : '';
-                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
 
                 const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/dosespot/sso-url${queryStr}`, {
                     headers: {
