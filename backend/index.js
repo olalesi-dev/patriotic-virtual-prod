@@ -345,6 +345,31 @@ app.post('/api/v1/auth/firebase-register', async (req, res) => {
     }
 });
 
+// 0.6 Auth: Generate Cross-Domain Bridge Token (SSO between main site and EMR portal)
+// Both domains use the same Firebase project, so a custom token minted here
+// lets the receiving site call signInWithCustomToken() to auto-sign in.
+app.post('/api/v1/auth/bridge-token', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).send('Unauthorized');
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        // Custom tokens are valid for 1 hour but we use them immediately for SSO
+        const customToken = await admin.auth().createCustomToken(uid, {
+            role: decodedToken.role || 'patient'
+        });
+
+        res.json({ customToken });
+    } catch (error) {
+        console.error('Bridge token error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 1. Consultation Intake
 app.post('/api/v1/consultations', async (req, res) => {
     try {
