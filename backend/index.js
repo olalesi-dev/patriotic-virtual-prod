@@ -4,9 +4,9 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const admin = require('firebase-admin');
 const dotenv = require('dotenv');
+dotenv.config(); // Must load env vars before any process.env access
 const { notifyWaitlist, notifyScheduled } = require('./notifications');
 
-dotenv.config();
 
 async function triggerScheduledNotifications(uid, consultData, apptData, scheduledDate) {
     if (!uid || !consultData) return;
@@ -95,6 +95,84 @@ app.use('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // Routes
+const { generateSSOUrl } = require('./dosespot');
+
+app.get('/api/v1/dosespot/sso-url', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const providerDoc = await db.collection('users').doc(uid).get();
+        if (!providerDoc.exists) {
+            return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
+        }
+
+        const data = providerDoc.data();
+        const doseSpotClinicianId = data?.doseSpotClinicianId;
+
+        if (!doseSpotClinicianId) {
+            return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
+        }
+
+        const patientDoseSpotId = req.query.patientDoseSpotId ? parseInt(req.query.patientDoseSpotId, 10) : undefined;
+        const refillsErrors = req.query.refillsErrors === 'true';
+
+        const ssoUrl = generateSSOUrl({ clinicianDoseSpotId: doseSpotClinicianId, patientDoseSpotId, refillsErrors });
+
+        return res.json({ ssoUrl });
+    } catch (error) {
+        console.error('Error generating DoseSpot SSO URL:', error);
+        return res.status(500).json({ error: 'Failed to build SSO link' });
+    }
+});
+
+app.get('/api/v1/dosespot/notification-count', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const defaultCounts = {
+            pendingPrescriptions: 0,
+            transmissionErrors: 0,
+            refillRequests: 0,
+            changeRequests: 0,
+            total: 0
+        };
+
+        const snapshot = await db.collection('users').doc(uid)
+            .collection('dosespot').doc('notifications').get();
+
+        if (!snapshot.exists) {
+            return res.json(defaultCounts);
+        }
+
+        const data = snapshot.data();
+        if (!data) return res.json(defaultCounts);
+
+        const pendingPrescriptions = data.pendingPrescriptions || 0;
+        const transmissionErrors = data.transmissionErrors || 0;
+        const refillRequests = data.refillRequests || 0;
+        const changeRequests = data.changeRequests || 0;
+        const total = pendingPrescriptions + transmissionErrors + refillRequests + changeRequests;
+
+        return res.json({
+            pendingPrescriptions,
+            transmissionErrors,
+            refillRequests,
+            changeRequests,
+            total
+        });
+    } catch (error) {
+        console.error('Error fetching DoseSpot notification count:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // EMR API Key middleware — allows the EMR provider dashboard to call the backend
 // without the provider being signed into patriotic-virtual-prod Firebase.
