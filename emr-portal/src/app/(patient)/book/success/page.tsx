@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { signInWithCustomToken } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { CheckCircle2, Calendar, Clock, User, ArrowRight, Sparkles, Phone } from 'lucide-react';
 import { format } from 'date-fns';
@@ -19,22 +20,45 @@ export default function SuccessPage() {
     const time = searchParams.get('time');
     const sessionId = searchParams.get('session_id');
     const appointmentId = searchParams.get('appointmentId');
+    const consultationId = searchParams.get('consultationId');  // passed from main site
+    const bridgeToken = searchParams.get('token');               // cross-domain SSO token
 
     useEffect(() => {
-        const createAppointment = async () => {
+        const init = async () => {
             if (writtenRef.current) return;
             writtenRef.current = true;
 
             try {
+                // 1. Auto sign-in via bridge token if provided (cross-domain SSO)
+                if (bridgeToken) {
+                    try {
+                        await signInWithCustomToken(auth, bridgeToken);
+                        console.log('Cross-domain SSO: signed in via bridge token');
+                    } catch (ssoErr) {
+                        // Non-fatal: token may have expired if user took too long
+                        console.warn('Bridge token sign-in failed (may have expired):', ssoErr);
+                    }
+                    // Remove token from URL bar immediately for security
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('token');
+                    window.history.replaceState({}, '', cleanUrl.toString());
+                }
+
+                // 2. If we have a consultationId from the main site flow,
+                //    the main site already wrote all the Firestore records — just confirm.
+                if (consultationId && !appointmentId) {
+                    setStatus('confirmed');
+                    return;
+                }
+
+                // 3. Legacy: write records if arrived from EMR portal booking flow
                 if (appointmentId) {
-                    // Update existing pending appointment
                     await updateDoc(doc(db, 'appointments', appointmentId), {
                         status: 'PENDING_SCHEDULING',
                         stripeSessionId: sessionId || 'mock_session',
                         updatedAt: serverTimestamp()
                     });
-                } else {
-                    // Fallback Add to Firestore
+                } else if (patientName && service) {
                     await addDoc(collection(db, 'appointments'), {
                         patient: patientName,
                         service: service,
@@ -47,27 +71,15 @@ export default function SuccessPage() {
                     });
                 }
 
-                // 3. Notify Providers
-                const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
-                if (apiBase) {
-                    await fetch(`${apiBase}/api/notifications/appointment-bucket-alert`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ patientName, service, appointmentId })
-                    });
-                }
-
                 setStatus('confirmed');
             } catch (err) {
-                console.error('Firestore Error:', err);
+                console.error('Success page error:', err);
                 setStatus('error');
             }
         };
 
-        if ((patientName && service) || appointmentId) {
-            createAppointment();
-        }
-    }, [patientName, service, date, time, sessionId, appointmentId]);
+        init();
+    }, [patientName, service, date, time, sessionId, appointmentId, consultationId, bridgeToken]);
 
     if (status === 'error') {
         return (

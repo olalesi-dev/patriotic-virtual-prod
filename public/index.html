@@ -6276,10 +6276,10 @@
           data-i18n="nav-reviews">Reviews</a>
       </div>
       <div class="nav-actions">
-        <a class="btn btn-ghost" id="loginBtn" href="https://patriotic-virtual-emr.web.app/login"
-          data-i18n="nav-login">Log In</a>
-        <a class="btn btn-primary" id="signupBtn" href="https://patriotic-virtual-emr.web.app/signup"
-          data-i18n="nav-get-started">Get Started</a>
+        <button class="btn btn-ghost" id="loginBtn" onclick="openModal('login')"
+          data-i18n="nav-login">Log In</button>
+        <button class="btn btn-primary" id="signupBtn" onclick="openModal('register')"
+          data-i18n="nav-get-started">Get Started</button>
         <a class="btn btn-ghost hidden" id="dashBtn" href="https://patriotic-virtual-emr.web.app/patient"
           data-i18n="nav-dashboard">Dashboard</a>
         <button class="btn btn-ghost" id="themeBtn" onclick="toggleTheme()"
@@ -9573,8 +9573,14 @@
 
         document.getElementById("authModal").classList.remove("active");
         updateNav();
-        showDashboard();
         toast("Welcome back, " + (user.firstName || user.email) + "!");
+        // If user clicked a service before being asked to log in, open the visit modal
+        if (window._pendingVisit || selSvc) {
+          window._pendingVisit = false;
+          openConsultation();
+        } else {
+          showDashboard();
+        }
       } catch (err) {
         console.error("Login Error Object:", err);
         let msg = "Login failed.";
@@ -9681,9 +9687,10 @@
           }
         }
         updateNav();
-
-        showDashboard();
-        toast("Welcome to Patriotic Virtual Telehealth!");
+        toast("Welcome! Let's start your visit.");
+        // After registration, immediately open the visit flow
+        window._pendingVisit = false;
+        openConsultation();
       } catch (err) {
         const msg =
           err.code === "auth/email-already-in-use"
@@ -10164,8 +10171,13 @@
     }
 
     function startSvc(k) {
-      if (!user) return openModal("register");
       selSvc = k;
+      if (!user) {
+        // Save intent so after login/register the consult opens automatically
+        window._pendingVisit = true;
+        return openModal("register");
+      }
+      window._pendingVisit = false;
       openConsultation();
       setTimeout(() => {
         document.querySelectorAll("#svcSel .ro").forEach((el) => {
@@ -10302,12 +10314,12 @@
 
         const payData = await payRes.json();
 
-        // --- STAGING BYPASS FOR TESTING: DO NOT PUSH TO PRODUCTION ---
-        // Automatically skips Stripe and goes to scheduling if on staging (-fresh)
+        // --- STAGING BYPASS FOR TESTING ---
+        // Skips Stripe on staging (-fresh) but still tests the full redirect flow
         if (window.location.host.includes("-fresh")) {
           console.warn("STAGING TEST BYPASS: Skipping Stripe Payment");
-          handlePaymentSuccess(consultationId);
           closeConsult();
+          await redirectToEMRSuccess(consultationId);
           return;
         }
         // --- END STAGING BYPASS ---
@@ -10878,12 +10890,12 @@
         await Promise.all(updateTasks);
         console.log("✅ Appointment written to all EMR collections successfully.");
 
-        // Show the professional success modal
-        showBookingSuccess();
+        // Redirect patient to EMR portal success page with a bridge token for auto-login
+        await redirectToEMRSuccess(consultationId);
 
       } catch (err) {
         console.error("Error finalizing payment flow:", err);
-        // Fallback: show success anyway so patient isn't stuck
+        // Fallback: show local success if redirect fails
         showBookingSuccess();
       }
 
@@ -10893,6 +10905,38 @@
         document.title,
         window.location.pathname,
       );
+    }
+
+    // Redirect to EMR portal with Firebase custom token for cross-domain SSO
+    async function redirectToEMRSuccess(consultationId) {
+      const EMR_BASE = 'https://patriotic-virtual-emr.web.app';
+      try {
+        const name = encodeURIComponent(
+          ((user && user.firstName) || '') + ' ' + ((user && user.lastName) || '')
+        ).trim();
+        // Try to get bridge token for SSO
+        let tokenParam = '';
+        if (auth && auth.currentUser) {
+          try {
+            const idTok = await auth.currentUser.getIdToken();
+            const bridgeRes = await fetch(`${API}/api/v1/auth/bridge-token`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${idTok}` }
+            });
+            if (bridgeRes.ok) {
+              const { customToken } = await bridgeRes.json();
+              tokenParam = `&token=${encodeURIComponent(customToken)}`;
+            }
+          } catch (bridgeErr) {
+            console.warn('Bridge token failed, proceeding without SSO:', bridgeErr.message);
+          }
+        }
+        const successUrl = `${EMR_BASE}/book/success?consultationId=${encodeURIComponent(consultationId || '')}&patientName=${name}${tokenParam}`;
+        window.location.href = successUrl;
+      } catch (e) {
+        console.error('Redirect to EMR failed:', e);
+        showBookingSuccess(); // Fallback to local page
+      }
     }
 
 
