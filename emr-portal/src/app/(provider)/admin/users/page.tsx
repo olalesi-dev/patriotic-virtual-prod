@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react'; 
 import {
-    Users, Plus, Search, MoreVertical, Shield, User,
+    Users, Search, Shield, User,
     UserPlus, Mail, Key, Trash2, Edit2, ShieldAlert,
-    CheckCircle2, XCircle, AlertCircle
+    CheckCircle2, XCircle, AlertCircle, Phone, Check, X, Save
 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 interface UserData {
     uid: string;
@@ -16,6 +17,11 @@ interface UserData {
     disabled: boolean;
     creationTime: string;
     lastSignInTime: string;
+    phone?: string;
+    firstName?: string;
+    lastName?: string;
+    dob?: string;
+    sex?: string;
 }
 
 export default function UserManagementPage() {
@@ -26,7 +32,29 @@ export default function UserManagementPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Form state
+    // Selected user detail state
+    const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [editPhone, setEditPhone] = useState('');
+    const [isEditingPhone, setIsEditingPhone] = useState(false);
+    const [savingPhone, setSavingPhone] = useState(false);
+
+    // Edit account modal state
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editForm, setEditForm] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        role: 'patient',
+        dob: '',
+        sex: '',
+    });
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [editError, setEditError] = useState<string | null>(null);
+
+    // Create form state
+    const [newUserPhone, setNewUserPhone] = useState('');
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -60,6 +88,121 @@ export default function UserManagementPage() {
         }
     };
 
+    // Open detail panel and fetch full profile from Firestore
+    const handleSelectUser = async (user: UserData) => {
+        setSelectedUser(user);
+        setIsEditingPhone(false);
+        setDetailLoading(true);
+        try {
+            const snap = await getDoc(doc(db, 'users', user.uid));
+            if (snap.exists()) {
+                const d = snap.data();
+                const phone = d.phone || '';
+                setEditPhone(phone);
+                setSelectedUser(prev => prev ? {
+                    ...prev, phone,
+                    firstName: d.firstName || '',
+                    lastName: d.lastName || '',
+                    dob: d.dob || '',
+                    sex: d.sex || '',
+                } : prev);
+            } else {
+                setEditPhone(user.phone || '');
+            }
+        } catch (e) {
+            setEditPhone(user.phone || '');
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
+    // Open edit modal pre-populated with current values
+    const openEditModal = (user: UserData) => {
+        const nameParts = user.displayName?.split(' ') || [];
+        setEditForm({
+            firstName: user.firstName || nameParts[0] || '',
+            lastName: user.lastName || nameParts.slice(1).join(' ') || '',
+            email: user.email || '',
+            phone: editPhone || user.phone || '',
+            role: user.role || 'patient',
+            dob: user.dob || '',
+            sex: user.sex || '',
+        });
+        setEditError(null);
+        setIsEditModalOpen(true);
+    };
+
+    // Save all edits: PATCH to API (Auth) + updateDoc (Firestore)
+    const handleSaveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+        setIsSavingEdit(true);
+        setEditError(null);
+        try {
+            // 1. Update Firebase Auth fields via API (displayName, email, role)
+            const displayName = `${editForm.firstName} ${editForm.lastName}`.trim();
+            const res = await fetch(`/api/admin/users/${selectedUser.uid}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    displayName,
+                    email: editForm.email,
+                    role: editForm.role,
+                })
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Failed to update Auth record');
+
+            // 2. Update Firestore users doc with all profile fields
+            await updateDoc(doc(db, 'users', selectedUser.uid), {
+                firstName: editForm.firstName,
+                lastName: editForm.lastName,
+                displayName,
+                email: editForm.email,
+                phone: editForm.phone,
+                role: editForm.role,
+                dob: editForm.dob,
+                sex: editForm.sex,
+                updatedAt: new Date().toISOString(),
+            });
+
+            // 3. Refresh local state
+            setEditPhone(editForm.phone);
+            setSelectedUser(prev => prev ? {
+                ...prev,
+                displayName,
+                email: editForm.email,
+                phone: editForm.phone,
+                role: editForm.role,
+                firstName: editForm.firstName,
+                lastName: editForm.lastName,
+                dob: editForm.dob,
+                sex: editForm.sex,
+            } : prev);
+            setIsEditModalOpen(false);
+            fetchUsers();
+        } catch (err: any) {
+            setEditError(err.message || 'An error occurred while saving.');
+        } finally {
+            setIsSavingEdit(false);
+        }
+    };
+
+    // Save updated phone to Firestore
+    const handleSavePhone = async () => {
+        if (!selectedUser) return;
+        setSavingPhone(true);
+        try {
+            await updateDoc(doc(db, 'users', selectedUser.uid), { phone: editPhone });
+            setSelectedUser(prev => prev ? { ...prev, phone: editPhone } : prev);
+            setIsEditingPhone(false);
+        } catch (e) {
+            alert('Failed to save phone number.');
+        } finally {
+            setSavingPhone(false);
+        }
+    };
+
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -68,12 +211,18 @@ export default function UserManagementPage() {
             const res = await fetch('/api/admin/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, phone: newUserPhone })
             });
             const data = await res.json();
             if (data.success) {
+                if (data.uid && newUserPhone) {
+                    try {
+                        await updateDoc(doc(db, 'users', data.uid), { phone: newUserPhone });
+                    } catch (_) { }
+                }
                 setIsCreateModalOpen(false);
                 setFormData({ firstName: '', lastName: '', dob: '', sex: '', email: '', password: '', role: 'patient' });
+                setNewUserPhone('');
                 fetchUsers();
             } else {
                 throw new Error(data.error);
@@ -95,6 +244,9 @@ export default function UserManagementPage() {
             const data = await res.json();
             if (data.success) {
                 fetchUsers();
+                if (selectedUser?.uid === user.uid) {
+                    setSelectedUser(prev => prev ? { ...prev, disabled: !prev.disabled } : prev);
+                }
             }
         } catch (err: any) {
             alert('Failed to update user status');
@@ -104,12 +256,11 @@ export default function UserManagementPage() {
     const handleDeleteUser = async (uid: string) => {
         if (!confirm('Are you sure you want to delete this user? This cannot be undone.')) return;
         try {
-            const res = await fetch(`/api/admin/users/${uid}`, {
-                method: 'DELETE'
-            });
+            const res = await fetch(`/api/admin/users/${uid}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.success) {
                 fetchUsers();
+                if (selectedUser?.uid === uid) setSelectedUser(null);
             }
         } catch (err: any) {
             alert('Failed to delete user');
@@ -119,19 +270,17 @@ export default function UserManagementPage() {
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.displayName?.toLowerCase().includes(searchTerm.toLowerCase());
-
         const role = user.role?.toLowerCase() || '';
         const matchesRole = !filterRole ||
             (filterRole === 'disabled' ? user.disabled :
                 filterRole === 'admin' ? ['admin', 'systems admin'].includes(role) :
                     filterRole === 'provider' ? ['doctor', 'provider'].includes(role) :
                         role === filterRole);
-
         return matchesSearch && matchesRole;
     });
 
     const getRoleBadge = (role: string) => {
-        switch (role.toLowerCase()) {
+        switch (role?.toLowerCase()) {
             case 'admin':
             case 'systems admin':
                 return <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800">Admin</span>;
@@ -145,7 +294,7 @@ export default function UserManagementPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header section */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -165,178 +314,390 @@ export default function UserManagementPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <StatCard
-                    label="Total Users"
-                    value={users.length}
-                    icon={Users}
-                    color="text-brand"
-                    bg="bg-brand/10"
-                    active={filterRole === null}
-                    onClick={() => setFilterRole(null)}
-                />
-                <StatCard
-                    label="Admins"
-                    value={users.filter(u => ['admin', 'systems admin'].includes(u.role?.toLowerCase())).length}
-                    icon={Shield}
-                    color="text-purple-500"
-                    bg="bg-purple-500/10"
-                    active={filterRole === 'admin'}
-                    onClick={() => setFilterRole('admin')}
-                />
-                <StatCard
-                    label="Providers"
-                    value={users.filter(u => ['doctor', 'provider'].includes(u.role?.toLowerCase())).length}
-                    icon={User}
-                    color="text-blue-500"
-                    bg="bg-blue-500/10"
-                    active={filterRole === 'provider'}
-                    onClick={() => setFilterRole('provider')}
-                />
-                <StatCard
-                    label="Disabled"
-                    value={users.filter(u => u.disabled).length}
-                    icon={AlertCircle}
-                    color="text-red-500"
-                    bg="bg-red-500/10"
-                    active={filterRole === 'disabled'}
-                    onClick={() => setFilterRole('disabled')}
-                />
+                <StatCard label="Total Users" value={users.length} icon={Users} color="text-brand" bg="bg-brand/10" active={filterRole === null} onClick={() => setFilterRole(null)} />
+                <StatCard label="Admins" value={users.filter(u => ['admin', 'systems admin'].includes(u.role?.toLowerCase())).length} icon={Shield} color="text-purple-500" bg="bg-purple-500/10" active={filterRole === 'admin'} onClick={() => setFilterRole('admin')} />
+                <StatCard label="Providers" value={users.filter(u => ['doctor', 'provider'].includes(u.role?.toLowerCase())).length} icon={User} color="text-blue-500" bg="bg-blue-500/10" active={filterRole === 'provider'} onClick={() => setFilterRole('provider')} />
+                <StatCard label="Disabled" value={users.filter(u => u.disabled).length} icon={AlertCircle} color="text-red-500" bg="bg-red-500/10" active={filterRole === 'disabled'} onClick={() => setFilterRole('disabled')} />
             </div>
 
-            {/* Main Table Container */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4 bg-slate-50/50 dark:bg-slate-800/50">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Filter by name or email..."
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+            {/* Table + Detail panel */}
+            <div className="flex gap-6 items-start">
+                {/* Table */}
+                <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden min-w-0">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4 bg-slate-50/50 dark:bg-slate-800/50">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Filter by name or email..."
+                                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        {filterRole && (
+                            <button onClick={() => setFilterRole(null)} className="text-xs font-bold text-slate-400 hover:text-brand flex items-center gap-1 transition-colors">
+                                <XCircle className="w-3 h-3" /> Clear filter: {filterRole}
+                            </button>
+                        )}
                     </div>
-                    {filterRole && (
-                        <button
-                            onClick={() => setFilterRole(null)}
-                            className="text-xs font-bold text-slate-400 hover:text-brand flex items-center gap-1 transition-colors"
-                        >
-                            <XCircle className="w-3 h-3" />
-                            Clear filter: {filterRole}
-                        </button>
-                    )}
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
+                                    <th className="px-6 py-4">User</th>
+                                    <th className="px-6 py-4">Role</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Created</th>
+                                    <th className="px-6 py-4">Last Login</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                                {loading ? (
+                                    Array(5).fill(0).map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td colSpan={6} className="px-6 py-4 h-16 bg-slate-100/10"></td>
+                                        </tr>
+                                    ))
+                                ) : filteredUsers.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Users className="w-8 h-8 opacity-20" />
+                                                <span>No users found</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredUsers.map((user) => (
+                                        <tr
+                                            key={user.uid}
+                                            className={`hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group cursor-pointer ${selectedUser?.uid === user.uid ? 'bg-brand/5 border-l-2 border-brand' : ''}`}
+                                            onClick={() => handleSelectUser(user)}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-offset-2 ring-transparent group-hover:ring-brand/30 transition-all ${user.disabled ? 'bg-slate-100 text-slate-400' : 'bg-brand/10 text-brand dark:bg-brand/20'}`}>
+                                                        {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className={`font-bold text-sm ${user.disabled ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
+                                                            {user.displayName}
+                                                        </p>
+                                                        <div className="text-xs text-slate-500">{user.email}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
+                                            <td className="px-6 py-4">
+                                                {user.disabled ? (
+                                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-red-500 uppercase tracking-tight"><XCircle className="w-3.5 h-3.5" /> Disabled</span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-tight"><CheckCircle2 className="w-3.5 h-3.5" /> Active</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-slate-500">
+                                                {user.creationTime ? new Date(user.creationTime).toLocaleDateString() : 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-slate-500">
+                                                {user.lastSignInTime ? new Date(user.lastSignInTime).toLocaleDateString() : 'Never'}
+                                            </td>
+                                            <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => { handleSelectUser(user).then(() => openEditModal(user)); }}
+                                                        className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                                                        title="Edit account"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            const confirmReset = confirm("Generate a password reset link for this user?");
+                                                            if (!confirmReset) return;
+                                                            fetch(`/api/admin/users/${user.uid}/reset`, { method: 'POST' })
+                                                                .then(res => res.json())
+                                                                .then(data => {
+                                                                    if (data.success) alert(`Reset link: ${data.link}`);
+                                                                    else alert('Error: ' + data.error);
+                                                                });
+                                                        }}
+                                                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Generate Reset Link"
+                                                    >
+                                                        <Key className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleStatus(user)}
+                                                        className={`p-2 rounded-lg transition-colors ${user.disabled ? 'text-emerald-500 hover:bg-emerald-50' : 'text-orange-500 hover:bg-orange-50'}`}
+                                                        title={user.disabled ? "Enable account" : "Disable account"}
+                                                    >
+                                                        {user.disabled ? <CheckCircle2 className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user.uid)}
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete user"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
-                                <th className="px-6 py-4">User</th>
-                                <th className="px-6 py-4">Role</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Created</th>
-                                <th className="px-6 py-4">Last Login</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                            {loading ? (
-                                Array(5).fill(0).map((_, i) => (
-                                    <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-6 py-4 h-16 bg-slate-100/10"></td>
-                                    </tr>
-                                ))
-                            ) : filteredUsers.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Users className="w-8 h-8 opacity-20" />
-                                            <span>No users found</span>
+                {/* Detail Panel */}
+                {selectedUser && (
+                    <div className="w-80 flex-shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden animate-in slide-in-from-right duration-200">
+                        {/* Panel header */}
+                        <div className="bg-brand/5 border-b border-brand/10 p-5 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center font-black text-sm">
+                                    {selectedUser.displayName?.charAt(0) || selectedUser.email?.charAt(0)}
+                                </div>
+                                <div>
+                                    <p className="font-black text-slate-900 dark:text-white text-sm">{selectedUser.displayName}</p>
+                                    <p className="text-xs text-slate-500">{selectedUser.email}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedUser(null)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Panel body */}
+                        <div className="p-5 space-y-4">
+                            <DetailField label="Role" value={getRoleBadge(selectedUser.role)} />
+                            <DetailField label="Status" value={
+                                selectedUser.disabled
+                                    ? <span className="text-xs font-black text-red-500 flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Disabled</span>
+                                    : <span className="text-xs font-black text-emerald-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Active</span>
+                            } />
+                            {selectedUser.dob && <DetailField label="Date of Birth" value={<span className="text-xs text-slate-600">{selectedUser.dob}</span>} />}
+                            {selectedUser.sex && <DetailField label="Sex" value={<span className="text-xs text-slate-600">{selectedUser.sex}</span>} />}
+                            <DetailField label="Created" value={<span className="text-xs text-slate-600">{selectedUser.creationTime ? new Date(selectedUser.creationTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>} />
+                            <DetailField label="Last Login" value={<span className="text-xs text-slate-600">{selectedUser.lastSignInTime ? new Date(selectedUser.lastSignInTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Never'}</span>} />
+
+                            {/* Phone */}
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Phone Number</p>
+                                {detailLoading ? (
+                                    <div className="h-8 bg-slate-100 rounded-lg animate-pulse" />
+                                ) : isEditingPhone ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative flex-1">
+                                            <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                            <input
+                                                type="tel"
+                                                value={editPhone}
+                                                onChange={e => setEditPhone(e.target.value)}
+                                                placeholder="+1 (555) 000-0000"
+                                                autoFocus
+                                                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-brand rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand/20"
+                                            />
                                         </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredUsers.map((user) => (
-                                    <tr key={user.uid} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-offset-2 ring-transparent group-hover:ring-brand/30 transition-all ${user.disabled ? 'bg-slate-100 text-slate-400' : 'bg-brand/10 text-brand dark:bg-brand/20'
-                                                    }`}>
-                                                    {user.displayName?.charAt(0) || user.email?.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <Link
-                                                        href={`/admin/users/${user.uid}`}
-                                                        className={`font-bold text-sm hover:text-brand transition-colors ${user.disabled ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}
-                                                    >
-                                                        {user.displayName}
-                                                    </Link>
-                                                    <div className="text-xs text-slate-500">{user.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
-                                        <td className="px-6 py-4">
-                                            {user.disabled ? (
-                                                <span className="flex items-center gap-1.5 text-[10px] font-black text-red-500 uppercase tracking-tight">
-                                                    <XCircle className="w-3.5 h-3.5" /> Disabled
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-tight">
-                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Active
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-slate-500">
-                                            {user.creationTime ? new Date(user.creationTime).toLocaleDateString() : 'N/A'}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-slate-500">
-                                            {user.lastSignInTime ? new Date(user.lastSignInTime).toLocaleDateString() : 'Never'}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => {
-                                                        const confirmReset = confirm("Generate a password reset link for this user?");
-                                                        if (!confirmReset) return;
-                                                        fetch(`/api/admin/users/${user.uid}/reset`, { method: 'POST' })
-                                                            .then(res => res.json())
-                                                            .then(data => {
-                                                                if (data.success) {
-                                                                    alert(`Reset link generated: ${data.link}`);
-                                                                } else {
-                                                                    alert('Error: ' + data.error);
-                                                                }
-                                                            });
-                                                    }}
-                                                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Generate Reset Link"
-                                                >
-                                                    <Key className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleToggleStatus(user)}
-                                                    className={`p-2 rounded-lg transition-colors ${user.disabled ? 'text-emerald-500 hover:bg-emerald-50' : 'text-orange-500 hover:bg-orange-50'}`}
-                                                    title={user.disabled ? "Enable account" : "Disable account"}
-                                                >
-                                                    {user.disabled ? <CheckCircle2 className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteUser(user.uid)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Delete history"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                        <button onClick={handleSavePhone} disabled={savingPhone} className="p-1.5 bg-brand text-white rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50" title="Save">
+                                            <Check className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button onClick={() => { setIsEditingPhone(false); setEditPhone(selectedUser.phone || ''); }} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors" title="Cancel">
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between group/phone">
+                                        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                            {editPhone || <span className="text-slate-400 italic">Not set</span>}
+                                        </div>
+                                        <button onClick={() => setIsEditingPhone(true)} className="p-1.5 text-slate-300 hover:text-brand hover:bg-brand/5 rounded-lg transition-all opacity-0 group-hover/phone:opacity-100" title="Edit phone">
+                                            <Edit2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <DetailField label="UID" value={<span className="text-[10px] font-mono text-slate-400 break-all">{selectedUser.uid}</span>} />
+                        </div>
+
+                        {/* Panel actions */}
+                        <div className="px-5 pb-5 flex flex-col gap-2">
+                            <button
+                                onClick={() => openEditModal(selectedUser)}
+                                className="w-full py-2.5 rounded-xl text-xs font-black bg-brand text-white hover:bg-brand-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/20"
+                            >
+                                <Edit2 className="w-3.5 h-3.5" /> Edit Account
+                            </button>
+                            <button
+                                onClick={() => handleToggleStatus(selectedUser)}
+                                className={`w-full py-2.5 rounded-xl text-xs font-black transition-all ${selectedUser.disabled ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200' : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'}`}
+                            >
+                                {selectedUser.disabled ? 'âœ“ Enable Account' : 'âš  Disable Account'}
+                            </button>
+                            <button
+                                onClick={() => handleDeleteUser(selectedUser.uid)}
+                                className="w-full py-2.5 rounded-xl text-xs font-black bg-red-50 text-red-500 hover:bg-red-100 border border-red-200 transition-all"
+                            >
+                                Delete User
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {/* â”€â”€ EDIT ACCOUNT MODAL â”€â”€ */}
+            {isEditModalOpen && selectedUser && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="bg-brand p-6 text-white relative">
+                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                <Edit2 className="w-5 h-5" /> Edit Account
+                            </h3>
+                            <p className="text-brand-100 text-sm mt-1">
+                                Editing: <strong>{selectedUser.displayName}</strong>
+                            </p>
+                            <button onClick={() => setIsEditModalOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors">
+                                <XCircle className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
+                            {editError && (
+                                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 text-sm">
+                                    <AlertCircle className="w-5 h-5 shrink-0" /> {editError}
+                                </div>
+                            )}
+
+                            {/* Name row */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="First name"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                            value={editForm.firstName}
+                                            onChange={e => setEditForm({ ...editForm, firstName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="Last name"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                            value={editForm.lastName}
+                                            onChange={e => setEditForm({ ...editForm, lastName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        required
+                                        type="email"
+                                        placeholder="email@example.com"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        value={editForm.email}
+                                        onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Phone */}
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Phone Number</label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="tel"
+                                        placeholder="+1 (555) 000-0000"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        value={editForm.phone}
+                                        onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* DOB + Sex row */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">D.O.B.</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        value={editForm.dob}
+                                        onChange={e => setEditForm({ ...editForm, dob: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Sex</label>
+                                    <select
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        value={editForm.sex}
+                                        onChange={e => setEditForm({ ...editForm, sex: e.target.value })}
+                                    >
+                                        <option value="">Select...</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Role */}
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Access Role</label>
+                                <select
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                    value={editForm.role}
+                                    onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+                                >
+                                    <option value="patient">Patient</option>
+                                    <option value="provider">Provider (Doctor)</option>
+                                    <option value="admin">Systems Administrator</option>
+                                </select>
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSavingEdit}
+                                    className="flex-1 py-2.5 bg-brand hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    <Save className="w-4 h-4" />
+                                    {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Create User Modal */}
             {isCreateModalOpen && (
@@ -344,14 +705,10 @@ export default function UserManagementPage() {
                     <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-scale-up">
                         <div className="bg-brand p-6 text-white relative">
                             <h3 className="text-xl font-bold flex items-center gap-2">
-                                <UserPlus className="w-6 h-6" />
-                                Create New Account
+                                <UserPlus className="w-6 h-6" /> Create New Account
                             </h3>
                             <p className="text-brand-100 text-sm mt-1">Register a new user and assign their access hierarchy.</p>
-                            <button
-                                onClick={() => setIsCreateModalOpen(false)}
-                                className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"
-                            >
+                            <button onClick={() => setIsCreateModalOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors">
                                 <XCircle className="w-6 h-6" />
                             </button>
                         </div>
@@ -359,130 +716,73 @@ export default function UserManagementPage() {
                         <form onSubmit={handleCreateUser} className="p-6 space-y-4">
                             {error && (
                                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 text-sm">
-                                    <AlertCircle className="w-5 h-5 shrink-0" />
-                                    {error}
+                                    <AlertCircle className="w-5 h-5 shrink-0" /> {error}
                                 </div>
                             )}
-
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
                                         <div className="relative">
                                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                            <input
-                                                required
-                                                type="text"
-                                                placeholder="e.g. John"
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                                value={formData.firstName}
-                                                onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                                            />
+                                            <input required type="text" placeholder="e.g. John" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
                                         <div className="relative">
                                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                            <input
-                                                required
-                                                type="text"
-                                                placeholder="e.g. Watson"
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                                value={formData.lastName}
-                                                onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                                            />
+                                            <input required type="text" placeholder="e.g. Watson" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">D.O.B.</label>
-                                        <div className="relative">
-                                            <input
-                                                required
-                                                type="date"
-                                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                                value={formData.dob}
-                                                onChange={e => setFormData({ ...formData, dob: e.target.value })}
-                                            />
-                                        </div>
+                                        <input required type="date" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Sex</label>
-                                        <div className="relative">
-                                            <select
-                                                required
-                                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                                value={formData.sex}
-                                                onChange={e => setFormData({ ...formData, sex: e.target.value })}
-                                            >
-                                                <option value="" disabled>Select Sex...</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
-                                        </div>
+                                        <select required className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.sex} onChange={e => setFormData({ ...formData, sex: e.target.value })}>
+                                            <option value="" disabled>Select Sex...</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
                                     </div>
                                 </div>
-
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <input
-                                            required
-                                            type="email"
-                                            placeholder="john@example.com"
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                            value={formData.email}
-                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                        />
+                                        <input required type="email" placeholder="john@example.com" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                                     </div>
                                 </div>
-
+                                <div>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Phone Number <span className="text-slate-300 font-normal normal-case tracking-normal">(optional)</span></label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input type="tel" placeholder="+1 (555) 000-0000" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={newUserPhone} onChange={e => setNewUserPhone(e.target.value)} />
+                                    </div>
+                                </div>
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Initial Password</label>
                                     <div className="relative">
                                         <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <input
-                                            required
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                            value={formData.password}
-                                            onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                        />
+                                        <input required type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                                     </div>
                                 </div>
-
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Access Role</label>
-                                    <select
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
-                                        value={formData.role}
-                                        onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                    >
+                                    <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
                                         <option value="patient">Patient</option>
                                         <option value="provider">Provider (Doctor)</option>
                                         <option value="admin">Systems Administrator</option>
                                     </select>
                                 </div>
                             </div>
-
                             <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCreateModalOpen(false)}
-                                    className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="flex-1 py-2.5 bg-brand hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand/20 transition-all active:scale-95 disabled:opacity-50"
-                                >
+                                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-all">Cancel</button>
+                                <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 bg-brand hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand/20 transition-all active:scale-95 disabled:opacity-50">
                                     {isSubmitting ? 'Creating...' : 'Finalize Account'}
                                 </button>
                             </div>
@@ -494,14 +794,20 @@ export default function UserManagementPage() {
     );
 }
 
+function DetailField({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+            <div>{value}</div>
+        </div>
+    );
+}
+
 function StatCard({ label, value, icon: Icon, color, bg, active, onClick }: any) {
     return (
         <button
             onClick={onClick}
-            className={`bg-white dark:bg-slate-800 p-5 rounded-2xl border transition-all text-left flex items-center gap-4 ${active
-                ? 'border-brand ring-4 ring-brand/5 shadow-md shadow-brand/5'
-                : 'border-slate-200 dark:border-slate-700 shadow-sm hover:border-slate-300 dark:hover:border-slate-600'
-                }`}
+            className={`bg-white dark:bg-slate-800 p-5 rounded-2xl border transition-all text-left flex items-center gap-4 ${active ? 'border-brand ring-4 ring-brand/5 shadow-md shadow-brand/5' : 'border-slate-200 dark:border-slate-700 shadow-sm hover:border-slate-300 dark:hover:border-slate-600'}`}
         >
             <div className={`p-3 rounded-xl ${bg} ${color}`}>
                 <Icon className="w-5 h-5" />

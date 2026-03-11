@@ -4,9 +4,41 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const admin = require('firebase-admin');
 const dotenv = require('dotenv');
+dotenv.config(); // Must load env vars before any process.env access
+const { notifyWaitlist, notifyScheduled } = require('./notifications');
 
-dotenv.config();
 
+async function triggerScheduledNotifications(uid, consultData, apptData, scheduledDate) {
+    if (!uid || !consultData) return;
+    const serviceName = (typeof CATALOG !== 'undefined' && CATALOG[consultData.serviceKey]?.name)
+        || consultData.serviceKey
+        || 'Telehealth Visit';
+
+    let pData = { uid };
+    try {
+        const patientSnap = await db.collection('patients').doc(uid).get();
+        if (patientSnap.exists) pData = { ...pData, ...patientSnap.data() };
+        const userRecord = await admin.auth().getUser(uid);
+        pData.email = pData.email || userRecord.email;
+        pData.phone = pData.phone || userRecord.phoneNumber;
+        if (!pData.firstName || pData.firstName === 'Unknown') {
+            if (userRecord.displayName) {
+                const parts = userRecord.displayName.split(' ');
+                pData.firstName = parts[0];
+                pData.lastName = parts.slice(1).join(' ');
+            }
+        }
+    } catch (e) {
+        console.error("Auth fetch error for schedule notification:", e);
+    }
+
+    const meetingUrl = (apptData && apptData.meetingUrl) ? apptData.meetingUrl : "https://doxy.me/patriotictelehealth";
+    const intakeParams = consultData.intake || {};
+
+    if (Object.keys(pData).length > 0) {
+        await notifyScheduled(pData, serviceName, scheduledDate, meetingUrl, intakeParams).catch(console.error);
+    }
+}
 // Initialize Firebase Admin
 if (!admin.apps.length) {
     admin.initializeApp({
@@ -26,7 +58,7 @@ app.use((req, res, next) => {
     const origin = req.headers.origin || '*';
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-EMR-Key');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
@@ -63,6 +95,281 @@ app.use('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // Routes
+const { generateSSOUrl } = require('./dosespot');
+
+app.get('/api/v1/dosespot/sso-url', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const providerDoc = await db.collection('users').doc(uid).get();
+        if (!providerDoc.exists) {
+            return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
+        }
+
+        const data = providerDoc.data();
+        const doseSpotClinicianId = data?.doseSpotClinicianId;
+
+        if (!doseSpotClinicianId) {
+            return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
+        }
+
+        const patientDoseSpotId = req.query.patientDoseSpotId ? parseInt(req.query.patientDoseSpotId, 10) : undefined;
+        const refillsErrors = req.query.refillsErrors === 'true';
+
+        const ssoUrl = generateSSOUrl({ clinicianDoseSpotId: doseSpotClinicianId, patientDoseSpotId, refillsErrors });
+
+        return res.json({ ssoUrl });
+    } catch (error) {
+        console.error('Error generating DoseSpot SSO URL:', error);
+        return res.status(500).json({ error: 'Failed to build SSO link' });
+    }
+});
+
+app.get('/api/v1/dosespot/notification-count', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const defaultCounts = {
+            pendingPrescriptions: 0,
+            transmissionErrors: 0,
+            refillRequests: 0,
+            changeRequests: 0,
+            total: 0
+        };
+
+        const snapshot = await db.collection('users').doc(uid)
+            .collection('dosespot').doc('notifications').get();
+
+        if (!snapshot.exists) {
+            return res.json(defaultCounts);
+        }
+
+        const data = snapshot.data();
+        if (!data) return res.json(defaultCounts);
+
+        const pendingPrescriptions = data.pendingPrescriptions || 0;
+        const transmissionErrors = data.transmissionErrors || 0;
+        const refillRequests = data.refillRequests || 0;
+        const changeRequests = data.changeRequests || 0;
+        const total = pendingPrescriptions + transmissionErrors + refillRequests + changeRequests;
+
+        return res.json({
+            pendingPrescriptions,
+            transmissionErrors,
+            refillRequests,
+            changeRequests,
+            total
+        });
+    } catch (error) {
+        console.error('Error fetching DoseSpot notification count:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// EMR API Key middleware — allows the EMR provider dashboard to call the backend
+// without the provider being signed into patriotic-virtual-prod Firebase.
+const EMR_API_KEY = process.env.EMR_API_KEY || 'emr-provider-key-patriotic-2024';
+function requireEmrKey(req, res, next) {
+    const key = req.headers['x-emr-key'] || req.query.emrKey;
+    if (key !== EMR_API_KEY) return res.status(403).json({ error: 'Forbidden: invalid EMR key' });
+    next();
+}
+
+// EMR Provider: Get Waitlist (no Firebase auth needed — uses API key)
+app.get('/api/v1/emr/waitlist', requireEmrKey, async (req, res) => {
+    try {
+        const snapshot = await db.collection('consultations')
+            .where('status', '==', 'waitlist')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const consultations = [];
+        const uids = new Set();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            consultations.push({ id: doc.id, ...data });
+            if (data.uid) uids.add(data.uid);
+        });
+
+        let userMap = {};
+        if (uids.size > 0) {
+            try {
+                const userRecords = await admin.auth().getUsers([...uids].map(uid => ({ uid })));
+                userRecords.users.forEach(user => {
+                    userMap[user.uid] = { name: user.displayName || user.email || 'Unknown', email: user.email || '' };
+                });
+            } catch (e) { console.error('Auth lookup:', e); }
+        }
+
+        const enriched = consultations.map(c => {
+            const u = userMap[c.uid] || {};
+            // Also try to pull name from intake answers
+            const intake = c.intake || {};
+            const intakeName = (intake.firstName || intake.first_name || '') + ' ' + (intake.lastName || intake.last_name || '');
+            return {
+                ...c,
+                patientName: u.name || intakeName.trim() || 'Unknown',
+                patientEmail: u.email || intake.email || ''
+            };
+        });
+
+        res.json({ consultations: enriched });
+    } catch (error) {
+        console.error('EMR waitlist error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// EMR Provider: Schedule a Waitlisted Appointment (no Firebase auth needed — uses API key)
+app.patch('/api/v1/emr/consultations/:id/schedule', requireEmrKey, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { scheduledAt } = req.body;
+
+        const scheduledDate = new Date(scheduledAt);
+        if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'Invalid scheduledAt date' });
+
+        await db.collection('consultations').doc(id).update({
+            status: 'scheduled',
+            scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Also update the sub-collection appointment doc
+        const consultSnap = await db.collection('consultations').doc(id).get();
+        if (consultSnap.exists) {
+            const uid = consultSnap.data().uid;
+            if (uid) {
+                const apptSnap = await db.collection('patients').doc(uid)
+                    .collection('appointments')
+                    .where('consultationId', '==', id)
+                    .limit(1).get();
+                if (!apptSnap.empty) {
+                    const apptDoc = apptSnap.docs[0];
+                    await apptDoc.ref.update({
+                        status: 'scheduled',
+                        scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Trigger notification
+                    await triggerScheduledNotifications(uid, consultSnap.data(), apptDoc.data(), scheduledDate);
+                }
+            }
+        }
+
+        res.json({ success: true, message: 'Appointment scheduled' });
+    } catch (error) {
+        console.error('EMR schedule error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 0. Auth: Get Current User Profile
+app.get('/api/v1/auth/me', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).send('Unauthorized');
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const patientDoc = await db.collection('patients').doc(uid).get();
+        if (patientDoc.exists) {
+            res.json(patientDoc.data());
+        } else {
+            // Check auth user as fallback
+            const authUser = await admin.auth().getUser(uid);
+            res.json({
+                uid,
+                email: authUser.email,
+                firstName: authUser.displayName ? authUser.displayName.split(' ')[0] : 'Unknown',
+                lastName: authUser.displayName ? authUser.displayName.split(' ').slice(1).join(' ') : '',
+                role: 'patient'
+            });
+        }
+    } catch (error) {
+        console.error('Auth /me error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 0.5 Auth: Sync Firebase Registration
+app.post('/api/v1/auth/firebase-register', async (req, res) => {
+    try {
+        const { firstName, lastName, state, dateOfBirth, gender, role, firebaseUid, email } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).send('Unauthorized');
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        if (uid !== firebaseUid) return res.status(403).send('Forbidden: UID mismatch');
+
+        const userData = {
+            uid,
+            firstName: firstName || '',
+            lastName: lastName || '',
+            name: `${firstName || ''} ${lastName || ''}`.trim(),
+            email: email || decodedToken.email || '',
+            state: state || '',
+            dob: dateOfBirth || '',
+            gender: gender || '',
+            role: role || 'patient',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        };
+
+        await db.collection('patients').doc(uid).set(userData, { merge: true });
+
+        // Optionally update custom claims
+        await admin.auth().setCustomUserClaims(uid, { role: userData.role });
+
+        res.json(userData);
+    } catch (error) {
+        console.error('Auth register error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 0.6 Auth: Generate Cross-Domain Bridge Token (SSO between main site and EMR portal)
+// Both domains use the same Firebase project, so a custom token minted here
+// lets the receiving site call signInWithCustomToken() to auto-sign in.
+app.post('/api/v1/auth/bridge-token', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).send('Unauthorized');
+        }
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        // Custom tokens are valid for 1 hour but we use them immediately for SSO
+        const customToken = await admin.auth().createCustomToken(uid, {
+            role: decodedToken.role || 'patient'
+        });
+
+        res.json({ customToken });
+    } catch (error) {
+        console.error('Bridge token error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 1. Consultation Intake
 app.post('/api/v1/consultations', async (req, res) => {
     try {
@@ -75,23 +382,48 @@ app.post('/api/v1/consultations', async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
+        // EMR PHASE 1: Create/Update Patient Record
+        // 1) Fetch current user from Auth to guarantee we have their real name
+        let realFirst = '';
+        let realLast = '';
+        let realEmail = '';
+        try {
+            if (uid) {
+                const userRec = await admin.auth().getUser(uid);
+                realEmail = userRec.email || '';
+                if (userRec.displayName) {
+                    const parts = userRec.displayName.split(' ');
+                    realFirst = parts[0] || '';
+                    realLast = parts.slice(1).join(' ') || '';
+                }
+            }
+        } catch (e) {
+            console.error("Auth fetch failed in consults:", e);
+        }
+
+        const fName = intake.firstName || intake.first_name || realFirst || 'Patient';
+        const lName = intake.lastName || intake.last_name || realLast || '';
+        const email = intake.email || realEmail;
+
         const consultRef = await db.collection('consultations').add({
-            uid,
-            serviceKey,
-            intake,
-            stripeProductId,
+            uid: uid || null,
+            patient: `${fName} ${lName}`.trim(),
+            patientEmail: email,
+            serviceKey: serviceKey || 'unknown',
+            intake: intake || {},
+            stripeProductId: stripeProductId || null,
             status: 'pending',
             paymentStatus: 'unpaid',
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        // EMR PHASE 1: Create/Update Patient Record
         const patientRef = db.collection('patients').doc(uid);
         await patientRef.set({
             uid,
-            firstName: intake.firstName || 'Unknown',
-            lastName: intake.lastName || '',
-            email: intake.email || '',
+            firstName: fName,
+            lastName: lName,
+            name: `${fName} ${lName}`.trim(),
+            email: email,
             dob: intake.dateOfBirth || '',
             state: intake.state || '',
             lastVisit: admin.firestore.FieldValue.serverTimestamp(),
@@ -120,6 +452,38 @@ app.get('/api/v1/consultations/mine', async (req, res) => {
         res.json({ consultations });
     } catch (error) {
         console.error('Error fetching consultations:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.55 Get MY Scheduled Appointments (confirmed, from root /appointments collection)
+app.get('/api/v1/appointments/mine', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+
+        const snapshot = await db.collection('appointments')
+            .where('patientId', '==', uid)
+            .orderBy('startTime', 'asc')
+            .get();
+
+        const appointments = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            appointments.push({
+                id: doc.id,
+                ...data,
+                startTime: data.startTime && data.startTime.toDate ? data.startTime.toDate().toISOString() : null,
+                createdAt: data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toISOString() : null,
+            });
+        });
+
+        res.json({ appointments });
+    } catch (error) {
+        console.error('Error fetching patient appointments:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -176,6 +540,49 @@ app.get('/api/v1/admin/consultations', async (req, res) => {
         res.json({ consultations: enrichedConsultations });
     } catch (error) {
         console.error('Error fetching admin consultations:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 1.6b ADMIN: Get Waitlist (paid but unscheduled)
+app.get('/api/v1/admin/waitlist', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        await admin.auth().verifyIdToken(idToken);
+
+        const snapshot = await db.collection('consultations')
+            .where('status', '==', 'waitlist')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const consultations = [];
+        const uids = new Set();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            consultations.push({ id: doc.id, ...data });
+            if (data.uid) uids.add(data.uid);
+        });
+
+        let userMap = {};
+        if (uids.size > 0) {
+            try {
+                const userRecords = await admin.auth().getUsers([...uids].map(uid => ({ uid })));
+                userRecords.users.forEach(user => {
+                    userMap[user.uid] = { name: user.displayName || 'Unknown', email: user.email || '' };
+                });
+            } catch (e) { console.error('Auth lookup error:', e); }
+        }
+
+        const enriched = consultations.map(c => {
+            const u = userMap[c.uid] || {};
+            return { ...c, patientName: u.name || 'Unknown', patientEmail: u.email || '' };
+        });
+
+        res.json({ consultations: enriched });
+    } catch (error) {
+        console.error('Error fetching waitlist:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -479,6 +886,98 @@ app.patch('/api/v1/doctor/labs/:orderId/review', async (req, res) => {
     }
 });
 
+// 1.7b PROVIDER: Schedule a Waitlisted Appointment
+app.patch('/api/v1/consultations/:id/schedule', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { scheduledAt } = req.body; // ISO string
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        const idToken = authHeader.split('Bearer ')[1];
+        await admin.auth().verifyIdToken(idToken);
+
+        const scheduledDate = new Date(scheduledAt);
+        if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'Invalid scheduledAt date' });
+
+        // Update the consultation doc
+        await db.collection('consultations').doc(id).update({
+            status: 'scheduled',
+            scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Find and update the corresponding appointment doc in patients sub-collection
+        const consultSnap = await db.collection('consultations').doc(id).get();
+        if (consultSnap.exists) {
+            const uid = consultSnap.data().uid;
+            if (uid) {
+                const apptSnap = await db.collection('patients').doc(uid)
+                    .collection('appointments')
+                    .where('consultationId', '==', id)
+                    .limit(1).get();
+                if (!apptSnap.empty) {
+                    const apptDoc = apptSnap.docs[0];
+                    await apptDoc.ref.update({
+                        status: 'scheduled',
+                        scheduledAt: admin.firestore.Timestamp.fromDate(scheduledDate),
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Trigger notification
+                    await triggerScheduledNotifications(uid, consultSnap.data(), apptDoc.data(), scheduledDate);
+                }
+            }
+        }
+
+        res.json({ success: true, message: 'Appointment scheduled' });
+    } catch (error) {
+        console.error('Error scheduling appointment:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// 1.7c Trigger Schedule Notifications Manually (from EMR frontend)
+app.post('/api/v1/trigger/schedule-notification', async (req, res) => {
+    try {
+        const { apptId, scheduledAt, meetingUrl } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+        await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+
+        if (!apptId || !scheduledAt) return res.status(400).json({ error: 'Missing apptId or scheduledAt' });
+
+        const scheduledDate = new Date(scheduledAt);
+        if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'Invalid scheduledAt' });
+
+        // Retrieve the data manually
+        let uid = null;
+        let consultData = {};
+        let apptData = { meetingUrl };
+
+        const consultSnap = await db.collection('consultations').doc(apptId).get();
+        if (consultSnap.exists) {
+            consultData = consultSnap.data();
+            uid = consultData.uid;
+        }
+
+        const apptSnap = await db.collection('appointments').doc(apptId).get();
+        if (apptSnap.exists) {
+            apptData = { ...apptData, ...apptSnap.data() };
+            if (!uid) uid = apptData.patientId || apptData.patientUid;
+            if (!consultData.serviceKey) consultData.serviceKey = apptData.service || apptData.type || 'Telehealth Visit';
+        }
+
+        if (!uid) {
+            return res.status(404).json({ error: 'Could not resolve patient UID' });
+        }
+
+        await triggerScheduledNotifications(uid, consultData, apptData, scheduledDate);
+        res.json({ success: true, message: 'Notification triggered' });
+    } catch (error) {
+        console.error('Trigger schedule notification error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 1.7 ADMIN: Update Consultation Status
 app.patch('/api/v1/admin/consultations/:id', async (req, res) => {
     try {
@@ -554,11 +1053,55 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
 
             // Auto-complete payment in DB for mock flow so backend state is consistent
             if (consultationId) {
-                await db.collection('consultations').doc(consultationId).update({
+                const consultRef = db.collection('consultations').doc(consultationId);
+                const mockSessionId = 'mock_session_' + Date.now();
+
+                await consultRef.update({
                     paymentStatus: 'paid',
-                    stripeSessionId: 'mock_session_' + Date.now(),
+                    status: 'waitlist',
+                    stripeSessionId: mockSessionId,
                     updatedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
+
+                const consultSnap = await consultRef.get();
+                const consultData = consultSnap.exists ? consultSnap.data() : {};
+                const uid = consultData.uid;
+
+                if (uid) {
+                    const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
+                    await apptRef.set({
+                        providerName: "Patriotic Provider",
+                        providerId: "dr-o-admin-uid",
+                        type: "Telehealth",
+                        status: "waitlist",
+                        scheduledAt: null,
+                        meetingUrl: "https://doxy.me/patriotictelehealth",
+                        consultationId: consultationId,
+                        serviceKey: consultData.serviceKey || 'general_consultation',
+                        intakeAnswers: consultData.intake || {},
+                        patientUid: uid,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
+                    const patientSnap = await db.collection('patients').doc(uid).get();
+                    let pData = patientSnap.exists ? patientSnap.data() : { uid };
+                    try {
+                        const userRecord = await admin.auth().getUser(uid);
+                        pData.email = pData.email || userRecord.email;
+                        pData.phone = pData.phone || userRecord.phoneNumber;
+                        if (!pData.firstName || pData.firstName === 'Unknown') {
+                            if (userRecord.displayName) {
+                                const parts = userRecord.displayName.split(' ');
+                                pData.firstName = parts[0];
+                                pData.lastName = parts.slice(1).join(' ');
+                            }
+                        }
+                    } catch (e) { console.error("Error fetching auth user for waitlist sync:", e); }
+                    if (Object.keys(pData).length > 0) {
+                        await notifyWaitlist(pData, serviceName).catch(console.error);
+                    }
+                }
             }
 
             // Return success URL immediately
@@ -683,9 +1226,10 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             const batch = db.batch();
             const consultRef = db.collection('consultations').doc(consultationId);
 
-            // 1. Mark consultation as paid
+            // 1. Mark consultation as paid + move to waitlist
             batch.update(consultRef, {
                 paymentStatus: 'paid',
+                status: 'waitlist',
                 stripeSessionId: session.id,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
@@ -694,26 +1238,49 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             const consultSnap = await consultRef.get();
             const consultData = consultSnap.exists ? consultSnap.data() : {};
 
-            // 3. Create Appointment in Patient Sub-collection
+            // 3. Create Waitlist Appointment in Patient Sub-collection
             // Path: patients/{uid}/appointments
-            // We'll use the UID from metadata
+            // status='waitlist' until provider schedules it
             if (uid) {
                 const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
                 batch.set(apptRef, {
-                    date: admin.firestore.FieldValue.serverTimestamp(), // Initial slot, patient can reschedule
-                    providerName: "Patriotic Provider", // Default as requested
-                    providerId: "dr-o-admin-uid", // Placeholder for Dr. O / Admin
+                    providerName: "Patriotic Provider",
+                    providerId: "dr-o-admin-uid",
                     type: "Telehealth",
-                    status: "scheduled",
+                    status: "waitlist",
+                    scheduledAt: null,
                     meetingUrl: "https://doxy.me/patriotictelehealth",
                     consultationId: consultationId,
                     serviceKey: consultData.serviceKey || 'general_consultation',
                     intakeAnswers: consultData.intake || {},
+                    patientUid: uid,
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
                 });
             }
 
             await batch.commit();
+
+            // 4. Notify Patient & Admin
+            if (uid && consultData && consultData.serviceKey) {
+                const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
+                const patientSnap = await db.collection('patients').doc(uid).get();
+                let pData = patientSnap.exists ? patientSnap.data() : { uid };
+                try {
+                    const userRecord = await admin.auth().getUser(uid);
+                    pData.email = pData.email || userRecord.email;
+                    pData.phone = pData.phone || userRecord.phoneNumber;
+                    if (!pData.firstName || pData.firstName === 'Unknown') {
+                        if (userRecord.displayName) {
+                            const parts = userRecord.displayName.split(' ');
+                            pData.firstName = parts[0];
+                            pData.lastName = parts.slice(1).join(' ');
+                        }
+                    }
+                } catch (e) { console.error("Error fetching auth user for waitlist sync:", e); }
+                if (Object.keys(pData).length > 0) {
+                    await notifyWaitlist(pData, serviceName).catch(console.error);
+                }
+            }
         }
 
         if (paymentType === 'balance_payment' && uid) {
