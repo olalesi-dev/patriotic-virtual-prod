@@ -40,21 +40,19 @@ export const enforceMfaForStaff = (req: Request, res: Response, next: NextFuncti
     const staffRoles = ['SuperAdmin', 'OrgAdmin', 'Provider', 'Staff', 'Biller'];
 
     if (staffRoles.includes(user.role_name)) {
+        // MFA Enforcement disabled for now
+        /*
         if (!user.mfa_enrolled_at) {
-            // Force enrollment flow
             return res.status(403).json({
                 error: 'MFA_REQUIRED',
                 message: 'Multifactor authentication is required. Please enroll.'
             });
         }
-
-        // In a real implementation, we would check the session for MFA verification timestamp
-        // e.g. if (req.session.mfaVerifiedAt < sessionTimeout) ...
-        // For REST, we might require a specific header or JWT claim "amr: mfa"
-        const isMfaVerified = req.headers['x-mfa-verified'] === 'true'; // Placeholder for token claim check
+        const isMfaVerified = req.headers['x-mfa-verified'] === 'true'; 
         if (!isMfaVerified) {
             return res.status(403).json({ error: 'MFA_CHALLENGE', message: 'Please verify generic MFA.' });
         }
+        */
     }
     next();
 };

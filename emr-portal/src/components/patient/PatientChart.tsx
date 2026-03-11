@@ -10,6 +10,9 @@ import {
 import { Patient } from '@/lib/data';
 import { BillingTab, SoapNoteModal, MedicationsTab, OrdersTab, ImagingTab, LabsVitalsTab, DocumentsTab, EncountersTab, InboxTab } from './PatientDetailComponents';
 
+import { db } from '@/lib/firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+
 interface PatientChartProps {
     patient: Patient;
     onBack: () => void;
@@ -19,6 +22,38 @@ interface PatientChartProps {
 export function PatientChart({ patient, onBack, onAddNote }: PatientChartProps) {
     const [activeTab, setActiveTab] = useState('Overview');
     const [isSoapModalOpen, setIsSoapModalOpen] = useState(false);
+    const [liveAppts, setLiveAppts] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        if (!patient?.id) return;
+        const apptsRef = collection(db, 'patients', patient.id.toString(), 'appointments');
+        const q = query(apptsRef, orderBy('date', 'desc'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(docSnap => {
+                const appt = docSnap.data();
+                return {
+                    id: docSnap.id,
+                    date: appt.date?.toDate ? appt.date.toDate().toISOString().split('T')[0] : 'N/A',
+                    title: `${appt.serviceKey || appt.reason || 'Telehealth'} Visit`,
+                    provider: appt.providerName || 'Clinical Provider',
+                    type: appt.type || 'Telehealth',
+                    status: appt.status || 'scheduled',
+                    intake: appt.intakeAnswers || {},
+                    serviceKey: appt.serviceKey
+                };
+            });
+            setLiveAppts(data);
+        });
+
+        return () => unsubscribe();
+    }, [patient.id]);
+
+    // Merge static patient data with live appointments
+    const mergedPatient = {
+        ...patient,
+        recentEncounters: [...liveAppts, ...(patient.recentEncounters || [])].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
+    };
 
     const handleSaveNote = (note: any) => {
         onAddNote(note);
@@ -120,18 +155,18 @@ export function PatientChart({ patient, onBack, onAddNote }: PatientChartProps) 
 
             {/* CONTENT AREA */}
             <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8 custom-scrollbar">
-                {activeTab === 'Overview' && <OverviewTab patient={patient} />}
-                {activeTab === 'Clinical' && <ClinicalTab patient={patient} onNewEncounter={() => setIsSoapModalOpen(true)} />}
-                {activeTab === 'Medications/eRx' && <MedicationsTab patient={patient} />}
-                {activeTab === 'Orders' && <OrdersTab patient={patient} />}
-                {activeTab === 'Imaging' && <ImagingTab patient={patient} />}
-                {activeTab === 'Labs & Vitals' && <LabsVitalsTab patient={patient} />}
-                {activeTab === 'Billing' && <BillingTab patient={patient} />}
+                {activeTab === 'Overview' && <OverviewTab patient={mergedPatient} />}
+                {activeTab === 'Clinical' && <ClinicalTab patient={mergedPatient} onNewEncounter={() => setIsSoapModalOpen(true)} />}
+                {activeTab === 'Medications/eRx' && <MedicationsTab patient={mergedPatient} />}
+                {activeTab === 'Orders' && <OrdersTab patient={mergedPatient} />}
+                {activeTab === 'Imaging' && <ImagingTab patient={mergedPatient} />}
+                {activeTab === 'Labs & Vitals' && <LabsVitalsTab patient={mergedPatient} />}
+                {activeTab === 'Billing' && <BillingTab patient={mergedPatient} />}
                 {activeTab === 'Documents' && (
-                    <DocumentsTab patient={patient} />
+                    <DocumentsTab patient={mergedPatient} />
                 )}
-                {activeTab === 'Encounters' && <EncountersTab patient={patient} onNewEncounter={() => setIsSoapModalOpen(true)} />}
-                {activeTab === 'Inbox' && <InboxTab patient={patient} />}
+                {activeTab === 'Encounters' && <EncountersTab patient={mergedPatient} onNewEncounter={() => setIsSoapModalOpen(true)} />}
+                {activeTab === 'Inbox' && <InboxTab patient={mergedPatient} />}
                 {['Overview', 'Clinical', 'Medications/eRx', 'Orders', 'Imaging', 'Labs & Vitals', 'Billing', 'Documents', 'Encounters', 'Inbox'].indexOf(activeTab) === -1 && (
                     <div className="flex flex-col items-center justify-center h-64 text-slate-400">
                         <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">

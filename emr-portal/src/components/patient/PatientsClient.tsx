@@ -135,6 +135,19 @@ export default function PatientsClient() {
                                 description: cData.symptom
                             });
                         }
+
+                        // Add to recentEncounters
+                        if (!patient.recentEncounters.find((e: any) => e.id === docSnap.id)) {
+                            patient.recentEncounters.push({
+                                id: docSnap.id,
+                                date: cData.createdAt?.toDate ? formatFirestoreDate(cData.createdAt) : new Date().toISOString().split('T')[0],
+                                title: `${cData.symptom || 'General visit'} Intake`,
+                                provider: 'Patient Submission',
+                                type: 'Initial Consult',
+                                intake: cData.intake || {},
+                                status: 'Completed'
+                            });
+                        }
                     }
                 });
 
@@ -144,6 +157,15 @@ export default function PatientsClient() {
                 console.error("Error fetching consultations:", error);
                 setIsLoading(false);
             });
+        };
+
+        const formatFirestoreDate = (ts: any) => {
+            try {
+                const d = ts.toDate();
+                return d.toISOString().split('T')[0];
+            } catch (e) {
+                return new Date().toISOString().split('T')[0];
+            }
         };
 
         const updatePatientsState = (pMap: any) => {

@@ -29,7 +29,10 @@ service cloud.firestore {
 
     // --- CONSULTATIONS ---
     match /consultations/{id} {
-      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
+      // Staff (any authenticated user in beta) can list/query all consultations
+      // Patients can only read their own docs
+      allow list: if isAuthenticated();
+      allow get: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
     }

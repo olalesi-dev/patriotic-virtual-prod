@@ -44,7 +44,10 @@ export default function RootLayout({
 
     return (
         <html lang="en">
-            <body className={`${inter.className} bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased min-h-screen`}>
+            <head>
+                <link rel="icon" href="/favicon.ico" sizes="any" />
+            </head>
+            <body className={`${inter.className} bg-slate-50 text-navy antialiased min-h-screen`}>
                 <MfaEnrollmentGate>
                     <SecurityShell>
                         <SonnerToaster position="top-right" richColors closeButton />

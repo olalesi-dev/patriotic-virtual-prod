@@ -1,271 +1,191 @@
 "use client";
 
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
-	collection,
-	doc,
-	getDoc,
-	onSnapshot,
-	query,
-	where,
-} from "firebase/firestore";
-import {
-	Activity,
-	Calendar,
-	ChevronRight,
-	CreditCard,
-	FileText,
-	LayoutDashboard,
-	LogOut,
-	Menu,
-	MessageSquare,
-	Pill,
-	Search,
-	Settings,
-	ShieldCheck,
-	User,
-	X,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import type React from "react";
-import { useEffect, useReducer, useRef, useState } from "react";
-import { toast } from "sonner";
-import { ProviderNotificationBell } from "@/components/common/ProviderNotificationBell";
-import { ThemeToggle } from "@/components/common/ThemeToggle";
-import { auth, db } from "@/lib/firebase";
+    LayoutDashboard,
+    Calendar,
+    MessageSquare,
+    FileText,
+    CreditCard,
+    Settings,
+    LogOut,
+    Bell,
+    Menu,
+    X,
+    User,
+    ShieldCheck,
+    Search,
+    Pill,
+    Activity,
+    CheckCircle2,
+    Clock,
+    AlertCircle,
+} from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 
-interface PatientLayoutState {
-	userProfile: any;
-	loading: boolean;
-	unreadCount: number;
-}
 
-type PatientLayoutAction =
-	| { type: "auth_changed" }
-	| { type: "profile_loaded"; payload: any }
-	| { type: "set_unread_count"; payload: number }
-	| { type: "auth_missing" }
-	| { type: "finish_loading" };
+export function PatientLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const router = useRouter();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const notifRef = useRef<HTMLDivElement>(null);
+    // Direct Firebase Auth user — always has the real displayName (set during signup)
+    const [authUser, setAuthUser] = useState<any>(null);
 
-const initialPatientLayoutState: PatientLayoutState = {
-	userProfile: null,
-	loading: true,
-	unreadCount: 0,
-};
+    const profile = useUserProfile();
 
-function patientLayoutReducer(
-	state: PatientLayoutState,
-	action: PatientLayoutAction,
-): PatientLayoutState {
-	if (action.type === "auth_changed") {
-		return {
-			...state,
-			userProfile: null,
-			loading: true,
-			unreadCount: 0,
-		};
-	}
+    // Derive the display name: prefer direct Firebase Auth, then hook, then email prefix
+    const getDisplayName = () => {
+        const authName = authUser?.displayName;
+        const hookName = profile.displayName;
+        const email = authUser?.email || profile.email;
+        if (authName && authName !== 'Unknown' && authName.trim()) return authName.trim();
+        if (hookName && hookName !== 'Unknown' && hookName.trim()) return hookName.trim();
+        if (email) {
+            const prefix = email.split('@')[0];
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        }
+        return 'Patient';
+    };
+    const displayName = getDisplayName();
+    const firstName = displayName.split(' ')[0];
+    const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || 'P';
 
-	if (action.type === "profile_loaded") {
-		return {
-			...state,
-			userProfile: action.payload,
-		};
-	}
+    useEffect(() => {
+        // Listen to Firebase Auth directly — most reliable source for displayName
+        const unsub = auth.onAuthStateChanged((u) => setAuthUser(u));
+        return () => unsub();
+    }, []);
 
-	if (action.type === "set_unread_count") {
-		return {
-			...state,
-			unreadCount: action.payload,
-		};
-	}
+    useEffect(() => {
+        if (!profile.loading) {
+            if (!profile.authenticated) {
+                if (!['/login', '/signup', '/forgot-password'].includes(pathname)) {
+                    router.replace('/login');
+                }
+            } else if (profile.normalizedRole !== 'patient') {
+                router.replace('/dashboard');
+            }
+        }
+    }, [profile, pathname, router]);
 
-	if (action.type === "auth_missing") {
-		return {
-			userProfile: null,
-			loading: false,
-			unreadCount: 0,
-		};
-	}
+    useEffect(() => {
+        let unsubThreads: any;
+        let unsubAppts: any;
 
-	return {
-		...state,
-		loading: false,
-	};
-}
+        const handleClickOutside = (e: MouseEvent) => {
+            if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
 
-function usePatientLayoutView({ children }: { children: React.ReactNode }) {
-	const pathname = usePathname();
-	const router = useRouter();
-	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const [layoutState, dispatchLayout] = useReducer(
-		patientLayoutReducer,
-		initialPatientLayoutState,
-	);
-	const { userProfile, loading, unreadCount } = layoutState;
-	const unreadThreadSnapshotRef = useRef<Record<string, number>>({});
-	const hasHydratedPatientThreadsRef = useRef(false);
+        const setupListeners = (uid: string) => {
+            // Message unread count
+            const q = query(collection(db, 'threads'), where('patientId', '==', uid));
+            unsubThreads = onSnapshot(q, (snapshot) => {
+                const total = snapshot.docs.reduce((acc, d) => acc + (d.data().unreadCount || 0), 0);
+                setUnreadCount(total);
 
-	useEffect(() => {
-		let unsubThreads: any;
+                const msgNotifs = snapshot.docs
+                    .filter(d => (d.data().unreadCount || 0) > 0)
+                    .slice(0, 2)
+                    .map(d => ({
+                        id: d.id,
+                        type: 'message',
+                        title: 'New message from your care team',
+                        body: d.data().lastMessage?.text || 'You have an unread message',
+                        time: 'Now',
+                        icon: 'message',
+                        href: '/patient/messages',
+                    }));
 
-		const unsubscribe = auth.onAuthStateChanged(async (user) => {
-			if (unsubThreads) {
-				unsubThreads();
-				unsubThreads = null;
-			}
+                // Appointment notifications from patients/{uid}/appointments
+                const apptQ = query(collection(db, 'patients', uid, 'appointments'), limit(3));
+                unsubAppts = onSnapshot(apptQ, (apptSnap) => {
+                    const apptNotifs = apptSnap.docs
+                        .map(d => {
+                            const raw = d.data();
+                            const isScheduled = raw.status === 'scheduled';
+                            const isPending = raw.status === 'PENDING_SCHEDULING';
+                            if (!isScheduled && !isPending) return null;
+                            return {
+                                id: d.id + '_appt',
+                                type: isScheduled ? 'appointment' : 'pending',
+                                title: isScheduled ? '✅ Appointment Confirmed' : '⏳ Awaiting Scheduling',
+                                body: isScheduled
+                                    ? `Your appointment has been scheduled by ${raw.providerName || 'your provider'}`
+                                    : 'Your request is in the queue — a provider will confirm your time soon',
+                                time: raw.updatedAt?.toDate ? raw.updatedAt.toDate().toLocaleDateString() : 'Recent',
+                                icon: isScheduled ? 'check' : 'clock',
+                                href: '/patient/appointments',
+                            };
+                        })
+                        .filter(Boolean);
 
-			dispatchLayout({ type: "auth_changed" });
-			unreadThreadSnapshotRef.current = {};
-			hasHydratedPatientThreadsRef.current = false;
+                    const base = [
+                        {
+                            id: 'hipaa',
+                            type: 'security',
+                            title: '🔐 HIPAA Secure Session',
+                            body: 'Your session is encrypted and protected',
+                            time: 'Always on',
+                            icon: 'shield',
+                            href: '/patient/settings',
+                        },
+                    ];
 
-			if (user) {
-				// Profile Retrieval (Check Patients then Users collection)
-				let profileData: any = {
-					name: user.displayName || "Patient",
-					firstName: user.displayName
-						? user.displayName.split(" ")[0]
-						: "Patient",
-					role: "Patient", // default fallback
-				};
+                    setNotifications([...msgNotifs, ...(apptNotifs as any[]), ...base]);
+                });
+            });
+        };
 
-				const docRef = doc(db, "patients", user.uid);
-				const docSnap = await getDoc(docRef);
+        if (auth.currentUser) {
+            setupListeners(auth.currentUser.uid);
+        } else {
+            const unsub = auth.onAuthStateChanged(user => {
+                if (user) setupListeners(user.uid);
+            });
+            return () => {
+                unsub();
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }
 
-				if (docSnap.exists()) {
-					profileData = { ...profileData, ...docSnap.data() };
-				} else {
-					const userRef = doc(db, "users", user.uid);
-					const userSnap = await getDoc(userRef);
-					if (userSnap.exists()) {
-						profileData = { ...profileData, ...userSnap.data() };
-						if (profileData.displayName && !profileData.name) {
-							profileData.name = profileData.displayName;
-						}
-					}
-				}
+        return () => {
+            unsubThreads?.();
+            unsubAppts?.();
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
-				dispatchLayout({ type: "profile_loaded", payload: profileData });
 
-				// Unread Count Listener
-				const q = query(
-					collection(db, "threads"),
-					where("patientId", "==", user.uid),
-				);
-				unsubThreads = onSnapshot(q, (snapshot) => {
-					const nextUnreadByThread: Record<string, number> = {};
-					let total = 0;
+    const navigation = [
+        { name: 'Dashboard', href: '/patient', icon: LayoutDashboard },
+        { name: 'My Schedule', href: '/patient/scheduled', icon: CheckCircle2 },
+        { name: 'My Appointments', href: '/patient/appointments', icon: FileText },
+        { name: 'Calendar', href: '/patient/calendar', icon: Calendar },
+        { name: 'Messages', href: '/patient/messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount.toString() : undefined },
+        { name: 'Medications', href: '/my-health/medications', icon: Pill },
+        { name: 'Lab Results', href: '/my-health/labs', icon: Activity },
+        { name: 'Imaging', href: '/my-health/imaging', icon: FileText },
+        { name: 'Billing', href: '/patient/billing', icon: CreditCard },
+        { name: 'Settings', href: '/patient/settings', icon: Settings },
+    ];
 
-						snapshot.docs.forEach((threadDoc) => {
-							const data = threadDoc.data();
-						const threadUnreadRaw =
-							typeof data.patientUnreadCount === "number"
-								? data.patientUnreadCount
-								: typeof data.unreadCount === "number"
-									? data.unreadCount
-									: 0;
-						const threadUnread =
-							threadUnreadRaw > 0 ? threadUnreadRaw : data.unread === true ? 1 : 0;
-
-							nextUnreadByThread[threadDoc.id] = threadUnread;
-							total += threadUnread;
-						});
-
-						dispatchLayout({ type: "set_unread_count", payload: total });
-
-					if (hasHydratedPatientThreadsRef.current) {
-						snapshot.docChanges().forEach((change) => {
-							if (change.type === "removed") return;
-
-							const data = change.doc.data();
-							const threadUnreadRaw =
-								typeof data.patientUnreadCount === "number"
-									? data.patientUnreadCount
-									: typeof data.unreadCount === "number"
-										? data.unreadCount
-										: 0;
-							const threadUnread =
-								threadUnreadRaw > 0 ? threadUnreadRaw : data.unread === true ? 1 : 0;
-							const previousUnread =
-								unreadThreadSnapshotRef.current[change.doc.id] ?? 0;
-
-							if (threadUnread > previousUnread) {
-								const providerName =
-									typeof data.providerName === "string" &&
-									data.providerName.trim() !== ""
-										? data.providerName
-										: "Care Team";
-								const preview =
-									typeof data.lastMessage === "string" &&
-									data.lastMessage.trim() !== ""
-										? data.lastMessage
-										: "You have a new message.";
-
-								toast.message(`New message from ${providerName}`, {
-									description: preview,
-								});
-							}
-						});
-					} else {
-						hasHydratedPatientThreadsRef.current = true;
-					}
-
-						unreadThreadSnapshotRef.current = nextUnreadByThread;
-					});
-				dispatchLayout({ type: "finish_loading" });
-			} else {
-				dispatchLayout({ type: "auth_missing" });
-			}
-		});
-
-		return () => {
-			unsubscribe();
-			if (unsubThreads) unsubThreads();
-		};
-	}, []);
-
-	const handleLogout = async () => {
-		await auth.signOut();
-		router.push("/login");
-	};
-
-	const getInitials = (name: string) => {
-		if (!name || name === "Patient") return "P";
-		const parts = name.trim().split(" ");
-		if (parts.length > 1) {
-			return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-		}
-		return name.substring(0, 2).toUpperCase();
-	};
-
-	const getFirstName = (name: string) => {
-		if (!name) return "Patient";
-		return name.trim().split(" ")[0];
-	};
-
-	const navigation = [
-		{ name: "Dashboard", href: "/patient", icon: LayoutDashboard },
-		{ name: "My Appointments", href: "/patient/appointments", icon: Calendar },
-		{
-			name: "Messages",
-			href: "/patient/messages",
-			icon: MessageSquare,
-			badge: unreadCount > 0 ? unreadCount.toString() : undefined,
-		},
-		{ name: "Medications", href: "/my-health/medications", icon: Pill },
-		{ name: "Lab Results", href: "/my-health/labs", icon: Activity },
-		{ name: "Imaging", href: "/my-health/imaging", icon: FileText },
-		{ name: "Billing", href: "/patient/billing", icon: CreditCard },
-		{ name: "Settings", href: "/patient/settings", icon: Settings },
-	];
-
-	if (loading) {
-		return (
-			<div className="min-h-screen bg-[#F0F9FF] dark:bg-slate-900 flex items-center justify-center">
-				<div className="w-12 h-12 border-4 border-slate-200 border-t-[#0EA5E9] rounded-full animate-spin"></div>
-			</div>
-		);
-	}
+    if (profile.loading) {
+        return (
+            <div className="min-h-screen bg-[#F0F9FF] flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-[#0EA5E9] rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
 	return (
 		<div className="min-h-screen bg-[#F0F9FF] dark:bg-slate-900 flex text-slate-900 dark:text-slate-100">
@@ -280,24 +200,15 @@ function usePatientLayoutView({ children }: { children: React.ReactNode }) {
 					/>
 				)}
 
-			{/* SIDEBAR */}
-			<aside
-				className={`
-                fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0
-                ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            `}
-			>
-				{/* Logo */}
-				<div className="h-20 flex items-center px-8 border-b border-slate-50 dark:border-slate-800">
-					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 bg-[#0EA5E9] rounded-xl flex items-center justify-center shadow-lg shadow-sky-100">
-							<span className="text-white font-black italic text-xl">P</span>
-						</div>
-						<span className="font-black text-slate-800 dark:text-slate-100 tracking-tight text-xl">
-							Patriotic
-						</span>
-					</div>
-				</div>
+            {/* SIDEBAR */}
+            <aside className={`
+                fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
+                {/* Logo */}
+                <div className="h-20 flex items-center px-8 border-b border-slate-50 pt-2">
+                    <img src="/logo.png" alt="Patriotic EHR" className="h-10 w-auto object-contain" />
+                </div>
 
 				{/* Navigation */}
 				<nav className="flex-1 py-8 px-4 space-y-2 overflow-y-auto">
@@ -333,53 +244,25 @@ function usePatientLayoutView({ children }: { children: React.ReactNode }) {
 					})}
 				</nav>
 
-				{/* User Profile info - Redesigned Dark Theme Box */}
-				<div className="mt-auto p-4 mx-4 mb-6 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-xl relative group overflow-hidden">
-					<div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none"></div>
+                {/* User Profile info */}
+                <UserIdentityMenu />
+            </aside>
 
-					<div className="flex items-center gap-3 relative z-10">
-						<div className="w-10 h-10 rounded-full bg-[#6366F1] flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md ring-2 ring-[#0F172A]">
-							{getInitials(userProfile?.name)}
-						</div>
-						<div className="flex-1 min-w-0 pr-6">
-							<h4 className="text-sm font-bold text-white truncate drop-shadow-sm">
-								{userProfile?.name || "Patient"}
-							</h4>
-							<p className="text-xs font-semibold text-slate-400 capitalize truncate">
-								{userProfile?.role || "Patient"}
-							</p>
-						</div>
-					</div>
-
-					{/* Logout Button (Appears on Hover) */}
-					<button
-						onClick={handleLogout}
-						className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-800/0 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-all z-20"
-						title="Sign Out"
-					>
-						<LogOut className="w-4 h-4" />
-					</button>
-				</div>
-			</aside>
-
-			{/* MAIN CONTENT */}
-			<div className="flex-1 flex flex-col min-w-0">
-				{/* Header */}
-				<header className="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 dark:border-slate-800 px-8 flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<button
-							className="p-2 -ml-2 lg:hidden text-slate-400 dark:text-slate-300"
-							onClick={() => setIsSidebarOpen(true)}
-						>
-							<Menu className="w-6 h-6" />
-						</button>
-						<h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight hidden sm:block">
-							Welcome back,{" "}
-							<span className="text-[#0EA5E9]">
-								{getFirstName(userProfile?.name)}
-							</span>
-						</h2>
-					</div>
+            {/* MAIN CONTENT */}
+            <div className="flex-1 flex flex-col min-w-0">
+                {/* Header */}
+                <header className="h-20 bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 px-8 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button
+                            className="p-2 -ml-2 lg:hidden text-slate-400"
+                            onClick={() => setIsSidebarOpen(true)}
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-xl font-black text-slate-800 tracking-tight hidden sm:block">
+                            Welcome back, <span className="text-[#0EA5E9]">{firstName}</span>
+                        </h2>
+                    </div>
 
 					<div className="flex items-center gap-2">
 						<div className="hidden md:flex items-center gap-2 mr-4 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-700">
@@ -391,17 +274,66 @@ function usePatientLayoutView({ children }: { children: React.ReactNode }) {
 							/>
 						</div>
 
-						<ProviderNotificationBell viewAllHref="/patient/notifications" />
+                        {/* Notification Bell */}
+                        <div className="relative" ref={notifRef}>
+                            <button
+                                onClick={() => setNotifOpen(!notifOpen)}
+                                className="p-2.5 text-slate-400 hover:text-[#0EA5E9] hover:bg-sky-50 rounded-xl transition-all relative"
+                            >
+                                <Bell className="w-5 h-5" />
+                                {notifications.some(n => n.type !== 'security') && (
+                                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                                )}
+                            </button>
 
-						<ThemeToggle />
+                            {notifOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden">
+                                    <div className="p-4 border-b border-slate-50 flex justify-between items-center">
+                                        <h3 className="font-black text-slate-800 text-sm">Notifications</h3>
+                                        <button onClick={() => setNotifOpen(false)} className="text-slate-300 hover:text-slate-500 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                                        {notifications.length === 0 ? (
+                                            <div className="p-6 text-center text-slate-400 text-sm italic">All caught up! No new notifications.</div>
+                                        ) : notifications.map(n => (
+                                            <Link key={n.id} href={n.href} onClick={() => setNotifOpen(false)}
+                                                className="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors group">
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm ${n.icon === 'message' ? 'bg-indigo-50 text-indigo-500' :
+                                                    n.icon === 'check' ? 'bg-emerald-50 text-emerald-600' :
+                                                        n.icon === 'clock' ? 'bg-amber-50 text-amber-500' :
+                                                            'bg-sky-50 text-sky-500'
+                                                    }`}>
+                                                    {n.icon === 'message' && <MessageSquare className="w-4 h-4" />}
+                                                    {n.icon === 'check' && <CheckCircle2 className="w-4 h-4" />}
+                                                    {n.icon === 'clock' && <Clock className="w-4 h-4" />}
+                                                    {n.icon === 'shield' && <ShieldCheck className="w-4 h-4" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold text-slate-800 leading-tight mb-0.5">{n.title}</p>
+                                                    <p className="text-[11px] text-slate-400 leading-snug">{n.body}</p>
+                                                    <p className="text-[10px] text-slate-300 mt-1 font-bold uppercase tracking-widest">{n.time}</p>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                    <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                                        <Link href="/patient/appointments" onClick={() => setNotifOpen(false)}
+                                            className="text-[11px] font-black text-[#0EA5E9] uppercase tracking-widest hover:underline">
+                                            View All Activity →
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
-						<div className="h-8 w-px bg-slate-100 dark:bg-slate-700 mx-2"></div>
-
-						<div className="flex items-center gap-1 text-slate-300 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest">
-							<ShieldCheck className="w-3 h-3 text-emerald-500" /> Secure
-						</div>
-					</div>
-				</header>
+                        <div className="h-8 w-px bg-slate-100 mx-2" />
+                        <div className="flex items-center gap-1 text-slate-300 font-bold text-[10px] uppercase tracking-widest">
+                            <ShieldCheck className="w-3 h-3 text-emerald-500" /> Secure
+                        </div>
+                    </div>
+                </header>
 
 				{/* Content area */}
 				<main className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F0F9FF] dark:bg-slate-900">

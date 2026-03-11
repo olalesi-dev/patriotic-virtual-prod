@@ -8,31 +8,27 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React, { useMemo, useRef, useState } from 'react';
-import { useTimezonePreference } from '@/hooks/useTimezonePreference';
-import { canMoveAppointmentStatusForward, isVideoVisitType, toCanonicalAppointmentStatus } from '@/lib/appointment-flow';
-import {
-    PROVIDER_APPOINTMENT_CREATED_EVENT,
-    type ProviderAppointmentCreatedEventDetail
-} from '@/lib/dashboard-events';
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Calendar, Video, Filter, MoreHorizontal, CheckCircle, XCircle, Clock, X, Mail, Phone, User, Activity, ChevronDown } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
-import { toHourMinuteLabel } from '@/lib/settings';
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, serverTimestamp, Timestamp, getDoc, getDocs, orderBy, limit } from 'firebase/firestore';
 
-type DashboardTab = 'Upcoming' | 'Completed' | 'Cancelled' | 'Waitlist';
-type AppointmentStatusKey = 'upcoming' | 'checked_in' | 'confirmed' | 'pending' | 'completed' | 'cancelled' | 'waitlist';
-type MutableStatusKey = 'checked_in' | 'confirmed' | 'pending' | 'completed' | 'cancelled' | 'waitlist';
-
+// --- Types ---
 interface Appointment {
     id: string;
     patient: string;
+    patientEmail: string;
+    patientUid: string;
+    serviceKey: string;
+    time: string;
     displayTime: string;
+    displayDate: string;
     type: string;
-    statusKey: AppointmentStatusKey;
-    statusLabel: string;
-    startAt: string | null;
-    notes: string | null;
-    meetingUrl: string | null;
+    status: 'Upcoming' | 'Checked In' | 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'Waitlist';
+    intakeAnswers: Record<string, any>;
+    createdAt: string;
+    meetingUrl?: string;
+    raw?: Record<string, any>;
 }
 
 interface Message {
@@ -41,505 +37,400 @@ interface Message {
     preview: string;
     time: string;
     unread: boolean;
-    unreadCount?: number;
+    patientId?: string;
 }
 
-interface WeeklyVolumePoint {
-    name: string;
-    visits: number;
-}
+interface WeekData { name: string; visits: number; }
 
-interface DashboardPayload {
-    success: boolean;
-    providerName?: string;
-    appointments?: Appointment[];
-    messages?: Message[];
-    unreadMessageCount?: number;
-    weeklyVolume?: WeeklyVolumePoint[];
-    error?: string;
-}
-
-interface StatusUpdatePayload {
-    success: boolean;
-    appointment?: {
-        id: string;
-        statusKey: AppointmentStatusKey;
-        statusLabel: string;
-    };
-    error?: string;
-}
-
-const UPCOMING_KEYS: AppointmentStatusKey[] = ['upcoming', 'checked_in', 'confirmed', 'pending'];
-const TAB_OPTIONS: DashboardTab[] = ['Upcoming', 'Completed', 'Cancelled', 'Waitlist'];
-const DEFAULT_WEEKLY_VOLUME: WeeklyVolumePoint[] = [
-    { name: 'M', visits: 0 },
-    { name: 'T', visits: 0 },
-    { name: 'W', visits: 0 },
-    { name: 'T', visits: 0 },
-    { name: 'F', visits: 0 },
-    { name: 'S', visits: 0 },
-    { name: 'S', visits: 0 }
-];
-
-const STATUS_OPTIONS: Array<{ key: MutableStatusKey; label: string }> = [
-    { key: 'checked_in', label: 'Checked In' },
-    { key: 'confirmed', label: 'Confirmed' },
-    { key: 'pending', label: 'Pending' },
-    { key: 'completed', label: 'Completed' },
-    { key: 'cancelled', label: 'Cancelled' },
-    { key: 'waitlist', label: 'Waitlist' }
-];
-
-const WeeklyVolumeChart = dynamic(() => import('@/components/dashboard/WeeklyVolumeChart'), {
-    ssr: false
-});
-
-async function buildAuthHeaders(user: FirebaseUser | null) {
-    const activeUser = user ?? auth.currentUser;
-    if (!activeUser) {
-        throw new Error('No active authenticated user.');
-    }
-
-    const idToken = await activeUser.getIdToken();
-    return {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json'
-    };
-}
-
-function readDashboardError(responseStatus: number, payloadError?: string) {
-    if (payloadError) return payloadError;
-    if (responseStatus === 401) return 'Your session expired. Please sign in again.';
-    if (responseStatus === 403) return 'You do not have access to provider dashboard data.';
-    if (responseStatus >= 500) return 'Dashboard API is currently unavailable.';
-    return 'Unable to load dashboard data.';
-}
-
-function readString(value: unknown): string | null {
-    if (typeof value !== 'string') return null;
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : null;
-}
-
-function asDate(value: unknown): Date | null {
-    if (!value) return null;
-    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-    if (
-        typeof value === 'object' &&
-        value !== null &&
-        'toDate' in value &&
-        typeof (value as { toDate?: unknown }).toDate === 'function'
-    ) {
-        const parsed = (value as { toDate: () => Date }).toDate();
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    }
-    if (typeof value === 'string') {
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    }
-    return null;
-}
-
-function toRelativeTime(value: Date | null): string {
-    if (!value) return '—';
-    const now = Date.now();
-    const diffMs = now - value.getTime();
-    const minuteMs = 60 * 1000;
-    const hourMs = 60 * minuteMs;
-    const dayMs = 24 * hourMs;
-
-    if (diffMs < minuteMs) return 'just now';
-    if (diffMs < hourMs) return `${Math.floor(diffMs / minuteMs)}m ago`;
-    if (diffMs < dayMs) return `${Math.floor(diffMs / hourMs)}h ago`;
-    if (diffMs < 7 * dayMs) return `${Math.floor(diffMs / dayMs)}d ago`;
-
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(value);
-}
-
-function useEmrDashboardView() {
-    const router = useRouter();
-    const scheduleRef = useRef<HTMLDivElement>(null);
-    const inboxRef = useRef<HTMLDivElement>(null);
-    const preferredTimezone = useTimezonePreference();
-
+export default function EmrDashboard() {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
-    const [weeklyVolume, setWeeklyVolume] = useState<WeeklyVolumePoint[]>(DEFAULT_WEEKLY_VOLUME);
-    const [activeTab, setActiveTab] = useState<DashboardTab>('Upcoming');
+    const [weekData, setWeekData] = useState<WeekData[]>([
+        { name: 'M', visits: 0 }, { name: 'T', visits: 0 }, { name: 'W', visits: 0 },
+        { name: 'T', visits: 0 }, { name: 'F', visits: 0 }, { name: 'S', visits: 0 }, { name: 'S', visits: 0 },
+    ]);
+    const [activeTab, setActiveTab] = useState('Waitlist');
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [providerName, setProviderName] = useState('Provider');
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isSeedingDemo, setIsSeedingDemo] = useState(false);
-    const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [activeUser, setActiveUser] = useState<FirebaseUser | null>(null);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [providerUid, setProviderUid] = useState('');
 
-    const filteredAppointments = useMemo(
-        () => appointments.filter((appointment) => {
-            if (activeTab === 'Upcoming') return UPCOMING_KEYS.includes(appointment.statusKey);
-            if (activeTab === 'Completed') return appointment.statusKey === 'completed';
-            if (activeTab === 'Cancelled') return appointment.statusKey === 'cancelled';
-            return appointment.statusKey === 'waitlist';
-        }),
-        [activeTab, appointments]
-    );
+    // Review & Schedule modal
+    const [reviewAppt, setReviewAppt] = useState<Appointment | null>(null);
+    const [scheduleDate, setScheduleDate] = useState('');
+    const [scheduleTime, setScheduleTime] = useState('');
+    const [isScheduling, setIsScheduling] = useState(false);
 
-    const upcomingCount = appointments.filter((appointment) => UPCOMING_KEYS.includes(appointment.statusKey)).length;
-    const completedCount = appointments.filter((appointment) => appointment.statusKey === 'completed').length;
-    const cancelledCount = appointments.filter((appointment) => appointment.statusKey === 'cancelled').length;
-    const waitlistCount = appointments.filter((appointment) => appointment.statusKey === 'waitlist').length;
+    // Detail modal (Upcoming card click)
+    const [detailAppt, setDetailAppt] = useState<Appointment | null>(null);
 
-    const fetchDashboard = React.useCallback(async (user: FirebaseUser, backgroundRefresh: boolean = false) => {
-        if (!backgroundRefresh) {
-            setIsLoading(true);
-        } else {
-            setIsRefreshing(true);
+    // Filter
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+
+    const scheduleRef = useRef<HTMLDivElement>(null);
+
+    // --- Derived State ---
+    const counts = {
+        Upcoming: appointments.filter(a => ['Upcoming', 'Checked In', 'Confirmed', 'Pending'].includes(a.status)).length,
+        Completed: appointments.filter(a => a.status === 'Completed').length,
+        Cancelled: appointments.filter(a => a.status === 'Cancelled').length,
+        Waitlist: appointments.filter(a => a.status === 'Waitlist').length,
+    };
+
+    const filteredAppointments = appointments.filter(appt => {
+        const tabMatch =
+            activeTab === 'Upcoming' ? ['Upcoming', 'Checked In', 'Confirmed', 'Pending'].includes(appt.status) :
+                activeTab === 'Completed' ? appt.status === 'Completed' :
+                    activeTab === 'Cancelled' ? appt.status === 'Cancelled' :
+                        appt.status === 'Waitlist';
+        const statusMatch = filterStatus === 'all' || appt.status.toLowerCase() === filterStatus;
+        return tabMatch && statusMatch;
+    });
+
+    // --- Helper: enrich appointment from consultations doc ---
+    const enrichFromConsultation = async (apptId: string, data: Record<string, any>) => {
+        let ptNameStr = String(data.patient || data.patientName || '').trim();
+        if (!ptNameStr || ptNameStr.toLowerCase().includes('unknown') || ptNameStr === 'Patient') {
+            ptNameStr = 'Unknown Patient';
         }
+        let patientName = ptNameStr;
+        let patientEmail = data.patientEmail || '';
+        let patientUid = data.patientId || data.uid || '';
+        let serviceKey = data.serviceKey || data.service || data.type || 'Consultation';
+        let intakeAnswers: Record<string, any> = {};
+        let meetingUrl = data.meetingUrl || 'https://doxy.me/patriotictelehealth';
 
         try {
-            const authHeaders = await buildAuthHeaders(user);
-            const response = await fetch('/api/dashboard/provider', {
-                method: 'GET',
-                headers: authHeaders,
-                cache: 'no-store'
-            });
+            const consultSnap = await getDoc(doc(db, 'consultations', apptId));
+            if (consultSnap.exists()) {
+                const cd = consultSnap.data();
+                intakeAnswers = cd.intake || {};
+                serviceKey = cd.serviceKey || serviceKey;
+                patientUid = cd.uid || cd.patientId || patientUid;
+                meetingUrl = cd.meetingUrl || meetingUrl;
 
-            const payload = await response.json() as DashboardPayload;
-            if (!response.ok || !payload.success) {
-                throw new Error(readDashboardError(response.status, payload.error));
-            }
+                const cdPtName = String(cd.patient || cd.patientName || '').trim();
+                if (cdPtName && !cdPtName.toLowerCase().includes('unknown') && cdPtName !== 'Patient') patientName = cdPtName;
 
-            const payloadMessages = payload.messages || [];
-            setProviderName(payload.providerName || 'Provider');
-            setAppointments(payload.appointments || []);
-            setMessages(payloadMessages);
-            setUnreadCount(
-                typeof payload.unreadMessageCount === 'number'
-                    ? payload.unreadMessageCount
-                    : payloadMessages.reduce((total, message) => (
-                        total + (
-                            typeof message.unreadCount === 'number'
-                                ? message.unreadCount
-                                : (message.unread ? 1 : 0)
-                        )
-                    ), 0)
-            );
-            setWeeklyVolume(payload.weeklyVolume?.length ? payload.weeklyVolume : DEFAULT_WEEKLY_VOLUME);
-            setError(null);
-        } catch (fetchError: unknown) {
-            const message = fetchError instanceof Error ? fetchError.message : 'Unable to load dashboard data.';
-            setError(message);
-        } finally {
-            if (!backgroundRefresh) {
-                setIsLoading(false);
-            } else {
-                setIsRefreshing(false);
-            }
-        }
-    }, []);
-
-    React.useEffect(() => {
-        let refreshTimer: ReturnType<typeof setInterval> | null = null;
-
-        const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
-            setActiveUser(user);
-
-            if (!user) {
-                setError('Please sign in to view dashboard data.');
-                setIsLoading(false);
-                if (refreshTimer) clearInterval(refreshTimer);
-                return;
-            }
-
-            await fetchDashboard(user, false);
-
-            if (refreshTimer) clearInterval(refreshTimer);
-            refreshTimer = setInterval(() => {
-                const currentUser = auth.currentUser;
-                if (!currentUser) return;
-                fetchDashboard(currentUser, true).catch(() => undefined);
-            }, 45_000);
-        });
-
-        return () => {
-            unsubscribeAuth();
-            if (refreshTimer) clearInterval(refreshTimer);
-        };
-    }, [fetchDashboard]);
-
-    React.useEffect(() => {
-        if (!activeUser) {
-            setMessages([]);
-            setUnreadCount(0);
-            return;
-        }
-
-        const threadsQuery = query(
-            collection(db, 'threads'),
-            where('providerId', '==', activeUser.uid)
-        );
-
-        const unsubscribeThreads = onSnapshot(threadsQuery, (snapshot) => {
-            const mappedMessages = snapshot.docs.map((threadDoc) => {
-                const data = threadDoc.data() as Record<string, unknown>;
-                const providerUnreadRaw = typeof data.providerUnreadCount === 'number'
-                    ? data.providerUnreadCount
-                    : (typeof data.unreadCount === 'number' ? data.unreadCount : 0);
-                const unreadCountForThread = providerUnreadRaw > 0
-                    ? providerUnreadRaw
-                    : (data.unread === true ? 1 : 0);
-                const lastMessageDate = asDate(data.lastMessageAt) ?? asDate(data.updatedAt) ?? asDate(data.createdAt);
-
-                return {
-                    id: threadDoc.id,
-                    sender: readString(data.patientName) ?? readString(data.patient) ?? readString(data.subject) ?? 'Patient',
-                    preview: readString(data.lastMessage) ?? readString(data.subject) ?? 'New message',
-                    time: toRelativeTime(lastMessageDate),
-                    unread: unreadCountForThread > 0,
-                    unreadCount: unreadCountForThread,
-                    sortAt: lastMessageDate?.getTime() ?? 0
-                };
-            });
-
-            mappedMessages.sort((a, b) => {
-                const unreadWeightDelta = Number(b.unread) - Number(a.unread);
-                if (unreadWeightDelta !== 0) return unreadWeightDelta;
-                return b.sortAt - a.sortAt;
-            });
-
-            setUnreadCount(
-                mappedMessages.reduce((total, message) => total + message.unreadCount, 0)
-            );
-            setMessages(
-                mappedMessages.slice(0, 8).map(({ sortAt: _sortAt, ...message }) => message)
-            );
-        }, (listenerError) => {
-            console.error('Provider dashboard threads listener error:', listenerError);
-        });
-
-        return () => {
-            unsubscribeThreads();
-        };
-    }, [activeUser]);
-
-    React.useEffect(() => {
-        if (!activeUser) return;
-
-        const appointmentsQuery = query(
-            collection(db, 'appointments'),
-            where('providerId', '==', activeUser.uid)
-        );
-
-        const unsubscribeAppointments = onSnapshot(appointmentsQuery, () => {
-            fetchDashboard(activeUser, true).catch((listenerError) => {
-                console.error('Provider dashboard appointments refresh error:', listenerError);
-            });
-        }, (listenerError) => {
-            console.error('Provider appointments listener error:', listenerError);
-        });
-
-        return () => {
-            unsubscribeAppointments();
-        };
-    }, [activeUser, fetchDashboard]);
-
-    React.useEffect(() => {
-        const sortAppointments = (items: Appointment[]) => {
-            return [...items].sort((first, second) => {
-                if (!first.startAt && !second.startAt) return 0;
-                if (!first.startAt) return 1;
-                if (!second.startAt) return -1;
-                return first.startAt.localeCompare(second.startAt);
-            });
-        };
-
-        const handleAppointmentCreated = (event: Event) => {
-            const customEvent = event as CustomEvent<ProviderAppointmentCreatedEventDetail>;
-            const detail = customEvent.detail;
-            if (!detail) return;
-
-            setAppointments((previous) => {
-                if (detail.mode === 'rollback') {
-                    return previous.filter((appointment) => appointment.id !== detail.optimisticId);
+                if (cd.intake?.firstName || cd.intake?.lastName) {
+                    const iNm = `${cd.intake.firstName || ''} ${cd.intake.lastName || ''}`.trim();
+                    if (iNm && !iNm.toLowerCase().includes('unknown') && iNm !== 'Patient') patientName = iNm;
                 }
+                if (cd.intake?.email) patientEmail = cd.intake.email;
+                if (cd.patientEmail) patientEmail = cd.patientEmail;
+            }
+        } catch (e) { /* silent */ }
 
-                if (detail.mode === 'optimistic') {
-                    const merged = [
-                        detail.appointment as Appointment,
-                        ...previous.filter((appointment) => appointment.id !== detail.optimisticId)
-                    ];
-                    return sortAppointments(merged);
+        // Lookup patient profile if still unknown
+        if (patientUid && patientName === 'Unknown Patient') {
+            try {
+                const userSnap = await getDoc(doc(db, 'users', patientUid));
+                if (userSnap.exists()) {
+                    const ud = userSnap.data();
+                    const udNm = (ud.displayName || `${ud.firstName || ''} ${ud.lastName || ''}`.trim() || ud.name || '').trim();
+                    if (udNm && !udNm.toLowerCase().includes('unknown') && udNm !== 'Patient') patientName = udNm;
+                    patientEmail = patientEmail || ud.email || '';
                 }
-
-                const merged = [
-                    detail.appointment as Appointment,
-                    ...previous.filter((appointment) => (
-                        appointment.id !== detail.optimisticId &&
-                        appointment.id !== detail.appointment.id
-                    ))
-                ];
-                return sortAppointments(merged);
-            });
-        };
-
-        window.addEventListener(PROVIDER_APPOINTMENT_CREATED_EVENT, handleAppointmentCreated as EventListener);
-        return () => {
-            window.removeEventListener(PROVIDER_APPOINTMENT_CREATED_EVENT, handleAppointmentCreated as EventListener);
-        };
-    }, []);
-
-    const scrollToSchedule = () => {
-        setActiveTab('Upcoming');
-        scheduleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    const scrollToInbox = () => {
-        inboxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    };
-
-    const handleRefresh = async () => {
-        if (!activeUser) return;
-        await fetchDashboard(activeUser, true);
-    };
-
-    const handleSeedDemoData = async () => {
-        if (!activeUser) return;
-        setIsSeedingDemo(true);
-        setError(null);
-
-        try {
-            const authHeaders = await buildAuthHeaders(activeUser);
-            const response = await fetch('/api/temp/seed-provider-dashboard', {
-                method: 'POST',
-                headers: authHeaders
-            });
-
-            const payload = await response.json() as { success?: boolean; error?: string };
-            if (!response.ok || !payload.success) {
-                throw new Error(payload.error || 'Failed to seed demo data.');
-            }
-
-            await fetchDashboard(activeUser, true);
-        } catch (seedError: unknown) {
-            const message = seedError instanceof Error ? seedError.message : 'Unable to seed demo data.';
-            setError(message);
-        } finally {
-            setIsSeedingDemo(false);
-        }
-    };
-
-    const handleUpdateStatus = async (id: string, newStatus: MutableStatusKey) => {
-        if (!activeUser) {
-            setError('Please sign in again to update appointment status.');
-            return;
-        }
-
-        const currentAppointment = appointments.find((appointment) => appointment.id === id);
-        if (!currentAppointment) {
-            setError('Appointment not found.');
-            return;
-        }
-
-        if (!canMoveAppointmentStatusForward(currentAppointment.statusKey, newStatus)) {
-            setError('Backward status updates are blocked. Please move status forward only.');
-            return;
-        }
-
-        setStatusUpdatingId(id);
-        setMenuOpenId(null);
-
-        try {
-            const authHeaders = await buildAuthHeaders(activeUser);
-            const response = await fetch(`/api/dashboard/appointments/${id}`, {
-                method: 'PATCH',
-                headers: authHeaders,
-                body: JSON.stringify({ status: newStatus })
-            });
-
-            const payload = await response.json() as StatusUpdatePayload;
-            if (!response.ok || !payload.success || !payload.appointment) {
-                throw new Error(payload.error || 'Failed to update appointment status.');
-            }
-
-            setAppointments((previous) => previous.map((appointment) => (
-                appointment.id === id
-                    ? {
-                        ...appointment,
-                        statusKey: payload.appointment?.statusKey ?? appointment.statusKey,
-                        statusLabel: payload.appointment?.statusLabel ?? appointment.statusLabel
+                if (patientName === 'Unknown Patient') {
+                    const patSnap = await getDoc(doc(db, 'patients', patientUid));
+                    if (patSnap.exists()) {
+                        const pd = patSnap.data();
+                        const pdNm = (pd.name || pd.displayName || `${pd.firstName || ''} ${pd.lastName || ''}`.trim() || '').trim();
+                        if (pdNm && !pdNm.toLowerCase().includes('unknown') && pdNm !== 'Patient') patientName = pdNm;
+                        patientEmail = patientEmail || pd.email || '';
                     }
-                    : appointment
-            )));
-        } catch (updateError: unknown) {
-            const message = updateError instanceof Error ? updateError.message : 'Failed to update status.';
-            setError(message);
+                }
+            } catch (e) { /* silent */ }
+        }
+
+        if (patientName === 'Unknown Patient' && patientEmail) {
+            patientName = patientEmail.split('@')[0]; // Final fallback: use email prefix instead of "Unknown Patient"
+        }
+
+        return { patientName, patientEmail, patientUid, serviceKey, intakeAnswers, meetingUrl };
+    };
+
+    // --- Data fetch ---
+    React.useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) return;
+            setProviderUid(user.uid);
+
+            // Get provider name
+            try {
+                const userSnap = await getDoc(doc(db, 'users', user.uid));
+                if (userSnap.exists()) {
+                    const ud = userSnap.data();
+                    setProviderName(ud.displayName || ud.name || user.displayName || 'Provider');
+                } else {
+                    setProviderName(user.displayName || 'Provider');
+                }
+            } catch (e) { setProviderName(user.displayName || 'Provider'); }
+
+            // --- Waitlist appointments (PENDING_SCHEDULING) ---
+            const bucketUnsub = onSnapshot(
+                query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING')),
+                async (snap) => {
+                    const enriched = await Promise.all(snap.docs.map(async (docSnap) => {
+                        const data = docSnap.data();
+                        const apptId = docSnap.id;
+                        let dateObj: Date;
+                        if (data.updatedAt?.toDate) dateObj = data.updatedAt.toDate();
+                        else if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
+                        else dateObj = new Date();
+
+                        const enriched = await enrichFromConsultation(apptId, data);
+                        const svcLabel = enriched.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+
+                        return {
+                            id: apptId,
+                            patient: enriched.patientName,
+                            patientEmail: enriched.patientEmail,
+                            patientUid: enriched.patientUid,
+                            serviceKey: enriched.serviceKey,
+                            time: dateObj.toISOString(),
+                            displayTime: 'Awaiting',
+                            displayDate: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                            type: svcLabel,
+                            status: 'Waitlist' as const,
+                            intakeAnswers: enriched.intakeAnswers,
+                            createdAt: dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+                            meetingUrl: enriched.meetingUrl,
+                        };
+                    }));
+
+                    setAppointments(prev => {
+                        const nonWaitlist = prev.filter(a => a.status !== 'Waitlist');
+                        return [...nonWaitlist, ...enriched].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+                    });
+                }
+            );
+
+            // --- Provider scheduled appointments ---
+            const provUnsub = onSnapshot(
+                query(collection(db, 'appointments'), where('providerId', '==', user.uid)),
+                async (snap) => {
+                    const enriched = await Promise.all(snap.docs.map(async (docSnap) => {
+                        const data = docSnap.data();
+                        const apptId = docSnap.id;
+
+                        let dateObj: Date;
+                        if (data.startTime?.toDate) dateObj = data.startTime.toDate();
+                        else if (data.scheduledAt?.toDate) dateObj = data.scheduledAt.toDate();
+                        else if (data.date && data.time) dateObj = new Date(`${data.date}T${data.time}:00`);
+                        else if (data.date?.toDate) dateObj = data.date.toDate();
+                        else if (typeof data.date === 'string') dateObj = new Date(data.date);
+                        else dateObj = new Date();
+                        if (isNaN(dateObj.getTime())) dateObj = new Date();
+
+                        let apptStatus = data.status || 'Upcoming';
+                        if (apptStatus === 'scheduled') apptStatus = 'Upcoming';
+                        if (apptStatus === 'completed') apptStatus = 'Completed';
+                        if (apptStatus === 'cancelled') apptStatus = 'Cancelled';
+                        if (apptStatus === 'PENDING_SCHEDULING' || apptStatus === 'waitlist') apptStatus = 'Waitlist';
+
+                        if (apptStatus === 'Waitlist') return null; // handled by bucket listener
+
+                        const enrichedData = await enrichFromConsultation(apptId, data);
+
+                        return {
+                            id: apptId,
+                            patient: data.patientName || enrichedData.patientName,
+                            patientEmail: data.patientEmail || enrichedData.patientEmail,
+                            patientUid: data.patientId || enrichedData.patientUid,
+                            serviceKey: enrichedData.serviceKey,
+                            time: dateObj.toISOString(),
+                            displayTime: dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+                            displayDate: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                            type: data.service || data.type || enrichedData.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                            status: apptStatus as Appointment['status'],
+                            intakeAnswers: enrichedData.intakeAnswers,
+                            createdAt: dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+                            meetingUrl: data.meetingUrl || enrichedData.meetingUrl,
+                        } as Appointment;
+                    }));
+
+                    const valid = enriched.filter(Boolean) as Appointment[];
+                    setAppointments(prev => {
+                        const waitlist = prev.filter(a => a.status === 'Waitlist');
+                        return [...valid, ...waitlist].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+                    });
+
+                    // Build weekly volume from this week's scheduled appointments
+                    const now = new Date();
+                    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+                    const startOfWeek = new Date(now);
+                    startOfWeek.setDate(now.getDate() - ((dayOfWeek + 6) % 7)); // Monday start
+                    startOfWeek.setHours(0, 0, 0, 0);
+
+                    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+                    valid.forEach(a => {
+                        const d = new Date(a.time);
+                        const diff = Math.floor((d.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diff >= 0 && diff < 7) dayCounts[diff]++;
+                    });
+                    setWeekData([
+                        { name: 'M', visits: dayCounts[0] }, { name: 'T', visits: dayCounts[1] },
+                        { name: 'W', visits: dayCounts[2] }, { name: 'T', visits: dayCounts[3] },
+                        { name: 'F', visits: dayCounts[4] }, { name: 'S', visits: dayCounts[5] },
+                        { name: 'S', visits: dayCounts[6] },
+                    ]);
+                }
+            );
+
+            // --- Real messages from threads ---
+            const msgsUnsub = onSnapshot(
+                query(collection(db, 'threads'), where('providerId', '==', user.uid), limit(10)),
+                (snap) => {
+                    const msgs = snap.docs.map(d => {
+                        const data = d.data();
+                        const ts = data.lastMessageAt?.toDate ? data.lastMessageAt.toDate() : new Date();
+                        const diffMs = Date.now() - ts.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const timeStr = diffMins < 60 ? `${diffMins}m ago` : diffMins < 1440 ? `${Math.floor(diffMins / 60)}h ago` : `${Math.floor(diffMins / 1440)}d ago`;
+                        return {
+                            id: d.id,
+                            sender: data.patientName || 'Patient',
+                            preview: data.lastMessage?.text || data.lastMessage || 'New message',
+                            time: timeStr,
+                            unread: (data.providerUnreadCount || 0) > 0,
+                            patientId: data.patientId,
+                        } as Message;
+                    }).sort((a, b) => (b.unread ? 1 : 0) - (a.unread ? 1 : 0)).slice(0, 4);
+                    setMessages(msgs);
+                },
+                (err) => console.error('Messages listener error:', err)
+            );
+
+            return () => {
+                bucketUnsub();
+                provUnsub();
+                msgsUnsub();
+            };
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // --- Actions ---
+    const handleUpdateStatus = async (id: string, newStatus: Appointment['status']) => {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+        setMenuOpenId(null);
+        try {
+            const statusMap: Record<string, string> = {
+                'Upcoming': 'scheduled', 'Completed': 'completed',
+                'Cancelled': 'cancelled', 'Confirmed': 'scheduled', 'Checked In': 'checked_in',
+            };
+            await updateDoc(doc(db, 'appointments', id), {
+                status: statusMap[newStatus] || newStatus.toLowerCase(),
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) { console.error('Failed to update status', e); }
+    };
+
+    const handleJoinCall = (appt: Appointment) => {
+        let url = appt.meetingUrl || 'https://doxy.me/patriotictelehealth';
+        if (url.includes('doxy.me')) url = 'https://doxy.me/sign-in';
+        window.open(url, '_blank');
+    };
+
+    const handleReviewSchedule = (appt: Appointment) => {
+        setReviewAppt(appt);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setScheduleDate(tomorrow.toISOString().split('T')[0]);
+        setScheduleTime('10:00');
+    };
+
+    const handleConfirmSchedule = async () => {
+        if (!reviewAppt || !scheduleDate || !scheduleTime) return;
+        setIsScheduling(true);
+        try {
+            const fullDate = new Date(`${scheduleDate}T${scheduleTime}:00`);
+            const scheduledAt = Timestamp.fromDate(fullDate);
+            const displayTime = fullDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            const displayDate = fullDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            const apptRef = doc(db, 'appointments', reviewAppt.id);
+            await updateDoc(apptRef, {
+                status: 'scheduled',
+                date: scheduleDate,
+                time: scheduleTime,
+                startTime: scheduledAt,
+                scheduledAt,
+                providerId: auth.currentUser?.uid,
+                providerName,
+                patientId: reviewAppt.patientUid || reviewAppt.id,
+                patientName: reviewAppt.patient,
+                type: 'Telehealth',
+                service: reviewAppt.type,
+                updatedAt: serverTimestamp()
+            });
+
+            // Update consultations doc
+            try {
+                await updateDoc(doc(db, 'consultations', reviewAppt.id), {
+                    status: 'scheduled', scheduledAt, providerName,
+                    providerId: auth.currentUser?.uid, updatedAt: serverTimestamp()
+                });
+            } catch (e) { /* may not exist */ }
+
+            // Update patient sub-collection
+            if (reviewAppt.patientUid) {
+                try {
+                    await setDoc(doc(db, 'patients', reviewAppt.patientUid, 'appointments', reviewAppt.id),
+                        { status: 'scheduled', scheduledAt, providerName, providerId: auth.currentUser?.uid, updatedAt: serverTimestamp() },
+                        { merge: true }
+                    );
+                } catch (e) { /* silent */ }
+            }
+
+            // TRIGGER BACKEND NOTIFICATION
+            try {
+                const tok = await auth.currentUser?.getIdToken();
+                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
+                await fetch(`${API}/api/v1/trigger/schedule-notification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+                    body: JSON.stringify({ apptId: reviewAppt.id, scheduledAt: fullDate.toISOString() })
+                });
+            } catch (e) {
+                console.error("Failed to trigger email notification", e);
+            }
+
+            setReviewAppt(null);
+            setAppointments(prev => prev.map(a =>
+                a.id === reviewAppt.id ? { ...a, status: 'Upcoming', displayTime, displayDate } : a
+            ));
+        } catch (e) {
+            console.error('Failed to schedule', e);
+            alert('Scheduling failed. Please try again.');
         } finally {
-            setStatusUpdatingId(null);
+            setIsScheduling(false);
         }
     };
-
-    const handleJoinCall = (appointment: Appointment) => {
-        if (appointment.meetingUrl) {
-            window.open(appointment.meetingUrl, '_blank', 'noopener,noreferrer');
-            return;
-        }
-        router.push(`/telehealth?appointmentId=${appointment.id}`);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="min-h-[55vh] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-10 h-10 border-4 border-slate-200 border-t-brand rounded-full animate-spin"></div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading live dashboard...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="flex flex-col gap-8 animate-fade-in-up pb-10">
-            {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-2 text-red-700 text-sm">
-                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>{error}</span>
-                    </div>
-                    <button
-                        onClick={handleRefresh}
-                        className="text-xs font-semibold text-red-700 hover:text-red-900"
-                    >
-                        Retry
-                    </button>
-                </div>
-            )}
 
-            <section className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 p-8 relative overflow-hidden shadow-sm group hover:shadow-md transition-shadow">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
-                <div className="absolute bottom-0 right-20 w-32 h-32 bg-purple-100/50 rounded-full blur-2xl -mb-10 pointer-events-none group-hover:scale-125 transition-transform duration-700 delay-100"></div>
-
-                <div className="relative z-10 max-w-3xl">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                        Welcome back, {providerName}
-                    </h2>
+            {/* HERO BANNER */}
+            <section className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 p-8 relative overflow-hidden shadow-sm">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                <div className="relative z-10 max-w-2xl">
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Welcome back, {providerName}</h2>
                     <p className="text-slate-500 mb-6 max-w-lg leading-relaxed">
-                        You have <button onClick={scrollToSchedule} className="font-bold text-brand hover:underline cursor-pointer">{upcomingCount} appointments</button> today and <button onClick={scrollToInbox} className="font-bold text-brand hover:underline cursor-pointer">{unreadCount} unread messages</button>.
-                        Your telehealth waiting room is active.
+                        You have <strong className="text-brand">{counts.Upcoming} upcoming</strong> and{' '}
+                        <strong className="text-purple-600">{counts.Waitlist} waiting</strong> for scheduling.
                     </p>
-
-                    <div className="flex flex-wrap gap-3">
-                        <Link
-                            href="/telehealth"
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => window.open('https://doxy.me/sign-in', '_blank')}
                             className="bg-brand hover:bg-brand-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95"
                         >
-                            <Video className="w-4 h-4" />
-                            Open Waiting Room
-                        </Link>
+                            <Video className="w-4 h-4" /> Open Waiting Room
+                        </button>
                         <button
-                            onClick={scrollToSchedule}
-                            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-lg font-medium text-sm transition-colors hover:border-slate-300 shadow-sm"
+                            onClick={() => { setActiveTab('Upcoming'); scheduleRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm"
                         >
                             View Schedule
                         </button>
@@ -557,19 +448,17 @@ function useEmrDashboardView() {
 
             <div className="border-b border-slate-200">
                 <div className="flex gap-8">
-                    {TAB_OPTIONS.map((tab) => (
-                        <Tab
+                    {(['Waitlist', 'Upcoming', 'Completed', 'Cancelled'] as const).map(tab => (
+                        <button
                             key={tab}
-                            label={tab}
-                            active={activeTab === tab}
                             onClick={() => setActiveTab(tab)}
-                            count={
-                                tab === 'Upcoming' ? upcomingCount :
-                                    tab === 'Completed' ? completedCount :
-                                        tab === 'Cancelled' ? cancelledCount :
-                                            waitlistCount
-                            }
-                        />
+                            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === tab ? 'border-brand text-brand' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {tab}
+                            {counts[tab] > 0 && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === tab ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600'}`}>{counts[tab]}</span>
+                            )}
+                        </button>
                     ))}
                 </div>
             </div>
@@ -581,9 +470,30 @@ function useEmrDashboardView() {
                             {activeTab} Schedule <span className="text-slate-400 font-normal text-sm ml-2">({filteredAppointments.length})</span>
                         </h3>
                         {activeTab === 'Upcoming' && (
-                            <button className="text-xs font-semibold text-slate-500 flex items-center gap-1 hover:text-brand transition-colors bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
-                                <Filter className="w-3 h-3" /> Live
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setFilterOpen(!filterOpen)}
+                                    className="text-xs font-semibold text-slate-500 flex items-center gap-1 hover:text-brand transition-colors bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-brand/30"
+                                >
+                                    <Filter className="w-3 h-3" /> Filter
+                                    {filterStatus !== 'all' && <span className="w-1.5 h-1.5 bg-brand rounded-full" />}
+                                    <ChevronDown className="w-3 h-3" />
+                                </button>
+                                {filterOpen && (
+                                    <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+                                        <div className="px-3 py-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filter by status</div>
+                                        {['all', 'upcoming', 'checked in', 'confirmed', 'pending'].map(s => (
+                                            <button
+                                                key={s}
+                                                onClick={() => { setFilterStatus(s); setFilterOpen(false); }}
+                                                className={`w-full text-left px-4 py-2 text-xs font-medium capitalize hover:bg-slate-50 ${filterStatus === s ? 'text-brand font-bold bg-brand-50' : 'text-slate-700'}`}
+                                            >
+                                                {s === 'all' ? 'All Upcoming' : s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -610,7 +520,9 @@ function useEmrDashboardView() {
                                     statusUpdating={statusUpdatingId === appointment.id}
                                     onToggleMenu={() => setMenuOpenId(menuOpenId === appointment.id ? null : appointment.id)}
                                     onStatusChange={handleUpdateStatus}
-                                    onJoin={() => handleJoinCall(appointment)}
+                                    onJoin={() => handleJoinCall(appt)}
+                                    onReviewSchedule={() => handleReviewSchedule(appt)}
+                                    onViewDetail={() => setDetailAppt(appt)}
                                 />
                             ))
                         )}
@@ -621,35 +533,145 @@ function useEmrDashboardView() {
                     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-slate-800 text-sm">Weekly Volume</h3>
-                            <span className="text-xs text-brand font-medium bg-brand-50 px-2 py-1 rounded-full">
-                                Real-time
+                            <span className="text-xs text-brand font-medium bg-brand-50 px-2 py-1 rounded-full flex items-center gap-1">
+                                <Activity className="w-3 h-3" />
+                                {counts.Upcoming + counts.Completed} this week
                             </span>
                         </div>
                         <div className="h-32 w-full">
-                            <WeeklyVolumeChart data={weeklyVolume} />
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={weekData}>
+                                    <defs>
+                                        <linearGradient id="colorBrand" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                                    <Tooltip
+                                        cursor={{ stroke: '#e2e8f0' }}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }}
+                                    />
+                                    <Area type="monotone" dataKey="visits" stroke="#4F46E5" strokeWidth={2} fillOpacity={1} fill="url(#colorBrand)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow" ref={inboxRef}>
-                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-25/50">
-                            <h3 className="font-bold text-slate-800 text-sm">Recent Messages <span className="text-slate-400 font-normal">({unreadCount})</span></h3>
+                    {/* Inbox Widget */}
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="p-4 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="font-bold text-slate-800 text-sm">
+                                Recent Messages <span className="text-slate-400 font-normal">({messages.filter(m => m.unread).length})</span>
+                            </h3>
                             <Link href="/inbox" className="text-xs font-semibold text-brand hover:underline">View All</Link>
                         </div>
                         <div>
-                            {messages.length === 0 ? (
-                                <div className="p-6 text-center">
-                                    <MessageSquare className="w-6 h-6 text-slate-300 mx-auto mb-2" />
-                                    <p className="text-xs text-slate-400">No recent provider messages.</p>
-                                </div>
-                            ) : (
-                                messages.map((message) => (
-                                    <InboxItem key={message.id} message={message} />
-                                ))
+                            {messages.length > 0 ? messages.map(msg => (
+                                <Link href="/inbox" key={msg.id} className={`block p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 flex items-start gap-3 group transition-colors ${msg.unread ? 'bg-indigo-50/30' : ''}`}>
+                                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0">
+                                        {msg.sender.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-baseline mb-0.5">
+                                            <h4 className={`text-sm truncate ${msg.unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>{msg.sender}</h4>
+                                            <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-2">{msg.time}</span>
+                                        </div>
+                                        <p className={`text-xs truncate ${msg.unread ? 'text-slate-600 font-medium' : 'text-slate-500'}`}>{msg.preview}</p>
+                                    </div>
+                                    {msg.unread && <div className="w-2 h-2 rounded-full bg-brand mt-1.5 shrink-0" />}
+                                </Link>
+                            )) : (
+                                <div className="p-8 text-center text-slate-400 text-sm italic">No messages yet.</div>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* REVIEW & SCHEDULE MODAL */}
+            {reviewAppt && (
+                <ModalOverlay onClose={() => setReviewAppt(null)}>
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800">Review &amp; Schedule</h2>
+                                <p className="text-slate-500 text-sm">Intake for <strong>{reviewAppt.patient}</strong></p>
+                            </div>
+                            <button onClick={() => setReviewAppt(null)} className="p-2 hover:bg-white rounded-full transition-colors">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto space-y-8">
+                            {/* Patient Info */}
+                            <PatientInfoSection appt={reviewAppt} />
+
+                            {/* Intake Q&A */}
+                            <IntakeSection intakeAnswers={reviewAppt.intakeAnswers} />
+
+                            {/* Set Time */}
+                            <section className="bg-indigo-50/20 p-6 rounded-2xl border border-indigo-100/50">
+                                <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Set Appointment Time</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">Date</label>
+                                        <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-500 ml-1">Time</label>
+                                        <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                            <button onClick={() => setReviewAppt(null)} className="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:bg-white rounded-lg transition-colors">Cancel</button>
+                            <button onClick={handleConfirmSchedule} disabled={isScheduling}
+                                className="bg-brand text-white px-8 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-brand/20 hover:bg-brand-600 transition-all disabled:opacity-50 flex items-center gap-2">
+                                {isScheduling ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                                {isScheduling ? 'Scheduling...' : 'Finalize & Schedule'}
+                            </button>
+                        </div>
+                    </div>
+                </ModalOverlay>
+            )}
+
+            {/* DETAIL MODAL (Upcoming card click) */}
+            {detailAppt && (
+                <ModalOverlay onClose={() => setDetailAppt(null)}>
+                    <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800">Appointment Details</h2>
+                                <p className="text-slate-500 text-sm">{detailAppt.displayDate} at {detailAppt.displayTime}</p>
+                            </div>
+                            <button onClick={() => setDetailAppt(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-y-auto space-y-8">
+                            <PatientInfoSection appt={detailAppt} />
+                            <IntakeSection intakeAnswers={detailAppt.intakeAnswers} />
+                            {detailAppt.meetingUrl && (
+                                <button
+                                    onClick={() => {
+                                        let url = detailAppt.meetingUrl || '';
+                                        if (url.includes('doxy.me')) url = 'https://doxy.me/sign-in';
+                                        window.open(url, '_blank');
+                                    }}
+                                    className="w-full bg-brand text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-600 transition-all shadow-md"
+                                >
+                                    <Video className="w-4 h-4" /> Join Telehealth Session
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </ModalOverlay>
+            )}
         </div>
     );
 }
@@ -658,83 +680,95 @@ export default function EmrDashboard() {
     return useEmrDashboardView();
 }
 
-function Tab({
-    label,
-    active,
-    onClick,
-    count
-}: {
-    label: string;
-    active: boolean;
-    onClick: () => void;
-    count: number;
-}) {
+function ModalOverlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
     return (
-        <button
-            onClick={onClick}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${active
-                ? 'border-brand text-brand'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                }`}
-        >
-            {label}
-            {count > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600'}`}>
-                    {count}
-                </span>
-            )}
-        </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="animate-in zoom-in duration-200">{children}</div>
+        </div>
     );
 }
 
-function ScheduleCard({
-    appointment,
-    preferredTimezone,
-    isMenuOpen,
-    statusUpdating,
-    onToggleMenu,
-    onStatusChange,
-    onJoin
-}: {
-    appointment: Appointment;
-    preferredTimezone: string;
-    isMenuOpen: boolean;
-    statusUpdating: boolean;
-    onToggleMenu: () => void;
-    onStatusChange: (id: string, status: MutableStatusKey) => void;
-    onJoin: () => void;
-}) {
-    const statusColors: Record<AppointmentStatusKey, string> = {
-        upcoming: 'bg-slate-50 text-slate-600 border-slate-100',
-        checked_in: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-        confirmed: 'bg-blue-50 text-blue-700 border-blue-100',
-        pending: 'bg-amber-50 text-amber-700 border-amber-100',
-        completed: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-        cancelled: 'bg-red-50 text-red-700 border-red-100',
-        waitlist: 'bg-purple-50 text-purple-700 border-purple-100'
+function PatientInfoSection({ appt }: { appt: Appointment }) {
+    return (
+        <section className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Patient Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                    { icon: User, label: 'Patient Name', value: appt.patient },
+                    { icon: Mail, label: 'Email', value: appt.patientEmail || 'Not provided' },
+                    { icon: Calendar, label: 'Service Requested', value: appt.type },
+                    { icon: Clock, label: 'Submitted', value: appt.createdAt },
+                ].map(({ icon: Icon, label, value }) => (
+                    <div key={label} className="bg-white p-4 rounded-xl border border-slate-100 flex items-start gap-3">
+                        <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
+                            <Icon className="w-4 h-4 text-brand" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
+                            <p className="text-sm font-bold text-slate-800">{value || '—'}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function IntakeSection({ intakeAnswers }: { intakeAnswers: Record<string, any> }) {
+    const entries = Object.entries(intakeAnswers || {});
+    return (
+        <section>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">Patient Intake Q&amp;A</h3>
+            {entries.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {entries.map(([k, v]) => (
+                        <div key={k} className="bg-white p-4 rounded-xl border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                {k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}
+                            </p>
+                            <p className="text-sm font-semibold text-slate-800">
+                                {typeof v === 'boolean' ? (v ? '✅ Yes' : '❌ No') : String(v)}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="text-sm text-slate-400 italic">No detailed intake provided.</p>
+            )}
+        </section>
+    );
+}
+
+function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, onJoin, onReviewSchedule, onViewDetail }: any) {
+    const { displayTime, displayDate, patient, type, status } = appointment;
+    const isActionable = ['Upcoming', 'Checked In', 'Confirmed'].includes(status);
+
+    const statusColors: Record<string, string> = {
+        'Upcoming': 'bg-slate-50 text-slate-600 border-slate-100',
+        'Checked In': 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        'Confirmed': 'bg-blue-50 text-blue-700 border-blue-100',
+        'Pending': 'bg-amber-50 text-amber-700 border-amber-100',
+        'Completed': 'bg-indigo-50 text-indigo-700 border-indigo-100',
+        'Cancelled': 'bg-red-50 text-red-700 border-red-100',
+        'Waitlist': 'bg-purple-50 text-purple-700 border-purple-100',
     };
 
-    const isActionable = ['upcoming', 'checked_in', 'confirmed'].includes(appointment.statusKey);
-    const isVideoVisit = isVideoVisitType(appointment.type);
-    const currentCanonicalStatus = toCanonicalAppointmentStatus(appointment.statusKey);
-    const availableStatusOptions = STATUS_OPTIONS.filter((statusOption) => {
-        const optionCanonicalStatus = toCanonicalAppointmentStatus(statusOption.key);
-        if (!optionCanonicalStatus || !currentCanonicalStatus) return false;
-        if (optionCanonicalStatus === currentCanonicalStatus) return false;
-        return canMoveAppointmentStatusForward(currentCanonicalStatus, optionCanonicalStatus);
-    });
-    const fallbackDisplay = appointment.displayTime;
-    const computedDisplay = appointment.startAt
-        ? toHourMinuteLabel(new Date(appointment.startAt), preferredTimezone)
-        : fallbackDisplay;
-    const [timePart, meridiem] = computedDisplay.split(' ');
-
     return (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between group cursor-pointer hover:border-brand/30 relative">
+        <div
+            onClick={status !== 'Waitlist' ? onViewDetail : undefined}
+            className={`bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between group relative ${status !== 'Waitlist' ? 'cursor-pointer hover:border-brand/30' : ''}`}
+        >
             <div className="flex items-center gap-4">
-                <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-50 rounded-lg border border-slate-100 text-slate-600 font-mono group-hover:bg-brand-50 group-hover:text-brand transition-colors">
-                    <span className="text-xs font-bold uppercase">{meridiem || ''}</span>
-                    <span className="text-base font-bold leading-tight">{timePart || computedDisplay}</span>
+                <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-50 rounded-lg border border-slate-100 text-slate-600 font-mono group-hover:bg-brand-50 group-hover:text-brand transition-colors shrink-0">
+                    {status === 'Waitlist' ? (
+                        <span className="text-[9px] font-bold text-purple-500 uppercase">Wait</span>
+                    ) : (
+                        <>
+                            <span className="text-[10px] font-bold uppercase">{displayTime.split(' ')[1] || ''}</span>
+                            <span className="text-base font-bold leading-tight">{displayTime.split(' ')[0]}</span>
+                            <span className="text-[9px] text-slate-400">{displayDate}</span>
+                        </>
+                    )}
                 </div>
                 <div>
                     <h4 className="font-bold text-slate-900 text-sm group-hover:text-brand transition-colors">{appointment.patient}</h4>
@@ -743,57 +777,40 @@ function ScheduleCard({
             </div>
 
             <div className="flex items-center gap-3">
-                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusColors[appointment.statusKey]}`}>
-                    {appointment.statusLabel}
-                </span>
+                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusColors[status] || 'bg-slate-50'}`}>{status}</span>
 
-                {isActionable && isVideoVisit && (
-                    <button
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onJoin();
-                        }}
-                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1"
-                    >
-                        <Video className="w-3 h-3" />
-                        Join
+                {status === 'Waitlist' && (
+                    <button onClick={e => { e.stopPropagation(); onReviewSchedule(); }}
+                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> Review &amp; Schedule
+                    </button>
+                )}
+
+                {isActionable && (
+                    <button onClick={e => { e.stopPropagation(); onJoin(); }}
+                        className="bg-brand text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-600 transition-colors shadow-sm active:scale-95 flex items-center gap-1">
+                        <Video className="w-3 h-3" /> Join
                     </button>
                 )}
 
                 <div className="relative">
-                    <button
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            if (!statusUpdating) onToggleMenu();
-                        }}
-                        disabled={statusUpdating}
-                        className={`text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors ${isMenuOpen ? 'bg-slate-100 text-slate-600' : ''}`}
-                    >
+                    <button onClick={e => { e.stopPropagation(); onToggleMenu(); }}
+                        className={`text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors ${isMenuOpen ? 'bg-slate-100' : ''}`}>
                         <MoreHorizontal className="w-4 h-4" />
                     </button>
 
                     {isMenuOpen && (
                         <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                             <div className="py-1">
-                                <div className="px-3 py-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Update Status
-                                </div>
-                                {availableStatusOptions.map((statusOption) => (
-                                    <button
-                                        key={statusOption.key}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            onStatusChange(appointment.id, statusOption.key);
-                                        }}
-                                        className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 ${statusOption.key === appointment.statusKey ? 'text-brand font-bold bg-brand-50' : 'text-slate-700'}`}
-                                    >
-                                        {statusOption.key === 'checked_in' && <CheckCircle className="w-3 h-3 text-emerald-500" />}
-                                        {statusOption.key === 'completed' && <CheckCircle className="w-3 h-3 text-indigo-500" />}
-                                        {statusOption.key === 'cancelled' && <XCircle className="w-3 h-3 text-red-500" />}
-                                        {statusOption.key === 'confirmed' && <Clock className="w-3 h-3 text-blue-500" />}
-                                        {statusOption.key === 'pending' && <Clock className="w-3 h-3 text-amber-500" />}
-                                        {statusOption.key === 'waitlist' && <Clock className="w-3 h-3 text-purple-500" />}
-                                        Mark as {statusOption.label}
+                                <div className="px-3 py-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Update Status</div>
+                                {['Checked In', 'Completed', 'Cancelled', 'Upcoming'].map(s => (
+                                    <button key={s} onClick={e => { e.stopPropagation(); onStatusChange(appointment.id, s); }}
+                                        className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 ${s === status ? 'text-brand font-bold bg-brand-50' : 'text-slate-700'}`}>
+                                        {s === 'Checked In' && <CheckCircle className="w-3 h-3 text-emerald-500" />}
+                                        {s === 'Completed' && <CheckCircle className="w-3 h-3 text-indigo-500" />}
+                                        {s === 'Cancelled' && <XCircle className="w-3 h-3 text-red-500" />}
+                                        {s === 'Upcoming' && <Clock className="w-3 h-3 text-slate-500" />}
+                                        Mark as {s}
                                     </button>
                                 ))}
                                 {availableStatusOptions.length === 0 && (
@@ -807,23 +824,5 @@ function ScheduleCard({
                 </div>
             </div>
         </div>
-    );
-}
-
-function InboxItem({ message }: { message: Message }) {
-    return (
-        <Link href="/inbox" className={`block p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer flex items-start gap-3 group transition-colors ${message.unread ? 'bg-indigo-50/30' : ''}`}>
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0 group-hover:bg-indigo-200 transition-colors">
-                {message.sender.charAt(0)}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline mb-0.5">
-                    <h4 className={`text-sm truncate ${message.unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>{message.sender}</h4>
-                    <span className="text-[10px] text-slate-400 font-medium">{message.time}</span>
-                </div>
-                <p className={`text-xs truncate ${message.unread ? 'text-slate-600 font-medium' : 'text-slate-500'}`}>{message.preview}</p>
-            </div>
-            {message.unread && <div className="w-2 h-2 rounded-full bg-brand mt-1.5"></div>}
-        </Link>
     );
 }

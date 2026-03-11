@@ -39,7 +39,8 @@ export async function POST(request: Request) {
         if (!auth || !db) {
             throw new Error('Firebase Admin not initialized');
         }
-        const { email, password, displayName, role } = await request.json();
+        const { email, password, firstName, lastName, dob, sex, role } = await request.json();
+        const displayName = `${firstName} ${lastName}`.trim();
 
         if (!email || !password || !role) {
             return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
@@ -57,8 +58,10 @@ export async function POST(request: Request) {
             uid: userRecord.uid,
             email,
             name: displayName,
-            firstName: displayName.split(' ')[0],
-            lastName: displayName.split(' ').slice(1).join(' '),
+            firstName: firstName || displayName.split(' ')[0] || '',
+            lastName: lastName || displayName.split(' ').slice(1).join(' ') || '',
+            dob: dob || null,
+            sex: sex || null,
             role: role,
             createdAt: new Date(),
             status: 'active'
