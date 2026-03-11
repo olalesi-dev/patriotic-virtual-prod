@@ -13,7 +13,19 @@ type PartialServiceAccount = {
 };
 
 function normalizePrivateKey(value: string): string {
-	return value.replace(/\\n/g, "\n");
+	const trimmed = value.trim();
+	const withoutTrailingComma = trimmed.endsWith(",")
+		? trimmed.slice(0, -1).trim()
+		: trimmed;
+	const withoutWrappingQuotes =
+		(withoutTrailingComma.startsWith('"') &&
+			withoutTrailingComma.endsWith('"')) ||
+		(withoutTrailingComma.startsWith("'") &&
+			withoutTrailingComma.endsWith("'"))
+			? withoutTrailingComma.slice(1, -1)
+			: withoutTrailingComma;
+
+	return withoutWrappingQuotes.replace(/\\n/g, "\n");
 }
 
 function parseServiceAccountJson(
