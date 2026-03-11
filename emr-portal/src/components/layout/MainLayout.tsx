@@ -1,153 +1,32 @@
 "use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import type { User as FirebaseUser } from 'firebase/auth';
-import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    limit,
-    onSnapshot,
-    query,
-    where
-} from 'firebase/firestore';
-import {
-    Activity, BarChart, Bot, Briefcase, Calendar, ChevronLeft, ChevronRight,
-    ClipboardList, CreditCard, FileText, LayoutDashboard, LogOut, Menu, MessageSquare,
-    Microscope, Pill, Plus, Scan, Search, Settings, ShieldCheck, TrendingUp, User,
-    Users, Video
-} from 'lucide-react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
+import {
+    Search, Calendar, Video, User, Bell, LayoutDashboard, FileText, Settings,
+    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu, LogOut,
+    Pill, Microscope, Scan, Bot, BarChart, TrendingUp, ShieldCheck, ClipboardList, Activity
+} from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { GlobalSearch } from './GlobalSearch';
 import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
-import { GlobalSearch } from './GlobalSearch';
 
-interface BookingPatientOption {
-    id: string;
-    name: string;
-    email: string | null;
-}
-
-const scheduleVisitSchema = z.object({
-    patientId: z.string().trim().min(1, 'Please select a patient.'),
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Valid date is required.'),
-    time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Valid time is required.'),
-    visitType: z.enum(['video', 'in_person']),
-    notes: z.string().trim().min(2, 'Please add visit notes.').max(500)
-}).superRefine((values, ctx) => {
-    const scheduledAt = new Date(`${values.date}T${values.time}:00`);
-    if (Number.isNaN(scheduledAt.getTime())) {
-        ctx.addIssue({ code: 'custom', message: 'Invalid date/time.', path: ['date'] });
-        return;
-    }
-    if (scheduledAt.getTime() < Date.now() - 60_000) {
-        ctx.addIssue({ code: 'custom', message: 'Visit must be in the future.', path: ['date'] });
-    }
-});
-
-type ScheduleVisitValues = z.infer<typeof scheduleVisitSchema>;
-
-function useMainLayoutView({ children }: { children: React.ReactNode }) {
+export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [bookingPatients, setBookingPatients] = useState<BookingPatientOption[]>([]);
-    const [loadingPatients, setLoadingPatients] = useState(false);
-    const [isSchedulingVisit, setIsSchedulingVisit] = useState(false);
+
+    // Form State
+    const [patient, setPatient] = useState('John Doe');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [time, setTime] = useState('10:00');
+    const [type, setType] = useState('video');
 
     const router = useRouter();
-    // usePushNotifications(activeUser);
-    const scheduleForm = useForm<ScheduleVisitValues>({
-        resolver: zodResolver(scheduleVisitSchema),
-        defaultValues: {
-            patientId: '',
-            date: new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString().split('T')[0],
-            time: '10:00',
-            visitType: 'video',
-            notes: ''
-        }
-    });
-
-    const asNonEmptyString = (value: unknown): string | null => {
-        if (typeof value !== 'string') return null;
-        const normalized = value.trim();
-        return normalized.length > 0 ? normalized : null;
-    };
-
-    const loadBookingPatients = React.useCallback(async () => {
-        setLoadingPatients(true);
-        try {
-            const [patientsSnapshot, usersSnapshot] = await Promise.all([
-                getDocs(query(collection(db, 'patients'), limit(150))),
-                getDocs(query(collection(db, 'users'), where('role', '==', 'patient'), limit(150)))
-            ]);
-
-            const optionsById = new Map<string, BookingPatientOption>();
-            const pushOption = (
-                id: string,
-                rawName: unknown,
-                rawEmail: unknown,
-                rawFirstName?: unknown,
-                rawLastName?: unknown
-            ) => {
-                const fullName = asNonEmptyString(rawName)
-                    ?? [asNonEmptyString(rawFirstName), asNonEmptyString(rawLastName)].filter(Boolean).join(' ')
-                    ?? asNonEmptyString(rawEmail)?.split('@')[0]
-                    ?? `Patient ${id.slice(0, 6)}`;
-
-                optionsById.set(id, {
-                    id,
-                    name: fullName,
-                    email: asNonEmptyString(rawEmail)
-                });
-            };
-
-            patientsSnapshot.docs.forEach((patientDoc) => {
-                const data = patientDoc.data();
-                pushOption(
-                    patientDoc.id,
-                    data.name ?? data.displayName,
-                    data.email,
-                    data.firstName,
-                    data.lastName
-                );
-            });
-
-            usersSnapshot.docs.forEach((userDoc) => {
-                const data = userDoc.data();
-                pushOption(
-                    userDoc.id,
-                    data.name ?? data.displayName,
-                    data.email,
-                    data.firstName,
-                    data.lastName
-                );
-            });
-
-            const nextOptions = Array.from(optionsById.values())
-                .sort((first, second) => first.name.localeCompare(second.name));
-            setBookingPatients(nextOptions);
-
-            if (!scheduleForm.getValues('patientId') && nextOptions.length > 0) {
-                scheduleForm.setValue('patientId', nextOptions[0].id, { shouldValidate: true });
-            }
-        } catch (loadPatientsError) {
-            console.error('Error loading booking patients:', loadPatientsError);
-            toast.error('Unable to load patient list for scheduling.');
-        } finally {
-            setLoadingPatients(false);
-        }
-    }, [scheduleForm]);
 
     const profile = useUserProfile();
 
@@ -162,10 +41,24 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
     }, [profile, router]);
 
 
-    const openBookingModal = () => {
-        setIsBookingModalOpen(true);
-        if (bookingPatients.length === 0) {
-            loadBookingPatients().catch(() => undefined);
+    const handleSchedule = () => {
+        const newAppointment = {
+            id: Date.now(),
+            patient,
+            date,
+            time,
+            type,
+            status: 'Scheduled'
+        };
+
+        const existing = JSON.parse(localStorage.getItem('emr_appointments') || '[]');
+        localStorage.setItem('emr_appointments', JSON.stringify([...existing, newAppointment]));
+
+        setIsBookingModalOpen(false);
+        if (pathname !== '/calendar') {
+            router.push('/calendar');
+        } else {
+            window.location.reload();
         }
     };
 
@@ -182,20 +75,23 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
 
             {/* SIDEBAR */}
             <aside
-                className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-sidebar flex flex-col fixed inset-y-0 z-30 text-sidebar-foreground shadow-xl transition-all duration-300 ease-in-out`}
+                className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-sidebar flex flex-col fixed inset-y-0 z-30 text-white shadow-xl transition-all duration-300 ease-in-out`}
             >
                 {/* Logo Area */}
                 <div className={`h-16 flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'px-6'} border-b border-sidebar-active/50 relative`}>
-                    <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shrink-0">
-                        <span className="font-bold text-lg text-white">P</span>
-                    </div>
-                    {!isSidebarCollapsed && (
-                        <span className="font-bold text-lg tracking-tight ml-3 whitespace-nowrap overflow-hidden transition-opacity duration-300">Patriotic EMR</span>
+                    {isSidebarCollapsed ? (
+                        <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center bg-gradient-to-br from-brand to-brand-600 shadow-lg shrink-0">
+                            <span className="font-bold text-lg text-white">P</span>
+                        </div>
+                    ) : (
+                        <div className="bg-white px-2 py-1.5 rounded-lg w-full max-w-[170px] flex items-center justify-center shadow-sm">
+                            <img src="/logo.png" alt="Patriotic EHR" className="h-7 w-auto object-contain transition-opacity duration-300" />
+                        </div>
                     )}
 
                     <button
                         onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                        className={`absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-300 shadow-sm hover:text-brand hover:border-brand transition-colors z-50 ${isSidebarCollapsed ? 'rotate-180 translate-x-8' : ''}`}
+                        className={`absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:text-brand hover:border-brand transition-colors z-50 ${isSidebarCollapsed ? 'rotate-180 translate-x-8' : ''}`}
                     >
                         <ChevronLeft className="w-3 h-3" />
                     </button>
@@ -210,16 +106,8 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
                         <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" active={pathname === '/dashboard'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname === '/calendar'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/team" icon={Users} label="Team" active={pathname === '/team'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patient-search" icon={Search} label="Patient Search" active={pathname === '/patient-search'} collapsed={isSidebarCollapsed} />
-                        <NavItem
-                            href="/inbox"
-                            icon={MessageSquare}
-                            label="Inbox / Messages"
-                            // badge={providerUnreadCount > 0 ? providerUnreadCount.toString() : undefined}
-                            active={pathname === '/inbox'}
-                            collapsed={isSidebarCollapsed}
-                        />
+                        <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname === '/inbox'} collapsed={isSidebarCollapsed} />
                     </div>
 
                     {/* ORDERS & Rx */}
@@ -267,16 +155,16 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
                 <div className={`p-4 border-t border-sidebar-active/30 ${isSidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
                     {!isSidebarCollapsed ? (
                         <button
-                            onClick={openBookingModal}
-                            className="w-full flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 font-medium py-2.5 rounded-lg transition-colors border border-indigo-500/20 mb-4 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-95 duration-200 whitespace-nowrap overflow-hidden"
+                            onClick={() => setIsBookingModalOpen(true)}
+                            className="w-full flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-200 font-medium py-2.5 rounded-lg transition-colors border border-indigo-500/20 mb-4 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-95 duration-200 whitespace-nowrap overflow-hidden"
                         >
                             <Video className="w-4 h-4 shrink-0" />
                             <span>Schedule Call</span>
                         </button>
                     ) : (
                         <button
-                            onClick={openBookingModal}
-                            className="w-10 h-10 flex items-center justify-center bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 rounded-lg transition-colors border border-indigo-500/20 mb-4 hover:shadow-lg active:scale-95 duration-200"
+                            onClick={() => setIsBookingModalOpen(true)}
+                            className="w-10 h-10 flex items-center justify-center bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-200 rounded-lg transition-colors border border-indigo-500/20 mb-4 hover:shadow-lg active:scale-95 duration-200"
                             title="Schedule Call"
                         >
                             <Video className="w-5 h-5" />
@@ -318,10 +206,13 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
 
                         <ThemeToggle />
 
-                        <ProviderNotificationBell />
+                        <button className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors relative hover:text-brand">
+                            <Bell className="w-5 h-5" />
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                        </button>
 
                         <button
-                            onClick={openBookingModal}
+                            onClick={() => setIsBookingModalOpen(true)}
                             className="bg-brand hover:bg-brand-600 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 shadow-sm transition-all active:scale-95 hover:shadow-md hover:shadow-brand/20"
                         >
                             <Plus className="w-4 h-4" />
@@ -352,120 +243,82 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
                                 </button>
                             </div>
 
-                            <form onSubmit={()=>{}}>
-                                <input type="hidden" {...scheduleForm.register('visitType')} />
-                                <div className="p-6 space-y-4">
-                                    <div>
-                                        <label htmlFor="schedule-patient" className="block text-sm font-bold text-slate-700 mb-1">Patient</label>
-                                        <select
-                                            id="schedule-patient"
-                                            {...scheduleForm.register('patientId')}
-                                            disabled={loadingPatients || isSchedulingVisit}
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow disabled:opacity-60"
-                                        >
-                                            {bookingPatients.length === 0 && (
-                                                <option value="">No patients found</option>
-                                            )}
-                                            {bookingPatients.map((patientOption) => (
-                                                <option key={patientOption.id} value={patientOption.id}>
-                                                    {patientOption.name}
-                                                    {patientOption.email ? ` (${patientOption.email})` : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {scheduleForm.formState.errors.patientId?.message && (
-                                            <p className="mt-1 text-xs font-semibold text-rose-500">{scheduleForm.formState.errors.patientId.message}</p>
-                                        )}
-                                    </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Patient</label>
+                                    <select
+                                        value={patient}
+                                        onChange={(e) => setPatient(e.target.value)}
+                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                                    >
+                                        <option value="John Doe">John Doe</option>
+                                        <option value="Sarah Connor">Sarah Connor</option>
+                                        <option value="Michael Brown">Michael Brown</option>
+                                    </select>
+                                </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label htmlFor="schedule-date" className="block text-sm font-bold text-slate-700 mb-1">Date</label>
-                                            <input
-                                                id="schedule-date"
-                                                type="date"
-                                                {...scheduleForm.register('date')}
-                                                disabled={isSchedulingVisit}
-                                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow disabled:opacity-60"
-                                            />
-                                            {scheduleForm.formState.errors.date?.message && (
-                                                <p className="mt-1 text-xs font-semibold text-rose-500">{scheduleForm.formState.errors.date.message}</p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label htmlFor="schedule-time" className="block text-sm font-bold text-slate-700 mb-1">Time</label>
-                                            <input
-                                                id="schedule-time"
-                                                type="time"
-                                                {...scheduleForm.register('time')}
-                                                disabled={isSchedulingVisit}
-                                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow disabled:opacity-60"
-                                            />
-                                            {scheduleForm.formState.errors.time?.message && (
-                                                <p className="mt-1 text-xs font-semibold text-rose-500">{scheduleForm.formState.errors.time.message}</p>
-                                            )}
-                                        </div>
-                                    </div>
-
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <p className="block text-sm font-bold text-slate-700 mb-1">Visit Type</p>
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => scheduleForm.setValue('visitType', 'video', { shouldValidate: true })}
-                                                className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${scheduleForm.watch('visitType') === 'video'
-                                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
-                                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                                    }`}
-                                            >
-                                                <Video className="w-4 h-4" /> Video Call
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => scheduleForm.setValue('visitType', 'in_person', { shouldValidate: true })}
-                                                className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${scheduleForm.watch('visitType') === 'in_person'
-                                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
-                                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                                    }`}
-                                            >
-                                                <User className="w-4 h-4" /> In-Person
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="schedule-notes" className="block text-sm font-bold text-slate-700 mb-1">Notes</label>
-                                        <textarea
-                                            id="schedule-notes"
-                                            {...scheduleForm.register('notes')}
-                                            disabled={isSchedulingVisit}
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow disabled:opacity-60"
-                                            placeholder="Reason for visit..."
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">Date</label>
+                                        <input
+                                            type="date"
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
                                         />
-                                        {scheduleForm.formState.errors.notes?.message && (
-                                            <p className="mt-1 text-xs font-semibold text-rose-500">{scheduleForm.formState.errors.notes.message}</p>
-                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">Time</label>
+                                        <input
+                                            type="time"
+                                            value={time}
+                                            onChange={(e) => setTime(e.target.value)}
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="p-6 pt-0 flex gap-3">
-                                    <button
-                                        type="button"
-                                        disabled={isSchedulingVisit}
-                                        onClick={() => setIsBookingModalOpen(false)}
-                                        className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-60"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isSchedulingVisit}
-                                        className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all active:scale-95 disabled:opacity-60"
-                                    >
-                                        {isSchedulingVisit ? 'Scheduling...' : 'Schedule Visit'}
-                                    </button>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Visit Type</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setType('video')}
+                                            className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'video'
+                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            <Video className="w-4 h-4" /> Video Call
+                                        </button>
+                                        <button
+                                            onClick={() => setType('person')}
+                                            className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'person'
+                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            <User className="w-4 h-4" /> In-Person
+                                        </button>
+                                    </div>
                                 </div>
-                            </form>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Notes</label>
+                                    <textarea className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
+                                </div>
+                            </div>
+
+                            <div className="p-6 pt-0 flex gap-3">
+                                <button onClick={() => setIsBookingModalOpen(false)} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors">
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSchedule}
+                                    className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all active:scale-95"
+                                >
+                                    Schedule Visit
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )
@@ -475,23 +328,19 @@ function useMainLayoutView({ children }: { children: React.ReactNode }) {
     );
 }
 
-export function MainLayout({ children }: { children: React.ReactNode }) {
-    return useMainLayoutView({ children });
-}
-
 function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {
     return (
         <Link
             href={href}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-all group relative overflow-hidden ${active
-                ? 'bg-sidebar-active text-sidebar-foreground font-medium shadow-inner shadow-black/10'
-                : 'text-sidebar-muted font-medium hover:bg-sidebar-hover hover:text-sidebar-foreground'
+                ? 'bg-sidebar-active text-white font-medium shadow-inner shadow-black/20'
+                : 'text-slate-400 font-medium hover:bg-sidebar-hover hover:text-white'
                 } ${collapsed ? 'justify-center' : ''}`}
             title={collapsed ? label : ''}
         >
             {active && !collapsed && <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand rounded-r-full"></div>}
 
-            <Icon className={`w-5 h-5 relative z-10 transition-colors shrink-0 ${active ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-indigo-500 dark:group-hover:text-indigo-300'}`} />
+            <Icon className={`w-5 h-5 relative z-10 transition-colors shrink-0 ${active ? 'text-indigo-400' : 'group-hover:text-indigo-300'}`} />
 
             {!collapsed && (
                 <>
@@ -513,11 +362,11 @@ function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {
 
 function NavSection({ label, collapsed }: { label: string, collapsed: boolean }) {
     if (collapsed) {
-        return <div className="h-px bg-sidebar-active/60 my-2 mx-2"></div>;
+        return <div className="h-px bg-slate-700/50 my-2 mx-2"></div>;
     }
     return (
         <div className="px-3 pt-4 pb-1">
-            <span className="text-[10px] font-black text-sidebar-muted uppercase tracking-widest leading-none">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
                 {label}
             </span>
         </div>

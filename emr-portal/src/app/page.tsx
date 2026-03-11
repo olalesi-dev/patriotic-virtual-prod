@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
-import RootDispatcherClient from './RootDispatcherClient';
+import '@/features/landing/landing.css';
+import LandingEmbed from '@/features/landing/components/LandingEmbed';
 
 export const metadata: Metadata = {
-    title: 'Patriotic EMR',
-    description: 'Secure care dashboard routing for Patriotic EMR.'
+    title: 'Patriotic Virtual Telehealth | Healthcare That Comes To You',
+    description:
+        'Board-certified telehealth, radiology education, AI imaging, and secure online consults through Patriotic Virtual Telehealth.',
 };
 
-export default function RootPage() {
-    return <RootDispatcherClient />;
+export default function HomePage() {
+    return <LandingEmbed />;
 }

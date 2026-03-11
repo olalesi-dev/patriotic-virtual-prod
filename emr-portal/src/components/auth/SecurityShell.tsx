@@ -1,18 +1,29 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { AlertCircle, Lock, LogOut } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 const TIMEOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const WARNING_THRESHOLD = 3 * 60 * 1000; // Warning at 12 minutes (3 mins remaining)
+
+const isPublicRoute = (pathname: string) =>
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/privacy' ||
+    pathname === '/terms' ||
+    pathname === '/forgot-password' ||
+    pathname.startsWith('/book');
 
 export function SecurityShell({ children }: { children: React.ReactNode }) {
     const [lastActivity, setLastActivity] = useState(Date.now());
     const [showWarning, setShowWarning] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
     const router = useRouter();
+    const pathname = usePathname();
+    const publicRoute = isPublicRoute(pathname);
 
     const logout = useCallback(async () => {
         try {
@@ -27,6 +38,11 @@ export function SecurityShell({ children }: { children: React.ReactNode }) {
     }, [router]);
 
     useEffect(() => {
+        if (publicRoute) {
+            setShowWarning(false);
+            return;
+        }
+
         const handleActivity = () => {
             setLastActivity(Date.now());
             if (showWarning) setShowWarning(false);
@@ -51,7 +67,11 @@ export function SecurityShell({ children }: { children: React.ReactNode }) {
             events.forEach(event => window.removeEventListener(event, handleActivity));
             clearInterval(interval);
         };
-    }, [lastActivity, logout, showWarning]);
+    }, [lastActivity, logout, publicRoute, showWarning]);
+
+    if (publicRoute) {
+        return <>{children}</>;
+    }
 
     return (
         <>

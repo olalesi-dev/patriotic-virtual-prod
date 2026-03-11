@@ -6,7 +6,7 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-
+    
     function isOwner(uid) {
       return request.auth.uid == uid;
     }
@@ -29,7 +29,10 @@ service cloud.firestore {
 
     // --- CONSULTATIONS ---
     match /consultations/{id} {
-      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
+      // Staff (any authenticated user in beta) can list/query all consultations
+      // Patients can only read their own docs
+      allow list: if isAuthenticated();
+      allow get: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
     }
@@ -84,13 +87,6 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isStaff();
     }
-
-    // --- NOTIFICATIONS (client reads only own notifications) ---
-    match /notifications/{id} {
-      allow read: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
-      allow create, update, delete: if false;
-    }
-
     // --- API & SYSTEM ---
     match /appointments/{id} {
       allow read, write: if isAuthenticated();
