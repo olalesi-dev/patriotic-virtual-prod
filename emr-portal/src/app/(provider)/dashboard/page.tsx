@@ -6,6 +6,7 @@ import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calendar, Video, Filter, MoreHorizontal, CheckCircle, XCircle, Clock, X, Mail, Phone, User, Activity, ChevronDown } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, serverTimestamp, Timestamp, getDoc, getDocs, orderBy, limit } from 'firebase/firestore';
+import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 
 // --- Types ---
 interface Appointment {
@@ -60,6 +61,9 @@ export default function EmrDashboard() {
     // Filter
     const [filterOpen, setFilterOpen] = useState(false);
     const [filterStatus, setFilterStatus] = useState<string>('all');
+
+    // Telehealth Modal State
+    const [activeVideoCall, setActiveVideoCall] = useState<{ url: string, apptId: string, role: 'patient' | 'provider', intakeAnswers: any, patientName: string } | null>(null);
 
     const scheduleRef = useRef<HTMLDivElement>(null);
 
@@ -324,7 +328,7 @@ export default function EmrDashboard() {
     const handleJoinCall = (appt: Appointment) => {
         let url = appt.meetingUrl || 'https://doxy.me/patriotictelehealth';
         if (url.includes('doxy.me')) url = 'https://doxy.me/sign-in';
-        window.open(url, '_blank');
+        setActiveVideoCall({ url, apptId: appt.id, role: 'provider', intakeAnswers: appt.intakeAnswers, patientName: appt.patient });
     };
 
     const handleReviewSchedule = (appt: Appointment) => {
@@ -417,7 +421,7 @@ export default function EmrDashboard() {
                     </p>
                     <div className="flex gap-3">
                         <button
-                            onClick={() => window.open('https://doxy.me/sign-in', '_blank')}
+                            onClick={() => setActiveVideoCall({ url: 'https://doxy.me/sign-in', apptId: '', role: 'provider', intakeAnswers: {}, patientName: 'Waiting Room' })}
                             className="bg-brand hover:bg-brand-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95"
                         >
                             <Video className="w-4 h-4" /> Open Waiting Room
@@ -644,7 +648,7 @@ export default function EmrDashboard() {
                                     onClick={() => {
                                         let url = detailAppt.meetingUrl || '';
                                         if (url.includes('doxy.me')) url = 'https://doxy.me/sign-in';
-                                        window.open(url, '_blank');
+                                        setActiveVideoCall({ url, apptId: detailAppt.id, role: 'provider', intakeAnswers: detailAppt.intakeAnswers, patientName: detailAppt.patient });
                                     }}
                                     className="w-full bg-brand text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-600 transition-all shadow-md"
                                 >
@@ -655,6 +659,16 @@ export default function EmrDashboard() {
                     </div>
                 </ModalOverlay>
             )}
+
+            <TelehealthIframeModal 
+                isOpen={!!activeVideoCall} 
+                onClose={() => setActiveVideoCall(null)} 
+                role={activeVideoCall?.role as any} 
+                videoLink={activeVideoCall?.url || ''} 
+                appointmentId={activeVideoCall?.apptId} 
+                patientName={activeVideoCall?.patientName}
+                intakeAnswers={activeVideoCall?.intakeAnswers} 
+            />
         </div>
     );
 }

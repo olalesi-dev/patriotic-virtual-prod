@@ -57,6 +57,7 @@ const Calendar = dynamic(() => import('react-calendar'), {
 import 'react-calendar/dist/Calendar.css';
 import { logAuditEvent } from '@/lib/audit';
 import { sanitize } from '@/lib/security';
+import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 
 // Helper: safely convert a Firestore Timestamp (or plain Date / ISO string) to a JS Date.
 // Returns null if the value is missing or cannot be converted.
@@ -134,6 +135,9 @@ export default function AppointmentsPage() {
     const [isThinking, setIsThinking] = useState(false);
     const [aiSummary, setAiSummary] = useState<any>(null);
     const [feedbackSent, setFeedbackSent] = useState(false);
+    
+    // Telehealth Modal State
+    const [activeVideoCall, setActiveVideoCall] = useState<{ url: string, apptId: string, role: 'patient' | 'provider', intakeAnswers: any } | null>(null);
 
     useEffect(() => {
         let unsubConsult: (() => void) | null = null;
@@ -672,24 +676,20 @@ export default function AppointmentsPage() {
                                 {isScheduled && (
                                     <>
                                         {isJoinable(appt.scheduledAt || appt.date) ? (
-                                            <a
-                                                href={appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={() => setActiveVideoCall({url: appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth', apptId: appt.id, role: 'patient', intakeAnswers: appt.intakeAnswers})}
                                                 className="w-full md:w-52 bg-[#0EA5E9] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-sky-100 dark:shadow-none hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse"
                                             >
                                                 <Video className="w-4 h-4" /> Join Now
-                                            </a>
+                                            </button>
                                         ) : (
                                             <div className="flex flex-col gap-2">
-                                                <a
-                                                    href={appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                                <button
+                                                    onClick={() => setActiveVideoCall({url: appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth', apptId: appt.id, role: 'patient', intakeAnswers: appt.intakeAnswers})}
                                                     className="w-full md:w-52 bg-sky-50 dark:bg-sky-900/30 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-800 py-3.5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-sky-100 transition-all flex items-center justify-center gap-2"
                                                 >
                                                     <Video className="w-4 h-4" /> Start Video Call
-                                                </a>
+                                                </button>
                                                 <button
                                                     onClick={() => setIntakeDetail(appt)}
                                                     className="w-full md:w-52 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
@@ -1149,6 +1149,15 @@ export default function AppointmentsPage() {
                     </div>
                 </div>
             )}
+            
+            <TelehealthIframeModal 
+                isOpen={!!activeVideoCall} 
+                onClose={() => setActiveVideoCall(null)} 
+                role={activeVideoCall?.role as any} 
+                videoLink={activeVideoCall?.url || ''} 
+                appointmentId={activeVideoCall?.apptId} 
+                intakeAnswers={activeVideoCall?.intakeAnswers} 
+            />
         </div>
     );
 }
