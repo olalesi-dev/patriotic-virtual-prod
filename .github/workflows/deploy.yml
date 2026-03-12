@@ -50,6 +50,8 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: '${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}'
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}'
           NEXT_PUBLIC_FIREBASE_APP_ID: '${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}'
+          STRIPE_SECRET_KEY: '${{ secrets.STRIPE_SECRET_KEY }}'
+          NEXT_PUBLIC_APP_URL: 'https://patriotic-virtual-emr.web.app'
 
       - name: Deploy to Firebase Landing
         uses: FirebaseExtended/action-hosting-deploy@v0
