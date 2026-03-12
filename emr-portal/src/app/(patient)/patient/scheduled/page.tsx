@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { format, isAfter, isBefore, addMinutes, subMinutes, formatDistanceToNow, isPast } from 'date-fns';
 import { toast } from 'react-hot-toast';
+import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 
 /* ─── helpers ──────────────────────────────────────────────── */
 function toDate(v: any): Date | null {
@@ -61,6 +62,9 @@ export default function ScheduledAppointmentsPage() {
     const [appointments, setAppointments] = useState<Appt[]>([]);
     const [loading, setLoading] = useState(true);
     const [selected, setSelected] = useState<Appt | null>(null);
+
+    // Telehealth Modal State
+    const [activeVideoCall, setActiveVideoCall] = useState<{ url: string, apptId: string, role: 'patient' | 'provider', intakeAnswers: any } | null>(null);
 
     useEffect(() => {
         let unsubs: Array<() => void> = [];
@@ -271,6 +275,7 @@ export default function ScheduledAppointmentsPage() {
                                     isJoinable={isJoinable(appt.scheduledAt)}
                                     fmtService={fmtService}
                                     onClick={() => setSelected(appt)}
+                                    onJoin={() => setActiveVideoCall({ url: appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth', apptId: appt.id, role: 'patient', intakeAnswers: appt.intakeAnswers })}
                                 />
                             ))}
                         </section>
@@ -290,6 +295,7 @@ export default function ScheduledAppointmentsPage() {
                                     isJoinable={false}
                                     fmtService={fmtService}
                                     onClick={() => setSelected(appt)}
+                                    onJoin={() => {}}
                                     dim
                                 />
                             ))}
@@ -351,35 +357,49 @@ export default function ScheduledAppointmentsPage() {
                             </div>
 
                             {/* CTA */}
-                            <a
-                                href={selected.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
                                 onClick={() => {
                                     if (selected.scheduledAt && !isJoinable(selected.scheduledAt)) {
                                         toast('Your visit link will be active 15 minutes before the appointment.');
+                                        return;
                                     }
+                                    setActiveVideoCall({
+                                        url: selected.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                                        apptId: selected.id,
+                                        role: 'patient',
+                                        intakeAnswers: selected.intakeAnswers
+                                    });
                                 }}
                                 className="flex items-center justify-center gap-3 w-full bg-[#0EA5E9] hover:bg-[#0284C7] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all active:scale-95 shadow-lg shadow-sky-100"
                             >
                                 <Video className="w-5 h-5" />
                                 Join Telehealth Visit
                                 <ExternalLink className="w-4 h-4 opacity-70" />
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            <TelehealthIframeModal 
+                isOpen={!!activeVideoCall} 
+                onClose={() => setActiveVideoCall(null)} 
+                role={activeVideoCall?.role as any} 
+                videoLink={activeVideoCall?.url || ''} 
+                appointmentId={activeVideoCall?.apptId} 
+                intakeAnswers={activeVideoCall?.intakeAnswers} 
+            />
         </div>
     );
 }
 
 /* ─── Sub-components ──────────────────────────────────────────── */
-function AppointmentCard({ appt, isJoinable, fmtService, onClick, dim = false }: {
+function AppointmentCard({ appt, isJoinable, fmtService, onClick, onJoin, dim = false }: {
     appt: Appt;
     isJoinable: boolean;
     fmtService: (k: string) => string;
     onClick: () => void;
+    onJoin: () => void;
     dim?: boolean;
 }) {
     const d = appt.scheduledAt;
@@ -465,15 +485,12 @@ function AppointmentCard({ appt, isJoinable, fmtService, onClick, dim = false }:
                 {/* Action */}
                 <div className="shrink-0 flex flex-col gap-2 w-full md:w-auto">
                     {isJoinable ? (
-                        <a
-                            href={appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
+                        <button
+                            onClick={e => { e.stopPropagation(); onJoin(); }}
                             className="flex items-center justify-center gap-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-sky-200 hover:scale-105"
                         >
                             <Video className="w-4 h-4" /> Join Now
-                        </a>
+                        </button>
                     ) : (
                         <button
                             onClick={e => { e.stopPropagation(); onClick(); }}
