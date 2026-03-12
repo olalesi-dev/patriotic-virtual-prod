@@ -512,23 +512,24 @@ export default function AppointmentsPage() {
     // FIX: Use toSafeDate() in filter â€” was crashing with .toDate() on undefined
     const parsedStatus = (s: string | undefined | null) => (s || '').toLowerCase();
 
-    // Waitlist tab: shows all submissions — pending AND newly scheduled.
-    // Appointments stay on this tab and update their card in real time.
+    // Waitlist tab: only shows PENDING bookings awaiting provider scheduling.
+    // Once a provider confirms a time (status → 'scheduled'), the appointment
+    // automatically moves to the Upcoming tab.
     const waitlist = appointments.filter(a => {
         const s = parsedStatus(a.status);
-        return s === 'pending_scheduling' || s === 'waitlist' || s === 'scheduled';
+        return s === 'pending_scheduling' || s === 'waitlist';
     });
 
     const upcoming = appointments.filter(a => {
         const s = parsedStatus(a.status);
-        const d = toSafeDate(a.date);
+        const d = toSafeDate(a.scheduledAt || a.date);
         return s === 'scheduled' &&
             (d ? isAfter(d, subMinutes(new Date(), 60)) : true);
     });
 
     const past = appointments.filter(a => {
         const s = parsedStatus(a.status);
-        const d = toSafeDate(a.date);
+        const d = toSafeDate(a.scheduledAt || a.date);
         return s === 'completed' || s === 'cancelled' ||
             (d && s === 'scheduled' ? isBefore(d, subMinutes(new Date(), 60)) : false);
     });

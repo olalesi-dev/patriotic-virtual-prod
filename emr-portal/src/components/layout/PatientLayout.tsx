@@ -27,6 +27,7 @@ import { auth, db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
+import { ConsentModal } from '@/components/patient/ConsentModal';
 
 
 export function PatientLayout({ children }: { children: React.ReactNode }) {
@@ -190,6 +191,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-[#F0F9FF] flex">
+            {/* Privacy & Consent Gate — shown once on first login */}
+            <ConsentModal />
             {/* MOBILE SIDEBAR OVERLAY */}
             {isSidebarOpen && (
                 <div
