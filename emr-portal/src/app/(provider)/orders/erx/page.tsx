@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Pill, Bell } from 'lucide-react';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
 import { auth } from '@/lib/firebase';
 
 export default function ErxPage() {
+    const searchParams = useSearchParams();
+    const patientIdParam = searchParams.get('patientId');
+    const patientDoseSpotId = patientIdParam ? parseInt(patientIdParam, 10) : undefined;
+
     const [notificationCount, setNotificationCount] = useState<number>(0);
 
     useEffect(() => {
@@ -67,7 +72,11 @@ export default function ErxPage() {
 
             {/* DoseSpot Frame Container */}
             <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden w-full">
-                <DoseSpotFrame refillsErrors={false} height="85vh" />
+                <DoseSpotFrame 
+                    patientDoseSpotId={patientDoseSpotId} 
+                    refillsErrors={false} 
+                    height="85vh" 
+                />
             </div>
         </div>
     );

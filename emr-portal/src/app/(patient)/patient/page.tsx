@@ -15,7 +15,8 @@ import {
     History,
     X,
     Send,
-    ShieldCheck
+    ShieldCheck,
+    Bell
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -316,6 +317,24 @@ export default function PatientDashboard() {
                     </p>
                 </div>
             </div>
+
+            {/* 24-HOUR PROVIDER CONTACT BANNER — shown when patient has pending booking */}
+            {appointments.some(a => (a.status as any) === 'PENDING_SCHEDULING') && (
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-[24px] p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                        <Bell className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-black text-amber-900 text-sm tracking-tight">Your visit request is confirmed!</p>
+                        <p className="text-amber-700/80 text-xs font-medium mt-0.5 leading-relaxed">
+                            A provider will contact you within <strong>24 hours</strong> to finalize your appointment time. Keep an eye on your phone and email.
+                        </p>
+                    </div>
+                    <button onClick={() => router.push('/patient/appointments')} className="shrink-0 bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl hover:bg-amber-700 transition-all">
+                        View
+                    </button>
+                </div>
+            )}
 
             {/* QUICK ACTIONS */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

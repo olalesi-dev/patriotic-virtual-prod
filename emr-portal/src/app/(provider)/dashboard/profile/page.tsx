@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, User, Phone, MapPin, Calendar, Shield, FileText, Activity, Edit3, Save, X, Loader2, CheckCircle2, Award, Building, Stethoscope } from 'lucide-react';
+import { Camera, User, Phone, MapPin, Calendar, Shield, FileText, Activity, Edit3, Save, X, Loader2, CheckCircle2, Award, Building, Stethoscope, ExternalLink, Info } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'react-hot-toast';
+import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
 
 interface ProfileData {
     firstName: string;
@@ -48,7 +49,7 @@ export default function ProviderProfilePage() {
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'practice'>('personal');
+    const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'practice' | 'erx'>('personal');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -289,6 +290,7 @@ export default function ProviderProfilePage() {
                             { id: 'personal', label: 'Personal', icon: User },
                             { id: 'professional', label: 'Credentials', icon: Award },
                             { id: 'practice', label: 'Practice', icon: Building },
+                            { id: 'erx', label: 'eRx (DoseSpot)', icon: ExternalLink },
                         ] as const).map(({ id, label, icon: Icon }) => (
                             <button
                                 key={id}
@@ -359,6 +361,60 @@ export default function ProviderProfilePage() {
                                     {field('State', 'state')}
                                     {field('ZIP Code', 'zip')}
                                 </div>
+                            </section>
+                        </div>
+                    )}
+
+                    {/* ── ERX / DOSESPOT ── */}
+                    {activeTab === 'erx' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                            <section>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <ExternalLink className="w-3.5 h-3.5" /> e-Prescribing Portal
+                                    </h3>
+                                    {data.doseSpotClinicianId && (
+                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1.5">
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> ID Linked: {data.doseSpotClinicianId}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {!data.doseSpotClinicianId ? (
+                                    <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[32px] border border-dashed border-slate-200 dark:border-slate-700">
+                                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                            <Shield className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                                        </div>
+                                        <h4 className="text-lg font-black text-slate-700 dark:text-slate-300 uppercase italic">eRx Not Configured</h4>
+                                        <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto mt-2">
+                                            Please enter your DoseSpot Clinician ID in the <span className="text-indigo-500 font-bold">Credentials</span> tab to enable e-prescribing.
+                                        </p>
+                                        <button 
+                                            onClick={() => setActiveTab('professional')}
+                                            className="mt-6 text-xs font-black text-indigo-500 uppercase tracking-widest hover:underline"
+                                        >
+                                            Go to Credentials
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800 flex items-start gap-3">
+                                            <Info className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-emerald-800 dark:text-emerald-300 font-bold leading-relaxed">
+                                                    SSO Integration Active (Staging)
+                                                </p>
+                                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium leading-relaxed">
+                                                    You are currently signed in as Clinician #{data.doseSpotClinicianId}. Any prescriptions written here will be linked to your professional record.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
+                                            <DoseSpotFrame height="800px" />
+                                        </div>
+                                    </div>
+                                )}
                             </section>
                         </div>
                     )}
