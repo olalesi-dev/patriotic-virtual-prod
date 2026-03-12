@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { LandingModals } from "./LandingModals";
 
 type LandingLocale = "en" | "es";
 
@@ -375,7 +376,28 @@ export function LandingEmbed() {
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<number | null>(null);
 
+  // Added Modals state
+  const [consultModalOpen, setConsultModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [initialService, setInitialService] = useState<string | null>(null);
+  const [initialConsultStep, setInitialConsultStep] = useState(1);
+  const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
+  const searchParams = useSearchParams();
+
   const copy = COPY[locale];
+
+  useEffect(() => {
+    // Post checkout routing logic 
+    if (searchParams?.get("payment") === "success") {
+      setInitialConsultStep(4);
+      setConsultModalOpen(true);
+      // Removed router.push("/dashboard") to let them read the message and click "Go to Dashboard"
+    } else if (searchParams?.get("payment") === "cancelled") {
+      showToast("Payment was cancelled.");
+      router.push("/");
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("theme");
@@ -501,12 +523,26 @@ export function LandingEmbed() {
 
   const handlePrimaryCta = () => {
     setMobileMenuOpen(false);
-    router.push("/book");
+    setInitialService(null);
+    if (!isAuthenticated) {
+      setAuthInitiator("header_get_started");
+      setAuthMode("register");
+      setAuthModalOpen(true);
+    } else {
+      setConsultModalOpen(true);
+    }
   };
 
   const handleServiceStart = (serviceKey: string) => {
     setMobileMenuOpen(false);
-    router.push(`/book?service=${encodeURIComponent(serviceKey)}`);
+    setInitialService(serviceKey);
+    if (!isAuthenticated) {
+      setAuthInitiator("service_card");
+      setAuthMode("register");
+      setAuthModalOpen(true);
+    } else {
+      setConsultModalOpen(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -567,20 +603,24 @@ export function LandingEmbed() {
           </div>
 
           <div className="nav-actions">
-            <Link
+            <button
               className={`btn btn-ghost ${isAuthenticated ? "hidden" : ""}`}
               id="loginBtn"
-              href="/login"
+              onClick={() => {
+                setAuthInitiator("header_login");
+                setAuthMode("login");
+                setAuthModalOpen(true);
+              }}
             >
               {copy.nav.login}
-            </Link>
-            <Link
+            </button>
+            <button
               className={`btn btn-primary ${isAuthenticated ? "hidden" : ""}`}
               id="signupBtn"
-              href="/signup"
+              onClick={handlePrimaryCta}
             >
               {copy.nav.getStarted}
-            </Link>
+            </button>
             <Link
               className={`btn btn-ghost ${isAuthenticated ? "" : "hidden"}`}
               id="dashBtn"
@@ -1956,6 +1996,26 @@ export function LandingEmbed() {
       <div className={`toast ${toastVisible ? "show" : ""}`} id="toast">
         {toastMessage}
       </div>
+
+      <LandingModals
+        consultModalOpen={consultModalOpen}
+        setConsultModalOpen={setConsultModalOpen}
+        authModalOpen={authModalOpen}
+        setAuthModalOpen={setAuthModalOpen}
+        authMode={authMode}
+        setAuthMode={setAuthMode}
+        initialService={initialService}
+        initialConsultStep={initialConsultStep}
+        onLoginSuccess={() => {
+          if (authInitiator === "header_login") {
+            setInitialService(null);
+            router.push("/");
+          } else {
+            setConsultModalOpen(true);
+          }
+        }}
+        showToast={showToast}
+      />
     </>
   );
 }
