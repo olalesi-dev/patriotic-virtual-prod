@@ -16,6 +16,7 @@ if (typeof window !== 'undefined') {
 }
 
 import { Toaster } from 'react-hot-toast';
+import AINavigator from '@/components/AINavigator';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -52,6 +53,7 @@ export default function RootLayout({
                 <MfaEnrollmentGate>
                     <SecurityShell>
                         <Toaster position="top-right" />
+                        <AINavigator />
                         {children}
                     </SecurityShell>
                 </MfaEnrollmentGate>
