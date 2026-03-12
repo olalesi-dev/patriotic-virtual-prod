@@ -232,7 +232,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             {
                 isBookingModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                        <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
+                        <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
                             <div className="bg-indigo-600 p-6 text-white flex justify-between items-start">
                                 <div>
                                     <h3 className="text-xl font-bold">New Telehealth Visit</h3>
@@ -245,11 +245,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                             <div className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Patient</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Patient</label>
                                     <select
                                         value={patient}
                                         onChange={(e) => setPatient(e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
                                     >
                                         <option value="John Doe">John Doe</option>
                                         <option value="Sarah Connor">Sarah Connor</option>
@@ -259,33 +259,33 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">Date</label>
+                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Date</label>
                                         <input
                                             type="date"
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">Time</label>
+                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Time</label>
                                         <input
                                             type="time"
                                             value={time}
                                             onChange={(e) => setTime(e.target.value)}
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Visit Type</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Visit Type</label>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setType('video')}
                                             className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'video'
-                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
-                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700 ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-800'
+                                                : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
                                                 }`}
                                         >
                                             <Video className="w-4 h-4" /> Video Call
@@ -293,8 +293,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                         <button
                                             onClick={() => setType('person')}
                                             className={`flex-1 py-2 px-3 border rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${type === 'person'
-                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2'
-                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700 ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-800'
+                                                : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
                                                 }`}
                                         >
                                             <User className="w-4 h-4" /> In-Person
@@ -303,13 +303,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Notes</label>
-                                    <textarea className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
+                                    <textarea className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
                                 </div>
                             </div>
 
                             <div className="p-6 pt-0 flex gap-3">
-                                <button onClick={() => setIsBookingModalOpen(false)} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors">
+                                <button onClick={() => setIsBookingModalOpen(false)} className="flex-1 py-2.5 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
                                     Cancel
                                 </button>
                                 <button

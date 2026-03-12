@@ -24,19 +24,19 @@ export default function LabsPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                         <FlaskConical className="w-4 h-4 text-emerald-500" /> Recent Activity
                     </h3>
                     <div className="space-y-4">
                         {[
-                            { patient: 'Wendy Smith', test: 'Complete Blood Count (CBC)', status: 'Resulted', color: 'text-emerald-600 bg-emerald-50' },
-                            { patient: 'John Doe', test: 'Metabolic Panel', status: 'In Transit', color: 'text-amber-600 bg-amber-50' },
+                            { patient: 'Wendy Smith', test: 'Complete Blood Count (CBC)', status: 'Resulted', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400' },
+                            { patient: 'John Doe', test: 'Metabolic Panel', status: 'In Transit', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400' },
                         ].map((lab, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+                            <div key={i} className="flex items-center justify-between p-3 border border-slate-100 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
                                 <div>
-                                    <div className="font-bold text-slate-800">{lab.test}</div>
-                                    <div className="text-xs text-slate-500">{lab.patient}</div>
+                                    <div className="font-bold text-slate-800 dark:text-slate-100">{lab.test}</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">{lab.patient}</div>
                                 </div>
                                 <span className={`text-[10px] font-black uppercase px-2 py-1 rounded ${lab.color}`}>{lab.status}</span>
                             </div>
@@ -44,12 +44,12 @@ export default function LabsPage() {
                     </div>
                 </div>
 
-                <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                <div className="bg-white dark:bg-slate-800 p-12 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-slate-500">
                         <Microscope className="w-8 h-8" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-1">Health Gorilla Portal</h3>
-                    <p className="text-slate-500 text-sm max-w-[250px]">Diagnostic lab orders and result processing integrated seamlessly.</p>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Health Gorilla Portal</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[250px]">Diagnostic lab orders and result processing integrated seamlessly.</p>
                 </div>
             </div>
         </div>

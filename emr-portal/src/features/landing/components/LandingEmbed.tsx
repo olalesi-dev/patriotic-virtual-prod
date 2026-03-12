@@ -1106,7 +1106,7 @@ export function LandingEmbed() {
                   <p className="rd">
                     Full educational image review plus a 30 - 60 minute secure
                     video consultation to discuss findings directly with Dr.
-                    Osunsade.
+                    Olalesi Osunsade, MD.
                   </p>
                   <div className="rpt">
                     $449 <span>/ consult</span>
@@ -1385,7 +1385,7 @@ export function LandingEmbed() {
                 style={getAboutTabStyle(aboutTab === 1)}
                 type="button"
               >
-                Dr. Olalesi Osunsade
+                Dr. Olalesi Osunsade, MD
               </button>
               <button
                 id="aboutTab2"
@@ -1423,7 +1423,7 @@ export function LandingEmbed() {
                 />
               </div>
               <div>
-                <h2 style={{ marginBottom: 8 }}>Dr. Olalesi Osunsade</h2>
+                <h2 style={{ marginBottom: 8 }}>Dr. Olalesi Osunsade, MD</h2>
                 <div
                   style={{
                     fontSize: 14,

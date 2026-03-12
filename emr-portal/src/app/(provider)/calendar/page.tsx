@@ -197,14 +197,14 @@ function AppointmentCard({
             {contextMenu && (
                 <div
                     style={{ top: contextMenu.y, left: contextMenu.x, position: 'fixed', zIndex: 9999 }}
-                    className="bg-white rounded-xl shadow-2xl border border-slate-100 py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
+                    className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {['confirmed', 'checked_in', 'no_show', 'completed', 'cancelled'].map(s => (
                         <button
                             key={s}
                             onClick={() => { onStatusChange(appt.id, s); setContextMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-xs font-bold hover:bg-slate-50 flex items-center gap-2"
+                            className="w-full text-left px-4 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300"
                         >
                             <span className={`w-2 h-2 rounded-full ${STATUS_CONFIG[s]?.dot}`} />
                             {STATUS_CONFIG[s]?.label}
@@ -262,7 +262,7 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
     return (
         <>
             <div className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[1px]" onClick={onClose} />
-            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300">
+            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl z-50 flex flex-col border-l border-slate-200 dark:border-slate-700 animate-in slide-in-from-right duration-300">
                 {/* Header */}
                 <div className={`p-5 border-b border-slate-100 ${typeConf.bg} border-l-4 ${typeConf.border}`}>
                     <div className="flex items-start justify-between">
@@ -282,9 +282,9 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                                     <h2 className="text-base font-bold">{name}</h2>
                                 </div>
                             ) : (
-                                <h2 className="text-xl font-black text-slate-900">{name}</h2>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">{name}</h2>
                             )}
-                            <p className="text-sm text-slate-500 font-medium mt-0.5">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                                 {appt.service || appt.type || 'Consultation'}
                             </p>
                         </div>
@@ -418,15 +418,15 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
 
 function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 flex-shrink-0">
-                {icon}
-            </div>
-            <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-                <p className="text-sm font-semibold text-slate-800 mt-0.5">{value}</p>
-            </div>
-        </div>
+                        <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                {icon}
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{value}</p>
+                            </div>
+                        </div>
     );
 }
 
@@ -680,7 +680,7 @@ export default function CalendarPage() {
     // â”€â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     return (
-        <div className="flex h-[calc(100vh-6rem)] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-sans relative">
+        <div className="flex h-[calc(100vh-6rem)] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden font-sans relative">
 
             {toast && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-300 flex items-center gap-2">
@@ -692,7 +692,7 @@ export default function CalendarPage() {
 
             {isModalOpen && (
                 <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                         <div className="bg-indigo-600 p-6 text-white">
                             <button onClick={() => setIsModalOpen(false)} className="absolute right-4 top-4 p-1 hover:bg-white/20 rounded-lg">
                                 <X className="w-5 h-5" />
@@ -702,27 +702,27 @@ export default function CalendarPage() {
                         </div>
                         <div className="p-6 space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-slate-700">Patient</label>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Patient</label>
                                 <select value={apptForm.patientName} onChange={e => setApptForm({ ...apptForm, patientName: e.target.value })}
-                                    className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                                    className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
                                     <option value="" disabled>Select patient...</option>
                                     {patients.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-slate-700">Date</label>
+                                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Date</label>
                                     <input type="date" value={apptForm.date} onChange={e => setApptForm({ ...apptForm, date: e.target.value })}
-                                        className="w-full h-11 pl-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                        className="w-full h-11 pl-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-slate-700">Time</label>
+                                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Time</label>
                                     <input type="time" value={apptForm.time} onChange={e => setApptForm({ ...apptForm, time: e.target.value })}
-                                        className="w-full h-11 pl-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                                        className="w-full h-11 pl-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-slate-700">Visit Type</label>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Visit Type</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {['video', 'in-person'].map(t => (
                                         <button key={t} onClick={() => setApptForm({ ...apptForm, type: t })}
@@ -733,14 +733,14 @@ export default function CalendarPage() {
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-slate-700">Notes</label>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Notes</label>
                                 <textarea placeholder="Reason for visit..." value={apptForm.notes}
                                     onChange={e => setApptForm({ ...apptForm, notes: e.target.value })}
-                                    className="w-full p-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 min-h-[80px] resize-none" />
+                                    className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 min-h-[80px] resize-none" />
                             </div>
                         </div>
-                        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                            <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-sm font-bold text-slate-600">Cancel</button>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3">
+                            <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-400">Cancel</button>
                             <button onClick={handleScheduleVisit}
                                 className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all">
                                 Schedule Visit
@@ -751,10 +751,10 @@ export default function CalendarPage() {
             )}
 
             {/* SIDEBAR */}
-            <aside className="w-60 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col overflow-y-auto">
-                <div className="p-4 border-b border-slate-100">
+            <aside className="w-60 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col overflow-y-auto">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-700">
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-bold text-slate-900">{format(currentDate, 'MMMM yyyy')}</span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{format(currentDate, 'MMMM yyyy')}</span>
                         <div className="flex gap-1">
                             <button onClick={handlePrev} className="p-1 hover:bg-slate-100 rounded"><ChevronLeft className="w-3.5 h-3.5 text-slate-500" /></button>
                             <button onClick={handleNext} className="p-1 hover:bg-slate-100 rounded"><ChevronRight className="w-3.5 h-3.5 text-slate-500" /></button>
@@ -818,7 +818,7 @@ export default function CalendarPage() {
 
             {/* MAIN */}
             <div className="flex-1 flex flex-col min-w-0">
-                <header className="h-16 border-b border-slate-200 flex items-center justify-between px-6 bg-white z-20 shrink-0">
+                <header className="h-16 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-6 bg-white dark:bg-slate-800 z-20 shrink-0">
                     <div className="flex items-center gap-4">
                         <button onClick={() => { setCurrentDate(new Date()); setViewType('week'); }}
                             className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
@@ -837,7 +837,7 @@ export default function CalendarPage() {
                                 {viewType} <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isViewDropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
                             {isViewDropdownOpen && (
-                                <div className="absolute top-full left-0 mt-2 w-28 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50">
+                                <div className="absolute top-full left-0 mt-2 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 z-50">
                                     {(['day', 'week', 'month'] as const).map(t => (
                                         <button key={t} onClick={() => { setViewType(t); setIsViewDropdownOpen(false); }}
                                             className={`w-full text-left px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-slate-50 ${viewType === t ? 'text-indigo-600' : 'text-slate-500'}`}>
@@ -869,7 +869,7 @@ export default function CalendarPage() {
                         </div>
                     )}
 
-                    <div className="flex border-b border-slate-200 shrink-0 bg-white pl-14">
+                    <div className="flex border-b border-slate-200 dark:border-slate-700 shrink-0 bg-white dark:bg-slate-800 pl-14">
                         {viewDays.map((day, i) => {
                             const isCurrent = isToday(day);
                             const isSelected = isSameDay(day, currentDate);
@@ -896,13 +896,13 @@ export default function CalendarPage() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto flex relative min-h-0">
-                        <div className="w-14 flex-shrink-0 border-r border-slate-100 bg-white relative sticky left-0 z-20" style={{ minHeight: `${HOURS.length * SLOT_HEIGHT}px` }}>
+                        <div className="w-14 flex-shrink-0 border-r border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 relative sticky left-0 z-20" style={{ minHeight: `${HOURS.length * SLOT_HEIGHT}px` }}>
                             {HOURS.map((hour, i) => {
                                 const isOff = hour < WORKING_START || hour >= WORKING_END;
                                 const top = i * SLOT_HEIGHT;
                                 return (
                                     <div key={i} style={{ top: `${top}px` }} className={`absolute w-full flex justify-center ${isOff ? 'text-slate-300' : 'text-slate-400'}`}>
-                                        <span className="absolute -top-2.5 text-[10px] font-black bg-white px-1 leading-none z-10">{format(new Date().setHours(hour, 0, 0, 0), 'h a')}</span>
+                                        <span className="absolute -top-2.5 text-[10px] font-black bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 px-1 leading-none z-10">{format(new Date().setHours(hour, 0, 0, 0), 'h a')}</span>
                                     </div>
                                 );
                             })}
@@ -914,7 +914,7 @@ export default function CalendarPage() {
                                     const isOff = hour < WORKING_START || hour >= WORKING_END;
                                     const top = i * SLOT_HEIGHT;
                                     return (
-                                        <div key={i} style={{ top: `${top}px`, height: `${SLOT_HEIGHT}px` }} className={`absolute w-full border-t ${isOff ? 'bg-slate-50/80 border-slate-100' : 'border-slate-100 bg-white'}`} />
+                                        <div key={i} style={{ top: `${top}px`, height: `${SLOT_HEIGHT}px` }} className={`absolute w-full border-t ${isOff ? 'bg-slate-50/80 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800' : 'border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800'}`} />
                                     );
                                 })}
                             </div>
