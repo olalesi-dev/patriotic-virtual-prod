@@ -30,13 +30,16 @@ const router = Router();
 
 /**
  * Verify the incoming DoseSpot push notification secret.
- * DoseSpot sends a bare secret in the Authorization header:
- *   "Authorization: Secret {{Secret Key}}"
+ * DoseSpot sends the webhook secret in the Authorization header as:
+ *   "Authorization: Secret {{DOSESPOT_WEBHOOK_SECRET}}"
+ *
+ * This is a DIFFERENT key from DOSESPOT_CLINIC_KEY (which is used for SSO URL signing).
+ * The webhook secret was provided by DoseSpot when the push notification endpoint was configured.
  */
 function verifyDoseSpotSecret(req: Request): boolean {
-    const clinicKey = process.env.DOSESPOT_CLINIC_KEY;
-    if (!clinicKey) {
-        logger.warn('[DoseSpot Webhook] DOSESPOT_CLINIC_KEY not set — skipping secret verification');
+    const webhookSecret = process.env.DOSESPOT_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+        logger.warn('[DoseSpot Webhook] DOSESPOT_WEBHOOK_SECRET not set — skipping secret verification');
         return true; // Can't verify without the key; don't block in dev
     }
 
@@ -51,7 +54,7 @@ function verifyDoseSpotSecret(req: Request): boolean {
         return true;
     }
 
-    const expectedHeader = `Secret ${clinicKey}`;
+    const expectedHeader = `Secret ${webhookSecret}`;
     
     // Constant-time comparison to prevent timing attacks
     try {
@@ -60,8 +63,8 @@ function verifyDoseSpotSecret(req: Request): boolean {
             Buffer.from(expectedHeader, 'utf8')
         );
     } catch {
-        // If lengths don't match, timingSafeEqual throws. It's a mismatch.
-        logger.warn('[DoseSpot Webhook] Secret mismatch');
+        // If lengths don't match, timingSafeEqual throws. Treat as mismatch.
+        logger.warn('[DoseSpot Webhook] Secret mismatch — invalid Authorization header');
         return false;
     }
 }
