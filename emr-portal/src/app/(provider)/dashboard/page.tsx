@@ -165,9 +165,9 @@ export default function EmrDashboard() {
                 }
             } catch (e) { setProviderName(user.displayName || 'Provider'); }
 
-            // --- Waitlist appointments (PENDING_SCHEDULING) ---
+            // --- Waitlist appointments (PENDING_SCHEDULING or waitlist) ---
             const bucketUnsub = onSnapshot(
-                query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING')),
+                query(collection(db, 'appointments'), where('status', 'in', ['PENDING_SCHEDULING', 'waitlist'])),
                 async (snap) => {
                     const enriched = await Promise.all(snap.docs.map(async (docSnap) => {
                         const data = docSnap.data();
