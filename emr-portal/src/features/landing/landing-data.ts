@@ -406,7 +406,7 @@ export const RADIOLOGY_EDUCATION_CARDS: RadiologyCard[] = [
         price: '$449 / consult',
         title: 'Imaging + Video Consult',
         description:
-            'Full educational image review plus a 30 to 60 minute secure video consultation to discuss findings directly with Dr. Osunsade.',
+            'Full educational image review plus a 30 to 60 minute secure video consultation to discuss findings directly with Dr. Olalesi Osunsade, MD.',
     },
 ];
 
@@ -470,7 +470,7 @@ export const TESTIMONIALS = [
 export const ABOUT_PROFILES: ClinicianProfile[] = [
     {
         id: 'osunsade',
-        name: 'Dr. Olalesi Osunsade',
+        name: 'Dr. Olalesi Osunsade, MD',
         role: 'Dr. "O" - Diagnostic & Interventional Radiologist',
         imageSrc: '/assets/dr_osunsade_new.jpg',
         imageAlt: 'Dr. Osunsade',

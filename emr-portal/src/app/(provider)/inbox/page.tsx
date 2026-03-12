@@ -185,10 +185,10 @@ export default function InboxPage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-6rem)] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-sans">
+        <div className="flex h-[calc(100vh-6rem)] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden font-sans">
 
             {/* INNER SIDEBAR */}
-            <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col">
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col">
                 <div className="p-4 space-y-1">
                     <SidebarItem
                         icon={Inbox}
@@ -211,7 +211,7 @@ export default function InboxPage() {
                 </div>
 
                 <div className="px-4 py-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 uppercase tracking-wide mb-2 cursor-pointer hover:text-brand">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide mb-2 cursor-pointer hover:text-brand">
                         <div className="flex items-center gap-1">
                             <Inbox className="w-4 h-4" /> Inboxes
                             <ChevronDown className="w-3 h-3" />
@@ -225,7 +225,7 @@ export default function InboxPage() {
                         {connectedInboxes.map(inbox => (
                             <div
                                 key={inbox.id}
-                                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg cursor-pointer transition-colors"
                             >
                                 <div className={`w-2 h-2 rounded-full ${inbox.type === 'google' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
                                 <span>{inbox.name}</span>
@@ -240,7 +240,7 @@ export default function InboxPage() {
                 <div className="px-4 mb-6">
                     <button
                         onClick={() => setIsComposeOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 bg-white border border-brand text-brand hover:bg-brand-50 font-bold py-2 rounded-lg transition-colors shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 bg-white dark:bg-slate-700 border border-brand text-brand hover:bg-brand-50 dark:hover:bg-slate-600 font-bold py-2 rounded-lg transition-colors shadow-sm"
                     >
                         <MessageSquare className="w-4 h-4" />
                         <span>Secure message</span>
@@ -253,7 +253,7 @@ export default function InboxPage() {
                         <div className="space-y-1 mt-1 pl-2">
                             <div
                                 onClick={() => handlePatientClick('Wendy Smith')}
-                                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors"
+                                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg cursor-pointer transition-colors"
                             >
                                 <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">W</div>
                                 <span>Wendy</span>
@@ -269,10 +269,10 @@ export default function InboxPage() {
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 relative">
+            <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-slate-900/30 relative">
 
                 {/* Header / Banner Area (Visible only if no thread selected or list view) */}
-                <div className="bg-white border-b border-slate-100 shrink-0">
+                <div className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 shrink-0">
                     <div className="flex items-center justify-between px-6 py-4">
                         <div className="flex items-center gap-3">
                             {selectedThreadId && (
@@ -280,10 +280,10 @@ export default function InboxPage() {
                                     <ArrowLeft className="w-5 h-5 text-slate-500" />
                                 </button>
                             )}
-                            <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                            <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-slate-500 dark:text-slate-400">
                                 <Inbox className="w-5 h-5" />
                             </div>
-                            <h2 className="text-xl font-bold text-slate-800">Inbox</h2>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Inbox</h2>
                         </div>
                         <div className="flex gap-2">
                             <button
@@ -297,14 +297,14 @@ export default function InboxPage() {
 
                     {/* PROMO BANNER */}
                     {showBanner && !selectedThreadId && (
-                        <div className="mx-6 mb-6 rounded-2xl bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 p-8 relative overflow-hidden border border-indigo-100 animate-fade-in-up">
+                        <div className="mx-6 mb-6 rounded-2xl bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-indigo-950/40 p-8 relative overflow-hidden border border-indigo-100 dark:border-indigo-900/40 animate-fade-in-up">
                             <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
                                 <div className="absolute top-10 left-10 text-brand"><ShieldCheck className="w-12 h-12" /></div>
                                 <div className="absolute top-20 right-20 text-brand"><MessageSquare className="w-16 h-16 rotate-12" /></div>
                             </div>
                             <div className="relative z-10 text-center">
                                 <h3 className="text-2xl font-bold text-brand mb-2">Secure messaging</h3>
-                                <p className="text-slate-600 font-medium mb-6">Establish a secure line of communication with your team and patients</p>
+                                <p className="text-slate-600 dark:text-slate-400 font-medium mb-6">Establish a secure line of communication with your team and patients</p>
                                 <button
                                     onClick={() => setIsComposeOpen(true)}
                                     className="bg-brand hover:bg-brand-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center gap-2 mx-auto"
@@ -323,12 +323,12 @@ export default function InboxPage() {
 
                 {selectedThread ? (
                     // --- THREAD VIEW ---
-                    <div className="flex-1 flex flex-col bg-white animate-fade-in">
+                    <div className="flex-1 flex flex-col bg-white dark:bg-slate-800 animate-fade-in">
                         {/* Thread Header */}
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/20">
                             <div>
-                                <h3 className="text-lg font-bold text-slate-900">{selectedThread.subject}</h3>
-                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedThread.subject}</h3>
+                                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                     <User className="w-3 h-3" />
                                     {selectedThread.participants.join(', ')}
                                 </div>
@@ -355,7 +355,7 @@ export default function InboxPage() {
                                             </div>
                                             <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe
                                                 ? 'bg-brand text-white rounded-tr-none'
-                                                : 'bg-slate-100 text-slate-800 rounded-tl-none'
+                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none'
                                                 }`}>
                                                 {msg.content}
                                             </div>
@@ -366,7 +366,7 @@ export default function InboxPage() {
                         </div>
 
                         {/* Reply Box */}
-                        <form onSubmit={handleReply} className="p-4 border-t border-slate-100 bg-white flex gap-4 items-end">
+                        <form onSubmit={handleReply} className="p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex gap-4 items-end">
                             <button type="button" className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg hover:text-slate-600 transition-colors">
                                 <Paperclip className="w-5 h-5" />
                             </button>
@@ -375,7 +375,7 @@ export default function InboxPage() {
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     placeholder="Type your secure response..."
-                                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 resize-none h-12 min-h-[48px] max-h-32 shadow-inner"
+                                    className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 resize-none h-12 min-h-[48px] max-h-32 shadow-inner"
                                 />
                             </div>
                             <button
@@ -391,7 +391,7 @@ export default function InboxPage() {
                     // --- LIST VIEW ---
                     <div className="flex-1 flex flex-col min-h-0">
                         {/* TABS & SEARCH (Visible in List View) */}
-                        <div className="px-6 border-b border-slate-200 bg-white">
+                        <div className="px-6 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
                             <div className="flex gap-6 mb-4 overflow-x-auto">
                                 {['Open', 'Closed', 'Scheduled', 'Deleted', 'Other'].map((tab) => (
                                     <button
@@ -399,7 +399,7 @@ export default function InboxPage() {
                                         onClick={() => setActiveTab(tab)}
                                         className={`pb-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
                                             ? 'border-brand text-brand'
-                                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'
                                             }`}
                                     >
                                         {tab}
@@ -408,8 +408,8 @@ export default function InboxPage() {
                             </div>
                         </div>
 
-                        <div className="px-6 py-3 bg-white border-b border-slate-100 flex items-center gap-4">
-                            <span className="text-sm font-bold text-slate-900">{filteredThreads.length} conversation{filteredThreads.length !== 1 && 's'}</span>
+                        <div className="px-6 py-3 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4">
+                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{filteredThreads.length} conversation{filteredThreads.length !== 1 && 's'}</span>
                             <div className="flex-1 relative">
                                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                                 <input
@@ -417,46 +417,46 @@ export default function InboxPage() {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Search conversations"
-                                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+                                    className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
                                 />
                             </div>
                         </div>
 
                         {/* LIST CONTENT */}
-                        <div className="flex-1 overflow-y-auto bg-white">
+                        <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-800">
                             {filteredThreads.length > 0 ? (
-                                <div className="divide-y divide-slate-100">
+                                <div className="divide-y divide-slate-100 dark:divide-slate-700">
                                     {filteredThreads.map(thread => (
                                         <div
                                             key={thread.id}
                                             onClick={() => setSelectedThreadId(thread.id)}
-                                            className="px-6 py-4 hover:bg-slate-50 cursor-pointer transition-colors group"
+                                            className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group"
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <div className="flex items-center gap-2">
                                                     {!thread.messages[thread.messages.length - 1].read && (
                                                         <div className="w-2 h-2 bg-brand rounded-full"></div>
                                                     )}
-                                                    <span className={`text-sm ${!thread.messages[thread.messages.length - 1].read ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                                                    <span className={`text-sm ${!thread.messages[thread.messages.length - 1].read ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
                                                         {thread.participants.join(', ')}
                                                     </span>
                                                 </div>
                                                 <span className="text-xs text-slate-400">{new Date(thread.lastActivity).toLocaleDateString()}</span>
                                             </div>
-                                            <div className="text-sm font-medium text-slate-800 mb-1">{thread.subject}</div>
-                                            <div className="text-sm text-slate-500 truncate">{thread.messages[thread.messages.length - 1].content}</div>
+                                            <div className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">{thread.subject}</div>
+                                            <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{thread.messages[thread.messages.length - 1].content}</div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
                                 // EMPTY STATE
                                 <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-                                    <div className="w-48 h-48 bg-indigo-50 rounded-full flex items-center justify-center mb-6 relative">
+                                    <div className="w-48 h-48 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mb-6 relative">
                                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/50 to-transparent rounded-full animate-pulse-slow"></div>
                                         <MessageSquare className="w-16 h-16 text-indigo-300 relative z-10" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-1">No conversations found</h3>
-                                    <p className="text-slate-500 text-sm max-w-xs">There are no {activeFolder} messages in this view.</p>
+                                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">No conversations found</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs">There are no {activeFolder} messages in this view.</p>
                                 </div>
                             )}
                         </div>
@@ -468,15 +468,15 @@ export default function InboxPage() {
             {/* COMPOSE MODAL */}
             {isComposeOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-scale-up border border-slate-200">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-scale-up border border-slate-200 dark:border-slate-700">
                         <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
                             <h3 className="font-bold flex items-center gap-2"><Lock className="w-4 h-4" /> Secure Message</h3>
                             <button onClick={() => setIsComposeOpen(false)} className="hover:bg-white/20 p-1 rounded transition-colors"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleCompose} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">To</label>
-                                <select className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">To</label>
+                                <select className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium">
                                     <option>Select Recipient...</option>
                                     <option>Wendy Smith (Patient)</option>
                                     <option>Michael Brown (Patient)</option>
@@ -484,12 +484,12 @@ export default function InboxPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">Subject</label>
-                                <input type="text" placeholder="e.g. Lab Results" required className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium" />
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Subject</label>
+                                <input type="text" placeholder="e.g. Lab Results" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">Message</label>
-                                <textarea required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none min-h-[150px] resize-none" placeholder="Type your secure message..."></textarea>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Message</label>
+                                <textarea required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none min-h-[150px] resize-none" placeholder="Type your secure message..."></textarea>
                             </div>
                             <div className="flex justify-end pt-2">
                                 <button type="submit" className="bg-brand hover:bg-brand-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2">
@@ -504,10 +504,10 @@ export default function InboxPage() {
             {/* CONNECT INBOX MODAL */}
             {isConnectModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in p-4">
-                    <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-scale-up border border-slate-200 flex flex-col max-h-[90vh]">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-scale-up border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh]">
                         {/* Header */}
-                        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                            <div className="flex items-center gap-3 text-slate-700">
+                        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200">
                                 <Inbox className="w-6 h-6" />
                                 <h3 className="text-xl font-bold">Connect inbox</h3>
                             </div>
@@ -518,16 +518,16 @@ export default function InboxPage() {
 
                         {/* Content */}
                         <div className="p-6 md:p-8 overflow-y-auto">
-                            <p className="text-slate-500 mb-8 max-w-lg">Connect your apps to seamlessly send, receive, and track all your communications in one centralized place.</p>
+                            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-lg">Connect your apps to seamlessly send, receive, and track all your communications in one centralized place.</p>
 
-                            <h4 className="flex items-center gap-2 text-lg font-bold text-slate-900 mb-4">
+                            <h4 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">
                                 <div className="w-6 flex justify-center"><Inbox className="w-5 h-5" /></div>
                                 Email
                             </h4>
 
                             <div className="grid md:grid-cols-2 gap-6">
                                 {/* Google Card */}
-                                <div className="border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                                <div className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 rounded-xl p-6 hover:shadow-md transition-shadow">
                                     <div className="flex items-center gap-3 mb-3">
                                         <svg className="w-6 h-6" viewBox="0 0 24 24">
                                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -535,9 +535,9 @@ export default function InboxPage() {
                                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                                         </svg>
-                                        <span className="font-bold text-slate-900 text-lg">Google</span>
+                                        <span className="font-bold text-slate-900 dark:text-slate-100 text-lg">Google</span>
                                     </div>
-                                    <p className="text-slate-500 text-sm mb-6 h-10">Add a Gmail account or Google group list</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 h-10">Add a Gmail account or Google group list</p>
                                     <button
                                         onClick={() => handleConnect('Google')}
                                         disabled={!!connectingProvider}
@@ -548,7 +548,7 @@ export default function InboxPage() {
                                 </div>
 
                                 {/* Microsoft Card */}
-                                <div className="border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                                <div className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 rounded-xl p-6 hover:shadow-md transition-shadow">
                                     <div className="flex items-center gap-3 mb-3">
                                         <svg className="w-6 h-6" viewBox="0 0 23 23">
                                             <path fill="#f25022" d="M1 1h10v10H1z" />
@@ -556,9 +556,9 @@ export default function InboxPage() {
                                             <path fill="#7fba00" d="M1 12h10v10H1z" />
                                             <path fill="#ffb900" d="M12 12h10v10H12z" />
                                         </svg>
-                                        <span className="font-bold text-slate-900 text-lg">Microsoft</span>
+                                        <span className="font-bold text-slate-900 dark:text-slate-100 text-lg">Microsoft</span>
                                     </div>
-                                    <p className="text-slate-500 text-sm mb-6 h-10">Add a Outlook, Office365 or Exchange account</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 h-10">Add a Outlook, Office365 or Exchange account</p>
                                     <button
                                         onClick={() => handleConnect('Microsoft')}
                                         disabled={!!connectingProvider}
@@ -570,7 +570,7 @@ export default function InboxPage() {
                             </div>
                         </div>
 
-                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
+                        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700">
                             <a href="#" className="flex items-center gap-2 text-brand font-bold text-sm hover:underline">
                                 <FileText className="w-4 h-4" /> Guide to set up inbox account
                             </a>
@@ -591,11 +591,11 @@ function SidebarItem({ icon: Icon, label, active, onClick }: any) {
         <div
             onClick={onClick}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors group ${active
-                ? 'bg-slate-100 text-slate-900 font-bold'
-                : 'text-slate-600 font-medium hover:bg-slate-50'
+                ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-bold'
+                : 'text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50'
                 }`}
         >
-            <Icon className={`w-4 h-4 ${active ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`} />
+            <Icon className={`w-4 h-4 ${active ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
             <span className="text-sm">{label}</span>
         </div>
     )
@@ -607,11 +607,11 @@ function CollapsibleSection({ icon: Icon, label, children, className, defaultOpe
         <div className={className}>
             <div
                 onClick={() => setOpen(!open)}
-                className="flex items-center justify-between px-2 py-1 cursor-pointer hover:bg-slate-50 rounded-md transition-colors"
+                className="flex items-center justify-between px-2 py-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-md transition-colors"
             >
                 <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-slate-500" />
-                    <span className="text-sm font-bold text-slate-800">{label}</span>
+                    <Icon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{label}</span>
                 </div>
                 <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
             </div>

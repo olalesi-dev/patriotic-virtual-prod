@@ -282,15 +282,15 @@ export default function PatientsClient() {
 
     // Otherwise show the list view
     return (
-        <div className="flex flex-col h-[calc(100vh-6rem)] font-sans bg-white relative">
+        <div className="flex flex-col h-[calc(100vh-6rem)] font-sans bg-white dark:bg-slate-800 relative">
 
             {/* HEADER */}
             <div className="flex justify-between items-center px-8 py-6 pb-2">
                 <div className="flex items-center gap-3">
-                    <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
+                    <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-slate-600 dark:text-slate-300">
                         <Users className="w-6 h-6" />
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-800">Patients</h1>
+                    <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Patients</h1>
                 </div>
                 <button
                     onClick={() => setIsNewPatientOpen(true)}
@@ -301,8 +301,8 @@ export default function PatientsClient() {
             </div>
 
             {/* FILTER BAR */}
-            <div className="px-8 py-4 flex items-center flex-wrap gap-4 border-b border-slate-100">
-                <span className="font-bold text-slate-900 whitespace-nowrap">{filteredPatients.length} Patients</span>
+            <div className="px-8 py-4 flex items-center flex-wrap gap-4 border-b border-slate-100 dark:border-slate-700">
+                <span className="font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">{filteredPatients.length} Patients</span>
 
                 {/* Search */}
                 <div className="relative flex-1 min-w-[300px] max-w-xl">
@@ -312,7 +312,7 @@ export default function PatientsClient() {
                         placeholder="Search by patient name, email or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-slate-400"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-slate-400"
                     />
                 </div>
 
@@ -367,9 +367,9 @@ export default function PatientsClient() {
             </div>
 
             {/* TABLE */}
-            <div className="flex-1 overflow-auto bg-slate-50 relative">
+            <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900/30 relative">
                 <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-100 text-xs font-bold text-slate-500 sticky top-0 z-10 shadow-sm">
+                    <thead className="bg-slate-100 dark:bg-slate-700/80 text-xs font-bold text-slate-500 dark:text-slate-400 sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th className="px-6 py-4 w-12 text-center">
                                 <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand" />
@@ -384,9 +384,9 @@ export default function PatientsClient() {
                             <th className="px-6 py-4">Assigned Team</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 bg-white">
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-800">
                         {filteredPatients.length > 0 ? filteredPatients.map((patient) => (
-                            <tr key={patient.id} className="hover:bg-slate-50 transition-colors group">
+                            <tr key={patient.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors group">
                                 <td className="px-6 py-4 text-center">
                                     <input
                                         type="checkbox"
@@ -410,8 +410,8 @@ export default function PatientsClient() {
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 font-medium text-slate-700">{patient.phone}</td>
-                                <td className="px-6 py-4 text-slate-600">{patient.email}</td>
+                                <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{patient.phone}</td>
+                                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{patient.email}</td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-wrap gap-2">
                                         {patient.tags?.map((tag: any) => (
@@ -432,9 +432,9 @@ export default function PatientsClient() {
                                     <div className="flex -space-x-2">
                                         {patient.team?.map((member: any, i: number) => (
                                             member === 'img' ? (
-                                                <img key={i} src={`https://i.pravatar.cc/150?u=${patient.id}`} alt="User" className="w-7 h-7 rounded-full border-2 border-white" />
+                                                <img key={i} src={`https://i.pravatar.cc/150?u=${patient.id}`} alt="User" className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-700" />
                                             ) : (
-                                                <div key={i} className="w-7 h-7 rounded-full bg-cyan-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-cyan-700">
+                                                <div key={i} className="w-7 h-7 rounded-full bg-cyan-100 dark:bg-cyan-900/40 border-2 border-white dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-cyan-700 dark:text-cyan-400">
                                                     {member}
                                                 </div>
                                             )
@@ -446,11 +446,11 @@ export default function PatientsClient() {
                             <tr>
                                 <td colSpan={7} className="px-6 py-20 text-center">
                                     <div className="flex flex-col items-center gap-2">
-                                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
                                             <Search className="w-6 h-6 text-slate-400" />
                                         </div>
-                                        <p className="text-slate-800 font-bold">No patients found</p>
-                                        <p className="text-slate-400 text-sm">Try adjusting your filters or search term</p>
+                                        <p className="text-slate-800 dark:text-slate-100 font-bold">No patients found</p>
+                                        <p className="text-slate-400 dark:text-slate-500 text-sm">Try adjusting your filters or search term</p>
                                         <button
                                             onClick={() => {
                                                 setSearchTerm('');
@@ -518,17 +518,17 @@ function FilterDropdown({ label, icon: Icon, options, selected, onChange }: any)
             </button>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                     <div className="p-2 max-h-60 overflow-y-auto">
                         {options.map((option: string) => (
-                            <label key={option} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
+                            <label key={option} className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={selected.includes(option)}
                                     onChange={() => onChange(option)}
                                     className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand"
                                 />
-                                <span className="text-sm text-slate-700 font-medium">{option}</span>
+                                <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{option}</span>
                             </label>
                         ))}
                         {options.length === 0 && <div className="p-2 text-xs text-slate-400 text-center">No options available</div>}
@@ -565,12 +565,12 @@ function StatusCell({ status, color, onUpdate }: any) {
                 <ChevronDown className="w-3 h-3 opacity-50" />
             </button>
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-32 bg-white rounded-lg shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                     {options.map(opt => (
                         <button
                             key={opt}
                             onClick={(e) => { e.stopPropagation(); onUpdate(opt); setIsOpen(false); }}
-                            className="block w-full text-left px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                            className="block w-full text-left px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                         >
                             {opt}
                         </button>
@@ -583,7 +583,7 @@ function StatusCell({ status, color, onUpdate }: any) {
 
 function FloatingButton({ icon: Icon, label }: any) {
     return (
-        <button className="w-12 h-12 bg-white rounded-full shadow-lg border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-colors group relative">
+        <button className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group relative">
             <Icon className="w-5 h-5 text-slate-500 group-hover:text-slate-700" />
             {label && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs font-bold flex items-center justify-center border-2 border-white">{label}</span>}
         </button>
