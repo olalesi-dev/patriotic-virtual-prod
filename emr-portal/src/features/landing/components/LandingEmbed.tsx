@@ -361,6 +361,26 @@ function getAboutTabStyle(isActive: boolean) {
   } as const;
 }
 
+function PaymentStatusHandler({
+  onSuccess,
+  onCancel,
+}: {
+  onSuccess: () => void;
+  onCancel: () => void;
+}) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams?.get("payment") === "success") {
+      onSuccess();
+    } else if (searchParams?.get("payment") === "cancelled") {
+      onCancel();
+    }
+  }, [searchParams, onSuccess, onCancel]);
+
+  return null;
+}
+
 export function LandingEmbed() {
   const router = useRouter();
   const [locale, setLocale] = useState<LandingLocale>("en");
@@ -383,21 +403,18 @@ export function LandingEmbed() {
   const [initialService, setInitialService] = useState<string | null>(null);
   const [initialConsultStep, setInitialConsultStep] = useState(1);
   const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
-  const searchParams = useSearchParams();
 
   const copy = COPY[locale];
 
-  useEffect(() => {
-    // Post checkout routing logic 
-    if (searchParams?.get("payment") === "success") {
-      setInitialConsultStep(4);
-      setConsultModalOpen(true);
-      // Removed router.push("/dashboard") to let them read the message and click "Go to Dashboard"
-    } else if (searchParams?.get("payment") === "cancelled") {
-      showToast("Payment was cancelled.");
-      router.push("/");
-    }
-  }, [searchParams, router]);
+  const handlePaymentSuccess = () => {
+    setInitialConsultStep(4);
+    setConsultModalOpen(true);
+  };
+
+  const handlePaymentCancel = () => {
+    showToast("Payment was cancelled.");
+    router.push("/");
+  };
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("theme");
@@ -2016,6 +2033,12 @@ export function LandingEmbed() {
         }}
         showToast={showToast}
       />
+      <Suspense fallback={null}>
+        <PaymentStatusHandler
+          onSuccess={handlePaymentSuccess}
+          onCancel={handlePaymentCancel}
+        />
+      </Suspense>
     </>
   );
 }
