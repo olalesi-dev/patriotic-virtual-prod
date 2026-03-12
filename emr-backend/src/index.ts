@@ -9,6 +9,7 @@ import healthRoutes from './routes/health';
 import appointmentRoutes from './routes/appointments';
 import patientRoutes from './routes/patients';
 import notificationRoutes from './routes/notifications';
+import dosespotRoutes from './routes/dosespot';
 import { logger } from './utils/logger';
 import { generateSSOUrl } from './utils/dosespot';
 import * as admin from 'firebase-admin';
@@ -44,6 +45,9 @@ app.use(express.json());
 
 // Public Routes (No Auth)
 app.use('/health', healthRoutes);
+
+// DoseSpot Webhook (Public - server-to-server from DoseSpot infrastructure)
+app.use('/api/v1/dosespot', dosespotRoutes);
 
 // DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
 app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
