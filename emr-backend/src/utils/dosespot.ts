@@ -24,8 +24,8 @@ function generatePhrase(): string {
  * SingleSignOnCode  (Encrypted Clinic ID)
  * ─────────────────────────────────────────────────────────────────────────────
  * Per DoseSpot Integration Guide p.6:
- *   Step 1.  raw    = phrase + clinicKey
- *   Step 2.  hash   = SHA512( UTF8(raw) )
+ *   Step 1.  raw     = phrase + clinicKey
+ *   Step 2.  hash    = SHA512( UTF8(raw) )
  *   Step 3.  hashB64 = Base64( hash )
  *   Step 4.  Strip ALL trailing '=' from hashB64
  *   Step 5.  result  = phrase + hashB64
@@ -61,22 +61,33 @@ function generateEncryptedUserId(userId: string, clinicKey: string, phrase: stri
 /**
  * Build the DoseSpot SSO URL
  * ─────────────────────────────────────────────────────────────────────────────
- * IMPORTANT: we build the query string MANUALLY (not via URLSearchParams) to
- * avoid double-encoding the already URL-encoded encrypted values.
+ * Full URL format (from DoseSpot Integration Guide):
  *
- * Query parameters (from guide):
- *   SingleSignOnClinicId      – integer clinic ID
- *   SingleSignOnUserId        – integer clinician ID
- *   SingleSignOnPhraseLength  – 32 (always)
- *   SingleSignOnCode          – URL-encoded encrypted clinic ID
- *   SingleSignOnUserIdVerify  – URL-encoded encrypted user ID
- *   PatientId                 – (optional) patient's DoseSpot ID
- *   RefillsErrors             – (optional, mutually exclusive with PatientId)
+ *   /LoginSingleSignOn.aspx
+ *     ?SingleSignOnClinicId     = {ClinicId}
+ *     &SingleSignOnUserId       = {ClinicianId}          ← the signing user (admin or clinician)
+ *     &SingleSignOnPhraseLength = 32
+ *     &SingleSignOnCode         = {EncryptedClinicId}
+ *     &SingleSignOnUserIdVerify = {EncryptedUserId}
+ *     &PatientId                = {PatientId}            ← (optional) open directly to a patient
+ *     &OnBehalfOfUserId         = {ClinicianId}          ← (optional) prescribe on behalf of clinician
+ *     &EncounterID              = {EncounterID}          ← (optional) link to a specific encounter
+ *     &RefillsErrors            = 1                      ← (optional, mutually exclusive w/ PatientId)
+ *
+ * IMPORTANT: query string is built MANUALLY to avoid double-encoding the
+ * already URL-encoded encrypted values (URLSearchParams would double-encode).
+ *
+ * OnBehalfOfUserId: Used when the SSO signing user is an admin/system account
+ * but the actual prescribing clinician is different. Both SingleSignOnUserId
+ * and OnBehalfOfUserId are typically set to the same clinicianDoseSpotId
+ * unless you are using a shared admin account to sign on behalf of others.
  */
 export function generateSSOUrl(params: {
-    clinicianDoseSpotId: number;
-    patientDoseSpotId?: number;
-    refillsErrors?: boolean;
+    clinicianDoseSpotId: number;      // The clinician who will be logged in
+    patientDoseSpotId?: number;        // Open directly to a patient's chart
+    onBehalfOfUserId?: number;         // Prescribe on behalf of this clinician ID
+    encounterId?: string;              // Link to a specific consult/encounter
+    refillsErrors?: boolean;           // Open the Refills & Errors view
 }): string {
     const clinicId  = process.env.DOSESPOT_CLINIC_ID!;
     const clinicKey = process.env.DOSESPOT_CLINIC_KEY!;
@@ -87,15 +98,14 @@ export function generateSSOUrl(params: {
     }
 
     const phrase        = generatePhrase();
-    const ssoCode       = generateEncryptedClinicId(clinicKey, phrase);       // already URL-encoded
+    const ssoCode       = generateEncryptedClinicId(clinicKey, phrase);
     const ssoUserVerify = generateEncryptedUserId(
         params.clinicianDoseSpotId.toString(),
         clinicKey,
         phrase
-    );                                                                          // already URL-encoded
+    );
 
-    // Build query string manually – these values are already encoded, so we
-    // must NOT pass them through URLSearchParams (which would double-encode).
+    // Core required parameters — build manually to avoid double-encoding
     const parts: string[] = [
         `SingleSignOnClinicId=${encodeURIComponent(clinicId)}`,
         `SingleSignOnUserId=${encodeURIComponent(params.clinicianDoseSpotId.toString())}`,
@@ -104,14 +114,26 @@ export function generateSSOUrl(params: {
         `SingleSignOnUserIdVerify=${ssoUserVerify}`,
     ];
 
+    // Optional: open directly to a patient's chart
     if (params.patientDoseSpotId) {
         parts.push(`PatientId=${encodeURIComponent(params.patientDoseSpotId.toString())}`);
     }
 
+    // Optional: prescribe on behalf of a different clinician
+    // (used when signing in as admin/system but writing Rx for a specific prescriber)
+    if (params.onBehalfOfUserId) {
+        parts.push(`OnBehalfOfUserId=${encodeURIComponent(params.onBehalfOfUserId.toString())}`);
+    }
+
+    // Optional: link the session to a specific encounter/consultation
+    if (params.encounterId) {
+        parts.push(`EncounterID=${encodeURIComponent(params.encounterId)}`);
+    }
+
+    // Optional: open Refills & Errors view (mutually exclusive with PatientId)
     if (params.refillsErrors) {
-        // Refills/Errors mode is mutually exclusive with PatientId
         const idx = parts.findIndex(p => p.startsWith('PatientId='));
-        if (idx !== -1) parts.splice(idx, 1);
+        if (idx !== -1) parts.splice(idx, 1); // remove PatientId if present
         parts.push('RefillsErrors=1');
     }
 

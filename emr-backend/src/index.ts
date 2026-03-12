@@ -69,10 +69,28 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
             return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
         }
 
-        const patientDoseSpotId = req.query.patientDoseSpotId ? parseInt(req.query.patientDoseSpotId as string, 10) : undefined;
+        // Parse all supported query parameters
+        const patientDoseSpotId = req.query.patientDoseSpotId
+            ? parseInt(req.query.patientDoseSpotId as string, 10)
+            : undefined;
+
+        const onBehalfOfUserId = req.query.onBehalfOfUserId
+            ? parseInt(req.query.onBehalfOfUserId as string, 10)
+            : undefined;
+
+        const encounterId = req.query.encounterId
+            ? (req.query.encounterId as string)
+            : undefined;
+
         const refillsErrors = req.query.refillsErrors === 'true';
 
-        const ssoUrl = generateSSOUrl({ clinicianDoseSpotId: doseSpotClinicianId, patientDoseSpotId, refillsErrors });
+        const ssoUrl = generateSSOUrl({
+            clinicianDoseSpotId: doseSpotClinicianId,
+            patientDoseSpotId,
+            onBehalfOfUserId,
+            encounterId,
+            refillsErrors,
+        });
 
         return res.json({ ssoUrl });
     } catch (error: any) {
