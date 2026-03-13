@@ -49,7 +49,7 @@ export default function RootLayout({
             <head>
                 <link rel="icon" href="/favicon.ico" sizes="any" />
             </head>
-            <body className={`${inter.className} bg-slate-50 text-navy antialiased min-h-screen`}>
+            <body className={`${inter.className} bg-slate-50 dark:bg-slate-900/50 text-navy antialiased min-h-screen`}>
                 <MfaEnrollmentGate>
                     <SecurityShell>
                         <Toaster position="top-right" />

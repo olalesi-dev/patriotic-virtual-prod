@@ -112,13 +112,13 @@ export function DoseSpotFrame({
 
     return (
         <div
-            className="relative w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700"
+            className="relative w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 dark:border-slate-700"
             style={{ minHeight: '700px', height }}
         >
             {/* Loading shimmer */}
             {loading && (
                 <div
-                    className="absolute inset-0 bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center gap-4"
+                    className="absolute inset-0 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 flex flex-col items-center justify-center gap-4"
                     style={{ minHeight: '700px' }}
                 >
                     <div className="w-10 h-10 border-4 border-sky-200 dark:border-sky-800 border-t-sky-500 rounded-full animate-spin" />

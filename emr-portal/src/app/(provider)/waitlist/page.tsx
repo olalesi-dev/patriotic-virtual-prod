@@ -185,7 +185,7 @@ export default function WaitlistPage() {
             </div>
 
             {/* ── Search & Filter Bar ── */}
-            <div className="flex flex-col sm:flex-row gap-3 bg-white dark:bg-slate-800 rounded-[28px] p-3 shadow-sm border border-slate-100 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row gap-3 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[28px] p-3 shadow-sm border border-slate-100 dark:border-slate-700 dark:border-slate-700">
                 <div className="relative flex-1 group">
                     <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                         <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
@@ -195,7 +195,7 @@ export default function WaitlistPage() {
                         placeholder="Search by name, email, or service..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-[20px] text-sm font-medium text-slate-700 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-200/60 dark:focus:ring-indigo-500/30 transition-all border border-transparent dark:border-slate-700"
+                        className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 rounded-[20px] text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-200/60 dark:focus:ring-indigo-500/30 transition-all border border-transparent dark:border-slate-700"
                     />
                 </div>
                 <div className="relative shrink-0">
@@ -205,7 +205,7 @@ export default function WaitlistPage() {
                     <select
                         value={filterService}
                         onChange={(e) => setFilterService(e.target.value)}
-                        className="appearance-none pl-11 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-[20px] text-sm font-bold text-slate-600 dark:text-slate-300 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-200/60 dark:focus:ring-indigo-500/30 transition-all cursor-pointer border border-transparent dark:border-slate-700"
+                        className="appearance-none pl-11 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 rounded-[20px] text-sm font-bold text-slate-600 dark:text-slate-300 dark:text-slate-300 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-200/60 dark:focus:ring-indigo-500/30 transition-all cursor-pointer border border-transparent dark:border-slate-700"
                     >
                         <option value="all">All Services</option>
                         {uniqueServices.map(s => (
@@ -224,12 +224,12 @@ export default function WaitlistPage() {
                     <p className="text-slate-400 font-semibold text-sm">Syncing live queue...</p>
                 </div>
             ) : filteredEntries.length === 0 ? (
-                <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-dashed border-slate-200 dark:border-slate-700 p-24 flex flex-col items-center text-center space-y-5 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[32px] border border-dashed border-slate-200 dark:border-slate-700 dark:border-slate-700 p-24 flex flex-col items-center text-center space-y-5 shadow-sm">
                     <div className="w-24 h-24 bg-emerald-50 dark:bg-emerald-900/20 rounded-[28px] flex items-center justify-center rotate-2">
                         <CheckCircle className="w-12 h-12 text-emerald-400 dark:text-emerald-500" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Queue is Clear</h3>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Queue is Clear</h3>
                         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm leading-relaxed">
                             {searchTerm || filterService !== 'all'
                                 ? 'No patients match your current filters. Try adjusting your search.'
@@ -250,7 +250,7 @@ export default function WaitlistPage() {
                     {filteredEntries.map((entry, index) => (
                         <div
                             key={entry.id}
-                            className="group relative bg-white dark:bg-slate-800 rounded-[28px] border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:shadow-indigo-900/5 hover:border-indigo-100 dark:hover:border-indigo-500/30 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                            className="group relative bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[28px] border border-slate-100 dark:border-slate-700 dark:border-slate-700 shadow-sm hover:shadow-xl hover:shadow-indigo-900/5 hover:border-indigo-100 dark:hover:border-indigo-500/30 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
                         >
                             {/* Priority / 'Up Next' accent bar */}
                             <div className={`absolute left-0 top-0 bottom-0 w-1.5 rounded-l-[28px] transition-all
@@ -261,9 +261,9 @@ export default function WaitlistPage() {
 
                             <div className="p-5 md:p-6 pl-8 flex flex-col md:flex-row gap-5 items-start md:items-center">
                                 {/* Wait-time badge */}
-                                <div className="w-[72px] h-[72px] rounded-[20px] bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:border-indigo-100 dark:group-hover:border-indigo-500/30 transition-colors">
+                                <div className="w-[72px] h-[72px] rounded-[20px] bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 dark:border-slate-700 flex flex-col items-center justify-center shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:border-indigo-100 dark:group-hover:border-indigo-500/30 transition-colors">
                                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-400 dark:group-hover:text-indigo-300">Wait</span>
-                                    <span className="text-lg font-black text-slate-700 dark:text-slate-200 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 leading-tight mt-0.5">
+                                    <span className="text-lg font-black text-slate-700 dark:text-slate-200 dark:text-slate-200 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 leading-tight mt-0.5">
                                         {getTimeElapsed(entry.createdAt)}
                                     </span>
                                 </div>
@@ -271,7 +271,7 @@ export default function WaitlistPage() {
                                 {/* Patient info */}
                                 <div className="flex-1 min-w-0 space-y-1.5">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 truncate">{entry.patientName}</h3>
+                                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 truncate">{entry.patientName}</h3>
                                         {entry.priority === 'high' && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-400/20">
                                                 <AlertCircle className="w-2.5 h-2.5" /> Priority
@@ -298,7 +298,7 @@ export default function WaitlistPage() {
                                 <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-none border-slate-50 dark:border-slate-700 shrink-0 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                     <button
                                         onClick={() => { /* Future: open intake drawer */ }}
-                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-colors border border-slate-100 dark:border-slate-600"
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-colors border border-slate-100 dark:border-slate-700 dark:border-slate-600"
                                     >
                                         <FileText className="w-3.5 h-3.5" /> Intake
                                     </button>

@@ -177,7 +177,7 @@ export function LoginForm() {
                         <div className="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center text-brand mb-4">
                             <Fingerprint className="w-6 h-6" />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Identity Verification</h2>
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">Identity Verification</h2>
                         <p className="text-slate-500 text-sm font-medium leading-relaxed">
                             For your security, we've sent a 6-digit verification code to your registered device.
                         </p>
@@ -203,7 +203,7 @@ export function LoginForm() {
                                 placeholder="000 000"
                                 value={verificationCode}
                                 onChange={(e) => setVerificationCode(e.target.value)}
-                                className="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-5 px-4 text-center text-4xl font-black tracking-[0.5em] text-slate-900 placeholder:text-slate-200 focus:border-brand/20 focus:bg-white transition-all outline-none"
+                                className="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-transparent rounded-2xl py-5 px-4 text-center text-4xl font-black tracking-[0.5em] text-slate-900 dark:text-white placeholder:text-slate-200 focus:border-brand/20 focus:bg-white transition-all outline-none"
                                 maxLength={6}
                                 required
                             />
@@ -236,7 +236,7 @@ export function LoginForm() {
                     className="w-full space-y-8"
                 >
                     <div className="space-y-2">
-                        <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase">PATRIOTIC VIRTUAL EHR</h2>
+                        <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">PATRIOTIC VIRTUAL EHR</h2>
                         <p className="text-slate-500 text-sm font-medium leading-relaxed">
                             Welcome back. Please authenticate to access your secure medical records and clinical updates.
                         </p>
@@ -264,7 +264,7 @@ export function LoginForm() {
                                     placeholder="yourname@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 pl-14 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:border-brand/20 focus:bg-white transition-all outline-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-transparent rounded-2xl py-4 pl-14 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:border-brand/20 focus:bg-white transition-all outline-none"
                                     required
                                 />
                             </div>
@@ -283,7 +283,7 @@ export function LoginForm() {
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 pl-14 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:border-brand/20 focus:bg-white transition-all outline-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-transparent rounded-2xl py-4 pl-14 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:border-brand/20 focus:bg-white transition-all outline-none"
                                     required
                                 />
                             </div>
@@ -291,7 +291,7 @@ export function LoginForm() {
 
                         <div className="flex items-center gap-2 px-1">
                             <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-slate-600 transition-colors">
-                                <input type="checkbox" className="rounded-md border-slate-200 text-brand focus:ring-brand/20 w-4 h-4" />
+                                <input type="checkbox" className="rounded-md border-slate-200 dark:border-slate-700 text-brand focus:ring-brand/20 w-4 h-4" />
                                 Maintain active session
                             </label>
                         </div>
@@ -315,7 +315,7 @@ export function LoginForm() {
                             type="button"
                             onClick={handleGoogleLogin}
                             disabled={loading}
-                            className="w-full bg-white border-2 border-slate-100 text-slate-600 py-4 rounded-2xl font-bold text-sm shadow-sm hover:border-slate-200 hover:bg-slate-50 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+                            className="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-bold text-sm shadow-sm hover:border-slate-200 hover:bg-slate-50 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

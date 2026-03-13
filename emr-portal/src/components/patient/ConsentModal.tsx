@@ -70,7 +70,7 @@ export function ConsentModal() {
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+            <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
 
                 {/* Header */}
                 <div className="bg-gradient-to-br from-[#0F172A] to-[#1E3A5F] p-8 text-white shrink-0">
@@ -129,16 +129,16 @@ export function ConsentModal() {
 
                 {/* Scroll Indicator */}
                 {!isScrolled && (
-                    <div className="flex items-center justify-center gap-2 py-2 text-slate-400 text-xs font-bold animate-bounce bg-white">
+                    <div className="flex items-center justify-center gap-2 py-2 text-slate-400 text-xs font-bold animate-bounce bg-white dark:bg-slate-800">
                         <ChevronDown className="w-4 h-4" /> Scroll to read all policies
                     </div>
                 )}
 
                 {/* Footer */}
-                <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
+                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 shrink-0">
                     <div className="flex items-start gap-3 mb-4 bg-sky-50 border border-sky-100 rounded-2xl p-4">
                         <CheckCircle2 className="w-5 h-5 text-sky-500 mt-0.5 shrink-0" />
-                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                             By clicking <strong>"I Accept"</strong>, you confirm that you have read and agree to Patriotic Virtual Telehealth's Privacy Policy, HIPAA Notice of Privacy Practices, Telehealth Informed Consent, and Patient Rights & Responsibilities.
                         </p>
                     </div>
@@ -169,9 +169,9 @@ function PolicySection({ icon: Icon, title, children }: { icon: any; title: stri
                 <div className="w-8 h-8 bg-sky-50 rounded-xl flex items-center justify-center">
                     <Icon className="w-4 h-4 text-[#0EA5E9]" />
                 </div>
-                <h3 className="font-black text-slate-800 text-sm">{title}</h3>
+                <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm">{title}</h3>
             </div>
-            <div className="bg-slate-50/80 rounded-2xl p-5 text-xs text-slate-600 leading-relaxed border border-slate-100">
+            <div className="bg-slate-50/80 rounded-2xl p-5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border border-slate-100 dark:border-slate-700">
                 {children}
             </div>
         </div>

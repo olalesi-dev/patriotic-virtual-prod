@@ -414,7 +414,7 @@ export default function EmrDashboard() {
             <section className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950/40 dark:to-slate-800/60 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 p-8 relative overflow-hidden shadow-sm">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 dark:bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
                 <div className="relative z-10 max-w-2xl">
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Welcome back, {providerName}</h2>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 mb-2">Welcome back, {providerName}</h2>
                     <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-lg leading-relaxed">
                         You have <strong className="text-brand">{counts.Upcoming} upcoming</strong> and{' '}
                         <strong className="text-purple-600 dark:text-purple-400">{counts.Waitlist} waiting</strong> for scheduling.
@@ -428,7 +428,7 @@ export default function EmrDashboard() {
                         </button>
                         <button
                             onClick={() => { setActiveTab('Upcoming'); scheduleRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
-                            className="bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 px-5 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm"
+                            className="bg-white dark:bg-slate-800 dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 dark:text-slate-200 border border-slate-200 dark:border-slate-700 dark:border-slate-600 px-5 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm"
                         >
                             View Schedule
                         </button>
@@ -437,7 +437,7 @@ export default function EmrDashboard() {
             </section>
 
             {/* TABS */}
-            <div className="border-b border-slate-200 dark:border-slate-700">
+            <div className="border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
                 <div className="flex gap-8">
                     {(['Waitlist', 'Upcoming', 'Completed', 'Cancelled'] as const).map(tab => (
                         <button
@@ -460,21 +460,21 @@ export default function EmrDashboard() {
                 {/* LEFT: SCHEDULE LIST */}
                 <div className="lg:col-span-2 space-y-4" ref={scheduleRef}>
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">
                             {activeTab} Schedule <span className="text-slate-400 font-normal text-sm ml-2">({filteredAppointments.length})</span>
                         </h3>
                         {activeTab === 'Upcoming' && (
                             <div className="relative">
                                 <button
                                     onClick={() => setFilterOpen(!filterOpen)}
-                                    className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 hover:text-brand transition-colors bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-brand/30"
+                                    className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 hover:text-brand transition-colors bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 dark:border-slate-700 hover:border-brand/30"
                                 >
                                     <Filter className="w-3 h-3" /> Filter
                                     {filterStatus !== 'all' && <span className="w-1.5 h-1.5 bg-brand rounded-full" />}
                                     <ChevronDown className="w-3 h-3" />
                                 </button>
                                 {filterOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden">
+                                    <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 z-50 overflow-hidden">
                                         <div className="px-3 py-2 border-b border-slate-50 dark:border-slate-700 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filter by status</div>
                                         {['all', 'upcoming', 'checked in', 'confirmed', 'pending'].map(s => (
                                             <button
@@ -493,7 +493,7 @@ export default function EmrDashboard() {
 
                     <div className="space-y-3 min-h-[300px]">
                         {filteredAppointments.length === 0 ? (
-                            <div className="text-center py-12 border border-slate-100 dark:border-slate-700 border-dashed rounded-xl bg-slate-50/50 dark:bg-slate-800/50">
+                            <div className="text-center py-12 border border-slate-100 dark:border-slate-700 dark:border-slate-700 border-dashed rounded-xl bg-slate-50/50 dark:bg-slate-800/50">
                                 <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                                 <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">No {activeTab.toLowerCase()} appointments.</p>
                             </div>
@@ -517,9 +517,9 @@ export default function EmrDashboard() {
                 {/* RIGHT: STATS & INBOX */}
                 <div className="space-y-6">
                     {/* Chart Widget */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-5 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Weekly Volume</h3>
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 text-sm">Weekly Volume</h3>
                             <span className="text-xs text-brand font-medium bg-brand-50 dark:bg-brand/10 px-2 py-1 rounded-full flex items-center gap-1">
                                 <Activity className="w-3 h-3" />
                                 {counts.Upcoming + counts.Completed} this week
@@ -546,9 +546,9 @@ export default function EmrDashboard() {
                     </div>
 
                     {/* Inbox Widget */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-700 dark:border-slate-700 flex justify-between items-center">
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 text-sm">
                                 Recent Messages <span className="text-slate-400 font-normal">({messages.filter(m => m.unread).length})</span>
                             </h3>
                             <Link href="/inbox" className="text-xs font-semibold text-brand hover:underline">View All</Link>
@@ -579,10 +579,10 @@ export default function EmrDashboard() {
             {/* REVIEW & SCHEDULE MODAL */}
             {reviewAppt && (
                 <ModalOverlay onClose={() => setReviewAppt(null)}>
-                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-indigo-50/30 dark:bg-indigo-900/20">
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-slate-100 dark:border-slate-700 dark:border-slate-700 flex justify-between items-center bg-indigo-50/30 dark:bg-indigo-900/20">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Review &amp; Schedule</h2>
+                                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">Review &amp; Schedule</h2>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">Intake for <strong>{reviewAppt.patient}</strong></p>
                             </div>
                             <button onClick={() => setReviewAppt(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
@@ -604,19 +604,19 @@ export default function EmrDashboard() {
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">Date</label>
                                         <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
-                                            className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
+                                            className="w-full bg-white dark:bg-slate-800 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">Time</label>
                                         <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
-                                            className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
+                                            className="w-full bg-white dark:bg-slate-800 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand/20 outline-none" />
                                     </div>
                                 </div>
                             </section>
                         </div>
 
-                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3">
-                            <button onClick={() => setReviewAppt(null)} className="px-6 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 dark:border-slate-700 flex justify-end gap-3">
+                            <button onClick={() => setReviewAppt(null)} className="px-6 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
                             <button onClick={handleConfirmSchedule} disabled={isScheduling}
                                 className="bg-brand text-white px-8 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-brand/20 hover:bg-brand-600 transition-all disabled:opacity-50 flex items-center gap-2">
                                 {isScheduling ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
@@ -630,10 +630,10 @@ export default function EmrDashboard() {
             {/* DETAIL MODAL (Upcoming card click) */}
             {detailAppt && (
                 <ModalOverlay onClose={() => setDetailAppt(null)}>
-                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-slate-100 dark:border-slate-700 dark:border-slate-700 flex justify-between items-center">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Appointment Details</h2>
+                                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">Appointment Details</h2>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">{detailAppt.displayDate} at {detailAppt.displayTime}</p>
                             </div>
                             <button onClick={() => setDetailAppt(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
@@ -685,7 +685,7 @@ function ModalOverlay({ children, onClose }: { children: React.ReactNode; onClos
 
 function PatientInfoSection({ appt }: { appt: Appointment }) {
     return (
-        <section className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-700">
+        <section className="bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 dark:border-slate-700">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Patient Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
@@ -694,13 +694,13 @@ function PatientInfoSection({ appt }: { appt: Appointment }) {
                     { icon: Calendar, label: 'Service Requested', value: appt.type },
                     { icon: Clock, label: 'Submitted', value: appt.createdAt },
                 ].map(({ icon: Icon, label, value }) => (
-                    <div key={label} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 flex items-start gap-3">
+                    <div key={label} className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 flex items-start gap-3">
                         <div className="w-8 h-8 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center shrink-0">
                             <Icon className="w-4 h-4 text-brand" />
                         </div>
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{value || '—'}</p>
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">{value || '—'}</p>
                         </div>
                     </div>
                 ))}
@@ -717,11 +717,11 @@ function IntakeSection({ intakeAnswers }: { intakeAnswers: Record<string, any> }
             {entries.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {entries.map(([k, v]) => (
-                        <div key={k} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                        <div key={k} className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 dark:border-slate-700">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                                 {k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}
                             </p>
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100">
                                 {typeof v === 'boolean' ? (v ? '✅ Yes' : '❌ No') : String(v)}
                             </p>
                         </div>
@@ -751,10 +751,10 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
     return (
         <div
             onClick={status !== 'Waitlist' ? onViewDetail : undefined}
-            className={`bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all flex items-center justify-between group relative ${status !== 'Waitlist' ? 'cursor-pointer hover:border-brand/30 dark:hover:border-brand/40' : ''}`}
+            className={`bg-white dark:bg-slate-800 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm hover:shadow-md transition-all flex items-center justify-between group relative ${status !== 'Waitlist' ? 'cursor-pointer hover:border-brand/30 dark:hover:border-brand/40' : ''}`}
         >
             <div className="flex items-center gap-4">
-                <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-100 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-mono group-hover:bg-brand-50 dark:group-hover:bg-brand/10 group-hover:text-brand transition-colors shrink-0">
+                <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 rounded-lg border border-slate-100 dark:border-slate-700 dark:border-slate-600 text-slate-600 dark:text-slate-300 dark:text-slate-300 font-mono group-hover:bg-brand-50 dark:group-hover:bg-brand/10 group-hover:text-brand transition-colors shrink-0">
                     {status === 'Waitlist' ? (
                         <span className="text-[9px] font-bold text-purple-500 dark:text-purple-400 uppercase">Wait</span>
                     ) : (
@@ -766,7 +766,7 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
                     )}
                 </div>
                 <div>
-                    <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm group-hover:text-brand transition-colors">{patient}</h4>
+                    <h4 className="font-bold text-slate-900 dark:text-white dark:text-slate-100 text-sm group-hover:text-brand transition-colors">{patient}</h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{type}</p>
                 </div>
             </div>
@@ -795,7 +795,7 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
                     </button>
 
                     {isMenuOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                             <div className="py-1">
                                 <div className="px-3 py-2 border-b border-slate-50 dark:border-slate-700 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Update Status</div>
                                 {['Checked In', 'Completed', 'Cancelled', 'Upcoming'].map(s => (

@@ -194,27 +194,27 @@ export default function LabsPage() {
         <div className="space-y-8 pb-20">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Lab Results</h1>
+                <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Lab Results</h1>
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Review your clinical findings and health trends</p>
             </div>
 
             {/* Top Stats / Trend */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-4 bg-white p-8 rounded-[40px] border border-slate-50 shadow-sm flex flex-col justify-between">
+                <div className="lg:col-span-4 bg-white dark:bg-slate-800 p-8 rounded-[40px] border border-slate-50 shadow-sm flex flex-col justify-between">
                     <div>
                         <div className="w-12 h-12 bg-sky-50 rounded-2xl flex items-center justify-center text-[#0EA5E9] mb-6">
                             <TrendingUp className="w-6 h-6" />
                         </div>
-                        <h3 className="font-black text-slate-800 tracking-tight text-xl mb-1">Health Summary</h3>
+                        <h3 className="font-black text-slate-800 dark:text-slate-100 tracking-tight text-xl mb-1">Health Summary</h3>
                         <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Performance over last 6 months</p>
                     </div>
 
                     <div className="mt-8 space-y-4">
-                        <div className="flex justify-between items-center p-4 rounded-2xl bg-slate-50">
+                        <div className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
                             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Normal Results</span>
                             <span className="text-xl font-black text-emerald-500">{labs.filter(l => l.status === 'Normal').length}</span>
                         </div>
-                        <div className="flex justify-between items-center p-4 rounded-2xl bg-slate-50">
+                        <div className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
                             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Need Review</span>
                             <span className="text-xl font-black text-amber-500">{labs.filter(l => l.status === 'Review Needed' || l.status === 'Critical').length}</span>
                         </div>
@@ -222,10 +222,10 @@ export default function LabsPage() {
                 </div>
 
                 {/* Trend Chart */}
-                <div className="lg:col-span-8 bg-white p-8 rounded-[40px] border border-slate-50 shadow-sm">
+                <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-8 rounded-[40px] border border-slate-50 shadow-sm">
                     <div className="flex justify-between items-start mb-8">
                         <div>
-                            <h3 className="font-black text-slate-800 tracking-tight text-xl mb-1">
+                            <h3 className="font-black text-slate-800 dark:text-slate-100 tracking-tight text-xl mb-1">
                                 {trendData?.name || 'Metabolic Trends'}
                             </h3>
                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Visualization of values over time</p>
@@ -261,7 +261,7 @@ export default function LabsPage() {
             </div>
 
             {/* Controls */}
-            <div className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col md:flex-row gap-4 items-center">
                 <div className="relative flex-1 w-full">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                     <input
@@ -269,16 +269,16 @@ export default function LabsPage() {
                         placeholder="Search specific tests or categories..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-14 pr-6 text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-sky-100 transition-all font-sans"
+                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl py-4 pl-14 pr-6 text-sm font-bold text-slate-800 dark:text-slate-100 placeholder:text-slate-300 focus:ring-2 focus:ring-sky-100 transition-all font-sans"
                     />
                 </div>
-                <button className="px-6 py-4 bg-slate-50 text-slate-400 rounded-2xl hover:text-slate-800 transition-all flex items-center gap-2">
+                <button className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 text-slate-400 rounded-2xl hover:text-slate-800 transition-all flex items-center gap-2">
                     <Filter className="w-4 h-4" />
                 </button>
             </div>
 
             {/* Results Table */}
-            <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-50 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -300,11 +300,11 @@ export default function LabsPage() {
                                 >
                                     <td className="px-8 py-6">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-[#0EA5E9] transition-colors">
+                                            <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-[#0EA5E9] transition-colors">
                                                 <Activity className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <p className="font-black text-slate-800 text-sm tracking-tight">{lab.testName}</p>
+                                                <p className="font-black text-slate-800 dark:text-slate-100 text-sm tracking-tight">{lab.testName}</p>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{lab.category}</p>
                                             </div>
                                         </div>
@@ -336,7 +336,7 @@ export default function LabsPage() {
             {/* Detail Modal */}
             {selectedLab && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
                         <div className="bg-slate-900 p-10 text-white flex justify-between items-start shrink-0">
                             <div>
                                 <h4 className="text-[10px] font-black text-sky-400 uppercase tracking-[0.2em] mb-2">Detailed Lab Report</h4>
@@ -353,11 +353,11 @@ export default function LabsPage() {
                         <div className="p-10 space-y-8 overflow-y-auto flex-1">
                             {/* Summary Cards */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 font-sans">
+                                <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 font-sans">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Result Value</p>
-                                    <p className="text-2xl font-black text-slate-800">{selectedLab.value} {selectedLab.unit}</p>
+                                    <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{selectedLab.value} {selectedLab.unit}</p>
                                 </div>
-                                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 font-sans">
+                                <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 font-sans">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Reference Range</p>
                                     <p className="text-2xl font-black text-slate-400">{selectedLab.referenceRange}</p>
                                 </div>
@@ -370,11 +370,11 @@ export default function LabsPage() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ordered By</p>
-                                    <p className="font-black text-slate-800">{selectedLab.provider}</p>
+                                    <p className="font-black text-slate-800 dark:text-slate-100">{selectedLab.provider}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Result Date</p>
-                                    <p className="font-black text-slate-800">{format(selectedLab.dateResulted.toDate(), 'PPP')}</p>
+                                    <p className="font-black text-slate-800 dark:text-slate-100">{format(selectedLab.dateResulted.toDate(), 'PPP')}</p>
                                 </div>
                             </div>
 
@@ -401,11 +401,11 @@ export default function LabsPage() {
                                     <div className="mt-6 bg-[#F5F3FF] p-8 rounded-[40px] border border-purple-100 animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                                         <div className="flex items-start gap-4 mb-6">
-                                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-purple-600 shrink-0">
+                                            <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-sm flex items-center justify-center text-purple-600 shrink-0">
                                                 <Sparkles className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-black text-slate-800 tracking-tight">AI Interpretation</h4>
+                                                <h4 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">AI Interpretation</h4>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plain-language explanation</p>
                                             </div>
                                         </div>
@@ -413,17 +413,17 @@ export default function LabsPage() {
                                         <div className="space-y-6">
                                             <div>
                                                 <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2">What this measures</p>
-                                                <p className="text-slate-700 font-bold leading-relaxed">{aiExplanation.summary}</p>
+                                                <p className="text-slate-700 dark:text-slate-200 font-bold leading-relaxed">{aiExplanation.summary}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2">What it means for you</p>
-                                                <p className="text-slate-700 font-bold leading-relaxed">{aiExplanation.interpretation}</p>
+                                                <p className="text-slate-700 dark:text-slate-200 font-bold leading-relaxed">{aiExplanation.interpretation}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2">Ask your doctor</p>
                                                 <ul className="space-y-2">
                                                     {aiExplanation.questions.map((q, i) => (
-                                                        <li key={i} className="flex gap-2 text-slate-600 font-bold text-sm italic">
+                                                        <li key={i} className="flex gap-2 text-slate-600 dark:text-slate-300 font-bold text-sm italic">
                                                             <span className="text-purple-300">•</span> {q}
                                                         </li>
                                                     ))}

@@ -129,7 +129,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                         {userData.displayName?.charAt(0) || userData.email?.charAt(0)}
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white dark:text-white tracking-tight">
                             {userData.displayName || 'User Profile'}
                         </h1>
                         <p className="text-slate-500 flex items-center gap-2 mt-1">
@@ -140,7 +140,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleResetPassword}
-                        className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-blue-500 hover:bg-blue-50 transition-all shadow-sm"
+                        className="p-3 bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-blue-500 hover:bg-blue-50 transition-all shadow-sm"
                         title="Reset Password"
                     >
                         <Key className="w-5 h-5" />
@@ -152,7 +152,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                                     .then(() => router.push('/admin/users'));
                             }
                         }}
-                        className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500 hover:bg-red-50 transition-all shadow-sm"
+                        className="p-3 bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-red-500 hover:bg-red-50 transition-all shadow-sm"
                         title="Delete User"
                     >
                         <Trash2 className="w-5 h-5" />
@@ -162,8 +162,8 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    <form onSubmit={handleSave} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-700">
+                    <form onSubmit={handleSave} className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 dark:border-slate-700">
                             <h3 className="text-lg font-bold">General Information</h3>
                         </div>
                         <div className="p-6 space-y-4">
@@ -185,7 +185,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                         value={userData.displayName}
                                         onChange={e => setUserData({ ...userData, displayName: e.target.value })}
                                     />
@@ -195,7 +195,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                                     <input
                                         disabled
                                         type="text"
-                                        className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-500 cursor-not-allowed"
+                                        className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm text-slate-500 cursor-not-allowed"
                                         value={userData.email}
                                     />
                                 </div>
@@ -205,7 +205,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Access Role</label>
                                     <select
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                         value={userData.role}
                                         onChange={e => setUserData({ ...userData, role: e.target.value })}
                                     >
@@ -222,7 +222,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                                             onClick={() => setUserData({ ...userData, disabled: !userData.disabled })}
                                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-transparent ring-offset-2 ${userData.disabled ? 'bg-red-500' : 'bg-emerald-500'}`}
                                         >
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${userData.disabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-800 transition-transform ${userData.disabled ? 'translate-x-6' : 'translate-x-1'}`} />
                                         </button>
                                         <span className={`text-sm font-bold ${userData.disabled ? 'text-red-500' : 'text-emerald-500'}`}>
                                             {userData.disabled ? 'Disabled' : 'Active'}
@@ -250,18 +250,18 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                 </div>
 
                 <div className="space-y-6">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Meta Information</h3>
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white dark:text-white uppercase tracking-widest mb-4">Meta Information</h3>
                         <div className="space-y-4">
                             <div>
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Account Created</div>
-                                <div className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <div className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300">
                                     {userData.creationTime ? new Date(userData.creationTime).toLocaleString() : 'N/A'}
                                 </div>
                             </div>
                             <div>
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Last Login Session</div>
-                                <div className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <div className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300">
                                     {userData.lastSignInTime ? new Date(userData.lastSignInTime).toLocaleString() : 'Never'}
                                 </div>
                             </div>

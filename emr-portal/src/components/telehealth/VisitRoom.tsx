@@ -51,7 +51,7 @@ export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, provide
 
                     {/* Camera Preview */}
                     <div className="aspect-video bg-black rounded-xl mb-6 relative overflow-hidden group border border-slate-700">
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-600 bg-slate-900">
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-slate-900">
                             {cameraOn ? (
                                 <div className="text-center">
                                     <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -89,10 +89,10 @@ export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, provide
     /* --- PROVIDER ROOM --- */
     if (role === 'provider') {
         return (
-            <div className="flex h-screen bg-slate-50">
+            <div className="flex h-screen bg-slate-50 dark:bg-slate-900/50">
                 {/* Sidebar */}
-                <div className="w-80 bg-white border-r border-slate-200 flex flex-col">
-                    <div className="p-4 border-b border-slate-100">
+                <div className="w-80 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-700">
                         <h2 className="font-bold text-navy">Waiting Room (1)</h2>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2">
@@ -109,7 +109,7 @@ export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, provide
                                 >
                                     Admit Patient
                                 </button>
-                                <button className="px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold">
+                                <button className="px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-semibold">
                                     Details
                                 </button>
                             </div>

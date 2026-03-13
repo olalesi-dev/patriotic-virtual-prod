@@ -33,20 +33,20 @@ const OVERDUE_LABS = [
 
 export default function ClinicalDashboardPage() {
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100">
+        <div className="space-y-8 animate-in fade-in duration-500 text-slate-900 dark:text-white dark:text-slate-100">
             {/* Header & Filters */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">CLINICAL ANALYTICS</h1>
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white dark:text-slate-100 tracking-tight">CLINICAL ANALYTICS</h1>
                     <p className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Patient outcomes and compliance monitoring</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-sm">
+                    <div className="flex bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl p-1 shadow-sm">
                         <button className="px-4 py-2 text-xs font-black uppercase tracking-widest bg-slate-900 dark:bg-slate-700 text-white rounded-lg shadow-lg shadow-slate-200 dark:shadow-none">GLP-1 Weight Loss</button>
                         <button className="px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">TRT</button>
                     </div>
-                    <button className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
+                    <button className="flex items-center gap-2 bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
                         <Filter className="w-4 h-4" /> Filters
                     </button>
                     <button className="flex items-center gap-2 bg-brand text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-brand/20 hover:bg-brand-600 transition-all active:scale-95">
@@ -63,7 +63,7 @@ export default function ClinicalDashboardPage() {
                     { label: 'Lab Compliance', value: '82%', trend: '-2%', sub: 'Completion rate', icon: Beaker, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                     { label: 'Titration On-Schedule', value: '74%', trend: '+5%', sub: 'Protocol adherence', icon: Calendar, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+                    <div key={i} className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                         <div className="flex justify-between items-start mb-6">
                             <div className={`w-12 h-12 ${stat.bg} rounded-2xl flex items-center justify-center`}>
                                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -73,7 +73,7 @@ export default function ClinicalDashboardPage() {
                                 {stat.trend}
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{stat.value}</div>
+                        <div className="text-3xl font-black text-slate-900 dark:text-white dark:text-slate-100 tracking-tight">{stat.value}</div>
                         <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{stat.label}</div>
                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2">{stat.sub}</p>
                     </div>
@@ -82,10 +82,10 @@ export default function ClinicalDashboardPage() {
 
             {/* ROW 2: Charts */}
             <div className="grid grid-cols-12 gap-8">
-                <div className="col-span-12 lg:col-span-8 bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="col-span-12 lg:col-span-8 bg-white dark:bg-slate-800 dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 leading-none">WEIGHT LOSS OUTCOMES</h3>
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white dark:text-slate-100 leading-none">WEIGHT LOSS OUTCOMES</h3>
                             <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">Average % lost by month on program</p>
                         </div>
                         <div className="flex gap-2">
@@ -185,13 +185,13 @@ export default function ClinicalDashboardPage() {
             {/* ROW 3: Tables & Action Lists */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
                 {/* Overdue Labs */}
-                <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
                     <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-rose-50 dark:bg-rose-950/30 rounded-xl flex items-center justify-center text-rose-500 dark:text-rose-400">
                                 <AlertCircle className="w-6 h-6" />
                             </div>
-                            <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Overdue Labs</h3>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white dark:text-slate-100 uppercase tracking-tight">Overdue Labs</h3>
                         </div>
                         <button className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline">View All</button>
                     </div>
@@ -210,7 +210,7 @@ export default function ClinicalDashboardPage() {
                                     <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-all group">
                                         <td className="px-8 py-4">
                                             <div className="flex flex-col">
-                                                <span className="text-xs font-black text-slate-900 dark:text-slate-100">{p.name}</span>
+                                                <span className="text-xs font-black text-slate-900 dark:text-white dark:text-slate-100">{p.name}</span>
                                                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">{p.mrn}</span>
                                             </div>
                                         </td>
@@ -235,13 +235,13 @@ export default function ClinicalDashboardPage() {
                 </div>
 
                 {/* Side Effects / AI Insights */}
-                <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
                     <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-700 flex items-center justify-between bg-indigo-50/30 dark:bg-indigo-900/20">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-500 dark:text-indigo-400">
                                 <TrendingUp className="w-6 h-6" />
                             </div>
-                            <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Clinical Insights</h3>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white dark:text-slate-100 uppercase tracking-tight">Clinical Insights</h3>
                         </div>
                         <span className="bg-indigo-600 dark:bg-indigo-700 text-white text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-widest">AI Monitor</span>
                     </div>
@@ -257,7 +257,7 @@ export default function ClinicalDashboardPage() {
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
-                                        <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">{insight.patient}</h4>
+                                        <h4 className="text-xs font-black text-slate-900 dark:text-white dark:text-slate-100">{insight.patient}</h4>
                                         <span className={`text-[9px] font-black uppercase tracking-widest text-${insight.color}-600 dark:text-${insight.color}-400`}>{insight.priority}</span>
                                     </div>
                                     <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 leading-relaxed mb-2">{insight.details}</p>

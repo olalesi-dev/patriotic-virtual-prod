@@ -156,7 +156,7 @@ export default function SuccessPage() {
 
                 <button
                     onClick={() => router.push('/patient')}
-                    className="w-full mt-12 bg-white text-navy py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-white/5"
+                    className="w-full mt-12 bg-white dark:bg-slate-800 text-navy py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-white/5"
                 >
                     Return to Dashboard <ArrowRight size={18} />
                 </button>

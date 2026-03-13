@@ -309,7 +309,7 @@ export default function PatientDashboard() {
             {/* WELCOME BANNER */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 animate-in fade-in duration-500">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-800 tracking-tight">
+                    <h1 className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                         Healthy morning, <span className="text-[#0EA5E9]">{user?.displayName?.split(' ')[0] || 'Patient'}</span>
                     </h1>
                     <p className="text-slate-400 font-bold mt-1 uppercase tracking-widest text-xs flex items-center gap-2">
@@ -357,21 +357,21 @@ export default function PatientDashboard() {
                                     return (
                                         <div key={appt.id} className={`p-5 rounded-2xl border ${isPending ? 'border-amber-100 bg-amber-50/20' : 'border-slate-50 bg-[#F8FAFC]'} group hover:border-[#0EA5E9]/30 transition-all relative`}>
                                             <div className="flex justify-between items-start mb-4">
-                                                <div className={`w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center ${isPending ? 'text-amber-500' : 'text-[#0EA5E9]'} group-hover:scale-110 transition-transform`}>
+                                                <div className={`w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-sm flex items-center justify-center ${isPending ? 'text-amber-500' : 'text-[#0EA5E9]'} group-hover:scale-110 transition-transform`}>
                                                     {isPending ? <Clock className="w-5 h-5" /> : <Calendar className="w-5 h-5" />}
                                                 </div>
                                                 <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isPending ? 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' : 'bg-sky-50 text-[#0EA5E9] border-sky-100'}`}>
                                                     {isPending ? 'AWAITING PROVIDER' : 'SCHEDULED'}
                                                 </span>
                                             </div>
-                                            <h4 className="font-black text-slate-800 tracking-tight text-lg mb-1">{appt.providerName}</h4>
+                                            <h4 className="font-black text-slate-800 dark:text-slate-100 tracking-tight text-lg mb-1">{appt.providerName}</h4>
                                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">{appt.type}</p>
 
                                             {isPending ? (
                                                 <div className="mb-4">
                                                     <p className="text-[10px] font-bold text-amber-700/70 uppercase tracking-widest mb-1">Requested On:</p>
                                                     <div className="flex items-center gap-2 mb-3">
-                                                        <span className="text-sm font-black text-slate-700">{apptDate ? format(apptDate, 'MMM do, yyyy') : 'Recently'}</span>
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">{apptDate ? format(apptDate, 'MMM do, yyyy') : 'Recently'}</span>
                                                         <span className="text-xs font-bold text-slate-400">{apptDate ? format(apptDate, 'h:mm a') : ''}</span>
                                                     </div>
                                                     <div className="bg-amber-50/50 border border-amber-200 text-amber-700 text-[9px] font-black uppercase tracking-widest p-2 rounded-lg flex items-start gap-2">
@@ -381,9 +381,9 @@ export default function PatientDashboard() {
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-4 mb-6">
-                                                    <div className="bg-white px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-2">
+                                                    <div className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700 flex items-center gap-2">
                                                         <Clock className="w-3.5 h-3.5 text-[#0EA5E9]" />
-                                                        <span className="text-xs font-black text-slate-600">
+                                                        <span className="text-xs font-black text-slate-600 dark:text-slate-300">
                                                             {apptDate ? format(apptDate, 'h:mm a') : 'TBD'}
                                                         </span>
                                                     </div>
@@ -397,7 +397,7 @@ export default function PatientDashboard() {
                                                     Join Now
                                                 </button>
                                             ) : (
-                                                <button onClick={() => router.push('/patient/appointments')} className="w-full bg-white text-slate-400 py-3 rounded-xl font-black uppercase tracking-widest border border-slate-100 hover:border-[#0EA5E9] hover:text-[#0EA5E9] transition-all text-xs">
+                                                <button onClick={() => router.push('/patient/appointments')} className="w-full bg-white dark:bg-slate-800 text-slate-400 py-3 rounded-xl font-black uppercase tracking-widest border border-slate-100 dark:border-slate-700 hover:border-[#0EA5E9] hover:text-[#0EA5E9] transition-all text-xs">
                                                     {isPending ? 'View Details' : 'View Appointment'}
                                                 </button>
                                             )}
@@ -418,7 +418,7 @@ export default function PatientDashboard() {
                                             {msg.providerName.charAt(0)}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-slate-800 text-sm truncate">{msg.providerName}</p>
+                                            <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{msg.providerName}</p>
                                             <p className="text-xs text-slate-400 truncate mt-0.5">{msg.lastMessage}</p>
                                         </div>
                                         <div className="text-[10px] font-black text-slate-300 uppercase shrink-0">
@@ -448,7 +448,7 @@ export default function PatientDashboard() {
                                             <Pill className="w-5 h-5" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-black text-slate-800 text-sm truncate">{med.name}</p>
+                                            <p className="font-black text-slate-800 dark:text-slate-100 text-sm truncate">{med.name}</p>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{med.dosage} • {med.frequency}</p>
                                         </div>
                                     </div>
@@ -465,14 +465,14 @@ export default function PatientDashboard() {
                                     <div key={lab.id} className="space-y-4">
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
-                                                <h4 className="font-black text-slate-800 tracking-tight leading-tight">{lab.testName}</h4>
+                                                <h4 className="font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight">{lab.testName}</h4>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Released {format(lab.date.toDate(), 'MMM d, yyyy')}</p>
                                             </div>
                                             <StatusBadge status={lab.status} />
                                         </div>
-                                        <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl flex items-center justify-between">
                                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Result Value</span>
-                                            <span className="text-lg font-black text-slate-800">{lab.value}</span>
+                                            <span className="text-lg font-black text-slate-800 dark:text-slate-100">{lab.value}</span>
                                         </div>
                                         <Link href="/my-health/labs" className="block w-full bg-[#F0F9FF] text-[#0EA5E9] py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-[#0EA5E9] hover:text-white transition-all text-center">
                                             View Full Report
@@ -489,7 +489,7 @@ export default function PatientDashboard() {
             {/* SEND MESSAGE MODAL */}
             {isMessagingOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
                         <div className="bg-[#0EA5E9] p-8 text-white flex justify-between items-center shrink-0 shadow-lg z-10 w-full relative">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
@@ -511,7 +511,7 @@ export default function PatientDashboard() {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Select Recipient</label>
                                     <select
                                         required
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100"
                                         onChange={(e) => {
                                             const p = providers.find(prov => prov.id === e.target.value);
                                             setComposeData({ ...composeData, recipientId: p?.id || '', recipientName: p?.name || '' });
@@ -531,7 +531,7 @@ export default function PatientDashboard() {
                                         <input
                                             required
                                             type="text"
-                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100"
                                             placeholder="e.g. Question about my labs"
                                             value={composeData.subject}
                                             onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
@@ -540,7 +540,7 @@ export default function PatientDashboard() {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</label>
                                         <select
-                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100"
                                             value={composeData.category}
                                             onChange={(e) => setComposeData({ ...composeData, category: e.target.value as any })}
                                         >
@@ -555,7 +555,7 @@ export default function PatientDashboard() {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Message</label>
                                     <textarea
                                         required
-                                        className="w-full bg-slate-50 border-none rounded-3xl p-6 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100 min-h-[150px] placeholder:text-slate-300"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-3xl p-6 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100 min-h-[150px] placeholder:text-slate-300"
                                         placeholder="Type your message here..."
                                         value={composeData.body}
                                         onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
@@ -564,7 +564,7 @@ export default function PatientDashboard() {
                             </form>
                         </div>
 
-                        <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0 flex flex-col sm:flex-row items-center gap-4 justify-between">
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 shrink-0 flex flex-col sm:flex-row items-center gap-4 justify-between">
                             <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
                                 <ShieldCheck className="w-4 h-4" />
                                 <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Encrypted & HIPAA-secure</span>
@@ -589,13 +589,13 @@ export default function PatientDashboard() {
 
 function DashboardCard({ title, icon: Icon, children, badge, footer }: any) {
     return (
-        <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-sky-900/5 flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-500">
+        <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-xl shadow-sky-900/5 flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-500">
             <div className="p-6 pb-4 flex items-center justify-between border-b border-slate-50">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-50 rounded-xl text-slate-400">
+                    <div className="p-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-slate-400">
                         <Icon className="w-4 h-4" />
                     </div>
-                    <h3 className="font-black text-slate-800 tracking-tight">{title}</h3>
+                    <h3 className="font-black text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>
                     {badge && (
                         <span className="bg-[#0EA5E9] text-white text-[10px] px-1.5 py-0.5 rounded-md font-black">
                             {badge}
@@ -617,11 +617,11 @@ function DashboardCard({ title, icon: Icon, children, badge, footer }: any) {
 
 function QuickActionButton({ icon: Icon, label, color, onClick }: any) {
     return (
-        <button onClick={onClick} className="flex items-center gap-4 bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all text-left">
+        <button onClick={onClick} className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-[24px] border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all text-left">
             <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-100`}>
                 <Icon className="w-5 h-5" />
             </div>
-            <span className="font-black text-slate-800 text-sm tracking-tight">{label}</span>
+            <span className="font-black text-slate-800 dark:text-slate-100 text-sm tracking-tight">{label}</span>
         </button>
     );
 }
@@ -642,7 +642,7 @@ function StatusBadge({ status }: { status: LabResult['status'] }) {
 function EmptyState({ message }: { message: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-2">
+            <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center text-slate-200 mb-2">
                 <AlertCircle className="w-6 h-6" />
             </div>
             <p className="text-slate-400 font-medium text-xs italic">{message}</p>

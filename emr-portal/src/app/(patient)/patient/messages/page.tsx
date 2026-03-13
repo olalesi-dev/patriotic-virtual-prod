@@ -261,7 +261,7 @@ export default function MessagesPage() {
     if (loading) return <div className="flex items-center justify-center min-h-[400px]"><div className="w-8 h-8 border-4 border-sky-100 border-t-[#0EA5E9] rounded-full animate-spin"></div></div>;
 
     return (
-        <div className="h-[calc(100vh-160px)] -mt-4 bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-sky-900/5 flex overflow-hidden">
+        <div className="h-[calc(100vh-160px)] -mt-4 bg-white dark:bg-slate-800 rounded-[40px] border border-slate-100 dark:border-slate-700 shadow-xl shadow-sky-900/5 flex overflow-hidden">
 
             {/* THREAD LIST */}
             <div className={`
@@ -270,7 +270,7 @@ export default function MessagesPage() {
                 border-r border-slate-50 flex flex-col transition-all duration-300
             `}>
                 <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                    <h2 className="text-xl font-black text-slate-800 tracking-tight">Inbox</h2>
+                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Inbox</h2>
                     <button
                         onClick={() => setIsComposing(true)}
                         className="w-10 h-10 bg-[#0EA5E9] text-white rounded-xl shadow-lg shadow-sky-100 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
@@ -285,7 +285,7 @@ export default function MessagesPage() {
                         <input
                             type="text"
                             placeholder="Search messages..."
-                            className="w-full bg-white border-none rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-sky-100 transition-all font-sans"
+                            className="w-full bg-white dark:bg-slate-800 border-none rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold text-slate-800 dark:text-slate-100 placeholder:text-slate-300 focus:ring-2 focus:ring-sky-100 transition-all font-sans"
                         />
                     </div>
                 </div>
@@ -342,7 +342,7 @@ export default function MessagesPage() {
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="font-black text-slate-800 tracking-tight text-sm truncate">{activeThread.providerName}</h3>
+                                    <h3 className="font-black text-slate-800 dark:text-slate-100 tracking-tight text-sm truncate">{activeThread.providerName}</h3>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{activeThread.subject}</p>
                                 </div>
                             </div>
@@ -398,7 +398,7 @@ export default function MessagesPage() {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-6 border-t border-slate-50 shrink-0 bg-white">
+                        <div className="p-6 border-t border-slate-50 shrink-0 bg-white dark:bg-slate-800">
                             <form onSubmit={handleSendMessage} className="flex items-end gap-3 max-w-4xl mx-auto">
                                 <div className="relative">
                                     <input
@@ -419,7 +419,7 @@ export default function MessagesPage() {
                                     <input
                                         type="text"
                                         placeholder="Type a clinical message..."
-                                        className="w-full bg-slate-50 border-none rounded-2xl py-3.5 px-6 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100 transition-all font-sans"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl py-3.5 px-6 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100 transition-all font-sans"
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         disabled={isSending}
@@ -438,8 +438,8 @@ export default function MessagesPage() {
                     /* COMPOSE VIEW */
                     <div className="flex-1 flex flex-col p-10 max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-3xl font-black text-slate-800 tracking-tight">New Conversation</h2>
-                            <button onClick={() => setIsComposing(false)} className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600">
+                            <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">New Conversation</h2>
+                            <button onClick={() => setIsComposing(false)} className="w-10 h-10 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
@@ -449,7 +449,7 @@ export default function MessagesPage() {
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Select Recipient</label>
                                 <select
                                     required
-                                    className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100"
                                     onChange={(e) => {
                                         const p = providers.find(p => p.id === e.target.value);
                                         setComposeData({ ...composeData, recipientId: p.id, recipientName: p.name });
@@ -468,7 +468,7 @@ export default function MessagesPage() {
                                     <input
                                         required
                                         type="text"
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100"
                                         placeholder="e.g. Question about my labs"
                                         value={composeData.subject}
                                         onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
@@ -477,7 +477,7 @@ export default function MessagesPage() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</label>
                                     <select
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100"
                                         value={composeData.category}
                                         onChange={(e) => setComposeData({ ...composeData, category: e.target.value as any })}
                                     >
@@ -490,7 +490,7 @@ export default function MessagesPage() {
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Initial Message</label>
                                 <textarea
                                     required
-                                    className="w-full bg-slate-50 border-none rounded-3xl p-6 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100 min-h-[150px] placeholder:text-slate-300"
+                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-3xl p-6 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100 min-h-[150px] placeholder:text-slate-300"
                                     placeholder="Type your message here..."
                                     value={composeData.body}
                                     onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
@@ -516,7 +516,7 @@ export default function MessagesPage() {
                             <MessageSquare className="w-10 h-10" />
                         </div>
                         <div className="max-w-xs">
-                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Select a Conversation</h3>
+                            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Select a Conversation</h3>
                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Securely message your care team. Your messages are private and encrypted.</p>
                         </div>
                         <button

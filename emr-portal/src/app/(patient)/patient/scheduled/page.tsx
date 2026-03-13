@@ -252,11 +252,11 @@ export default function ScheduledAppointmentsPage() {
                     <div className="w-10 h-10 border-4 border-sky-100 border-t-[#0EA5E9] rounded-full animate-spin" />
                 </div>
             ) : appointments.length === 0 ? (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-16 text-center space-y-4">
+                <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm p-16 text-center space-y-4">
                     <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center mx-auto">
                         <CalendarCheck className="w-10 h-10 text-sky-300" />
                     </div>
-                    <h3 className="text-xl font-black text-slate-800">No scheduled appointments yet</h3>
+                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">No scheduled appointments yet</h3>
                     <p className="text-slate-400 text-sm max-w-sm mx-auto">When your care team confirms an appointment, it will appear here with a link to join your telehealth visit.</p>
                 </div>
             ) : (
@@ -311,7 +311,7 @@ export default function ScheduledAppointmentsPage() {
                     onClick={() => setSelected(null)}
                 >
                     <div
-                        className="bg-white w-full md:max-w-lg rounded-t-[40px] md:rounded-[40px] shadow-2xl animate-in slide-in-from-bottom-8 duration-400 overflow-hidden"
+                        className="bg-white dark:bg-slate-800 w-full md:max-w-lg rounded-t-[40px] md:rounded-[40px] shadow-2xl animate-in slide-in-from-bottom-8 duration-400 overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Panel header */}
@@ -407,7 +407,7 @@ function AppointmentCard({ appt, isJoinable, fmtService, onClick, onJoin, dim = 
 
     return (
         <div
-            className={`group bg-white rounded-[28px] border transition-all cursor-pointer hover:shadow-xl hover:shadow-sky-900/5 active:scale-[0.99]
+            className={`group bg-white dark:bg-slate-800 rounded-[28px] border transition-all cursor-pointer hover:shadow-xl hover:shadow-sky-900/5 active:scale-[0.99]
                 ${isJoinable
                     ? 'border-[#0EA5E9]/30 shadow-md shadow-sky-100 ring-2 ring-[#0EA5E9]/20'
                     : dim
@@ -443,7 +443,7 @@ function AppointmentCard({ appt, isJoinable, fmtService, onClick, onJoin, dim = 
                 {/* Details */}
                 <div className="flex-1 min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-black text-slate-800 truncate">{appt.providerName}</h3>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 truncate">{appt.providerName}</h3>
                         {isJoinable && (
                             <span className="inline-flex items-center gap-1 bg-[#0EA5E9] text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg animate-pulse">
                                 <Wifi className="w-2.5 h-2.5" /> LIVE NOW
@@ -494,7 +494,7 @@ function AppointmentCard({ appt, isJoinable, fmtService, onClick, onJoin, dim = 
                     ) : (
                         <button
                             onClick={e => { e.stopPropagation(); onClick(); }}
-                            className="flex items-center justify-center gap-2 bg-slate-50 hover:bg-sky-50 text-slate-500 hover:text-[#0EA5E9] border border-slate-100 hover:border-sky-100 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
+                            className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900/50 hover:bg-sky-50 text-slate-500 hover:text-[#0EA5E9] border border-slate-100 dark:border-slate-700 hover:border-sky-100 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
                         >
                             Details <ChevronRight className="w-4 h-4" />
                         </button>
@@ -511,7 +511,7 @@ function InfoRow({ icon, label, children }: { icon: React.ReactNode; label: stri
             <div className="w-8 h-8 bg-sky-50 rounded-xl flex items-center justify-center shrink-0 mt-0.5">{icon}</div>
             <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
-                <p className="text-slate-800 font-bold text-sm">{children}</p>
+                <p className="text-slate-800 dark:text-slate-100 font-bold text-sm">{children}</p>
             </div>
         </div>
     );

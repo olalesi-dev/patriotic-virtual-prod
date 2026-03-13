@@ -109,10 +109,10 @@ function AppointmentCard({ appt, style, onClickCard }: {
 function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 flex-shrink-0">{icon}</div>
+            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 flex-shrink-0">{icon}</div>
             <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-                <p className="text-sm font-semibold text-slate-800 mt-0.5">{value}</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-0.5">{value}</p>
             </div>
         </div>
     );
@@ -130,18 +130,18 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
     return (
         <>
             <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300">
+            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl z-50 flex flex-col border-l border-slate-200 dark:border-slate-700 animate-in slide-in-from-right duration-300">
 
                 {/* Header */}
-                <div className={`p-6 border-b border-slate-100 ${typeConf.bg} border-l-4 ${typeConf.border}`}>
+                <div className={`p-6 border-b border-slate-100 dark:border-slate-700 ${typeConf.bg} border-l-4 ${typeConf.border}`}>
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <span className={`w-2 h-2 rounded-full ${statusConf.dot}`} />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">{statusConf.label}</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">{statusConf.label}</span>
                                 <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${typeConf.badge}`}>VIDEO</span>
                             </div>
-                            <h2 className="text-2xl font-black text-slate-900">{appt.providerName || 'Patriotic Provider'}</h2>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">{appt.providerName || 'Patriotic Provider'}</h2>
                             <p className="text-sm text-slate-500 font-bold mt-1">
                                 {(appt.serviceKey || 'Consultation').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                             </p>
@@ -154,7 +154,7 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto">
-                    <div className="p-6 space-y-5 border-b border-slate-100">
+                    <div className="p-6 space-y-5 border-b border-slate-100 dark:border-slate-700">
                         <DetailRow icon={<Clock size={16} />} label="Scheduled For" value={displayDateTime} />
                         <DetailRow icon={<Video size={16} />} label="Visit Type" value={appt.type || 'Telehealth'} />
                         {appt.status !== 'PENDING_SCHEDULING' && (
@@ -163,7 +163,7 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
                     </div>
 
                     {appt.status === 'scheduled' && (
-                        <div className="p-6 border-b border-slate-100 bg-sky-50/30">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 bg-sky-50/30">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Video Visit Link</p>
                             <a href={meetingUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#0EA5E9] hover:underline break-all">
                                 {meetingUrl}
@@ -188,7 +188,7 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-slate-100">
+                <div className="p-6 border-t border-slate-100 dark:border-slate-700">
                     {appt.status === 'scheduled' && (
                         <a
                             href={meetingUrl}
@@ -204,7 +204,7 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
                         </a>
                     )}
                     {appt.status === 'PENDING_SCHEDULING' && (
-                        <div className="w-full text-center py-4 bg-slate-50 rounded-2xl text-xs uppercase tracking-widest font-black text-slate-400 border border-slate-200">
+                        <div className="w-full text-center py-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl text-xs uppercase tracking-widest font-black text-slate-400 border border-slate-200 dark:border-slate-700">
                             Awaiting Schedule Confirmation
                         </div>
                     )}
@@ -391,30 +391,30 @@ export default function PatientCalendarPage() {
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-20">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-slate-800 p-6 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Calendar</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Calendar</h1>
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">{format(currentDate, 'MMMM yyyy')}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
+                    <div className="flex bg-slate-50 dark:bg-slate-900/50 p-1 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <button onClick={() => setViewType('week')} className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewType === 'week' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Week</button>
                         <button onClick={() => setViewType('month')} className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewType === 'month' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Month</button>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={handlePrev} className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 hover:bg-slate-100 transition-colors"><ChevronLeft size={18} /></button>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-5 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors">Today</button>
-                        <button onClick={handleNext} className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 hover:bg-slate-100 transition-colors"><ChevronRight size={18} /></button>
+                        <button onClick={handlePrev} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition-colors"><ChevronLeft size={18} /></button>
+                        <button onClick={() => setCurrentDate(new Date())} className="px-5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition-colors">Today</button>
+                        <button onClick={handleNext} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition-colors"><ChevronRight size={18} /></button>
                     </div>
                 </div>
             </div>
 
             {/* Calendar Grid */}
-            <div className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 {viewType === 'week' && (
                     <div className="flex overflow-x-auto" style={{ minWidth: 640 }}>
                         {/* Time axis */}
-                        <div className="w-16 flex-shrink-0 bg-slate-50 border-r border-slate-100 pt-16">
+                        <div className="w-16 flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-700 pt-16">
                             {HOURS.map(hour => (
                                 <div key={hour} className="relative" style={{ height: SLOT_HEIGHT }}>
                                     <span className="absolute -top-2.5 right-3 text-[10px] font-black text-slate-400 opacity-70">
@@ -429,11 +429,11 @@ export default function PatientCalendarPage() {
                                 const dayAppts = visibleAppts.filter(a => { const ad = getApptDate(a); return ad && isSameDay(ad, day); });
                                 return (
                                     <div key={day.toISOString()} className={`flex-1 min-w-[110px] ${idx < 6 ? 'border-r border-slate-100' : ''}`}>
-                                        <div className={`p-3 text-center border-b border-slate-100 h-16 flex flex-col items-center justify-center ${isToday(day) ? 'bg-[#F0F9FF]' : 'bg-white'}`}>
+                                        <div className={`p-3 text-center border-b border-slate-100 dark:border-slate-700 h-16 flex flex-col items-center justify-center ${isToday(day) ? 'bg-[#F0F9FF]' : 'bg-white'}`}>
                                             <span className={`text-[10px] font-black uppercase tracking-widest ${isToday(day) ? 'text-[#0EA5E9]' : 'text-slate-400'}`}>{format(day, 'EEE')}</span>
                                             <span className={`text-lg font-black mt-0.5 ${isToday(day) ? 'text-[#0EA5E9]' : 'text-slate-800'}`}>{format(day, 'd')}</span>
                                         </div>
-                                        <div className="relative bg-white" style={{ height: HOURS.length * SLOT_HEIGHT }}>
+                                        <div className="relative bg-white dark:bg-slate-800" style={{ height: HOURS.length * SLOT_HEIGHT }}>
                                             {HOURS.map(h => (
                                                 <div key={h} className="absolute w-full border-t border-slate-50" style={{ top: (h - 7) * SLOT_HEIGHT, height: SLOT_HEIGHT }} />
                                             ))}
@@ -456,7 +456,7 @@ export default function PatientCalendarPage() {
 
                 {viewType === 'month' && (
                     <div style={{ minWidth: 640 }}>
-                        <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50">
+                        <div className="grid grid-cols-7 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                                 <div key={d} className="p-3 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">{d}</div>
                             ))}
@@ -466,7 +466,7 @@ export default function PatientCalendarPage() {
                                 const dayAppts = visibleAppts.filter(a => { const ad = getApptDate(a); return ad && isSameDay(ad, day); });
                                 const isCurrentMonth = format(day, 'M') === format(currentDate, 'M');
                                 return (
-                                    <div key={day.toISOString()} className={`min-h-[120px] p-2 border-r border-b border-slate-100 ${!isCurrentMonth ? 'bg-slate-50/50' : 'bg-white'}`}>
+                                    <div key={day.toISOString()} className={`min-h-[120px] p-2 border-r border-b border-slate-100 dark:border-slate-700 ${!isCurrentMonth ? 'bg-slate-50/50' : 'bg-white'}`}>
                                         <div className={`text-xs font-black mb-2 text-right ${isToday(day) ? 'text-[#0EA5E9] bg-sky-50 w-6 h-6 rounded-full flex items-center justify-center ml-auto' : 'text-slate-400'}`}>
                                             {format(day, 'd')}
                                         </div>
@@ -481,7 +481,7 @@ export default function PatientCalendarPage() {
                                                 );
                                             })}
                                             {dayAppts.length > 3 && (
-                                                <div className="text-[10px] font-bold text-slate-400 text-center py-1 bg-slate-50 rounded-lg">+{dayAppts.length - 3} more</div>
+                                                <div className="text-[10px] font-bold text-slate-400 text-center py-1 bg-slate-50 dark:bg-slate-900/50 rounded-lg">+{dayAppts.length - 3} more</div>
                                             )}
                                         </div>
                                     </div>

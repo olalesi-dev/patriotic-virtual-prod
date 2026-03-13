@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-50 rounded-full blur-3xl -ml-48 -mb-48 pointer-events-none"></div>
 
             <div className="relative z-10 w-full max-w-md">
-                <div className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="mb-6">
                         <Link
                             href="/login"
@@ -47,12 +47,12 @@ export default function ForgotPasswordPage() {
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-6">
                             <div className="p-3 bg-brand/5 rounded-2xl">
-                                <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-brand/10 flex items-center justify-center">
+                                <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-brand/10 flex items-center justify-center">
                                     <Lock className="w-6 h-6 text-brand" />
                                 </div>
                             </div>
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Reset Password</h2>
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Reset Password</h2>
                         <p className="text-slate-500 mt-2 text-sm font-medium">We'll send you a link to recover your account</p>
                     </div>
 
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
                                         placeholder="your@email.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                         required
                                     />
                                 </div>

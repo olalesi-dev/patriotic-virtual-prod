@@ -98,11 +98,11 @@ export default function SignupPage() {
     if (success) {
         return (
             <div className="min-h-screen bg-[#F0F9FF] flex items-center justify-center p-6">
-                <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 text-center space-y-6 animate-in fade-in zoom-in duration-300">
+                <div className="w-full max-w-md bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 text-center space-y-6 animate-in fade-in zoom-in duration-300">
                     <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
                         <CheckCircle2 className="w-10 h-10" />
                     </div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Account Created!</h2>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Account Created!</h2>
                     <p className="text-slate-500 font-medium">
                         We've sent a verification email to <span className="text-brand font-bold">{formData.email}</span>.
                         Please verify your email before logging in.
@@ -127,16 +127,16 @@ export default function SignupPage() {
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-50 rounded-full blur-3xl -ml-48 -mb-48 pointer-events-none"></div>
 
             <div className="relative z-10 w-full max-w-md">
-                <div className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-6">
                             <div className="p-3 bg-brand/5 rounded-2xl">
-                                <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-brand/10 flex items-center justify-center">
+                                <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-brand/10 flex items-center justify-center">
                                     <span className="text-2xl font-black text-brand italic">P</span>
                                 </div>
                             </div>
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Join Patriotic</h2>
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Join Patriotic</h2>
                         <p className="text-slate-500 mt-2 text-sm font-medium">Create your secure patient portal account</p>
                     </div>
 
@@ -158,7 +158,7 @@ export default function SignupPage() {
                                         placeholder="John"
                                         value={formData.firstName}
                                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                        className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                         required
                                     />
                                 </div>
@@ -172,7 +172,7 @@ export default function SignupPage() {
                                         placeholder="Doe"
                                         value={formData.lastName}
                                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                        className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                         required
                                     />
                                 </div>
@@ -187,7 +187,7 @@ export default function SignupPage() {
                                         type="date"
                                         value={formData.dob}
                                         onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                                        className="w-full bg-slate-50 border-none rounded-xl py-4 px-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 px-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                         required
                                     />
                                 </div>
@@ -198,7 +198,7 @@ export default function SignupPage() {
                                     <select
                                         value={formData.sex}
                                         onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
-                                        className="w-full bg-slate-50 border-none rounded-xl py-4 px-4 text-slate-900 font-bold focus:ring-2 focus:ring-brand/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 px-4 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-brand/20 transition-all"
                                         required
                                     >
                                         <option value="" disabled>Select...</option>
@@ -218,7 +218,7 @@ export default function SignupPage() {
                                     placeholder="your@email.com"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                     required
                                 />
                             </div>
@@ -234,7 +234,7 @@ export default function SignupPage() {
                                         placeholder="••••••••"
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                         required
                                     />
                                 </div>
@@ -248,7 +248,7 @@ export default function SignupPage() {
                                         placeholder="••••••••"
                                         value={formData.confirmPassword}
                                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                        className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                         required
                                     />
                                 </div>

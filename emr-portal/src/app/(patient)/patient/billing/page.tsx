@@ -169,7 +169,7 @@ export default function BillingPage() {
         <div className="space-y-10 pb-20 max-w-6xl mx-auto">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Billing & Insurance</h1>
+                <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Billing & Insurance</h1>
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Manage your payments, statements, and coverage</p>
             </div>
 
@@ -177,7 +177,7 @@ export default function BillingPage() {
                 {/* Main Column */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Balance Card */}
-                    <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden relative group">
+                    <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-50 shadow-sm overflow-hidden relative group">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-sky-50 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-sky-100/50 transition-colors"></div>
                         <div className="p-10 relative">
                             <div className="flex justify-between items-start mb-8">
@@ -195,13 +195,13 @@ export default function BillingPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
+                                <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                    <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
                                         <Calendar className="w-5 h-5" />
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Next Billing Date</p>
-                                        <p className="font-black text-slate-800 text-sm">
+                                        <p className="font-black text-slate-800 dark:text-slate-100 text-sm">
                                             {summary?.nextBillingDate ? format(summary.nextBillingDate.toDate(), 'MMMM d, yyyy') : 'N/A'}
                                         </p>
                                     </div>
@@ -224,9 +224,9 @@ export default function BillingPage() {
                     </div>
 
                     {/* Statement History */}
-                    <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-50 shadow-sm overflow-hidden">
                         <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-                            <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs flex items-center gap-2">
+                            <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest text-xs flex items-center gap-2">
                                 <Receipt className="w-4 h-4 text-slate-300" /> Statement History
                             </h3>
                             <button className="text-[10px] font-black text-[#0EA5E9] uppercase tracking-widest hover:underline">Download All (PDF)</button>
@@ -243,13 +243,13 @@ export default function BillingPage() {
                                             <FileText className="w-7 h-7" />
                                         </div>
                                         <div>
-                                            <p className="text-lg font-black text-slate-800 tracking-tight">Statement for {format(st.date.toDate(), 'MMMM yyyy')}</p>
+                                            <p className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Statement for {format(st.date.toDate(), 'MMMM yyyy')}</p>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{format(st.date.toDate(), 'MMM d, yyyy')}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-8">
                                         <div className="text-right">
-                                            <p className="text-xl font-black text-slate-800 tracking-tighter">${st.amount.toFixed(2)}</p>
+                                            <p className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">${st.amount.toFixed(2)}</p>
                                             <span className={`text-[10px] font-black uppercase tracking-widest ${st.status === 'paid' ? 'text-emerald-500' : 'text-amber-500'}`}>
                                                 {st.status}
                                             </span>
@@ -290,28 +290,28 @@ export default function BillingPage() {
                     </div>
 
                     {/* Insurance Card */}
-                    <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden p-8">
+                    <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-50 shadow-sm overflow-hidden p-8">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                 <Building2 className="w-5 h-5" />
                             </div>
-                            <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Insurance Coverage</h3>
+                            <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest text-xs">Insurance Coverage</h3>
                         </div>
 
                         {insurance ? (
                             <div className="space-y-6">
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Carrier</p>
-                                    <p className="font-black text-slate-800">{insurance.carrier}</p>
+                                    <p className="font-black text-slate-800 dark:text-slate-100">{insurance.carrier}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Member ID</p>
-                                        <p className="font-black text-slate-800 text-xs">{insurance.memberId}</p>
+                                        <p className="font-black text-slate-800 dark:text-slate-100 text-xs">{insurance.memberId}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Group ID</p>
-                                        <p className="font-black text-slate-800 text-xs">{insurance.groupNumber}</p>
+                                        <p className="font-black text-slate-800 dark:text-slate-100 text-xs">{insurance.groupNumber}</p>
                                     </div>
                                 </div>
                                 <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
@@ -339,7 +339,7 @@ export default function BillingPage() {
                         <div className="flex gap-4 items-start">
                             <Info className="w-5 h-5 text-[#0EA5E9] shrink-0" />
                             <div>
-                                <h4 className="font-black text-slate-800 text-xs uppercase tracking-widest mb-2">Billing Support</h4>
+                                <h4 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-widest mb-2">Billing Support</h4>
                                 <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
                                     Need help with a statement? Schedule a quick call with our billing office or send a secure message.
                                 </p>
@@ -353,10 +353,10 @@ export default function BillingPage() {
             {/* Statement Detail Modal */}
             {selectedStatement && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500">
                         <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                             <div>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Statement Details</h2>
+                                <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Statement Details</h2>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{format(selectedStatement.date.toDate(), 'MMMM d, yyyy')}</p>
                             </div>
                             <button onClick={() => setSelectedStatement(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
@@ -368,8 +368,8 @@ export default function BillingPage() {
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Itemized Charges</p>
                                 {selectedStatement.items.map((item, i) => (
                                     <div key={i} className="flex justify-between items-center py-4 border-b border-slate-50 last:border-none">
-                                        <p className="font-bold text-slate-700">{item.description}</p>
-                                        <p className="font-black text-slate-800">${item.amount.toFixed(2)}</p>
+                                        <p className="font-bold text-slate-700 dark:text-slate-200">{item.description}</p>
+                                        <p className="font-black text-slate-800 dark:text-slate-100">${item.amount.toFixed(2)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -378,7 +378,7 @@ export default function BillingPage() {
                                 <p className="text-2xl font-black">${selectedStatement.amount.toFixed(2)}</p>
                             </div>
                             <div className="flex gap-3">
-                                <button className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                                <button className="flex-1 bg-slate-100 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
                                     <Download className="w-3.5 h-3.5" /> Download PDF
                                 </button>
                                 {selectedStatement.status === 'unpaid' && (
@@ -398,7 +398,7 @@ export default function BillingPage() {
             {/* Insurance Update Modal */}
             {isUpdatingInsurance && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-500">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-500">
                         <div className="p-10 bg-[#0EA5E9] text-white relative">
                             <h2 className="text-2xl font-black tracking-tight mb-2">Update Coverage</h2>
                             <p className="text-xs font-bold opacity-80 uppercase tracking-widest">Submit insurance changes for verification</p>
@@ -410,21 +410,21 @@ export default function BillingPage() {
                             <div className="grid grid-cols-1 gap-6">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Insurance Carrier</label>
-                                    <input name="carrier" required type="text" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100" placeholder="e.g. Aetna" />
+                                    <input name="carrier" required type="text" className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100" placeholder="e.g. Aetna" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Member ID</label>
-                                        <input name="memberId" required type="text" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100" placeholder="ID Number" />
+                                        <input name="memberId" required type="text" className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100" placeholder="ID Number" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Group Number</label>
-                                        <input name="groupNumber" required type="text" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-sky-100" placeholder="Group #" />
+                                        <input name="groupNumber" required type="text" className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100" placeholder="Group #" />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Front of Card (Photo)</label>
-                                    <button type="button" className="w-full h-32 border-2 border-dashed border-slate-100 rounded-[32px] flex flex-col items-center justify-center gap-3 text-slate-300 hover:border-[#0EA5E9] hover:text-[#0EA5E9] transition-all group bg-slate-50/30">
+                                    <button type="button" className="w-full h-32 border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-[32px] flex flex-col items-center justify-center gap-3 text-slate-300 hover:border-[#0EA5E9] hover:text-[#0EA5E9] transition-all group bg-slate-50/30">
                                         <Smartphone className="w-6 h-6 group-hover:scale-110 transition-transform" />
                                         <span className="text-[10px] font-black uppercase tracking-widest">Upload or Take Photo</span>
                                     </button>

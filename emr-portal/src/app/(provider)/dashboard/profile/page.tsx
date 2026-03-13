@@ -221,7 +221,7 @@ export default function ProviderProfilePage() {
                     <select
                         value={data[key] as string}
                         onChange={e => setData(p => ({ ...p, [key]: e.target.value }))}
-                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800"
+                        className="w-full border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800 dark:bg-slate-800"
                     >
                         <option value="">Select...</option>
                         {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -231,7 +231,7 @@ export default function ProviderProfilePage() {
                         type={type}
                         value={data[key] as string}
                         onChange={e => setData(p => ({ ...p, [key]: e.target.value }))}
-                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800"
+                        className="w-full border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800 dark:bg-slate-800"
                     />
                 )
             ) : (
@@ -250,7 +250,7 @@ export default function ProviderProfilePage() {
                     rows={4}
                     value={data[key] as string}
                     onChange={e => setData(p => ({ ...p, [key]: e.target.value }))}
-                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800 resize-y"
+                    className="w-full border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800 dark:bg-slate-800 resize-y"
                     placeholder="Enter details here..."
                 />
             ) : (
@@ -270,7 +270,7 @@ export default function ProviderProfilePage() {
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight italic uppercase">Provider Profile</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 tracking-tight italic uppercase">Provider Profile</h1>
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Manage your clinical credentials</p>
                 </div>
                 {!editing ? (
@@ -295,7 +295,7 @@ export default function ProviderProfilePage() {
             </div>
 
             {/* Profile Hero Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="h-28 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 relative">
                     <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDB2LTJoMzZ6bTAtNHYtMkgwdi0yaDB2Mmgzdn0iLz48L2c+PC9nPjwvc3ZnPg==')] opacity-40" />
                 </div>
@@ -335,7 +335,7 @@ export default function ProviderProfilePage() {
                         </div>
 
                         <div className="pb-2">
-                            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 uppercase italic">
+                            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 uppercase italic">
                                 {data.firstName || data.lastName
                                     ? `Dr. ${data.firstName} ${data.lastName}`.trim()
                                     : `Dr. ${userProfile.displayName}`}
@@ -362,13 +362,13 @@ export default function ProviderProfilePage() {
                                         style={{ width: `${completionPct}%` }}
                                     />
                                 </div>
-                                <span className="text-sm font-black text-slate-700 dark:text-slate-200">{completionPct}%</span>
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-200 dark:text-slate-200">{completionPct}%</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Tab Switcher */}
-                    <div className="flex gap-1 bg-slate-50 dark:bg-slate-900/50 p-1 rounded-2xl mb-6 border border-slate-100 dark:border-slate-700">
+                    <div className="flex gap-1 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 p-1 rounded-2xl mb-6 border border-slate-100 dark:border-slate-700 dark:border-slate-700">
                         {([
                             { id: 'personal', label: 'Personal', icon: User },
                             { id: 'professional', label: 'Credentials', icon: Award },
@@ -426,32 +426,32 @@ export default function ProviderProfilePage() {
                                 </div>
                                 <div className="space-y-3">
                                     {data.complianceDocs.length === 0 ? (
-                                        <div className="p-8 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-sm font-medium">
+                                        <div className="p-8 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 dark:border-slate-800 text-sm font-medium">
                                             No compliance documents uploaded yet.
                                         </div>
                                     ) : (
                                         data.complianceDocs.map(docItem => (
-                                            <div key={docItem.id} className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                            <div key={docItem.id} className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-4 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm">
                                                 <div className="flex items-center gap-3 w-full md:w-auto">
                                                     <div className="min-w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                                                         <FileText className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         {editing ? (
-                                                            <input type="text" value={docItem.name} onChange={e => handleUpdateDocExpiry(docItem.id, docItem.expiryDate, e.target.value)} className="w-full text-sm font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 p-1 rounded" />
+                                                            <input type="text" value={docItem.name} onChange={e => handleUpdateDocExpiry(docItem.id, docItem.expiryDate, e.target.value)} className="w-full text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 p-1 rounded" />
                                                         ) : (
-                                                            <a href={docItem.url} target="_blank" rel="noreferrer" className="text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 truncate block">
+                                                            <a href={docItem.url} target="_blank" rel="noreferrer" className="text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 truncate block">
                                                                 {docItem.name}
                                                             </a>
                                                         )}
                                                         <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5 block">{docItem.type}</span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0 pt-2 border-t border-slate-100 dark:border-slate-700 md:pt-0 md:border-none">
+                                                <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0 pt-2 border-t border-slate-100 dark:border-slate-700 dark:border-slate-700 md:pt-0 md:border-none">
                                                     <div className="flex items-center gap-2 flex-1 md:flex-none">
                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expires:</span>
                                                         {editing ? (
-                                                            <input type="date" value={docItem.expiryDate} onChange={e => handleUpdateDocExpiry(docItem.id, e.target.value, docItem.name)} className="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 outline-none focus:ring-1 focus:ring-indigo-500" />
+                                                            <input type="date" value={docItem.expiryDate} onChange={e => handleUpdateDocExpiry(docItem.id, e.target.value, docItem.name)} className="text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 dark:border-slate-700 outline-none focus:ring-1 focus:ring-indigo-500" />
                                                         ) : (
                                                             <span className={`text-xs font-bold px-2 py-1 rounded-lg ${docItem.expiryDate ? (new Date(docItem.expiryDate) < new Date() ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300') : 'text-slate-400'}`}>
                                                                 {docItem.expiryDate || 'N/A'}
@@ -529,11 +529,11 @@ export default function ProviderProfilePage() {
                                 </div>
 
                                 {!data.doseSpotClinicianId ? (
-                                    <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[32px] border border-dashed border-slate-200 dark:border-slate-700">
+                                    <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 rounded-[32px] border border-dashed border-slate-200 dark:border-slate-700 dark:border-slate-700">
                                         <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                             <Shield className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                                         </div>
-                                        <h4 className="text-lg font-black text-slate-700 dark:text-slate-300 uppercase italic">eRx Not Configured</h4>
+                                        <h4 className="text-lg font-black text-slate-700 dark:text-slate-200 dark:text-slate-300 uppercase italic">eRx Not Configured</h4>
                                         <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto mt-2">
                                             Please enter your DoseSpot Clinician ID in the <span className="text-indigo-500 font-bold">Credentials</span> tab to enable e-prescribing.
                                         </p>
@@ -558,7 +558,7 @@ export default function ProviderProfilePage() {
                                             </div>
                                         </div>
                                         
-                                        <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
+                                        <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-inner">
                                             <DoseSpotFrame height="800px" />
                                         </div>
                                     </div>

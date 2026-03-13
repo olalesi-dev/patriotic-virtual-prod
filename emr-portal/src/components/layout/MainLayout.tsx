@@ -64,14 +64,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
     if (profile.loading) {
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin"></div>
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-indigo-500 rounded-full animate-spin"></div>
             </div>
         );
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
+        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 font-sans text-slate-900 dark:text-white dark:text-slate-100">
 
             {/* SIDEBAR */}
             <aside
@@ -84,14 +84,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <span className="font-bold text-lg text-white">P</span>
                         </div>
                     ) : (
-                        <div className="bg-white px-2 py-1.5 rounded-lg w-full max-w-[170px] flex items-center justify-center shadow-sm">
+                        <div className="bg-white dark:bg-slate-800 px-2 py-1.5 rounded-lg w-full max-w-[170px] flex items-center justify-center shadow-sm">
                             <img src="/logo.png" alt="Patriotic EHR" className="h-7 w-auto object-contain transition-opacity duration-300" />
                         </div>
                     )}
 
                     <button
                         onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                        className={`absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:text-brand hover:border-brand transition-colors z-50 ${isSidebarCollapsed ? 'rotate-180 translate-x-8' : ''}`}
+                        className={`absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:text-brand hover:border-brand transition-colors z-50 ${isSidebarCollapsed ? 'rotate-180 translate-x-8' : ''}`}
                     >
                         <ChevronLeft className="w-3 h-3" />
                     </button>
@@ -180,9 +180,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-64'} flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out`}>
 
                 {/* Header */}
-                <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90 dark:bg-slate-800/90">
+                <header className="h-16 bg-white dark:bg-slate-800 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90 dark:bg-slate-800/90">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 capitalize">
+                        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 capitalize">
                             {pathname === '/dashboard' ? 'Dashboard' : pathname.replace('/', '')}
                         </h1>
                     </div>
@@ -233,7 +233,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             {
                 isBookingModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                        <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
+                        <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
                             <div className="bg-indigo-600 p-6 text-white flex justify-between items-start">
                                 <div>
                                     <h3 className="text-xl font-bold">New Telehealth Visit</h3>
@@ -246,11 +246,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                             <div className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Patient</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 mb-1">Patient</label>
                                     <select
                                         value={patient}
                                         onChange={(e) => setPatient(e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
                                     >
                                         <option value="John Doe">John Doe</option>
                                         <option value="Sarah Connor">Sarah Connor</option>
@@ -260,27 +260,27 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Date</label>
+                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 mb-1">Date</label>
                                         <input
                                             type="date"
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
-                                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Time</label>
+                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 mb-1">Time</label>
                                         <input
                                             type="time"
                                             value={time}
                                             onChange={(e) => setTime(e.target.value)}
-                                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-shadow"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Visit Type</label>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 mb-1">Visit Type</label>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setType('video')}
@@ -304,13 +304,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
-                                    <textarea className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 mb-1">Notes</label>
+                                    <textarea className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
                                 </div>
                             </div>
 
                             <div className="p-6 pt-0 flex gap-3">
-                                <button onClick={() => setIsBookingModalOpen(false)} className="flex-1 py-2.5 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                                <button onClick={() => setIsBookingModalOpen(false)} className="flex-1 py-2.5 text-slate-600 dark:text-slate-300 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
                                     Cancel
                                 </button>
                                 <button
