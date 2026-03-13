@@ -172,15 +172,15 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
     if (step === 3) {
         return (
             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
+                <div className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
                     <div className="p-12 text-center">
                         <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
                             <Check className="w-12 h-12 text-emerald-500" />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 mb-4">Registration Complete!</h2>
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4">Registration Complete!</h2>
                         <div className="bg-brand/5 border border-brand/10 p-4 rounded-3xl mb-8 flex flex-col items-center">
                             <span className="text-[10px] font-black text-brand uppercase tracking-[0.2em] mb-1">Generated Identifier (MRN)</span>
-                            <span className="text-2xl font-black text-slate-900 tracking-tighter">{generatedMrn}</span>
+                            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">{generatedMrn}</span>
                         </div>
                         <p className="text-slate-500 font-medium mb-8">Patient has been added to the queue, and all invitations have been dispatched.</p>
 
@@ -192,9 +192,9 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                                 { text: 'Welcome Comms Sent', icon: Send },
                                 { text: 'AI Intake Invitation Sent', icon: Sparkles }
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <div key={i} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
                                     <item.icon className="w-5 h-5 text-brand" />
-                                    <span className="text-sm font-bold text-slate-700">{item.text}</span>
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{item.text}</span>
                                     <Check className="w-4 h-4 text-emerald-500 ml-auto" />
                                 </div>
                             ))}
@@ -215,13 +215,13 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
     if (step === 2) {
         return (
             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
-                    <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="p-10 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50">
                         <div>
                             <span className="text-[10px] font-black text-brand uppercase tracking-[0.2em] mb-2 block">Step 2 of 3</span>
-                            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Consent & Disclosures</h2>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Consent & Disclosures</h2>
                         </div>
-                        <button onClick={onClose} className="p-3 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 text-slate-400 hover:text-slate-600 transition-all">
+                        <button onClick={onClose} className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-50 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 transition-all">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
@@ -242,12 +242,12 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                                 { title: 'Financial Policy', desc: 'Patient accepts responsibility for membership fees and late cancellation charges.' },
                                 { title: 'Arbitration Agreement', desc: 'Standard clinical dispute resolution terms.' }
                             ].map((item, i) => (
-                                <div key={i} className="flex items-start gap-4 p-5 rounded-[2rem] border border-slate-100 hover:border-brand/20 hover:bg-brand/5 transition-all cursor-pointer group">
-                                    <div className="w-6 h-6 rounded-lg border-2 border-slate-200 group-hover:border-brand flex items-center justify-center transition-colors mt-0.5">
+                                <div key={i} className="flex items-start gap-4 p-5 rounded-[2rem] border border-slate-100 dark:border-slate-700 hover:border-brand/20 hover:bg-brand/5 transition-all cursor-pointer group">
+                                    <div className="w-6 h-6 rounded-lg border-2 border-slate-200 dark:border-slate-700 group-hover:border-brand flex items-center justify-center transition-colors mt-0.5">
                                         <div className="w-3 h-3 bg-brand rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     </div>
                                     <div>
-                                        <h5 className="text-sm font-black text-slate-900 uppercase tracking-tight">{item.title}</h5>
+                                        <h5 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</h5>
                                         <p className="text-xs text-slate-500 font-medium">{item.desc}</p>
                                     </div>
                                 </div>
@@ -255,8 +255,8 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                         </div>
                     </div>
 
-                    <div className="p-10 bg-slate-50 border-t border-slate-100 flex gap-4">
-                        <button onClick={() => setStep(1)} className="px-8 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all">
+                    <div className="p-10 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex gap-4">
+                        <button onClick={() => setStep(1)} className="px-8 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all">
                             Back
                         </button>
                         <button
@@ -273,9 +273,9 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-[3.5rem] shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-12 duration-700">
+            <div className="bg-white dark:bg-slate-800 rounded-[3.5rem] shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-12 duration-700">
                 {/* Header */}
-                <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-white relative">
+                <div className="p-10 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800 relative">
                     <div className="absolute top-0 left-0 w-full h-1 bg-brand/10">
                         <div className="h-full bg-brand transition-all duration-500" style={{ width: '33.33%' }}></div>
                     </div>
@@ -284,9 +284,9 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                             <span className="w-2 h-2 rounded-full bg-brand animate-pulse"></span>
                             <span className="text-[10px] font-black text-brand uppercase tracking-[0.3em]">Patient Onboarding</span>
                         </div>
-                        <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">New Registration</h2>
+                        <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">New Registration</h2>
                     </div>
-                    <button onClick={onClose} className="p-4 bg-slate-50 hover:bg-brand/5 rounded-3xl border border-slate-100 text-slate-400 hover:text-brand transition-all">
+                    <button onClick={onClose} className="p-4 bg-slate-50 dark:bg-slate-900/50 hover:bg-brand/5 rounded-3xl border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-brand transition-all">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -296,7 +296,7 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                         {/* SECTION 1: PERSONAL INFORMATION */}
                         <div className="space-y-8">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-700">
                                 <User className="w-5 h-5 text-brand" />
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Identity & Demographics</h3>
                             </div>
@@ -313,7 +313,7 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
 
                         {/* SECTION 2: CONTACT & ADDRESS */}
                         <div className="space-y-8">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-700">
                                 <MapPin className="w-5 h-5 text-brand" />
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Location & Contact</h3>
                             </div>
@@ -343,12 +343,12 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
 
                         {/* SECTION 3: CLINICAL & OPERATIONS */}
                         <div className="space-y-8">
-                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-700">
                                 <ClipboardCheck className="w-5 h-5 text-brand" />
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Clinical Routing</h3>
                             </div>
 
-                            <div className="bg-slate-50 p-6 rounded-3xl space-y-4">
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl space-y-4">
                                 <RegistrationSelect label="Primary Concern" required value={formData.primaryConcern} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, primaryConcern: e.target.value })} error={errors.primaryConcern} options={PRIMARY_CONCERNS} />
                                 <RegistrationSelect label="Assigned Provider" required value={formData.assignedProviderId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, assignedProviderId: e.target.value })} error={errors.assignedProviderId} options={ASSIGNED_PROVIDERS.map(p => p.name)} />
                                 <RegistrationSelect label="Starting Status" required value={formData.status} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value })} error={errors.status} options={STATUS_OPTIONS} />
@@ -364,7 +364,7 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
                                             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                                             placeholder="VIP, Spanish..."
-                                            className="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-brand/10 transition-all placeholder:text-slate-300"
+                                            className="flex-1 px-5 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-brand/10 transition-all placeholder:text-slate-300"
                                         />
                                         <button type="button" onClick={addTag} className="p-4 bg-brand text-white rounded-2xl hover:bg-brand-600 transition-all">
                                             <Plus className="w-5 h-5" />
@@ -410,7 +410,7 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                                         <input
                                             type="text"
                                             placeholder="Search pharmacies..."
-                                            className="w-full pl-11 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-brand/10 transition-all"
+                                            className="w-full pl-11 pr-5 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-brand/10 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -420,7 +420,7 @@ export default function NewPatientRegistration({ onClose, onComplete }: NewPatie
                 </form>
 
                 {/* Footer */}
-                <div className="p-10 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <div className="p-10 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
                     <div className="flex items-center gap-4 text-slate-400">
                         <div className="flex -space-x-3">
                             {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-black">PT</div>)}
@@ -466,7 +466,7 @@ function RegistrationField({ label, required, type = 'text', value, onChange, er
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className={`w-full px-5 py-4 bg-slate-50 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 transition-all placeholder:text-slate-300 ${error ? 'border-rose-400 focus:ring-rose-400/10 text-rose-600' : 'border-slate-200 focus:ring-brand/10 text-slate-900'
+                className={`w-full px-5 py-4 bg-slate-50 dark:bg-slate-900/50 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 transition-all placeholder:text-slate-300 ${error ? 'border-rose-400 focus:ring-rose-400/10 text-rose-600' : 'border-slate-200 focus:ring-brand/10 text-slate-900'
                     }`}
             />
             {error && <div className="flex items-center gap-1 text-[9px] font-black text-rose-500 uppercase tracking-tight mt-1 ml-1"><AlertCircle className="w-3 h-3" /> {error}</div>}
@@ -485,7 +485,7 @@ function RegistrationSelect({ label, required, value, onChange, error, options, 
                 <select
                     value={value}
                     onChange={onChange}
-                    className={`w-full px-5 py-4 bg-slate-50 border rounded-2xl text-sm font-bold appearance-none focus:outline-none focus:ring-4 transition-all cursor-pointer ${error ? 'border-rose-400 focus:ring-rose-400/10 text-rose-600' : 'border-slate-200 focus:ring-brand/10 text-slate-900 group-focus-within:border-brand-300'
+                    className={`w-full px-5 py-4 bg-slate-50 dark:bg-slate-900/50 border rounded-2xl text-sm font-bold appearance-none focus:outline-none focus:ring-4 transition-all cursor-pointer ${error ? 'border-rose-400 focus:ring-rose-400/10 text-rose-600' : 'border-slate-200 focus:ring-brand/10 text-slate-900 group-focus-within:border-brand-300'
                         }`}
                 >
                     <option value="">Select...</option>

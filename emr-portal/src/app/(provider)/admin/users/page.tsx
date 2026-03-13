@@ -288,7 +288,7 @@ export default function UserManagementPage() {
             case 'provider':
                 return <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">Provider</span>;
             default:
-                return <span className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">Patient</span>;
+                return <span className="bg-slate-100 text-slate-700 dark:text-slate-200 dark:bg-slate-800 dark:text-slate-400 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 dark:border-slate-700">Patient</span>;
         }
     };
 
@@ -323,14 +323,14 @@ export default function UserManagementPage() {
             {/* Table + Detail panel */}
             <div className="flex gap-6 items-start">
                 {/* Table */}
-                <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden min-w-0">
-                    <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4 bg-slate-50/50 dark:bg-slate-800/50">
+                <div className="flex-1 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden min-w-0">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-700 dark:border-slate-700 flex items-center gap-4 bg-slate-50/50 dark:bg-slate-800/50">
                         <div className="relative flex-1 max-w-sm">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
                                 placeholder="Filter by name or email..."
-                                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -345,7 +345,7 @@ export default function UserManagementPage() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
+                                <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 dark:border-slate-700">
                                     <th className="px-6 py-4">User</th>
                                     <th className="px-6 py-4">Role</th>
                                     <th className="px-6 py-4">Status</th>
@@ -455,7 +455,7 @@ export default function UserManagementPage() {
 
                 {/* Detail Panel */}
                 {selectedUser && (
-                    <div className="w-80 flex-shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden animate-in slide-in-from-right duration-200">
+                    <div className="w-80 flex-shrink-0 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden animate-in slide-in-from-right duration-200">
                         {/* Panel header */}
                         <div className="bg-brand/5 border-b border-brand/10 p-5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -463,7 +463,7 @@ export default function UserManagementPage() {
                                     {selectedUser.displayName?.charAt(0) || selectedUser.email?.charAt(0)}
                                 </div>
                                 <div>
-                                    <p className="font-black text-slate-900 dark:text-white text-sm">{selectedUser.displayName}</p>
+                                    <p className="font-black text-slate-900 dark:text-white dark:text-white text-sm">{selectedUser.displayName}</p>
                                     <p className="text-xs text-slate-500">{selectedUser.email}</p>
                                 </div>
                             </div>
@@ -480,10 +480,10 @@ export default function UserManagementPage() {
                                     ? <span className="text-xs font-black text-red-500 flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Disabled</span>
                                     : <span className="text-xs font-black text-emerald-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Active</span>
                             } />
-                            {selectedUser.dob && <DetailField label="Date of Birth" value={<span className="text-xs text-slate-600">{selectedUser.dob}</span>} />}
-                            {selectedUser.sex && <DetailField label="Sex" value={<span className="text-xs text-slate-600">{selectedUser.sex}</span>} />}
-                            <DetailField label="Created" value={<span className="text-xs text-slate-600">{selectedUser.creationTime ? new Date(selectedUser.creationTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>} />
-                            <DetailField label="Last Login" value={<span className="text-xs text-slate-600">{selectedUser.lastSignInTime ? new Date(selectedUser.lastSignInTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Never'}</span>} />
+                            {selectedUser.dob && <DetailField label="Date of Birth" value={<span className="text-xs text-slate-600 dark:text-slate-300">{selectedUser.dob}</span>} />}
+                            {selectedUser.sex && <DetailField label="Sex" value={<span className="text-xs text-slate-600 dark:text-slate-300">{selectedUser.sex}</span>} />}
+                            <DetailField label="Created" value={<span className="text-xs text-slate-600 dark:text-slate-300">{selectedUser.creationTime ? new Date(selectedUser.creationTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>} />
+                            <DetailField label="Last Login" value={<span className="text-xs text-slate-600 dark:text-slate-300">{selectedUser.lastSignInTime ? new Date(selectedUser.lastSignInTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Never'}</span>} />
 
                             {/* Phone */}
                             <div>
@@ -500,7 +500,7 @@ export default function UserManagementPage() {
                                                 onChange={e => setEditPhone(e.target.value)}
                                                 placeholder="+1 (555) 000-0000"
                                                 autoFocus
-                                                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-brand rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand/20"
+                                                className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-900/50 border border-brand rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand/20"
                                             />
                                         </div>
                                         <button onClick={handleSavePhone} disabled={savingPhone} className="p-1.5 bg-brand text-white rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50" title="Save">
@@ -512,7 +512,7 @@ export default function UserManagementPage() {
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between group/phone">
-                                        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                                        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200 dark:text-slate-300">
                                             <Phone className="w-3.5 h-3.5 text-slate-400" />
                                             {editPhone || <span className="text-slate-400 italic">Not set</span>}
                                         </div>
@@ -554,7 +554,7 @@ export default function UserManagementPage() {
             {/* â”€â”€ EDIT ACCOUNT MODAL â”€â”€ */}
             {isEditModalOpen && selectedUser && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-hidden">
                         <div className="bg-brand p-6 text-white relative">
                             <h3 className="text-xl font-bold flex items-center gap-2">
                                 <Edit2 className="w-5 h-5" /> Edit Account
@@ -584,7 +584,7 @@ export default function UserManagementPage() {
                                             required
                                             type="text"
                                             placeholder="First name"
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                             value={editForm.firstName}
                                             onChange={e => setEditForm({ ...editForm, firstName: e.target.value })}
                                         />
@@ -598,7 +598,7 @@ export default function UserManagementPage() {
                                             required
                                             type="text"
                                             placeholder="Last name"
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                             value={editForm.lastName}
                                             onChange={e => setEditForm({ ...editForm, lastName: e.target.value })}
                                         />
@@ -615,7 +615,7 @@ export default function UserManagementPage() {
                                         required
                                         type="email"
                                         placeholder="email@example.com"
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                         value={editForm.email}
                                         onChange={e => setEditForm({ ...editForm, email: e.target.value })}
                                     />
@@ -630,7 +630,7 @@ export default function UserManagementPage() {
                                     <input
                                         type="tel"
                                         placeholder="+1 (555) 000-0000"
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                         value={editForm.phone}
                                         onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
                                     />
@@ -643,7 +643,7 @@ export default function UserManagementPage() {
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">D.O.B.</label>
                                     <input
                                         type="date"
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                         value={editForm.dob}
                                         onChange={e => setEditForm({ ...editForm, dob: e.target.value })}
                                     />
@@ -651,7 +651,7 @@ export default function UserManagementPage() {
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Sex</label>
                                     <select
-                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                         value={editForm.sex}
                                         onChange={e => setEditForm({ ...editForm, sex: e.target.value })}
                                     >
@@ -666,7 +666,7 @@ export default function UserManagementPage() {
                             <div>
                                 <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Access Role</label>
                                 <select
-                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                                     value={editForm.role}
                                     onChange={e => setEditForm({ ...editForm, role: e.target.value })}
                                 >
@@ -681,7 +681,7 @@ export default function UserManagementPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsEditModalOpen(false)}
-                                    className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-all"
+                                    className="flex-1 py-2.5 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 rounded-xl transition-all"
                                 >
                                     Cancel
                                 </button>
@@ -702,7 +702,7 @@ export default function UserManagementPage() {
             {/* Create User Modal */}
             {isCreateModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-scale-up">
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-hidden animate-scale-up">
                         <div className="bg-brand p-6 text-white relative">
                             <h3 className="text-xl font-bold flex items-center gap-2">
                                 <UserPlus className="w-6 h-6" /> Create New Account
@@ -725,25 +725,25 @@ export default function UserManagementPage() {
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
                                         <div className="relative">
                                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                            <input required type="text" placeholder="e.g. John" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
+                                            <input required type="text" placeholder="e.g. John" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
                                         <div className="relative">
                                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                            <input required type="text" placeholder="e.g. Watson" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
+                                            <input required type="text" placeholder="e.g. Watson" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
                                         </div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">D.O.B.</label>
-                                        <input required type="date" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
+                                        <input required type="date" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Sex</label>
-                                        <select required className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.sex} onChange={e => setFormData({ ...formData, sex: e.target.value })}>
+                                        <select required className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.sex} onChange={e => setFormData({ ...formData, sex: e.target.value })}>
                                             <option value="" disabled>Select Sex...</option>
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
@@ -754,26 +754,26 @@ export default function UserManagementPage() {
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <input required type="email" placeholder="john@example.com" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                        <input required type="email" placeholder="john@example.com" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Phone Number <span className="text-slate-300 font-normal normal-case tracking-normal">(optional)</span></label>
                                     <div className="relative">
                                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <input type="tel" placeholder="+1 (555) 000-0000" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={newUserPhone} onChange={e => setNewUserPhone(e.target.value)} />
+                                        <input type="tel" placeholder="+1 (555) 000-0000" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={newUserPhone} onChange={e => setNewUserPhone(e.target.value)} />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Initial Password</label>
                                     <div className="relative">
                                         <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <input required type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                                        <input required type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Access Role</label>
-                                    <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
+                                    <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand focus:border-transparent transition-all" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
                                         <option value="patient">Patient</option>
                                         <option value="provider">Provider (Doctor)</option>
                                         <option value="admin">Systems Administrator</option>
@@ -781,7 +781,7 @@ export default function UserManagementPage() {
                                 </div>
                             </div>
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-all">Cancel</button>
+                                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 py-2.5 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 rounded-xl transition-all">Cancel</button>
                                 <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 bg-brand hover:bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand/20 transition-all active:scale-95 disabled:opacity-50">
                                     {isSubmitting ? 'Creating...' : 'Finalize Account'}
                                 </button>
@@ -807,13 +807,13 @@ function StatCard({ label, value, icon: Icon, color, bg, active, onClick }: any)
     return (
         <button
             onClick={onClick}
-            className={`bg-white dark:bg-slate-800 p-5 rounded-2xl border transition-all text-left flex items-center gap-4 ${active ? 'border-brand ring-4 ring-brand/5 shadow-md shadow-brand/5' : 'border-slate-200 dark:border-slate-700 shadow-sm hover:border-slate-300 dark:hover:border-slate-600'}`}
+            className={`bg-white dark:bg-slate-800 dark:bg-slate-800 p-5 rounded-2xl border transition-all text-left flex items-center gap-4 ${active ? 'border-brand ring-4 ring-brand/5 shadow-md shadow-brand/5' : 'border-slate-200 dark:border-slate-700 shadow-sm hover:border-slate-300 dark:hover:border-slate-600'}`}
         >
             <div className={`p-3 rounded-xl ${bg} ${color}`}>
                 <Icon className="w-5 h-5" />
             </div>
             <div>
-                <div className="text-2xl font-black text-slate-900 dark:text-white">{value}</div>
+                <div className="text-2xl font-black text-slate-900 dark:text-white dark:text-white">{value}</div>
                 <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</div>
             </div>
         </button>

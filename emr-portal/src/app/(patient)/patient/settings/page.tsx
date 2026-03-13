@@ -60,7 +60,7 @@ export default function PatientSettingsPage() {
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-20">
             <div>
-                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Settings</h1>
+                <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Settings</h1>
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Manage your account preferences</p>
             </div>
 
@@ -81,10 +81,10 @@ export default function PatientSettingsPage() {
                 </div>
 
                 {/* Content */}
-                <div className="md:col-span-3 bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
+                <div className="md:col-span-3 bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm p-8">
                     {activeSection === 'profile' && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-black text-slate-800">Profile Information</h2>
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Profile Information</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {[
                                     { label: 'First Name', key: 'firstName' },
@@ -99,13 +99,13 @@ export default function PatientSettingsPage() {
                                             type="text"
                                             value={(profile as any)[key]}
                                             onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))}
-                                            className="w-full border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none transition-all"
+                                            className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none transition-all"
                                         />
                                     </div>
                                 ))}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Email</label>
-                                    <input type="email" value={user?.email || ''} disabled className="w-full border border-slate-100 rounded-xl p-3 text-sm font-bold text-slate-400 bg-slate-50 cursor-not-allowed" />
+                                    <input type="email" value={user?.email || ''} disabled className="w-full border border-slate-100 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-400 bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed" />
                                 </div>
                             </div>
                         </div>
@@ -113,22 +113,22 @@ export default function PatientSettingsPage() {
 
                     {activeSection === 'notifications' && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-black text-slate-800">Notification Preferences</h2>
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Notification Preferences</h2>
                             {[
                                 { key: 'email', label: 'Email Notifications', desc: 'Receive appointment confirmations and updates via email' },
                                 { key: 'sms', label: 'SMS Notifications', desc: 'Get text message reminders for upcoming appointments' },
                                 { key: 'reminders', label: 'Appointment Reminders', desc: 'Receive reminders 24 hours before your appointment' },
                             ].map(({ key, label, desc }) => (
-                                <div key={key} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                                <div key={key} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                                     <div>
-                                        <p className="font-bold text-slate-800 text-sm">{label}</p>
+                                        <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{label}</p>
                                         <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
                                     </div>
                                     <button
                                         onClick={() => setNotifs(n => ({ ...n, [key]: !(n as any)[key] }))}
                                         className={`w-12 h-6 rounded-full transition-all relative ${(notifs as any)[key] ? 'bg-[#0EA5E9]' : 'bg-slate-200'}`}
                                     >
-                                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${(notifs as any)[key] ? 'left-7' : 'left-1'}`} />
+                                        <span className={`absolute top-1 w-4 h-4 bg-white dark:bg-slate-800 rounded-full shadow transition-all ${(notifs as any)[key] ? 'left-7' : 'left-1'}`} />
                                     </button>
                                 </div>
                             ))}
@@ -137,7 +137,7 @@ export default function PatientSettingsPage() {
 
                     {activeSection === 'security' && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-black text-slate-800">Security</h2>
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Security</h2>
                             <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
                                 <Shield className="w-5 h-5 text-emerald-600" />
                                 <div>
@@ -147,9 +147,9 @@ export default function PatientSettingsPage() {
                             </div>
                             <div className="space-y-3">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Account</p>
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
                                     <p className="text-xs font-bold text-slate-500 mb-1">Email Address</p>
-                                    <p className="text-sm font-bold text-slate-800">{user?.email}</p>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{user?.email}</p>
                                 </div>
                                 <p className="text-xs text-slate-400 italic">To change your password, use the "Forgot Password" link on the login page.</p>
                             </div>

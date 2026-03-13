@@ -52,7 +52,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 const Calendar = dynamic(() => import('react-calendar'), {
     ssr: false,
-    loading: () => <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-3xl animate-pulse">Loading selector...</div>
+    loading: () => <div className="h-[300px] flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-3xl animate-pulse">Loading selector...</div>
 });
 import 'react-calendar/dist/Calendar.css';
 import { logAuditEvent } from '@/lib/audit';
@@ -547,12 +547,12 @@ export default function AppointmentsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">Appointments</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 dark:text-white tracking-tight">Appointments</h1>
                     <p className="text-slate-400 dark:text-slate-300 font-bold uppercase tracking-widest text-xs mt-1">Manage your upcoming care visits</p>
                 </div>
 
                 <div className="flex gap-4">
-                    <div className="flex bg-white dark:bg-slate-800 p-1 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="flex bg-white dark:bg-slate-800 dark:bg-slate-800 p-1 rounded-2xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 shadow-sm">
                         <button
                             onClick={() => setActiveTab('waitlist')}
                             className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'waitlist' ? 'bg-[#0EA5E9] text-white shadow-lg shadow-sky-100 dark:shadow-sky-900/20' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}
@@ -612,7 +612,7 @@ export default function AppointmentsPage() {
                             : 'bg-[#F8FAFC] dark:bg-slate-900';
 
                     return (
-                        <div key={appt.id} className={`bg-white dark:bg-slate-800/80 rounded-[32px] border ${cardBorder} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
+                        <div key={appt.id} className={`bg-white dark:bg-slate-800 dark:bg-slate-800/80 rounded-[32px] border ${cardBorder} shadow-sm p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group hover:shadow-xl hover:shadow-sky-900/5 dark:hover:shadow-black/20 transition-all`}>
                             <div className={`w-20 h-20 ${dateBadgeBg} rounded-[24px] flex flex-col items-center justify-center shrink-0 border border-slate-50 dark:border-slate-700/50`}>
                                 {apptDate ? (
                                     <>
@@ -626,7 +626,7 @@ export default function AppointmentsPage() {
 
                             <div className="flex-1 text-center md:text-left space-y-2 min-w-0">
                                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
-                                    <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight truncate">{appt.providerName}</h3>
+                                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 dark:text-white tracking-tight truncate">{appt.providerName}</h3>
                                     <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isScheduled ? 'bg-sky-50 text-[#0EA5E9] border-sky-100 dark:bg-sky-900/30 dark:border-sky-800/50' :
                                         isWaitlist ? 'bg-transparent text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800/50' :
                                             isCancelled ? 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/30 dark:border-rose-800/50' :
@@ -692,7 +692,7 @@ export default function AppointmentsPage() {
                                                 </button>
                                                 <button
                                                     onClick={() => setIntakeDetail(appt)}
-                                                    className="w-full md:w-52 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                                                    className="w-full md:w-52 bg-white dark:bg-slate-800 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 dark:border-slate-700 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                                                 >
                                                     View Intake
                                                 </button>
@@ -703,7 +703,7 @@ export default function AppointmentsPage() {
                                 {isWaitlistStatus && (
                                     <button
                                         onClick={() => setIntakeDetail(appt)}
-                                        className="w-full md:w-auto bg-white dark:bg-slate-800 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm"
+                                        className="w-full md:w-auto bg-white dark:bg-slate-800 dark:bg-slate-800 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-900/50 px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm"
                                     >
                                         View Intake
                                     </button>
@@ -711,7 +711,7 @@ export default function AppointmentsPage() {
                                 {isCompleted && (
                                     <button
                                         onClick={() => handleViewSummary(appt)}
-                                        className="w-full md:w-48 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 py-4 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-100 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 hover:text-[#0EA5E9] transition-all flex items-center justify-center gap-2"
+                                        className="w-full md:w-48 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 py-4 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-100 dark:border-slate-700 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 hover:text-[#0EA5E9] transition-all flex items-center justify-center gap-2"
                                     >
                                         <Sparkles className="w-4 h-4" /> View AI Summary
                                     </button>
@@ -720,7 +720,7 @@ export default function AppointmentsPage() {
                         </div>
                     );
                 }) : (
-                    <div className="py-20 text-center space-y-4 bg-white dark:bg-slate-800/50 rounded-[40px] border border-slate-50 dark:border-slate-700/50">
+                    <div className="py-20 text-center space-y-4 bg-white dark:bg-slate-800 dark:bg-slate-800/50 rounded-[40px] border border-slate-50 dark:border-slate-700/50">
                         <CalendarIcon className="w-16 h-16 text-slate-100 dark:text-slate-700 mx-auto" />
                         <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-xs">No appointments found</p>
                     </div>
@@ -733,7 +733,7 @@ export default function AppointmentsPage() {
             {/* SCHEDULING FLOW MODAL */}
             {isScheduling && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
                         <div className="bg-[#0EA5E9] p-8 text-white flex justify-between items-center shrink-0 shadow-lg z-10">
                             <div className="flex items-center gap-4">
                                 {step > 1 && (
@@ -777,8 +777,8 @@ export default function AppointmentsPage() {
                             {step === 2 && (
                                 <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                                     {(iQs[newAppt.serviceKey as keyof typeof iQs] || []).map((q: any) => (
-                                        <div key={q.k} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
-                                            <label className="block text-sm font-black text-slate-800 mb-4">{q.l}</label>
+                                        <div key={q.k} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
+                                            <label className="block text-sm font-black text-slate-800 dark:text-slate-100 mb-4">{q.l}</label>
                                             {q.t === 'yn' ? (
                                                 <div className="flex gap-3">
                                                     {[
@@ -806,7 +806,7 @@ export default function AppointmentsPage() {
                                                         ...newAppt,
                                                         intake: { ...newAppt.intake, [q.k]: e.target.value }
                                                     })}
-                                                    className="w-full bg-white border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/10 focus:border-[#0EA5E9] transition-all"
+                                                    className="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/10 focus:border-[#0EA5E9] transition-all"
                                                 />
                                             )}
                                         </div>
@@ -822,11 +822,11 @@ export default function AppointmentsPage() {
 
                             {step === 3 && (
                                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                    <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
+                                    <div className="p-8 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 space-y-6">
                                         <div className="flex justify-between items-center pb-6 border-b border-slate-200/50">
                                             <div>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Service Selection</p>
-                                                <h4 className="text-xl font-black text-slate-800">{svcs.find(s => s.k === newAppt.serviceKey)?.name}</h4>
+                                                <h4 className="text-xl font-black text-slate-800 dark:text-slate-100">{svcs.find(s => s.k === newAppt.serviceKey)?.name}</h4>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Due</p>
@@ -838,9 +838,9 @@ export default function AppointmentsPage() {
                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intake Summary</p>
                                             <div className="grid grid-cols-1 gap-2">
                                                 {Object.entries(newAppt.intake).map(([k, v]) => (
-                                                    <div key={k} className="flex justify-between text-xs font-bold py-1 border-b border-slate-100 last:border-0">
+                                                    <div key={k} className="flex justify-between text-xs font-bold py-1 border-b border-slate-100 dark:border-slate-700 last:border-0">
                                                         <span className="text-slate-500 capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
-                                                        <span className="text-slate-800">{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</span>
+                                                        <span className="text-slate-800 dark:text-slate-100">{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -863,7 +863,7 @@ export default function AppointmentsPage() {
                         </div>
 
                         {step > 1 && (
-                            <div className="p-6 pt-0 shrink-0 border-t border-slate-100 bg-slate-50/50">
+                            <div className="p-6 pt-0 shrink-0 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50">
                                 <button onClick={() => setStep(step - 1)} className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-[#0EA5E9]">
                                     Back to previous step
                                 </button>
@@ -876,7 +876,7 @@ export default function AppointmentsPage() {
             {/* PRE-VISIT CHECKLIST MODAL */}
             {joiningAppt && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500">
                         <div className="bg-slate-900 p-8 text-white text-center">
                             <h2 className="text-2xl font-black tracking-tight mb-2">Pre-Visit Checklist</h2>
                             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Let's get ready for your visit</p>
@@ -929,7 +929,7 @@ export default function AppointmentsPage() {
             {/* INTAKE DETAIL MODAL — shown when patient clicks View Intake */}
             {intakeDetail && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
                         <div className="bg-gradient-to-br from-sky-400 to-indigo-500 p-8 md:p-10 text-white shrink-0 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="flex justify-between items-start relative z-10">
@@ -951,7 +951,7 @@ export default function AppointmentsPage() {
                             </div>
                         </div>
 
-                        <div className="p-8 space-y-4 overflow-y-auto flex-1 bg-white custom-scrollbar text-slate-800">
+                        <div className="p-8 space-y-4 overflow-y-auto flex-1 bg-white dark:bg-slate-800 custom-scrollbar text-slate-800 dark:text-slate-100">
                             {(() => {
                                 const isWaitlistDetail = ['pending_scheduling', 'waitlist'].includes(parsedStatus(intakeDetail.status));
                                 const isScheduledDetail = parsedStatus(intakeDetail.status) === 'scheduled';
@@ -961,15 +961,15 @@ export default function AppointmentsPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Provider</p>
-                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.providerName || 'Patriotic Provider'}</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{intakeDetail.providerName || 'Patriotic Provider'}</p>
                                             </div>
                                             <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Visit Type</p>
-                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.type || 'Telehealth'}</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{intakeDetail.type || 'Telehealth'}</p>
                                             </div>
                                             <div className="col-span-2 bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Scheduled Date & Time</p>
-                                                <p className="text-sm font-bold text-slate-800">
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                                     {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date) && isScheduledDetail
                                                         ? format(toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)!, 'PPPP p')
                                                         : 'TBD — Provider will confirm within 24–48 hours'}
@@ -984,7 +984,7 @@ export default function AppointmentsPage() {
                                             </div>
                                             <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Service</p>
-                                                <p className="text-sm font-bold text-slate-800">{intakeDetail.serviceKey?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Consultation'}</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{intakeDetail.serviceKey?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Consultation'}</p>
                                             </div>
                                             {intakeDetail.meetingUrl && isScheduledDetail && (
                                                 <div className="col-span-2 bg-sky-50/50 p-5 rounded-[24px] border border-sky-100/60">
@@ -1017,7 +1017,7 @@ export default function AppointmentsPage() {
                                                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">
                                                                         {question?.l || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}
                                                                     </p>
-                                                                    <div className="text-sm font-bold text-slate-800 bg-white p-4 rounded-2xl border border-slate-100">
+                                                                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
                                                                         {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v || '—')}
                                                                     </div>
                                                                 </div>
@@ -1048,24 +1048,24 @@ export default function AppointmentsPage() {
             {/* AI VISIT SUMMARY MODAL */}
             {selectedSummary && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 flex flex-col max-h-[90vh]">
                         <div className="bg-[#F5F3FF] p-10 flex justify-between items-start shrink-0 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-200/20 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-purple-600">
+                                    <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-sm flex items-center justify-center text-purple-600">
                                         <Sparkles className="w-5 h-5" />
                                     </div>
                                     <span className="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Generated by AI Scribe</span>
                                 </div>
-                                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Visit Summary</h2>
+                                <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Visit Summary</h2>
                                 {/* FIX: Guard toDate() in the modal header */}
                                 <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">
                                     {selectedSummary.providerName}
                                     {toSafeDate(selectedSummary.date) ? ` â€¢ ${format(toSafeDate(selectedSummary.date)!, 'PPP')}` : ''}
                                 </p>
                             </div>
-                            <button onClick={() => setSelectedSummary(null)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-white/80 transition-colors shadow-sm relative z-10">
+                            <button onClick={() => setSelectedSummary(null)} className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center hover:bg-white/80 transition-colors shadow-sm relative z-10">
                                 <X className="w-6 h-6 text-slate-400" />
                             </button>
                         </div>
@@ -1080,7 +1080,7 @@ export default function AppointmentsPage() {
                                 <>
                                     {/* ALWAYS show Intake if available */}
                                     {selectedSummary.intakeAnswers && Object.keys(selectedSummary.intakeAnswers).length > 0 && (
-                                        <div className="p-8 rounded-[2rem] border bg-slate-50 border-slate-100 shadow-inner">
+                                        <div className="p-8 rounded-[2rem] border bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700 shadow-inner">
                                             <div className="flex items-center gap-3 mb-6">
                                                 <div className="w-8 h-8 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center border border-indigo-100 shadow-sm">
                                                     <ClipboardCheck className="w-4 h-4" />
@@ -1096,7 +1096,7 @@ export default function AppointmentsPage() {
                                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-indigo-400 transition-colors">
                                                                 {question?.l || k.replace(/([A-Z])/g, ' $1')}
                                                             </p>
-                                                            <div className="text-sm font-bold text-slate-800 bg-white/60 p-4 rounded-2xl border border-slate-200/50 shadow-sm">
+                                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100 bg-white/60 p-4 rounded-2xl border border-slate-200/50 shadow-sm">
                                                                 {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v}
                                                             </div>
                                                         </div>
@@ -1131,8 +1131,8 @@ export default function AppointmentsPage() {
                                             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Was this summary helpful?</span>
                                             {!feedbackSent ? (
                                                 <div className="flex gap-2">
-                                                    <button onClick={() => handleFeedback(true)} className="p-2 bg-slate-50 rounded-lg hover:bg-emerald-50 hover:text-emerald-500 transition-colors"><ThumbsUp className="w-4 h-4" /></button>
-                                                    <button onClick={() => handleFeedback(false)} className="p-2 bg-slate-50 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-colors"><ThumbsDown className="w-4 h-4" /></button>
+                                                    <button onClick={() => handleFeedback(true)} className="p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg hover:bg-emerald-50 hover:text-emerald-500 transition-colors"><ThumbsUp className="w-4 h-4" /></button>
+                                                    <button onClick={() => handleFeedback(false)} className="p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-colors"><ThumbsDown className="w-4 h-4" /></button>
                                                 </div>
                                             ) : (
                                                 <span className="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Feedback Saved</span>
@@ -1183,7 +1183,7 @@ function VisitTypeCard({ icon: Icon, title, desc, active, onClick }: any) {
                 <Icon className="w-7 h-7" />
             </div>
             <div>
-                <h4 className="font-black text-slate-800 tracking-tight">{title}</h4>
+                <h4 className="font-black text-slate-800 dark:text-slate-100 tracking-tight">{title}</h4>
                 <p className="text-xs text-slate-400 font-bold">{desc}</p>
             </div>
         </button>
@@ -1200,7 +1200,7 @@ function CheckListItem({ icon: Icon, label, active, onClick }: any) {
                 <Icon className="w-4 h-4" />
                 <span className="text-xs font-black uppercase tracking-widest">{label}</span>
             </div>
-            {active ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-200"></div>}
+            {active ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-slate-700"></div>}
         </button>
     );
 }

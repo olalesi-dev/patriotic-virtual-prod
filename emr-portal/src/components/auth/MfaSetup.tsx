@@ -90,14 +90,14 @@ export function MfaSetup({ onComplete }: MfaSetupProps) {
     };
 
     return (
-        <div className="w-full max-w-md p-8 bg-white rounded-3xl shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-300">
+        <div className="w-full max-w-md p-8 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 animate-in fade-in zoom-in duration-300">
             <div id="recaptcha-container"></div>
 
             <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-brand/10 rounded-2xl flex items-center justify-center text-brand mx-auto mb-4">
                     <Shield className="w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Identity Verification</h2>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Identity Verification</h2>
                 <p className="text-slate-500 mt-2 text-sm font-medium">To protect sensitive patient data, HIPAA compliance requires Multi-Factor Authentication.</p>
             </div>
 
@@ -119,7 +119,7 @@ export function MfaSetup({ onComplete }: MfaSetupProps) {
                                 placeholder="+1 (555) 000-0000"
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
-                                className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
+                                className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all"
                                 required
                             />
                         </div>
@@ -144,7 +144,7 @@ export function MfaSetup({ onComplete }: MfaSetupProps) {
                             placeholder="000000"
                             value={verificationCode}
                             onChange={(e) => setVerificationCode(e.target.value)}
-                            className="w-full bg-slate-50 border-none rounded-xl py-4 px-4 text-center text-3xl font-black tracking-[0.5em] text-slate-900 placeholder:text-slate-200 focus:ring-2 focus:ring-brand/20 transition-all"
+                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 px-4 text-center text-3xl font-black tracking-[0.5em] text-slate-900 dark:text-white placeholder:text-slate-200 focus:ring-2 focus:ring-brand/20 transition-all"
                             maxLength={6}
                             required
                         />
@@ -171,7 +171,7 @@ export function MfaSetup({ onComplete }: MfaSetupProps) {
                     <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                         <CheckCircle2 className="w-10 h-10" />
                     </div>
-                    <h3 className="text-xl font-black text-slate-900">MFA Enrolled Successfully</h3>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white">MFA Enrolled Successfully</h3>
                     <p className="text-slate-500 text-sm font-medium px-4">Your account is now protected with 2-Factor Authentication. Redirecting to EMR...</p>
                 </div>
             )}

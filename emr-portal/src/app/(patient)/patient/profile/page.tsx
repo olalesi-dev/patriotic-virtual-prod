@@ -160,7 +160,7 @@ export default function PatientProfilePage() {
                     <select
                         value={data[key] as string}
                         onChange={e => setData(p => ({ ...p, [key]: e.target.value }))}
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white"
+                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800"
                     >
                         <option value="">Select...</option>
                         {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -170,7 +170,7 @@ export default function PatientProfilePage() {
                         type={type}
                         value={data[key] as string}
                         onChange={e => setData(p => ({ ...p, [key]: e.target.value }))}
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none"
+                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none"
                     />
                 )
             ) : (
@@ -190,7 +190,7 @@ export default function PatientProfilePage() {
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">My Profile</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">My Profile</h1>
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Manage your health record</p>
                 </div>
                 {!editing ? (
@@ -215,7 +215,7 @@ export default function PatientProfilePage() {
             </div>
 
             {/* Profile Hero Card */}
-            <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
                 {/* Banner */}
                 <div className="h-28 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 relative">
                     <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDB2LTJoMzZ6bTAtNHYtMkgwdi0yaDB2Mmgzdn0iLz48L2c+PC9nPjwvc3ZnPg==')] opacity-40" />
@@ -257,7 +257,7 @@ export default function PatientProfilePage() {
                         </div>
 
                         <div className="pb-2">
-                            <h2 className="text-2xl font-black text-slate-800">
+                            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100">
                                 {data.firstName || data.lastName
                                     ? `${data.firstName} ${data.lastName}`.trim()
                                     : userProfile.displayName}
@@ -285,7 +285,7 @@ export default function PatientProfilePage() {
                                         style={{ width: `${completionPct}%` }}
                                     />
                                 </div>
-                                <span className="text-sm font-black text-slate-700">{completionPct}%</span>
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-200">{completionPct}%</span>
                             </div>
                             {completionPct < 100 && (
                                 <button onClick={() => setEditing(true)} className="text-[10px] text-[#0EA5E9] font-bold mt-1 hover:underline">
@@ -296,7 +296,7 @@ export default function PatientProfilePage() {
                     </div>
 
                     {/* Tab Switcher */}
-                    <div className="flex gap-1 bg-slate-50 p-1 rounded-2xl mb-6 border border-slate-100">
+                    <div className="flex gap-1 bg-slate-50 dark:bg-slate-900/50 p-1 rounded-2xl mb-6 border border-slate-100 dark:border-slate-700">
                         {([
                             { id: 'personal', label: 'Personal Info', icon: User },
                             { id: 'medical', label: 'Medical History', icon: Activity },
@@ -341,7 +341,7 @@ export default function PatientProfilePage() {
                                 </div>
                             </section>
 
-                            <div className="h-px bg-slate-50" />
+                            <div className="h-px bg-slate-50 dark:bg-slate-900/50" />
 
                             <section>
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -355,7 +355,7 @@ export default function PatientProfilePage() {
                                 </div>
                             </section>
 
-                            <div className="h-px bg-slate-50" />
+                            <div className="h-px bg-slate-50 dark:bg-slate-900/50" />
 
                             <section>
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -393,7 +393,7 @@ export default function PatientProfilePage() {
                                         value={data.allergies}
                                         onChange={e => setData(p => ({ ...p, allergies: e.target.value }))}
                                         placeholder="e.g. Penicillin, Peanuts, Latex"
-                                        className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none min-h-[80px] resize-none"
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none min-h-[80px] resize-none"
                                     />
                                 ) : (
                                     <p className={`text-sm font-bold py-2 px-1 ${data.allergies ? 'text-slate-800' : 'text-slate-300 italic'}`}>
@@ -411,7 +411,7 @@ export default function PatientProfilePage() {
                                         value={data.currentMedications}
                                         onChange={e => setData(p => ({ ...p, currentMedications: e.target.value }))}
                                         placeholder="List current medications and dosages"
-                                        className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none min-h-[80px] resize-none"
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none min-h-[80px] resize-none"
                                     />
                                 ) : (
                                     <p className={`text-sm font-bold py-2 px-1 ${data.currentMedications ? 'text-slate-800' : 'text-slate-300 italic'}`}>
@@ -429,7 +429,7 @@ export default function PatientProfilePage() {
                                         value={data.chronicConditions}
                                         onChange={e => setData(p => ({ ...p, chronicConditions: e.target.value }))}
                                         placeholder="e.g. Diabetes Type 2, Hypertension"
-                                        className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none min-h-[80px] resize-none"
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none min-h-[80px] resize-none"
                                     />
                                 ) : (
                                     <p className={`text-sm font-bold py-2 px-1 ${data.chronicConditions ? 'text-slate-800' : 'text-slate-300 italic'}`}>

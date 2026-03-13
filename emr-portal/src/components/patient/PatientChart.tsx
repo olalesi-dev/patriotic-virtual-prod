@@ -73,9 +73,9 @@ export function PatientChart({ patient, onBack, onAddNote }: PatientChartProps) 
     ];
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-sans">
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900/50 overflow-hidden font-sans">
             {/* TOP BANNER */}
-            <div className="bg-white border-b border-slate-200 shadow-sm relative z-10">
+            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm relative z-10">
                 <div className="px-8 py-4">
                     <div
                         className="flex items-center gap-1 text-xs text-slate-400 font-bold mb-3 cursor-pointer hover:text-brand transition-colors group"
@@ -87,12 +87,12 @@ export function PatientChart({ patient, onBack, onAddNote }: PatientChartProps) 
 
                     <div className="flex justify-between items-start">
                         <div className="flex gap-6">
-                            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 font-black flex items-center justify-center text-2xl border-2 border-slate-200 dark:border-slate-700 shadow-inner">
+                            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 font-black flex items-center justify-center text-2xl border-2 border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-inner">
                                 {patient.name.split(' ').map(n => n[0]).join('')}
                             </div>
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
-                                    <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{patient.name}</h1>
+                                    <h1 className="text-2xl font-black text-slate-900 dark:text-white dark:text-slate-100 tracking-tight">{patient.name}</h1>
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${patient.statusColor}`}>
                                         {patient.status}
                                     </span>
@@ -203,18 +203,18 @@ function OverviewTab({ patient }: { patient: Patient }) {
                     <div className="space-y-3">
                         {patient.problemList && patient.problemList.length > 0 ? (
                             patient.problemList.map((p, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow group">
+                                <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 hover:shadow-md transition-shadow group">
                                     <div className="flex items-center gap-4">
                                         <div className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-[10px] font-black text-slate-500 font-mono">
                                             {p.code}
                                         </div>
-                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{p.description}</span>
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200">{p.description}</span>
                                     </div>
                                     <MoreHorizontal className="w-4 h-4 text-slate-300 group-hover:text-slate-500 cursor-pointer" />
                                 </div>
                             ))
                         ) : (
-                            <div className="p-4 text-center text-slate-400 text-xs font-medium bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <div className="p-4 text-center text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                                 No active problems recorded.
                             </div>
                         )}
@@ -226,13 +226,13 @@ function OverviewTab({ patient }: { patient: Patient }) {
                     <div className="space-y-3">
                         {patient.activeMedications && patient.activeMedications.length > 0 ? (
                             patient.activeMedications.map((m, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow group">
+                                <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 hover:shadow-md transition-shadow group">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
                                             <Pill className="w-5 h-5 text-indigo-500" />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-black text-slate-800 dark:text-slate-100">{m.name}</div>
+                                            <div className="text-sm font-black text-slate-800 dark:text-slate-100 dark:text-slate-100">{m.name}</div>
                                             <div className="text-xs text-slate-400 font-bold">{m.dosage} • {m.frequency}</div>
                                         </div>
                                     </div>
@@ -240,7 +240,7 @@ function OverviewTab({ patient }: { patient: Patient }) {
                                 </div>
                             ))
                         ) : (
-                            <div className="p-4 text-center text-slate-400 text-xs font-medium bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <div className="p-4 text-center text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                                 No active medications recorded.
                             </div>
                         )}
@@ -252,13 +252,13 @@ function OverviewTab({ patient }: { patient: Patient }) {
                     <div className="space-y-3">
                         {patient.recentEncounters && patient.recentEncounters.length > 0 ? (
                             patient.recentEncounters.map((e, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
+                                <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 hover:shadow-md transition-shadow">
                                     <div className="flex items-center gap-4">
                                         <div className="text-xs font-black text-slate-400 w-24">
                                             {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </div>
                                         <div>
-                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{e.title}</div>
+                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">{e.title}</div>
                                             <div className="text-xs text-brand font-black tracking-tight">{e.provider}</div>
                                         </div>
                                     </div>
@@ -266,7 +266,7 @@ function OverviewTab({ patient }: { patient: Patient }) {
                                 </div>
                             ))
                         ) : (
-                            <div className="p-8 text-center text-slate-400 text-sm font-medium bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <div className="p-8 text-center text-slate-400 text-sm font-medium bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                                 No recent encounters recorded.
                             </div>
                         )}
@@ -298,7 +298,7 @@ function OverviewTab({ patient }: { patient: Patient }) {
                                 </div>
                             ))
                         ) : (
-                            <div className="p-8 text-center bg-slate-100/50 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 shadow-sm">
+                            <div className="p-8 text-center bg-slate-100/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 shadow-sm">
                                 No upcoming appointments scheduled
                             </div>
                         )}
@@ -309,9 +309,9 @@ function OverviewTab({ patient }: { patient: Patient }) {
             {/* RIGHT COLUMN (40%) */}
             <div className="col-span-12 lg:col-span-5 space-y-8">
                 {/* Demographics Card */}
-                <div className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
                     <div className="flex justify-between items-center mb-8">
-                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Demographics</h3>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 uppercase tracking-tight">Demographics</h3>
                         <button className="text-xs text-brand font-black hover:underline">Edit</button>
                     </div>
 
@@ -328,17 +328,17 @@ function OverviewTab({ patient }: { patient: Patient }) {
 
                     <div className="mt-8 pt-8 border-t border-slate-50 dark:border-slate-700">
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Preferred Pharmacy</h4>
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700">
-                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">CVS Pharmacy #04432</div>
+                        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 dark:border-slate-700">
+                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">CVS Pharmacy #04432</div>
                             <div className="text-xs text-slate-500 mt-1">123 Health St, New York, NY 10001</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Weight Trend */}
-                <div className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Weight Trend</h3>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 uppercase tracking-tight">Weight Trend</h3>
                         <span className="text-xs font-black text-emerald-500">-15 lbs (last 60d)</span>
                     </div>
 
@@ -359,7 +359,7 @@ function OverviewTab({ patient }: { patient: Patient }) {
                                 );
                             })
                         ) : (
-                            <div className="flex-1 flex items-center justify-center text-slate-300 text-xs font-bold border-2 border-dashed border-slate-100 rounded-xl h-full">
+                            <div className="flex-1 flex items-center justify-center text-slate-300 text-xs font-bold border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-xl h-full">
                                 No weight data available
                             </div>
                         )}
@@ -371,21 +371,21 @@ function OverviewTab({ patient }: { patient: Patient }) {
                 </div>
 
                 {/* Consent Status */}
-                <div className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Consent Status</h3>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 uppercase tracking-tight">Consent Status</h3>
                         <button className="text-xs text-brand font-black hover:underline">View All</button>
                     </div>
                     <div className="space-y-4">
                         {patient.consents.map((c, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl">
+                            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 rounded-2xl">
                                 <div className="flex items-center gap-3">
                                     {c.status === 'Signed' || c.status === 'Acknowledged' ? (
                                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                                     ) : (
                                         <Clock className="w-5 h-5 text-slate-300" />
                                     )}
-                                    <div className="text-sm font-bold text-slate-700 dark:text-slate-200">{c.title}</div>
+                                    <div className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200">{c.title}</div>
                                 </div>
                                 <div className="text-[10px] font-black text-slate-400">{c.date}</div>
                             </div>
@@ -418,13 +418,13 @@ function ClinicalTab({ patient, onNewEncounter }: { patient: Patient; onNewEncou
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Clinical Header Actions */}
-            <div className="flex items-center justify-between bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-brand">
+            <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-brand/10 rounded-2xl flex items-center justify-center">
                         <Stethoscope className="w-6 h-6 text-brand" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Clinical Documentation</h2>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Clinical Documentation</h2>
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Manage medical records and encounters</p>
                     </div>
                 </div>
@@ -442,15 +442,15 @@ function ClinicalTab({ patient, onNewEncounter }: { patient: Patient; onNewEncou
                         <div className="space-y-3">
                             {patient.problemList && patient.problemList.length > 0 ? (
                                 patient.problemList.map((p, i) => (
-                                    <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                                         <div>
                                             <div className="text-xs font-black text-brand uppercase">{p.code}</div>
-                                            <div className="text-sm font-bold text-slate-800">{p.description}</div>
+                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{p.description}</div>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="p-8 text-center text-slate-400 text-sm font-medium bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                <div className="p-8 text-center text-slate-400 text-sm font-medium bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                                     No active problems recorded.
                                 </div>
                             )}
@@ -476,11 +476,11 @@ function ClinicalTab({ patient, onNewEncounter }: { patient: Patient; onNewEncou
 
 function Section({ icon: Icon, title, children, action, accentColor = "text-brand" }: any) {
     return (
-        <div className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
+        <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-6 lg:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
                     <Icon className={`w-6 h-6 ${accentColor}`} />
-                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight uppercase">{title}</h3>
+                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 dark:text-slate-100 tracking-tight uppercase">{title}</h3>
                 </div>
                 {action && (
                     <button className="text-xs font-black text-brand uppercase tracking-widest hover:underline">{action}</button>
@@ -495,7 +495,7 @@ function DataField({ label, value }: { label: string; value: string }) {
     return (
         <div>
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</div>
-            <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{value}</div>
+            <div className="text-sm font-bold text-slate-800 dark:text-slate-100 dark:text-slate-200">{value}</div>
         </div>
     );
 }

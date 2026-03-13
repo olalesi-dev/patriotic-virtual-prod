@@ -67,7 +67,7 @@ export default function ImagingPage() {
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Imaging Reports</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Imaging Reports</h1>
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">MRI, X-Ray, and Radiology results</p>
                 </div>
                 <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 font-bold text-xs">
@@ -80,15 +80,15 @@ export default function ImagingPage() {
                 {orders.length > 0 ? orders.map((order) => (
                     <div
                         key={order.id}
-                        className="bg-white rounded-[40px] border border-slate-50 shadow-sm hover:shadow-xl hover:shadow-sky-900/5 transition-all p-8 md:p-10 flex flex-col md:flex-row gap-8 relative group"
+                        className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-50 shadow-sm hover:shadow-xl hover:shadow-sky-900/5 transition-all p-8 md:p-10 flex flex-col md:flex-row gap-8 relative group"
                     >
-                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-400 group-hover:bg-[#0EA5E9]/10 group-hover:text-[#0EA5E9] transition-all shrink-0">
+                        <div className="w-20 h-20 bg-slate-50 dark:bg-slate-900/50 rounded-3xl flex items-center justify-center text-slate-400 group-hover:bg-[#0EA5E9]/10 group-hover:text-[#0EA5E9] transition-all shrink-0">
                             <Scan className="w-10 h-10" />
                         </div>
 
                         <div className="flex-1 space-y-4">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                <h3 className="text-2xl font-black text-slate-800 tracking-tight">{order.type} {order.bodyPart}</h3>
+                                <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{order.type} {order.bodyPart}</h3>
                                 <span className={`w-fit px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${order.status === 'Results Available' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                     order.status === 'Completed' ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' :
                                         'bg-amber-50 text-amber-600 border-amber-100'
@@ -100,15 +100,15 @@ export default function ImagingPage() {
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ordered By</p>
-                                    <p className="font-bold text-slate-700 text-sm">{order.provider}</p>
+                                    <p className="font-bold text-slate-700 dark:text-slate-200 text-sm">{order.provider}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Study Date</p>
-                                    <p className="font-bold text-slate-700 text-sm">{format(order.date.toDate(), 'PPP')}</p>
+                                    <p className="font-bold text-slate-700 dark:text-slate-200 text-sm">{format(order.date.toDate(), 'PPP')}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Facility</p>
-                                    <p className="font-bold text-slate-700 text-sm">{order.facility || 'Patriotic Medical Imaging'}</p>
+                                    <p className="font-bold text-slate-700 dark:text-slate-200 text-sm">{order.facility || 'Patriotic Medical Imaging'}</p>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +134,7 @@ export default function ImagingPage() {
                                     )}
                                 </>
                             ) : (
-                                <div className="p-4 bg-slate-50 rounded-2xl text-center">
+                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl text-center">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Processing</p>
                                     <p className="text-xs font-bold text-slate-500 mt-1 italic">ETA: 24-48 Hours</p>
                                 </div>
@@ -142,7 +142,7 @@ export default function ImagingPage() {
                         </div>
                     </div>
                 )) : (
-                    <div className="py-20 text-center space-y-4 bg-white rounded-[40px] border border-slate-50">
+                    <div className="py-20 text-center space-y-4 bg-white dark:bg-slate-800 rounded-[40px] border border-slate-50">
                         <Scan className="w-16 h-16 text-slate-100 mx-auto" />
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No imaging studies found in your record</p>
                     </div>
@@ -152,7 +152,7 @@ export default function ImagingPage() {
             {/* Report Modal */}
             {selectedOrder && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
                         <div className="bg-[#0EA5E9] p-10 text-white flex justify-between items-start shrink-0 relative">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                             <div className="relative z-10">
@@ -169,10 +169,10 @@ export default function ImagingPage() {
 
                         <div className="p-10 space-y-8 overflow-y-auto flex-1">
                             {/* Study Info */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-slate-50 rounded-[32px] border border-slate-100">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[32px] border border-slate-100 dark:border-slate-700">
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Study Date</p>
-                                    <p className="font-black text-slate-800">{format(selectedOrder.date.toDate(), 'PPP')}</p>
+                                    <p className="font-black text-slate-800 dark:text-slate-100">{format(selectedOrder.date.toDate(), 'PPP')}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
@@ -180,14 +180,14 @@ export default function ImagingPage() {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Referrer</p>
-                                    <p className="font-black text-slate-800">{selectedOrder.provider}</p>
+                                    <p className="font-black text-slate-800 dark:text-slate-100">{selectedOrder.provider}</p>
                                 </div>
                             </div>
 
                             {/* Report Body */}
                             <div className="space-y-6">
                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Radiologist Findings</h4>
-                                <div className="font-sans text-slate-700 leading-relaxed space-y-4">
+                                <div className="font-sans text-slate-700 dark:text-slate-200 leading-relaxed space-y-4">
                                     {selectedOrder.reportText ? (
                                         selectedOrder.reportText.split('\n\n').map((para, i) => (
                                             <p key={i} className="font-medium">{para}</p>
@@ -212,7 +212,7 @@ export default function ImagingPage() {
                             )}
                             <button
                                 onClick={() => setSelectedOrder(null)}
-                                className="px-10 bg-white text-slate-400 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all border border-slate-100"
+                                className="px-10 bg-white dark:bg-slate-800 text-slate-400 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all border border-slate-100 dark:border-slate-700"
                             >
                                 Close
                             </button>

@@ -211,19 +211,19 @@ export default function BillingPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-6rem)] font-sans bg-slate-50 dark:bg-slate-900 relative overflow-hidden text-slate-900 dark:text-slate-100">
+        <div className="flex flex-col h-[calc(100vh-6rem)] font-sans bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 relative overflow-hidden text-slate-900 dark:text-white dark:text-slate-100">
 
             {/* HEADER */}
-            <div className="bg-white dark:bg-slate-900 px-8 pt-6 pb-0 border-b border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-800 dark:bg-slate-900 px-8 pt-6 pb-0 border-b border-slate-200 dark:border-slate-700 dark:border-slate-800">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-slate-600 dark:text-slate-400">
+                        <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-slate-600 dark:text-slate-300 dark:text-slate-400">
                             <DollarSign className="w-6 h-6" />
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Billing</h1>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">Billing</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button onClick={handleExport} className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold py-2 px-4 rounded-lg shadow-sm flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <button onClick={handleExport} className="bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 dark:text-slate-300 font-bold py-2 px-4 rounded-lg shadow-sm flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                             <Download className="w-4 h-4" /> Export
                         </button>
                         <button onClick={() => setIsNewInvoiceOpen(true)} className="bg-brand hover:bg-brand-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm flex items-center gap-2 transition-colors">
@@ -284,7 +284,7 @@ export default function BillingPage() {
 
                     {/* FILTER BAR */}
                     <div className="flex items-center flex-wrap gap-4">
-                        <span className="font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">{filteredData.length} {activeTab}</span>
+                        <span className="font-bold text-slate-900 dark:text-white dark:text-slate-100 whitespace-nowrap">{filteredData.length} {activeTab}</span>
 
                         {/* Search */}
                         <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -294,7 +294,7 @@ export default function BillingPage() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={`Search ${activeTab.toLowerCase()}...`}
-                                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border-0 dark:border dark:border-slate-700 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-slate-100"
+                                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 dark:bg-slate-800 border-0 dark:border dark:border-slate-700 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white dark:text-slate-100"
                             />
                         </div>
 
@@ -322,9 +322,9 @@ export default function BillingPage() {
                     </div>
 
                     {/* TABLE */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative min-h-[400px]">
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-hidden relative min-h-[400px]">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                            <thead className="bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
                                 <tr>
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">ID</th>
@@ -339,11 +339,11 @@ export default function BillingPage() {
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                 {filteredData.map((item: any) => (
                                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors group">
-                                        <td className="px-6 py-4 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                                        <td className="px-6 py-4 text-slate-700 dark:text-slate-200 dark:text-slate-300 font-medium whitespace-nowrap">
                                             {item.issueDate || item.date}
                                         </td>
                                         <td className="px-6 py-4 font-bold text-brand hover:underline cursor-pointer">{item.id}</td>
-                                        <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{item.patient}</td>
+                                        <td className="px-6 py-4 text-slate-700 dark:text-slate-200 dark:text-slate-300">{item.patient}</td>
 
                                         {activeTab === 'Invoices' && (
                                             <td className="px-6 py-4">
@@ -351,16 +351,16 @@ export default function BillingPage() {
                                             </td>
                                         )}
                                         {activeTab === 'Invoices' && (
-                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-400 text-sm truncate max-w-xs">{item.services}</td>
+                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300 dark:text-slate-400 text-sm truncate max-w-xs">{item.services}</td>
                                         )}
 
                                         {activeTab !== 'Invoices' && (
-                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-400 text-sm">
+                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300 dark:text-slate-400 text-sm">
                                                 {item.method || item.insurance || '-'}
                                             </td>
                                         )}
 
-                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100 text-right">${item.price?.toFixed(2) || item.amount?.toFixed(2)}</td>
+                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white dark:text-slate-100 text-right">${item.price?.toFixed(2) || item.amount?.toFixed(2)}</td>
 
                                         <td className="px-6 py-4">
                                             <button className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
@@ -411,16 +411,16 @@ function StatusBadge({ status }: { status: string }) {
 
 function FinancialCard({ amount, label, subLabel, badge, color = "text-slate-900 dark:text-slate-100" }: any) {
     return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center text-center relative h-32">
+        <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center text-center relative h-32">
             {badge === 'stripe' && (
                 <span className="absolute top-3 right-3 bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">stripe</span>
             )}
             {badge === 'USD' && (
-                <span className="absolute top-3 right-3 bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">USD</span>
+                <span className="absolute top-3 right-3 bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 dark:border-slate-700">USD</span>
             )}
 
             <div className={`text-3xl font-bold mb-1 ${color}`}>${amount}</div>
-            <div className="text-sm font-bold text-slate-600 dark:text-slate-400">
+            <div className="text-sm font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400">
                 {label} <span className="text-slate-400 dark:text-slate-500 font-normal">{subLabel}</span>
             </div>
         </div>
@@ -445,7 +445,7 @@ function FilterDropdown({ label, icon: Icon, options, selected, onChange }: any)
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                         <div className="p-2 space-y-1">
                             {options.map((option: string) => (
                                 <label key={option} className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg cursor-pointer">
@@ -455,7 +455,7 @@ function FilterDropdown({ label, icon: Icon, options, selected, onChange }: any)
                                         onChange={() => onChange(option)}
                                         className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-brand focus:ring-brand"
                                     />
-                                    <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{option}</span>
+                                    <span className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-300 font-medium">{option}</span>
                                 </label>
                             ))}
                         </div>
@@ -468,7 +468,7 @@ function FilterDropdown({ label, icon: Icon, options, selected, onChange }: any)
 
 function FloatingButton({ icon: Icon, onClick }: any) {
     return (
-        <button onClick={onClick} className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group relative">
+        <button onClick={onClick} className="w-12 h-12 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group relative">
             <Icon className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200" />
         </button>
     )
@@ -486,9 +486,9 @@ function NewInvoiceModal({ onClose, onSave }: any) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border dark:border-slate-700">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">New Invoice</h3>
+            <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border dark:border-slate-700">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 dark:border-slate-700">
+                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 dark:text-slate-100">New Invoice</h3>
                     <button onClick={onClose}><X className="w-5 h-5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300" /></button>
                 </div>
                 <div className="p-6 space-y-4">
@@ -505,8 +505,8 @@ function NewInvoiceModal({ onClose, onSave }: any) {
                         <input type="text" value={service} onChange={e => setService(e.target.value)} placeholder="e.g. Therapy Session" className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand" />
                     </div>
                 </div>
-                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 font-bold text-sm bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 dark:border-slate-700 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 dark:text-slate-300 font-bold text-sm bg-white dark:bg-slate-800 dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancel</button>
                     <button onClick={handleSubmit} className="px-6 py-2 bg-brand hover:bg-brand-600 text-white font-bold rounded-lg text-sm shadow-sm">Create Invoice</button>
                 </div>
             </div>

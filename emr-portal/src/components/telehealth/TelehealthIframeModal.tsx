@@ -104,7 +104,7 @@ export function TelehealthIframeModal({
 
     return (
         <div className="fixed inset-0 z-[999] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col w-full max-w-6xl h-full max-h-[90vh] border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-800 dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col w-full max-w-6xl h-full max-h-[90vh] border border-slate-200 dark:border-slate-700 dark:border-slate-800">
                 
                 {/* Header Toolbar */}
                 <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0 shadow-md z-10">
@@ -161,7 +161,7 @@ export function TelehealthIframeModal({
                 </div>
 
                 {/* iFrame Container */}
-                <div className="flex-1 w-full bg-slate-50 dark:bg-slate-950 relative">
+                <div className="flex-1 w-full bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-950 relative">
                     {/* Placeholder while iframe loads, mostly hidden once loaded */}
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-4 pointer-events-none opacity-50">
                         <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />

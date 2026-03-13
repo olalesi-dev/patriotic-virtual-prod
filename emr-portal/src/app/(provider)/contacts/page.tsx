@@ -203,9 +203,9 @@ export default function ContactsPage() {
         <div className="space-y-6">
 
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">Professional Contacts</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Professional Contacts</h2>
                     <p className="text-slate-500 text-sm">Manage your network of healthcare professionals.</p>
                 </div>
                 <button
@@ -223,7 +223,7 @@ export default function ContactsPage() {
                     <input
                         type="text"
                         placeholder="Search by name, role, or email..."
-                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand focus:border-brand outline-none"
+                        className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-brand focus:border-brand outline-none"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -233,7 +233,7 @@ export default function ContactsPage() {
                         <select
                             value={roleFilter}
                             onChange={(e) => setRoleFilter(e.target.value)}
-                            className="appearance-none pl-10 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand focus:border-brand outline-none cursor-pointer"
+                            className="appearance-none pl-10 pr-8 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand focus:border-brand outline-none cursor-pointer"
                         >
                             {roles.map(role => <option key={role} value={role}>{role}</option>)}
                         </select>
@@ -244,7 +244,7 @@ export default function ContactsPage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as 'name' | 'role')}
-                            className="appearance-none pl-10 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand focus:border-brand outline-none cursor-pointer"
+                            className="appearance-none pl-10 pr-8 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand focus:border-brand outline-none cursor-pointer"
                         >
                             <option value="name">Sort by Name</option>
                             <option value="role">Sort by Role</option>
@@ -256,14 +256,14 @@ export default function ContactsPage() {
 
             {/* CONTACTS GRID */}
             {filteredContacts.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
+                <div className="text-center py-12 text-slate-500 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 border-dashed">
                     <UserPlus className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                     <p>No contacts found matching your search.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredContacts.map(contact => (
-                        <div key={contact.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group relative flex flex-col">
+                        <div key={contact.id} className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow group relative flex flex-col">
                             {/* Avatar & Actions */}
                             <div className="flex justify-between items-start mb-4 relative z-0">
                                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${contact.color}`}>
@@ -279,8 +279,8 @@ export default function ContactsPage() {
 
                                     {/* DROPDOWN MENU */}
                                     {activeMenuId === contact.id && (
-                                        <div className="absolute right-0 top-8 w-40 bg-white rounded-lg shadow-xl border border-slate-100 z-50 animate-in fade-in zoom-in-95 duration-75 overflow-hidden">
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditContact(contact); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors border-b border-slate-50">
+                                        <div className="absolute right-0 top-8 w-40 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 z-50 animate-in fade-in zoom-in-95 duration-75 overflow-hidden">
+                                            <button onClick={(e) => { e.stopPropagation(); handleEditContact(contact); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 flex items-center gap-2 transition-colors border-b border-slate-50">
                                                 <Edit className="w-4 h-4" /> Edit
                                             </button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteContact(contact.id); }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors">
@@ -292,10 +292,10 @@ export default function ContactsPage() {
                             </div>
 
                             {/* Info */}
-                            <h3 className="font-bold text-lg text-slate-900 mb-1">{contact.name}</h3>
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{contact.name}</h3>
                             <p className="text-brand font-medium text-sm mb-4 bg-indigo-50 inline-block px-2 py-0.5 rounded-md self-start">{contact.role}</p>
 
-                            <div className="space-y-2 text-sm text-slate-600 flex-1">
+                            <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300 flex-1">
                                 <div className="flex items-center gap-3">
                                     <Mail className="w-4 h-4 text-slate-400" />
                                     <a href={`mailto:${contact.email}`} className="hover:text-brand hover:underline truncate">{contact.email}</a>
@@ -311,16 +311,16 @@ export default function ContactsPage() {
                             </div>
 
                             {/* Actions */}
-                            <div className="mt-6 pt-4 border-t border-slate-100 flex gap-2">
+                            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2">
                                 <button
                                     onClick={() => setMessageTarget(contact)}
-                                    className="flex-1 py-2 border border-slate-200 rounded-lg text-slate-600 font-bold text-sm hover:bg-brand-50 hover:text-brand hover:border-brand-200 transition-colors flex items-center justify-center gap-2"
+                                    className="flex-1 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-brand-50 hover:text-brand hover:border-brand-200 transition-colors flex items-center justify-center gap-2"
                                 >
                                     <MessageSquare className="w-4 h-4" /> Message
                                 </button>
                                 <button
                                     onClick={() => setSelectedContact(contact)}
-                                    className="flex-1 py-2 border border-slate-200 rounded-lg text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors"
+                                    className="flex-1 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 transition-colors"
                                 >
                                     Profile
                                 </button>
@@ -357,9 +357,9 @@ function AddContactModal({ onClose, onSave, initialData }: any) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h3 className="font-bold text-lg text-slate-800">{initialData ? 'Edit Contact' : 'Add New Contact'}</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{initialData ? 'Edit Contact' : 'Add New Contact'}</h3>
                     <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -393,7 +393,7 @@ function AddContactModal({ onClose, onSave, initialData }: any) {
                     </div>
 
                     <div className="pt-4 flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-slate-600 font-bold text-sm hover:bg-slate-50 rounded-lg">Cancel</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 rounded-lg">Cancel</button>
                         <button type="submit" className="px-6 py-2 bg-brand text-white font-bold text-sm rounded-lg hover:bg-brand-600 shadow-md">{initialData ? 'Save Changes' : 'Save Contact'}</button>
                     </div>
                 </form>
@@ -405,7 +405,7 @@ function AddContactModal({ onClose, onSave, initialData }: any) {
 function ProfileModal({ contact, onClose, onMessage }: any) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative">
                 {/* Header with background */}
                 <div className="h-24 bg-gradient-to-r from-blue-500 to-indigo-600 relative">
                     <button onClick={onClose} className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 p-1.5 rounded-full text-white backdrop-blur-md transition-colors"><X className="w-4 h-4" /></button>
@@ -413,7 +413,7 @@ function ProfileModal({ contact, onClose, onMessage }: any) {
 
                 {/* Avatar */}
                 <div className="px-6 relative">
-                    <div className={`w-20 h-20 rounded-full border-4 border-white shadow-md flex items-center justify-center text-2xl font-bold -mt-10 ${contact.color} bg-white`}>
+                    <div className={`w-20 h-20 rounded-full border-4 border-white shadow-md flex items-center justify-center text-2xl font-bold -mt-10 ${contact.color} bg-white dark:bg-slate-800`}>
                         {contact.avatar}
                     </div>
                 </div>
@@ -421,7 +421,7 @@ function ProfileModal({ contact, onClose, onMessage }: any) {
                 <div className="p-6 pt-2">
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <h3 className="text-xl font-bold text-slate-900">{contact.name}</h3>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{contact.name}</h3>
                             <p className="text-brand font-medium text-sm">{contact.role}</p>
                         </div>
                         <button onClick={onMessage} className="bg-brand text-white p-2 rounded-full shadow-lg hover:scale-105 transition-transform">
@@ -430,21 +430,21 @@ function ProfileModal({ contact, onClose, onMessage }: any) {
                     </div>
 
                     <div className="space-y-4">
-                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm text-slate-600 leading-relaxed">
+                        <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                             {contact.bio || "No bio available."}
                         </div>
 
                         <div className="space-y-3">
-                            <div className="flex items-center gap-3 text-sm text-slate-700">
+                            <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                                 <Mail className="w-4 h-4 text-slate-400" /> {contact.email}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-slate-700">
+                            <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                                 <Phone className="w-4 h-4 text-slate-400" /> {contact.phone}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-slate-700">
+                            <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                                 <MapPin className="w-4 h-4 text-slate-400" /> {contact.location}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-slate-700">
+                            <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                                 <Clock className="w-4 h-4 text-slate-400" /> {contact.availability || "Standard Hours"}
                             </div>
                         </div>
@@ -467,13 +467,13 @@ function MessageModal({ contact, onClose, onSend }: any) {
     const [msg, setMsg] = useState('');
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
                     <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${contact.color}`}>
                             {contact.avatar}
                         </div>
-                        <h3 className="font-bold text-slate-800">Message to {contact.name}</h3>
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100">Message to {contact.name}</h3>
                     </div>
                     <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
                 </div>
@@ -486,7 +486,7 @@ function MessageModal({ contact, onClose, onSend }: any) {
                         onChange={e => setMsg(e.target.value)}
                     ></textarea>
                     <div className="flex justify-end gap-3">
-                        <button onClick={onClose} className="px-4 py-2 text-slate-600 font-bold text-sm hover:bg-slate-50 rounded-lg">Cancel</button>
+                        <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 rounded-lg">Cancel</button>
                         <button onClick={() => onSend(msg)} className="px-6 py-2 bg-brand text-white font-bold text-sm rounded-lg hover:bg-brand-600 shadow-md flex items-center gap-2">
                             <MessageSquare className="w-4 h-4" /> Send Message
                         </button>

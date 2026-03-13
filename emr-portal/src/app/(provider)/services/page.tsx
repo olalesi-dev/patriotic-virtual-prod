@@ -203,12 +203,12 @@ export default function ServicesPage() {
         : SERVICES.filter(s => s.category === activeCategory);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-6rem)] font-sans bg-slate-50 dark:bg-slate-900 relative overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-6rem)] font-sans bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 relative overflow-hidden">
             <div className="px-8 pt-8 pb-4 space-y-8 overflow-y-auto h-full">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
-                        <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 italic tracking-tight uppercase">Medical Services & Plans</h2>
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-white dark:text-slate-100 italic tracking-tight uppercase">Medical Services & Plans</h2>
                         <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-xl text-sm font-bold uppercase tracking-widest">
                             Select a category to explore specialized care options
                         </p>
@@ -216,7 +216,7 @@ export default function ServicesPage() {
                 </div>
 
                 {/* Tabs Bar */}
-                <div className="flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl w-fit border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl w-fit border border-slate-200 dark:border-slate-700 dark:border-slate-700">
                     {TABS.map(tab => (
                         <button
                             key={tab.id}
@@ -242,7 +242,7 @@ export default function ServicesPage() {
                     {filteredServices.map((service, index) => (
                         <div
                             key={index}
-                            className={`group relative bg-white dark:bg-slate-800 border rounded-2xl p-6 transition-all hover:shadow-xl hover:-translate-y-1.5 flex flex-col h-full ${service.highlight
+                            className={`group relative bg-white dark:bg-slate-800 dark:bg-slate-800 border rounded-2xl p-6 transition-all hover:shadow-xl hover:-translate-y-1.5 flex flex-col h-full ${service.highlight
                                 ? 'border-amber-200 dark:border-amber-900 shadow-md ring-2 ring-amber-50 dark:ring-amber-900/20'
                                 : 'border-slate-200 dark:border-slate-700 shadow-sm'
                                 }`}
@@ -275,7 +275,7 @@ export default function ServicesPage() {
 
                             {/* Content */}
                             <div className="flex-1 mb-6">
-                                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-2 group-hover:text-brand transition-colors">
+                                <h3 className="font-bold text-lg text-slate-900 dark:text-white dark:text-slate-100 mb-2 group-hover:text-brand transition-colors">
                                     {service.title}
                                 </h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
@@ -284,12 +284,12 @@ export default function ServicesPage() {
                             </div>
 
                             {/* Footer (Price + Action) */}
-                            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 dark:border-slate-700 flex items-center justify-between">
                                 <div>
-                                    <span className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{service.price}</span>
+                                    <span className="text-xl font-extrabold text-slate-900 dark:text-white dark:text-slate-100 tracking-tight">{service.price}</span>
                                     <span className="text-xs text-slate-400 dark:text-slate-500 font-bold ml-1 uppercase">{service.unit.replace('/ ', '')}</span>
                                 </div>
-                                <button className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:bg-brand group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand/30 transition-all duration-300">
+                                <button className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:bg-brand group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand/30 transition-all duration-300">
                                     <ArrowRight className="w-5 h-5" />
                                 </button>
                             </div>

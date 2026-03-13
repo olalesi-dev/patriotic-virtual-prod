@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 
 export default function LoginPage() {
     return (
-        <div className="min-h-screen flex bg-white font-sans overflow-hidden">
+        <div className="min-h-screen flex bg-white dark:bg-slate-800 font-sans overflow-hidden">
             {/* Left side: Hero Image and Branding */}
             <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 items-center justify-center overflow-hidden">
                 <div
@@ -28,7 +28,7 @@ export default function LoginPage() {
                         className="space-y-8"
                     >
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-white rounded-xl shadow-lg flex items-center justify-center">
+                            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center">
                                 <span className="text-2xl font-black text-brand italic">P</span>
                             </div>
                             <h1 className="text-white text-3xl font-black tracking-tighter">
@@ -79,7 +79,7 @@ export default function LoginPage() {
             {/* Right side: Login Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative">
                 <div className="absolute top-8 right-8 lg:top-12 lg:right-12 hidden sm:block">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 rounded-full border border-slate-100 dark:border-slate-700">
                         <ShieldCheck className="w-4 h-4 text-brand" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Security Verified</span>
                     </div>
@@ -92,17 +92,17 @@ export default function LoginPage() {
                         <div className="inline-flex items-center gap-6 px-6 py-3 bg-slate-50/50 rounded-2xl border border-slate-100/50">
                             <div className="flex flex-col items-center">
                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Standard</span>
-                                <span className="text-xs font-bold text-slate-700">HITRUST</span>
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">HITRUST</span>
                             </div>
                             <div className="h-4 w-[1px] bg-slate-200"></div>
                             <div className="flex flex-col items-center">
                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</span>
-                                <span className="text-xs font-bold text-slate-700">Certified</span>
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Certified</span>
                             </div>
                             <div className="h-4 w-[1px] bg-slate-200"></div>
                             <div className="flex flex-col items-center">
                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Protocol</span>
-                                <span className="text-xs font-bold text-slate-700">OAuth 2.0</span>
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">OAuth 2.0</span>
                             </div>
                         </div>
                     </div>
