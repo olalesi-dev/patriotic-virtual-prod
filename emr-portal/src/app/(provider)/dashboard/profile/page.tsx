@@ -32,6 +32,9 @@ interface ProfileData {
     residency: string;
     doseSpotClinicianId: string;
     photoURL: string;
+    aboutMe: string;
+    languagesSpoken: string;
+    complianceDocs: { id: string; name: string; type: string; url: string; expiryDate: string; }[];
 }
 
 const EMPTY: ProfileData = {
@@ -40,6 +43,7 @@ const EMPTY: ProfileData = {
     specialty: '', npi: '', deaNumber: '', stateLicenseNumber: '', stateLicenseState: '',
     clinicName: '', clinicPhone: '', clinicFax: '',
     medicalSchool: '', residency: '', doseSpotClinicianId: '', photoURL: '',
+    aboutMe: '', languagesSpoken: '', complianceDocs: [],
 };
 
 export default function ProviderProfilePage() {
@@ -49,8 +53,9 @@ export default function ProviderProfilePage() {
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'practice' | 'erx'>('personal');
+    const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'practice' | 'compliance' | 'erx'>('personal');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const docInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (!userProfile.uid) return;
@@ -81,6 +86,9 @@ export default function ProviderProfilePage() {
                         residency: d.residency || '',
                         doseSpotClinicianId: d.doseSpotClinicianId?.toString() || '',
                         photoURL: d.photoURL || userProfile.photoURL || '',
+                        aboutMe: d.aboutMe || '',
+                        languagesSpoken: d.languagesSpoken || '',
+                        complianceDocs: d.complianceDocs || [],
                     });
                 } else {
                     setData(prev => ({
@@ -149,6 +157,62 @@ export default function ProviderProfilePage() {
         }
     };
 
+    const handleDocUpload = async (file: File) => {
+        if (!auth.currentUser) return;
+        setUploading(true);
+        try {
+            const storage = getStorage();
+            const fileRef = storageRef(storage, `compliance/${auth.currentUser.uid}/${Date.now()}_${file.name}`);
+            const task = uploadBytesResumable(fileRef, file);
+            task.on('state_changed', null, 
+                (err) => { toast.error('Upload failed'); setUploading(false); },
+                async () => {
+                    const url = await getDownloadURL(task.snapshot.ref);
+                    const newDoc = {
+                        id: Date.now().toString(),
+                        name: file.name,
+                        type: 'Certificate/License',
+                        url,
+                        expiryDate: ''
+                    };
+                    const newDocs = [...data.complianceDocs, newDoc];
+                    setData(p => ({ ...p, complianceDocs: newDocs }));
+                    await updateDoc(doc(db, 'users', auth.currentUser!.uid), { complianceDocs: newDocs, updatedAt: serverTimestamp() });
+                    setUploading(false);
+                    toast.success('Document uploaded!');
+                }
+            );
+        } catch (e) {
+            toast.error('Upload failed');
+            setUploading(false);
+        }
+    };
+
+    const handleRemoveDoc = async (docId: string) => {
+        if (!auth.currentUser) return;
+        try {
+            const newDocs = data.complianceDocs.filter(d => d.id !== docId);
+            setData(p => ({ ...p, complianceDocs: newDocs }));
+            await updateDoc(doc(db, 'users', auth.currentUser.uid), { complianceDocs: newDocs, updatedAt: serverTimestamp() });
+            toast.success('Document removed');
+        } catch (e) {
+            toast.error('Failed to remove document');
+        }
+    };
+
+    const handleUpdateDocExpiry = async (docId: string, expiryDate: string, docName: string) => {
+        const newDocs = data.complianceDocs.map(d => d.id === docId ? { ...d, expiryDate, name: docName } : d);
+        setData(p => ({ ...p, complianceDocs: newDocs }));
+        // Only save to DB if not currently in global 'editing' mode, to allow batch saving, 
+        // but wait, we want instant save for docs or part of form? Let's just update local state, 
+        // user has to click "Save Changes" to commit if we don't auto-save.
+        // Actually, let's auto-save doc metadata.
+        if (!editing) {
+             await updateDoc(doc(db, 'users', auth.currentUser!.uid), { complianceDocs: newDocs, updatedAt: serverTimestamp() });
+             toast.success('Document details updated');
+        }
+    };
+
     const field = (label: string, key: keyof ProfileData, type = 'text', options?: string[]) => (
         <div className="space-y-1.5" key={key}>
             <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>
@@ -172,6 +236,25 @@ export default function ProviderProfilePage() {
                 )
             ) : (
                 <p className={`text-sm font-bold py-2 px-1 ${data[key] ? 'text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600 italic'}`}>
+                    {(data[key] as string) || 'Not provided'}
+                </p>
+            )}
+        </div>
+    );
+
+    const textareaField = (label: string, key: keyof ProfileData) => (
+        <div className="space-y-1.5 md:col-span-2" key={key}>
+            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>
+            {editing ? (
+                <textarea
+                    rows={4}
+                    value={data[key] as string}
+                    onChange={e => setData(p => ({ ...p, [key]: e.target.value }))}
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800 resize-y"
+                    placeholder="Enter details here..."
+                />
+            ) : (
+                <p className={`text-sm font-bold py-2 px-1 whitespace-pre-wrap ${data[key] ? 'text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600 italic'}`}>
                     {(data[key] as string) || 'Not provided'}
                 </p>
             )}
@@ -290,6 +373,7 @@ export default function ProviderProfilePage() {
                             { id: 'personal', label: 'Personal', icon: User },
                             { id: 'professional', label: 'Credentials', icon: Award },
                             { id: 'practice', label: 'Practice', icon: Building },
+                            { id: 'compliance', label: 'Compliance & Docs', icon: FileText },
                             { id: 'erx', label: 'eRx (DoseSpot)', icon: ExternalLink },
                         ] as const).map(({ id, label, icon: Icon }) => (
                             <button
@@ -319,6 +403,70 @@ export default function ProviderProfilePage() {
                                     {field('Gender', 'gender', 'text', ['Male', 'Female', 'Non-binary', 'Prefer not to say'])}
                                     {field('Personal Phone', 'phone', 'tel')}
                                     {field('Primary Address', 'address')}
+                                    {field('Languages Spoken', 'languagesSpoken', 'text')}
+                                    {textareaField('About Me / Bio', 'aboutMe')}
+                                </div>
+                            </section>
+                        </div>
+                    )}
+
+                    {/* ── COMPLIANCE & DOCS ── */}
+                    {activeTab === 'compliance' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                            <section>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <FileText className="w-3.5 h-3.5" /> Licenses & Certificates
+                                    </h3>
+                                    <input type="file" ref={docInputRef} className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={e => e.target.files?.[0] && handleDocUpload(e.target.files[0])} />
+                                    <button onClick={() => docInputRef.current?.click()} disabled={uploading} className="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors disabled:opacity-50 flex items-center gap-1.5">
+                                        {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                                        Upload Document
+                                    </button>
+                                </div>
+                                <div className="space-y-3">
+                                    {data.complianceDocs.length === 0 ? (
+                                        <div className="p-8 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-sm font-medium">
+                                            No compliance documents uploaded yet.
+                                        </div>
+                                    ) : (
+                                        data.complianceDocs.map(docItem => (
+                                            <div key={docItem.id} className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                                    <div className="min-w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                                                        <FileText className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        {editing ? (
+                                                            <input type="text" value={docItem.name} onChange={e => handleUpdateDocExpiry(docItem.id, docItem.expiryDate, e.target.value)} className="w-full text-sm font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 p-1 rounded" />
+                                                        ) : (
+                                                            <a href={docItem.url} target="_blank" rel="noreferrer" className="text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 truncate block">
+                                                                {docItem.name}
+                                                            </a>
+                                                        )}
+                                                        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5 block">{docItem.type}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0 pt-2 border-t border-slate-100 dark:border-slate-700 md:pt-0 md:border-none">
+                                                    <div className="flex items-center gap-2 flex-1 md:flex-none">
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expires:</span>
+                                                        {editing ? (
+                                                            <input type="date" value={docItem.expiryDate} onChange={e => handleUpdateDocExpiry(docItem.id, e.target.value, docItem.name)} className="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 outline-none focus:ring-1 focus:ring-indigo-500" />
+                                                        ) : (
+                                                            <span className={`text-xs font-bold px-2 py-1 rounded-lg ${docItem.expiryDate ? (new Date(docItem.expiryDate) < new Date() ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300') : 'text-slate-400'}`}>
+                                                                {docItem.expiryDate || 'N/A'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {editing && (
+                                                        <button onClick={() => handleRemoveDoc(docItem.id)} className="p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors">
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </section>
                         </div>
