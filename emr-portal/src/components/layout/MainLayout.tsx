@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
     Search, Calendar, Video, User, Bell, LayoutDashboard, FileText, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu, LogOut,
-    Pill, Microscope, Scan, Bot, BarChart, TrendingUp, ShieldCheck, ClipboardList, Activity
+    Pill, Microscope, Scan, Bot, BarChart, TrendingUp, ShieldCheck, ClipboardList, Activity, Clock
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { GlobalSearch } from './GlobalSearch';
@@ -108,6 +108,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patient-search" icon={Search} label="Patient Search" active={pathname === '/patient-search'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname === '/inbox'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname === '/waitlist'} collapsed={isSidebarCollapsed} />
                     </div>
 
                     {/* ORDERS & Rx */}
