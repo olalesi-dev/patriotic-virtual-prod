@@ -501,10 +501,7 @@ export default function AppointmentsPage() {
 
     // FIX: Guard against undefined date before calling toDate()
     const isJoinable = (apptDate: any) => {
-        const date = toSafeDate(apptDate);
-        if (!date) return false;
-        const now = new Date();
-        return isAfter(now, subMinutes(date, 15)) && isBefore(now, addMinutes(date, 60));
+        return true; // testing: bypass 15 min check
     };
 
     const canCancel = (apptDate: any) => {

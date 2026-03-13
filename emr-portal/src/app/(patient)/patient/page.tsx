@@ -260,10 +260,7 @@ export default function PatientDashboard() {
     };
 
     const isJoinable = (apptDate: any) => {
-        const date = safeDate(apptDate);
-        if (!date) return false;
-        const now = new Date();
-        return isAfter(now, subMinutes(date, 15)) && !isAfter(now, addMinutes(date, 60));
+        return true; // testing: bypass 15 min time check
     };
 
     const handleSendMessage = async (e: React.FormEvent) => {

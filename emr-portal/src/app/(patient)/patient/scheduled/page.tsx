@@ -199,9 +199,7 @@ export default function ScheduledAppointmentsPage() {
     }, []);
 
     const isJoinable = (d: Date | null) => {
-        if (!d) return false;
-        const now = new Date();
-        return isAfter(now, subMinutes(d, 15)) && isBefore(now, addMinutes(d, 90));
+        return true; // testing: bypass 15 min check
     };
 
     const fmtService = (key: string) =>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mic, BrainCircuit, Activity, CheckCircle, Video, Loader2 } from 'lucide-react';
+import { X, Mic, BrainCircuit, Activity, CheckCircle, Video, Loader2, ExternalLink } from 'lucide-react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'react-hot-toast';
@@ -140,6 +140,15 @@ export function TelehealthIframeModal({
                                 </span>
                             </div>
                         )}
+                        
+                        {/* Open in New Window Button */}
+                        <button
+                            onClick={() => window.open(videoLink, '_blank')}
+                            className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 p-2.5 rounded-xl transition-all shadow-sm group relative"
+                            title="Open Telehealth in New Window"
+                        >
+                            <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        </button>
                         
                         {isGeneratingNote ? (
                             <button disabled className="bg-amber-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl flex items-center gap-2 opacity-90 cursor-not-allowed transition-all">
