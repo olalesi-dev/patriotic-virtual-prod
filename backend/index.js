@@ -1204,20 +1204,32 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
                 const uid = consultData.uid;
 
                 if (uid) {
-                    const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
-                    await apptRef.set({
+                    const baseApptData = {
                         providerName: "Patriotic Provider",
                         providerId: "dr-o-admin-uid",
                         type: "Telehealth",
                         status: "waitlist",
                         scheduledAt: null,
-                        meetingUrl: "https://doxy.me/patriotictelehealth",
+                        meetingUrl: "https://doxy.me/ патриотиctelehealth", // leaving as url encoded but fixing URL just in case, wait it's just a string, let's keep original "https://doxy.me/patriotictelehealth"
                         consultationId: consultationId,
                         serviceKey: consultData.serviceKey || 'general_consultation',
                         intakeAnswers: consultData.intake || {},
                         patientUid: uid,
                         createdAt: admin.firestore.FieldValue.serverTimestamp()
-                    });
+                    };
+                    baseApptData.meetingUrl = "https://doxy.me/patriotictelehealth";
+
+                    // 1. Patient Sub-collection
+                    const apptRef = db.collection('patients').doc(uid).collection('appointments').doc(consultationId);
+                    await apptRef.set(baseApptData, { merge: true });
+
+                    // 2. Top-level collection (Used by EMR)
+                    const topApptRef = db.collection('appointments').doc(consultationId);
+                    await topApptRef.set({
+                        ...baseApptData,
+                        patientId: uid,
+                        paymentStatus: 'paid'
+                    }, { merge: true });
 
                     const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
                     const patientSnap = await db.collection('patients').doc(uid).get();
@@ -1374,12 +1386,9 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             const consultSnap = await consultRef.get();
             const consultData = consultSnap.exists ? consultSnap.data() : {};
 
-            // 3. Create Waitlist Appointment in Patient Sub-collection
-            // Path: patients/{uid}/appointments
-            // status='waitlist' until provider schedules it
+            // 3. Create Waitlist Appointment in Patient Sub-collection AND Top-Level
             if (uid) {
-                const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
-                batch.set(apptRef, {
+                const baseApptData = {
                     providerName: "Patriotic Provider",
                     providerId: "dr-o-admin-uid",
                     type: "Telehealth",
@@ -1391,7 +1400,19 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
                     intakeAnswers: consultData.intake || {},
                     patientUid: uid,
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
-                });
+                };
+
+                // Patient Sub-collection
+                const apptRef = db.collection('patients').doc(uid).collection('appointments').doc(consultationId);
+                batch.set(apptRef, baseApptData, { merge: true });
+
+                // Top-level collection (Used by EMR)
+                const topApptRef = db.collection('appointments').doc(consultationId);
+                batch.set(topApptRef, {
+                    ...baseApptData,
+                    patientId: uid,
+                    paymentStatus: 'paid'
+                }, { merge: true });
             }
 
             await batch.commit();
