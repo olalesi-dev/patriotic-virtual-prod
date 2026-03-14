@@ -29,9 +29,9 @@ function generateEncryptedUserId(userId, clinicKey, phrase) {
 }
 
 function generateSSOUrl(params) {
-    const clinicId = process.env.DOSESPOT_CLINIC_ID;
-    const clinicKey = process.env.DOSESPOT_CLINIC_KEY;
-    const baseUrl = process.env.DOSESPOT_BASE_URL;
+    const clinicId = (process.env.DOSESPOT_CLINIC_ID || '1007159').trim();
+    const clinicKey = (process.env.DOSESPOT_CLINIC_KEY || 'HPHH63FJA79VHFQQ5S4UR2K9JMVTF2N9').trim();
+    const baseUrl = (process.env.DOSESPOT_BASE_URL || 'https://my.staging.dosespot.com').trim();
 
     const phrase = generatePhrase();
 

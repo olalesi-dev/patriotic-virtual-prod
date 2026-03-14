@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, Video, Filter, MoreHorizontal, CheckCircle, XCircle, Clock, X, Mail, Phone, User, Activity, ChevronDown } from 'lucide-react';
+import { Calendar, Video, Filter, MoreHorizontal, CheckCircle, XCircle, Clock, X, Mail, Phone, User, Activity, ChevronDown, Stethoscope } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, serverTimestamp, Timestamp, getDoc, getDocs, orderBy, limit } from 'firebase/firestore';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
@@ -748,6 +748,15 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
         'Waitlist': 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-100 dark:border-purple-800',
     };
 
+    const getServiceIcon = (key: string) => {
+        if (!key) return Stethoscope;
+        const k = key.toLowerCase();
+        if (k.includes('weight') || k.includes('hrt') || k.includes('testosterone') || k.includes('vital')) return Activity;
+        if (k.includes('erectile') || k.includes('premature') || k.includes('mens')) return Activity;
+        return Stethoscope; // Fallback
+    };
+    const ServiceIcon = getServiceIcon(appointment.serviceKey);
+
     return (
         <div
             onClick={status !== 'Waitlist' ? onViewDetail : undefined}
@@ -756,7 +765,10 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
             <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 rounded-lg border border-slate-100 dark:border-slate-700 dark:border-slate-600 text-slate-600 dark:text-slate-300 dark:text-slate-300 font-mono group-hover:bg-brand-50 dark:group-hover:bg-brand/10 group-hover:text-brand transition-colors shrink-0">
                     {status === 'Waitlist' ? (
-                        <span className="text-[9px] font-bold text-purple-500 dark:text-purple-400 uppercase">Wait</span>
+                        <>
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter leading-tight" title="Submitted Date">{appointment.createdAt ? appointment.createdAt.split(',')[0] : 'Wait'}</span>
+                            <span className="text-[10px] font-bold leading-tight mt-0.5" title="Submitted Time">{appointment.createdAt ? (appointment.createdAt.split(',')[2]?.trim() || appointment.createdAt.split(',')[1]?.trim() || appointment.displayTime) : ''}</span>
+                        </>
                     ) : (
                         <>
                             <span className="text-[10px] font-bold uppercase">{displayTime.split(' ')[1] || ''}</span>
@@ -767,7 +779,10 @@ function ScheduleCard({ appointment, isMenuOpen, onToggleMenu, onStatusChange, o
                 </div>
                 <div>
                     <h4 className="font-bold text-slate-900 dark:text-white dark:text-slate-100 text-sm group-hover:text-brand transition-colors">{patient}</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{type}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+                        <ServiceIcon className="w-3.5 h-3.5 text-brand" />
+                        {type}
+                    </p>
                 </div>
             </div>
 

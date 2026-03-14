@@ -176,7 +176,7 @@ app.get('/api/v1/dosespot/notification-count', async (req, res) => {
 });
 
 function verifyDoseSpotSecret(req) {
-    const webhookSecret = process.env.DOSESPOT_WEBHOOK_SECRET;
+    const webhookSecret = (process.env.DOSESPOT_WEBHOOK_SECRET || '').trim();
     if (!webhookSecret) {
         console.warn('[DoseSpot Webhook] DOSESPOT_WEBHOOK_SECRET not set — skipping secret verification');
         return true;
@@ -185,7 +185,7 @@ function verifyDoseSpotSecret(req) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-        if (process.env.DOSESPOT_WEBHOOK_STRICT === 'true') {
+        if ((process.env.DOSESPOT_WEBHOOK_STRICT || '').trim() === 'true') {
             console.warn('[DoseSpot Webhook] Missing Authorization header in strict mode — rejecting');
             return false;
         }
