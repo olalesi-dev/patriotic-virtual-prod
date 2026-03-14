@@ -147,8 +147,12 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
                     {/* Header */}
                     <div className="p-5 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-indigo-500 flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
-                                {profile.initials}
+                            <div className="w-10 h-10 rounded-full bg-indigo-500 flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md overflow-hidden">
+                                {profile.photoURL ? (
+                                    <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    profile.initials
+                                )}
                             </div>
                             <div className="min-w-0">
                                 <h4 className="text-sm font-bold text-slate-900 dark:text-white dark:text-white truncate">
@@ -243,11 +247,15 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
             >
                 {!isOpen && !collapsed && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none"></div>}
 
-                <div className={`w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md ring-2 transition-all
+                <div className={`w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md ring-2 transition-all overflow-hidden
                     ${isOpen ? 'bg-white text-indigo-600 ring-indigo-500' : 'bg-indigo-500 ring-slate-900'}
                     ${collapsed && !isOpen ? 'ring-offset-2 ring-indigo-500/20' : ''}
                 `}>
-                    {resolvedInitials}
+                    {profile.photoURL ? (
+                        <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        resolvedInitials
+                    )}
                 </div>
 
                 {!collapsed && (

@@ -226,8 +226,13 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
     const [intakeData, setIntakeData] = useState<Record<string, any> | null>(null);
     const [intakeLoading, setIntakeLoading] = useState(false);
     const [screeningOpen, setScreeningOpen] = useState(true);
+    
+    // SOAP Notes State
+    const [chartOpen, setChartOpen] = useState(false);
+    const [soapNotes, setSoapNotes] = useState(appt?.soapNotes || '');
+    const [isSavingSoap, setIsSavingSoap] = useState(false);
 
-    // Fetch full appointment doc (including intakeData) when panel opens
+    // Fetch full appointment doc (including intakeData and soapNotes) when panel opens
     useEffect(() => {
         if (!appt?.id) { setIntakeData(null); return; }
         setIntakeLoading(true);
@@ -236,6 +241,7 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                 if (snap.exists()) {
                     const data = snap.data();
                     setIntakeData(data.intakeData || null);
+                    if (data.soapNotes) setSoapNotes(data.soapNotes);
                 } else {
                     setIntakeData(null);
                 }
@@ -258,6 +264,19 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
         key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^./, s => s.toUpperCase()).trim();
 
     const intakeEntries = intakeData ? Object.entries(intakeData) : [];
+
+    const handleSaveChart = async () => {
+        if (!appt?.id) return;
+        setIsSavingSoap(true);
+        try {
+            await updateDoc(doc(db, 'appointments', appt.id), { soapNotes });
+            alert('SOAP notes saved successfully.');
+        } catch (e) {
+            alert('Failed to save SOAP notes.');
+        } finally {
+            setIsSavingSoap(false);
+        }
+    };
 
     return (
         <>
@@ -302,6 +321,45 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                         <DetailRow icon={<User size={14} />} label="Provider" value={appt.providerName || appt.doctor || 'â€”'} />
                         <DetailRow icon={<FileText size={14} />} label="Visit Reason" value={appt.notes || appt.service || 'â€”'} />
                         {appt.patientId && <DetailRow icon={<User size={14} />} label="Patient ID" value={appt.patientId.slice(0, 12)} />}
+                    </div>
+
+                    {/* ── PATIENT CHART / SOAP NOTES ── */}
+                    <div className="border-b border-slate-100 dark:border-slate-700">
+                        <button
+                            onClick={() => setChartOpen(o => !o)}
+                            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <FileText size={15} className="text-indigo-500" />
+                                <span className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">Patient Chart & SOAP Notes</span>
+                            </div>
+                            <ChevronDownIcon size={14} className={`text-slate-400 transition-transform duration-200 ${chartOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {chartOpen && (
+                            <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
+                                        Clinical SOAP Notes
+                                    </label>
+                                    <textarea
+                                        className="w-full h-32 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        placeholder="S: Subjective&#10;O: Objective&#10;A: Assessment&#10;P: Plan"
+                                        value={soapNotes}
+                                        onChange={(e) => setSoapNotes(e.target.value)}
+                                    />
+                                    <div className="flex justify-end">
+                                        <button
+                                            onClick={handleSaveChart}
+                                            disabled={isSavingSoap}
+                                            className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                                        >
+                                            {isSavingSoap ? 'Saving...' : 'Save Notes'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* â”€â”€ SAFETY SCREENING SECTION â”€â”€ */}
