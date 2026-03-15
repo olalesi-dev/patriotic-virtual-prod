@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState } from 'react';
+import type { User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-    Search, Calendar, Video, User, Bell, LayoutDashboard, FileText, Settings,
+    Search, Calendar, Video, User, LayoutDashboard, FileText, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu, LogOut,
     Pill, Microscope, Scan, Bot, BarChart, TrendingUp, ShieldCheck, ClipboardList, Activity, Clock
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { GlobalSearch } from './GlobalSearch';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -19,6 +22,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [activeUser, setActiveUser] = useState<FirebaseUser | null>(auth.currentUser);
 
     // Form State
     const [patient, setPatient] = useState('John Doe');
@@ -27,8 +31,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [type, setType] = useState('video');
 
     const router = useRouter();
+    usePushNotifications(activeUser);
 
     const profile = useUserProfile();
+
+    React.useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((nextUser) => {
+            setActiveUser(nextUser);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     React.useEffect(() => {
         if (!profile.loading) {
@@ -106,6 +119,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" active={pathname === '/dashboard'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname === '/calendar'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/team" icon={Users} label="Team" active={pathname === '/team'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patient-search" icon={Search} label="Patient Search" active={pathname === '/patient-search'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname === '/inbox'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname === '/waitlist'} collapsed={isSidebarCollapsed} />
@@ -207,10 +221,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                         <ThemeToggle />
 
-                        <button className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors relative hover:text-brand">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
-                        </button>
+                        <ProviderNotificationBell />
 
                         <button
                             onClick={() => setIsBookingModalOpen(true)}

@@ -21,7 +21,7 @@ const nextConfig = {
     },
     transpilePackages: ['undici', 'firebase', '@firebase/auth'],
     experimental: {
-        serverExternalPackages: ['firebase-admin'],
+        serverComponentsExternalPackages: ['firebase-admin'],
     },
     async headers() {
         return [

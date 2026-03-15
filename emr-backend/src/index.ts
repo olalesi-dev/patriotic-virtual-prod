@@ -44,6 +44,9 @@ app.use(morgan('combined'));
 app.use(express.json());
 
 // Public Routes (No Auth)
+app.get('/', (_req, res) => {
+    res.json({ service: 'emr-backend', status: 'UP', health: '/health' });
+});
 app.use('/health', healthRoutes);
 
 // DoseSpot Webhook (Public - server-to-server from DoseSpot infrastructure)
