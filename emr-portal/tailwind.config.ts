@@ -12,9 +12,11 @@ const config: Config = {
         extend: {
             colors: {
                 sidebar: {
-                    DEFAULT: '#0F172A',
-                    active: '#1E293B',
-                    hover: '#334155',
+                    DEFAULT: 'rgb(var(--sidebar-bg) / <alpha-value>)',
+                    active: 'rgb(var(--sidebar-active) / <alpha-value>)',
+                    hover: 'rgb(var(--sidebar-hover) / <alpha-value>)',
+                    foreground: 'rgb(var(--sidebar-foreground) / <alpha-value>)',
+                    muted: 'rgb(var(--sidebar-muted) / <alpha-value>)',
                 },
                 brand: {
                     DEFAULT: '#4F46E5',
