@@ -317,9 +317,9 @@ export default function PatientDashboard() {
 
             {/* 24-HOUR PROVIDER CONTACT BANNER — shown when patient has pending booking */}
             {appointments.some(a => (a.status as any) === 'PENDING_SCHEDULING') && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-[24px] p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
-                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-                        <Bell className="w-5 h-5 text-amber-600" />
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-800/50 rounded-[24px] p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-xl flex items-center justify-center shrink-0">
+                        <Bell className="w-5 h-5 text-amber-600 dark:text-amber-500" />
                     </div>
                     <div className="flex-1">
                         <p className="font-black text-amber-900 text-sm tracking-tight">Your visit request is confirmed!</p>
@@ -352,7 +352,7 @@ export default function PatientDashboard() {
                                     const apptDate = safeDate(appt.date);
                                     const isPending = (appt.status as any) === 'PENDING_SCHEDULING';
                                     return (
-                                        <div key={appt.id} className={`p-5 rounded-2xl border ${isPending ? 'border-amber-100 bg-amber-50/20' : 'border-slate-50 bg-[#F8FAFC]'} group hover:border-[#0EA5E9]/30 transition-all relative`}>
+                                        <div key={appt.id} className={`p-5 rounded-2xl border ${isPending ? 'border-amber-100 bg-amber-50/20 dark:border-amber-900/30 dark:bg-amber-900/10' : 'border-slate-50 bg-[#F8FAFC] dark:border-slate-700/50 dark:bg-slate-800/50'} group hover:border-[#0EA5E9]/30 transition-all relative`}>
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className={`w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-sm flex items-center justify-center ${isPending ? 'text-amber-500' : 'text-[#0EA5E9]'} group-hover:scale-110 transition-transform`}>
                                                     {isPending ? <Clock className="w-5 h-5" /> : <Calendar className="w-5 h-5" />}
@@ -410,8 +410,8 @@ export default function PatientDashboard() {
                         {messages.length > 0 ? (
                             <div className="space-y-3">
                                 {messages.map((msg) => (
-                                    <div key={msg.id} className="p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-colors flex items-center gap-4 group cursor-pointer" onClick={() => router.push('/patient/messages')}>
-                                        <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 shrink-0">
+                                    <div key={msg.id} className="p-4 rounded-2xl border border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center gap-4 group cursor-pointer" onClick={() => router.push('/patient/messages')}>
+                                        <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-500 dark:text-indigo-400 shrink-0">
                                             {msg.providerName.charAt(0)}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -604,7 +604,7 @@ function DashboardCard({ title, icon: Icon, children, badge, footer }: any) {
                 {children}
             </div>
             {footer && (
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-50 text-center">
+                <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-50 dark:border-slate-700/50 text-center">
                     {footer}
                 </div>
             )}

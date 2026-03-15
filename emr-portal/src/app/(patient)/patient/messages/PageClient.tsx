@@ -368,11 +368,11 @@ export default function MessagesPage() {
                                                 p-4 rounded-[28px] text-sm font-bold leading-relaxed shadow-sm
                                                 ${isMe
                                                     ? 'bg-[#0EA5E9] text-white rounded-tr-none'
-                                                    : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none'}
+                                                    : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100'}
                                             `}>
                                                 {msg.body}
                                                 {msg.attachment && (
-                                                    <div className={`mt-3 p-3 rounded-2xl flex items-center gap-3 border ${isMe ? 'bg-white/10 border-white/20' : 'bg-slate-50 border-slate-100'}`}>
+                                                    <div className={`mt-3 p-3 rounded-2xl flex items-center gap-3 border ${isMe ? 'bg-white/10 border-white/20' : 'bg-slate-50 border-slate-100 dark:bg-slate-800/50 dark:border-slate-600'}`}>
                                                         <div className="w-8 h-8 rounded-lg bg-[#0EA5E9]/10 flex items-center justify-center text-[#0EA5E9]">
                                                             <FileText className="w-4 h-4" />
                                                         </div>
@@ -410,7 +410,7 @@ export default function MessagesPage() {
                                     />
                                     <label
                                         htmlFor="file-upload"
-                                        className={`w-12 h-12 rounded-2xl flex items-center justify-center cursor-pointer border transition-all ${isUploading ? 'bg-slate-50 text-slate-300' : 'bg-white border-slate-100 text-slate-400 hover:border-[#0EA5E9] hover:text-[#0EA5E9]'}`}
+                                        className={`w-12 h-12 rounded-2xl flex items-center justify-center cursor-pointer border transition-all ${isUploading ? 'bg-slate-50 dark:bg-slate-900/50 text-slate-300 dark:text-slate-600' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:border-[#0EA5E9] hover:text-[#0EA5E9]'}`}
                                     >
                                         <Paperclip className={`w-5 h-5 ${isUploading ? 'animate-spin' : ''}`} />
                                     </label>
