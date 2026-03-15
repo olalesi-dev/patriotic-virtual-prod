@@ -694,7 +694,7 @@ function PostCard({ post, currentUid, profile }: { post: Post, currentUid: strin
                             <div key={comment.id} className="flex gap-3">
                                 <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0 mt-1">
                                     {comment.authorAvatar ? (
-                                        <img src={comment.authorAvatar} className="w-full h-full object-cover" />
+                                        <img src={comment.authorAvatar} alt={comment.authorName} className="w-full h-full object-cover" />
                                     ) : (
                                         <User className="w-full h-full p-1 text-slate-400" />
                                     )}
