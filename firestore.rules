@@ -107,5 +107,19 @@ service cloud.firestore {
     match /claims/{id} {
       allow read, write: if isAuthenticated();
     }
+    match /shop-products/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    match /community-posts/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /community-events/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    match /social-posts/{id} {
+      allow read, write: if isStaff();
+    }
   }
 }
