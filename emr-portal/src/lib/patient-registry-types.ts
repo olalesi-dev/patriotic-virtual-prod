@@ -58,6 +58,85 @@ export interface PatientDetailEncounter {
     provider: string;
     type: string;
     status: string;
+    notes?: string | null;
+}
+
+export interface PatientDetailOrder {
+    id: string;
+    type: string;
+    description: string;
+    status: string;
+    orderedAt: string | null;
+    scheduledFor: string | null;
+    provider: string | null;
+    tests: string[];
+    notes: string | null;
+}
+
+export interface PatientDetailImagingStudy {
+    id: string;
+    modality: string;
+    bodyPart: string;
+    status: string;
+    date: string | null;
+    provider: string | null;
+    facility: string | null;
+    reportText: string | null;
+    viewerUrl: string | null;
+}
+
+export interface PatientDetailObservation {
+    id: string;
+    category: 'lab' | 'vital';
+    name: string;
+    date: string | null;
+    value: string;
+    unit: string | null;
+    referenceRange: string | null;
+    status: string;
+    notes: string | null;
+}
+
+export interface PatientDetailDocument {
+    id: string;
+    name: string;
+    category: string;
+    date: string | null;
+    type: string | null;
+    url: string | null;
+    size: string | null;
+    status: string | null;
+}
+
+export interface PatientDetailMessage {
+    id: string;
+    senderName: string;
+    senderType: 'patient' | 'provider' | 'system';
+    text: string;
+    timestamp: string | null;
+    unread: boolean;
+}
+
+export interface PatientBillingStatementItem {
+    description: string;
+    amount: number;
+}
+
+export interface PatientBillingStatement {
+    id: string;
+    date: string | null;
+    amount: number;
+    status: string;
+    items: PatientBillingStatementItem[];
+}
+
+export interface PatientDetailBilling {
+    balance: number;
+    status: string | null;
+    nextBillingDate: string | null;
+    membershipPlan: string | null;
+    stripePortalUrl: string | null;
+    statements: PatientBillingStatement[];
 }
 
 export interface PatientDetailRecord extends PatientRegistryRow {
@@ -68,6 +147,12 @@ export interface PatientDetailRecord extends PatientRegistryRow {
     problemList: PatientDetailProblem[];
     activeMedications: PatientDetailMedication[];
     recentEncounters: PatientDetailEncounter[];
+    orders: PatientDetailOrder[];
+    imagingStudies: PatientDetailImagingStudy[];
+    observations: PatientDetailObservation[];
+    documents: PatientDetailDocument[];
+    messages: PatientDetailMessage[];
+    billing: PatientDetailBilling;
 }
 
 export interface PatientRegistryFacetOption {
