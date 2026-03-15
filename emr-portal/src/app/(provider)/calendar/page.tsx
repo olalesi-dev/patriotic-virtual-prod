@@ -189,7 +189,7 @@ function AppointmentCard({
                             ? 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-300'
                             : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
                     >
-                        {joinActive ? 'â–¶ JOIN NOW' : 'ðŸ”’ JOIN'}
+                        {joinActive ? 'Join Now' : 'Locked'}
                     </button>
                 </div>
             )}
@@ -257,7 +257,7 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
     const joinActive = isJoinActive(appt);
     const isVideo = (appt.type || '').toLowerCase() === 'video' || (appt.type || '').toLowerCase() === 'telehealth';
     const apptDate = getApptDate(appt);
-    const displayDateTime = apptDate ? format(apptDate, 'h:mm a Â· MMM d, yyyy') : (appt.time || 'â€”');
+    const displayDateTime = apptDate ? format(apptDate, 'h:mm a • MMM d, yyyy') : (appt.time || '—');
 
     // Format intake question keys into readable labels
     const formatKey = (key: string) =>
@@ -318,8 +318,8 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                     {/* Basic details */}
                     <div className="p-5 space-y-4 border-b border-slate-100 dark:border-slate-700">
                         <DetailRow icon={<Clock size={14} />} label="Time" value={displayDateTime} />
-                        <DetailRow icon={<User size={14} />} label="Provider" value={appt.providerName || appt.doctor || 'â€”'} />
-                        <DetailRow icon={<FileText size={14} />} label="Visit Reason" value={appt.notes || appt.service || 'â€”'} />
+                        <DetailRow icon={<User size={14} />} label="Provider" value={appt.providerName || appt.doctor || '—'} />
+                        <DetailRow icon={<FileText size={14} />} label="Visit Reason" value={appt.notes || appt.service || '—'} />
                         {appt.patientId && <DetailRow icon={<User size={14} />} label="Patient ID" value={appt.patientId.slice(0, 12)} />}
                     </div>
 
@@ -390,7 +390,7 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                                 {intakeLoading ? (
                                     <div className="flex items-center gap-2 py-4">
                                         <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                                        <span className="text-xs text-slate-400">Loading intake dataâ€¦</span>
+                                        <span className="text-xs text-slate-400">Loading intake data...</span>
                                     </div>
                                 ) : intakeEntries.length === 0 ? (
                                     <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 text-center">
@@ -412,8 +412,8 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                                                         : 'text-slate-800'
                                                     }`}>
                                                     {typeof value === 'boolean'
-                                                        ? (value ? 'âš ï¸ Yes' : 'âœ“ No')
-                                                        : String(value || 'â€”')}
+                                                        ? (value ? 'Alert: Yes' : 'No')
+                                                        : String(value || '—')}
                                                 </p>
                                             </div>
                                         ))}
@@ -785,7 +785,7 @@ export default function CalendarPage() {
                                     {['video', 'in-person'].map(t => (
                                         <button key={t} onClick={() => setApptForm({ ...apptForm, type: t })}
                                             className={`h-11 rounded-xl border-2 font-bold text-sm transition-all ${apptForm.type === t ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'}`}>
-                                            {t === 'video' ? 'ðŸ“¹ Video' : 'ðŸ¥ In-Person'}
+                                            {t === 'video' ? 'Video' : 'In-Person'}
                                         </button>
                                     ))}
                                 </div>
@@ -887,7 +887,7 @@ export default function CalendarPage() {
                             <button onClick={handleNext} className="p-1.5 hover:bg-white rounded-lg transition-all text-slate-600 dark:text-slate-300"><ChevronRight className="w-4 h-4" /></button>
                         </div>
                         <span className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                            {format(viewStart, 'MMM d')} â€“ {format(viewEnd, 'MMM d, yyyy')}
+                            {format(viewStart, 'MMM d')} - {format(viewEnd, 'MMM d, yyyy')}
                         </span>
                         <div className="relative">
                             <button onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}

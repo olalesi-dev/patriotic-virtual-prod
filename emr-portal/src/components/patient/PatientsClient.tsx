@@ -7,7 +7,6 @@ import {
     Calendar, X, Users, Tag, ChevronRight, Settings, DollarSign, Activity, BookOpen,
     CreditCard, FileText, Zap, Layout
 } from 'lucide-react';
-import { PATIENTS as INITIAL_PATIENTS, Patient } from '@/lib/data';
 import { PatientChart } from '@/components/patient/PatientChart';
 import NewPatientRegistration from '@/components/patient/NewPatientRegistration';
 
@@ -23,7 +22,7 @@ export default function PatientsClient() {
     const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
     const [filters, setFilters] = useState({ tags: [] as string[], team: [] as string[], status: [] as string[] });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
-    const [selectedPatientIds, setSelectedPatientIds] = useState<number[]>([]);
+    const [selectedPatientIds, setSelectedPatientIds] = useState<string[]>([]);
     const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
@@ -184,16 +183,34 @@ export default function PatientsClient() {
     // Auto-select patient from URL
     React.useEffect(() => {
         if (patientIdParam && patients.length > 0) {
-            const p = patients.find(p => p.id === patientIdParam || p.id === parseInt(patientIdParam));
-            if (p) setSelectedPatient(p);
+            const patient = patients.find((entry) => String(entry.id) === patientIdParam);
+            if (patient) {
+                saveRecentPatient(patient);
+                setSelectedPatient(patient);
+            }
         }
     }, [patientIdParam, patients]);
 
     // Filter Logic
     React.useEffect(() => {
         const results = patients.filter(patient => {
-            if (searchTerm && !patient.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                !patient.phone.includes(searchTerm) && !patient.email.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+            if (searchTerm) {
+                const terms = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+                const searchableText = [
+                    patient.name,
+                    patient.mrn,
+                    patient.dob,
+                    patient.phone,
+                    patient.email
+                ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase();
+
+                if (!terms.every((term) => searchableText.includes(term))) {
+                    return false;
+                }
+            }
             // if (filters.tags.length > 0 && !patient.tags?.some((t: any) => filters.tags.includes(t.label))) return false;
             if (filters.team.length > 0 && !patient.team?.some((t: string) => filters.team.includes(t))) return false;
             if (filters.status.length > 0 && !filters.status.includes(patient.status)) return false;
@@ -210,6 +227,19 @@ export default function PatientsClient() {
                 [type]: current.includes(value) ? current.filter(v => v !== value) : [...current, value]
             };
         });
+    };
+
+    const saveRecentPatient = (patient: any) => {
+        if (typeof window === 'undefined') return;
+
+        try {
+            const saved = window.localStorage.getItem('recent_patients');
+            const parsed = saved ? JSON.parse(saved) as any[] : [];
+            const updated = [patient, ...parsed.filter((entry) => String(entry.id) !== String(patient.id))].slice(0, 5);
+            window.localStorage.setItem('recent_patients', JSON.stringify(updated));
+        } catch (error) {
+            console.error('Failed to store recent patient', error);
+        }
     };
 
     const handleCreatePatient = (data: any) => {
@@ -236,13 +266,13 @@ export default function PatientsClient() {
             zipCode: data.zipCode,
             primaryConcern: data.primaryConcern
         };
-        setPatients([newPatient, ...patients]);
+        setPatients((currentPatients) => [newPatient, ...currentPatients]);
         setIsNewPatientOpen(false);
     };
 
-    const updatePatientStatus = (patientId: number, newStatus: string) => {
+    const updatePatientStatus = (patientId: string, newStatus: string) => {
         setPatients(patients.map(c => {
-            if (c.id === patientId) {
+            if (String(c.id) === patientId) {
                 let newColor = 'bg-slate-100 text-slate-700';
                 if (newStatus === 'Active') newColor = 'bg-emerald-100 text-emerald-700';
                 if (newStatus === 'Lead') newColor = 'bg-purple-100 text-purple-700';
@@ -254,7 +284,7 @@ export default function PatientsClient() {
         }));
     };
 
-    const toggleSelect = (id: number) => {
+    const toggleSelect = (id: string) => {
         if (selectedPatientIds.includes(id)) {
             setSelectedPatientIds(selectedPatientIds.filter(cid => cid !== id));
         } else {
@@ -262,22 +292,22 @@ export default function PatientsClient() {
         }
     };
 
-    const updatePatientNotes = (patientId: number, newNote: any) => {
+    const updatePatientNotes = (patientId: string, newNote: any) => {
         setPatients(prevPatients => prevPatients.map(c => {
-            if (c.id === patientId) {
+            if (String(c.id) === patientId) {
                 return { ...c, notes: [newNote, ...(c.notes || [])] };
             }
             return c;
         }));
 
-        if (selectedPatient && selectedPatient.id === patientId) {
+        if (selectedPatient && String(selectedPatient.id) === patientId) {
             setSelectedPatient((prev: any) => ({ ...prev, notes: [newNote, ...(prev.notes || [])] }));
         }
     };
 
     // If a patient is selected, show the detail view
     if (selectedPatient) {
-        return <PatientChart patient={selectedPatient} onBack={() => setSelectedPatient(null)} onAddNote={(note: any) => updatePatientNotes(selectedPatient.id, note)} />;
+        return <PatientChart patient={selectedPatient} onBack={() => setSelectedPatient(null)} onAddNote={(note: any) => updatePatientNotes(String(selectedPatient.id), note)} />;
     }
 
     // Otherwise show the list view
@@ -309,7 +339,7 @@ export default function PatientsClient() {
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     <input
                         type="text"
-                        placeholder="Search by patient name, email or phone..."
+                        placeholder="Search by patient name, MRN, DOB, email, or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-slate-400"
@@ -390,15 +420,18 @@ export default function PatientsClient() {
                                 <td className="px-6 py-4 text-center">
                                     <input
                                         type="checkbox"
-                                        checked={selectedPatientIds.includes(patient.id)}
-                                        onChange={() => toggleSelect(patient.id)}
+                                        checked={selectedPatientIds.includes(String(patient.id))}
+                                        onChange={() => toggleSelect(String(patient.id))}
                                         className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
                                     />
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
                                         <button
-                                            onClick={() => setSelectedPatient(patient)}
+                                            onClick={() => {
+                                                saveRecentPatient(patient);
+                                                setSelectedPatient(patient);
+                                            }}
                                             className="font-bold text-brand hover:underline"
                                         >
                                             {patient.name}
@@ -422,11 +455,11 @@ export default function PatientsClient() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <StatusCell
-                                        status={patient.status}
-                                        color={patient.statusColor}
-                                        onUpdate={(newStatus: string) => updatePatientStatus(patient.id, newStatus)}
-                                    />
+                                        <StatusCell
+                                            status={patient.status}
+                                            color={patient.statusColor}
+                                            onUpdate={(newStatus: string) => updatePatientStatus(String(patient.id), newStatus)}
+                                        />
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex -space-x-2">

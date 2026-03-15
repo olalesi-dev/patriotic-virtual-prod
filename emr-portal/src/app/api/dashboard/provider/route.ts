@@ -21,6 +21,7 @@ interface DashboardAppointment {
     statusKey: DashboardStatusKey;
     statusLabel: string;
     startAt: string | null;
+    submittedAt: string | null;
     notes: string | null;
     meetingUrl: string | null;
 }
@@ -86,7 +87,7 @@ function toStatusKey(value: unknown): DashboardStatusKey {
     if (normalized === 'pending') return 'pending';
     if (normalized === 'completed') return 'completed';
     if (normalized === 'cancelled' || normalized === 'canceled') return 'cancelled';
-    if (normalized === 'waitlist') return 'waitlist';
+    if (normalized === 'waitlist' || normalized === 'pending_scheduling') return 'waitlist';
     if (normalized === 'upcoming') return 'upcoming';
 
     return 'pending';
@@ -173,10 +174,11 @@ export async function GET(request: Request) {
     const firestore = db;
 
     try {
-        const [userDocSnap, patientDocSnap, appointmentSnap, threadsSnap] = await Promise.all([
+        const [userDocSnap, patientDocSnap, providerAppointmentSnap, waitlistAppointmentSnap, threadsSnap] = await Promise.all([
             firestore.collection('users').doc(user.uid).get(),
             firestore.collection('patients').doc(user.uid).get(),
             firestore.collection('appointments').where('providerId', '==', user.uid).get(),
+            firestore.collection('appointments').where('status', 'in', ['PENDING_SCHEDULING', 'waitlist']).get(),
             firestore.collection('threads').where('providerId', '==', user.uid).get()
         ]);
 
@@ -200,10 +202,23 @@ export async function GET(request: Request) {
             'Provider'
         ) as string;
 
-        const appointmentRows = appointmentSnap.docs.map((docSnap) => ({
-            id: docSnap.id,
-            data: docSnap.data()
-        }));
+        const appointmentRows = new Map<string, { id: string; data: Record<string, unknown> }>();
+
+        providerAppointmentSnap.docs.forEach((docSnap) => {
+            appointmentRows.set(docSnap.id, {
+                id: docSnap.id,
+                data: docSnap.data()
+            });
+        });
+
+        waitlistAppointmentSnap.docs.forEach((docSnap) => {
+            appointmentRows.set(docSnap.id, {
+                id: docSnap.id,
+                data: docSnap.data()
+            });
+        });
+
+        const appointmentEntries = Array.from(appointmentRows.values());
 
         const threadRows = threadsSnap.docs.map((docSnap) => ({
             id: docSnap.id,
@@ -211,7 +226,7 @@ export async function GET(request: Request) {
         }));
 
         const patientIdsForLookup = Array.from(new Set([
-            ...appointmentRows
+            ...appointmentEntries
                 .map(({ data }) => asString(data.patientId) ?? asString(data.patientUid))
                 .filter((value): value is string => Boolean(value)),
             ...threadRows
@@ -242,11 +257,14 @@ export async function GET(request: Request) {
             }
         }
 
-        const appointments: DashboardAppointment[] = appointmentRows.map(({ id, data }) => {
+        const appointments: DashboardAppointment[] = appointmentEntries.map(({ id, data }) => {
             const startAtDate =
                 asDate(data.startTime) ??
                 asDateFromDateTime(data.date, data.time) ??
                 asDate(data.date);
+            const submittedAtDate =
+                asDate(data.updatedAt) ??
+                asDate(data.createdAt);
             const patientId = asString(data.patientId) ?? asString(data.patientUid);
             const fallbackPatientName = patientId ? patientNamesById.get(patientId) : null;
 
@@ -263,19 +281,24 @@ export async function GET(request: Request) {
             return {
                 id,
                 patient: (asString(data.patientName) ?? asString(data.patient) ?? fallbackPatientName ?? 'Unknown Patient') as string,
-                displayTime: formatTimeLabel(startAtDate),
+                displayTime: statusKey === 'waitlist' && !startAtDate
+                    ? 'Awaiting scheduling'
+                    : formatTimeLabel(startAtDate),
                 type: typeLabel,
                 statusKey,
                 statusLabel: toStatusLabel(statusKey),
                 startAt: startAtDate ? startAtDate.toISOString() : null,
+                submittedAt: submittedAtDate ? submittedAtDate.toISOString() : null,
                 notes: typeof data.notes === 'string' ? data.notes : (typeof data.reason === 'string' ? data.reason : null),
                 meetingUrl
             };
         }).sort((a, b) => {
-            if (!a.startAt && !b.startAt) return 0;
-            if (!a.startAt) return 1;
-            if (!b.startAt) return -1;
-            return a.startAt.localeCompare(b.startAt);
+            const aSortKey = a.startAt ?? a.submittedAt ?? '';
+            const bSortKey = b.startAt ?? b.submittedAt ?? '';
+            if (!aSortKey && !bSortKey) return 0;
+            if (!aSortKey) return 1;
+            if (!bSortKey) return -1;
+            return aSortKey.localeCompare(bSortKey);
         });
 
         const messagesWithSortWeight = threadRows.map(({ id, data }) => {
