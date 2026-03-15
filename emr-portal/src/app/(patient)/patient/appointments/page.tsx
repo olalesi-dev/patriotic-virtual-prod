@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation } from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 import {
     Calendar as CalendarIcon,
@@ -30,6 +31,7 @@ import {
     Search
 } from 'lucide-react';
 import { svcs, iQs } from '@/lib/catalog';
+import { apiFetchJson } from '@/lib/api-client';
 import { auth, db } from '@/lib/firebase';
 import {
     collection,
@@ -116,6 +118,47 @@ export default function AppointmentsPage() {
         serviceKey: '',
         intake: {} as Record<string, any>,
         date: new Date(addDays(new Date(), 1).setHours(10, 0, 0, 0)),
+    });
+    const initializeBookingMutation = useMutation({
+        mutationFn: async ({
+            token,
+            serviceKey,
+            intake,
+            priceId,
+            uid
+        }: {
+            token: string;
+            serviceKey: string;
+            intake: Record<string, any>;
+            priceId: string;
+            uid: string;
+        }) => {
+            const baseHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+
+            const consultation = await apiFetchJson<{ id: string }>('/api/v1/consultations', {
+                method: 'POST',
+                headers: baseHeaders,
+                body: {
+                    serviceKey,
+                    intake,
+                    stripeProductId: priceId
+                }
+            });
+
+            return apiFetchJson<{ url: string }>('/api/v1/payments/create-checkout-session', {
+                method: 'POST',
+                headers: baseHeaders,
+                body: {
+                    priceId,
+                    serviceKey,
+                    consultationId: consultation.id,
+                    uid
+                }
+            });
+        }
     });
 
     // Checklist State
@@ -401,34 +444,13 @@ export default function AppointmentsPage() {
             const service = svcs.find(s => s.k === newAppt.serviceKey);
             if (!service) throw new Error('Service not found');
 
-            // 1. Create Consultation
-            const consRes = await fetch('/api/v1/consultations', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    serviceKey: newAppt.serviceKey,
-                    intake: newAppt.intake,
-                    stripeProductId: service.priceId
-                })
+            const payData = await initializeBookingMutation.mutateAsync({
+                token,
+                serviceKey: newAppt.serviceKey,
+                intake: newAppt.intake,
+                priceId: service.priceId,
+                uid: auth.currentUser.uid
             });
-
-            if (!consRes.ok) throw new Error('Failed to create consultation');
-            const consData = await consRes.json();
-
-            // 2. Create Payment Session
-            const payRes = await fetch('/api/v1/payments/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    priceId: service.priceId,
-                    serviceKey: newAppt.serviceKey,
-                    consultationId: consData.id,
-                    uid: auth.currentUser.uid
-                })
-            });
-
-            if (!payRes.ok) throw new Error('Payment initialization failed');
-            const payData = await payRes.json();
 
             // 3. Redirect to Stripe
             window.location.href = payData.url;

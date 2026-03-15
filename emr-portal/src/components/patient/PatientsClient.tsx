@@ -1,7 +1,7 @@
 "use client";
 
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import React from 'react';
-import type { User as FirebaseUser } from 'firebase/auth';
 import {
     flexRender,
     getCoreRowModel,
@@ -24,8 +24,8 @@ import {
     Users
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { auth } from '@/lib/firebase';
-import { PatientChart } from '@/components/patient/PatientChart';
+import { useAuthUser } from '@/hooks/useAuthUser';
+import { apiFetchJson } from '@/lib/api-client';
 import NewPatientRegistration from '@/components/patient/NewPatientRegistration';
 import type { PatientRegistryFacetOption, PatientRegistryResponse, PatientRegistryRow } from '@/lib/patient-registry-types';
 
@@ -43,14 +43,6 @@ const DEFAULT_COLUMN_VISIBILITY: VisibilityState = {
 };
 
 const DEFAULT_PAGE_SIZE = 25;
-
-async function buildHeaders(activeUser: FirebaseUser): Promise<Record<string, string>> {
-    const idToken = await activeUser.getIdToken();
-    return {
-        Authorization: `Bearer ${idToken}`,
-        'Content-Type': 'application/json'
-    };
-}
 
 function formatDate(value: string | null): string {
     if (!value) return '—';
@@ -104,13 +96,12 @@ function parseSavedView() {
 }
 
 export default function PatientsClient() {
+    const queryClient = useQueryClient();
     const router = useRouter();
     const searchParams = useSearchParams();
     const patientIdParam = searchParams.get('id');
+    const { user: activeUser, isReady } = useAuthUser();
 
-    const [activeUser, setActiveUser] = React.useState<FirebaseUser | null>(auth.currentUser);
-    const [rows, setRows] = React.useState<PatientRegistryRow[]>([]);
-    const [selectedPatient, setSelectedPatient] = React.useState<PatientRegistryRow | null>(null);
     const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
     const [isNewPatientOpen, setIsNewPatientOpen] = React.useState(false);
     const [searchInput, setSearchInput] = React.useState('');
@@ -121,19 +112,10 @@ export default function PatientsClient() {
     const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE);
     const [sorting, setSorting] = React.useState<SortingState>([{ id: 'patient', desc: false }]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(DEFAULT_COLUMN_VISIBILITY);
-    const [loading, setLoading] = React.useState(true);
-    const [error, setError] = React.useState<string | null>(null);
     const [showColumnPanel, setShowColumnPanel] = React.useState(false);
-    const [facets, setFacets] = React.useState<PatientRegistryResponse['facets']>({
-        statuses: [],
-        teams: [],
-        tags: []
-    });
-    const [nextCursor, setNextCursor] = React.useState<string | null>(null);
     const [cursorStack, setCursorStack] = React.useState<Array<string | null>>([null]);
     const [pageIndex, setPageIndex] = React.useState(0);
     const [viewLoaded, setViewLoaded] = React.useState(false);
-    const [totalCount, setTotalCount] = React.useState(0);
 
     const currentCursor = cursorStack[pageIndex] ?? null;
     const activeSort = sorting[0];
@@ -159,18 +141,6 @@ export default function PatientsClient() {
     }, []);
 
     React.useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            setActiveUser(user);
-            if (!user) {
-                setRows([]);
-                setLoading(false);
-            }
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    React.useEffect(() => {
         if (!viewLoaded) return;
         React.startTransition(() => {
             setCursorStack([null]);
@@ -179,56 +149,119 @@ export default function PatientsClient() {
         });
     }, [deferredSearch, pageSize, sortField, sortDir, statusFilters, teamFilters, tagFilters, viewLoaded]);
 
-    const loadPatients = React.useCallback(async (user: FirebaseUser, cursor: string | null) => {
-        setLoading(true);
-        setError(null);
+    const patientQueryKey = React.useMemo(() => [
+        'patients',
+        activeUser?.uid ?? 'anonymous',
+        deferredSearch.trim(),
+        statusFilters,
+        teamFilters,
+        tagFilters,
+        pageSize,
+        sortField,
+        sortDir,
+        currentCursor
+    ] as const, [
+        activeUser?.uid,
+        currentCursor,
+        deferredSearch,
+        pageSize,
+        sortDir,
+        sortField,
+        statusFilters,
+        tagFilters,
+        teamFilters
+    ]);
 
-        try {
-            const headers = await buildHeaders(user);
-            const params = new URLSearchParams();
-            if (deferredSearch.trim()) params.set('q', deferredSearch.trim());
-            statusFilters.forEach((status) => params.append('status', status));
-            teamFilters.forEach((teamId) => params.append('teamId', teamId));
-            tagFilters.forEach((tag) => params.append('tag', tag));
-            params.set('pageSize', String(pageSize));
-            params.set('sortField', sortField);
-            params.set('sortDir', sortDir);
-            if (cursor) params.set('cursor', cursor);
-
-            const response = await fetch(`/api/patients/list?${params.toString()}`, {
-                method: 'GET',
-                headers,
-                cache: 'no-store'
-            });
-            const payload = await response.json() as PatientRegistryResponse;
-
-            if (!response.ok || !payload.success) {
-                throw new Error(payload.error || 'Failed to load patients.');
-            }
-
-            setRows(payload.patients);
-            setNextCursor(payload.nextCursor);
-            setTotalCount(payload.totalCount);
-            setFacets(payload.facets);
-        } catch (loadError) {
-            setError(loadError instanceof Error ? loadError.message : 'Failed to load patients.');
-        } finally {
-            setLoading(false);
+    const fetchPatients = React.useCallback(async (cursor: string | null) => {
+        if (!activeUser) {
+            throw new Error('Please sign in to view patients.');
         }
-    }, [deferredSearch, pageSize, sortDir, sortField, statusFilters, tagFilters, teamFilters]);
+
+        const params = new URLSearchParams();
+        if (deferredSearch.trim()) params.set('q', deferredSearch.trim());
+        statusFilters.forEach((status) => params.append('status', status));
+        teamFilters.forEach((teamId) => params.append('teamId', teamId));
+        tagFilters.forEach((tag) => params.append('tag', tag));
+        params.set('pageSize', String(pageSize));
+        params.set('sortField', sortField);
+        params.set('sortDir', sortDir);
+        if (cursor) params.set('cursor', cursor);
+
+        const payload = await apiFetchJson<PatientRegistryResponse>(`/api/patients/list?${params.toString()}`, {
+            method: 'GET',
+            user: activeUser,
+            cache: 'no-store'
+        });
+
+        if (!payload.success) {
+            throw new Error(payload.error || 'Failed to load patients.');
+        }
+
+        return payload;
+    }, [activeUser, deferredSearch, pageSize, sortDir, sortField, statusFilters, tagFilters, teamFilters]);
+
+    const patientsQuery = useQuery({
+        queryKey: patientQueryKey,
+        enabled: viewLoaded && isReady && Boolean(activeUser),
+        queryFn: () => fetchPatients(currentCursor),
+        placeholderData: keepPreviousData
+    });
 
     React.useEffect(() => {
-        if (!activeUser || !viewLoaded) return;
-        loadPatients(activeUser, currentCursor).catch(() => undefined);
-    }, [activeUser, currentCursor, loadPatients, viewLoaded]);
+        const nextCursor = patientsQuery.data?.nextCursor;
+        if (!nextCursor || !activeUser) return;
+
+        const nextQueryKey = [
+            'patients',
+            activeUser.uid,
+            deferredSearch.trim(),
+            statusFilters,
+            teamFilters,
+            tagFilters,
+            pageSize,
+            sortField,
+            sortDir,
+            nextCursor
+        ] as const;
+
+        void queryClient.prefetchQuery({
+            queryKey: nextQueryKey,
+            queryFn: () => fetchPatients(nextCursor)
+        });
+    }, [
+        activeUser,
+        deferredSearch,
+        fetchPatients,
+        pageSize,
+        patientsQuery.data?.nextCursor,
+        queryClient,
+        sortDir,
+        sortField,
+        statusFilters,
+        tagFilters,
+        teamFilters
+    ]);
+
+    const rows = React.useMemo(
+        () => patientsQuery.data?.patients ?? [],
+        [patientsQuery.data?.patients]
+    );
+    const facets = patientsQuery.data?.facets ?? {
+        statuses: [],
+        teams: [],
+        tags: []
+    };
+    const nextCursor = patientsQuery.data?.nextCursor ?? null;
+    const totalCount = patientsQuery.data?.totalCount ?? 0;
+    const loading = !isReady || patientsQuery.isLoading;
+    const error = patientsQuery.error instanceof Error
+        ? patientsQuery.error.message
+        : (activeUser || !isReady ? null : 'Please sign in to view patients.');
 
     React.useEffect(() => {
         if (!patientIdParam) return;
-        const patient = rows.find((entry) => entry.id === patientIdParam);
-        if (patient) {
-            setSelectedPatient(patient);
-        }
-    }, [patientIdParam, rows]);
+        router.replace(`/patients/${patientIdParam}`);
+    }, [patientIdParam, router]);
 
     const saveView = React.useCallback(() => {
         if (typeof window === 'undefined') return;
@@ -258,13 +291,7 @@ export default function PatientsClient() {
     }, []);
 
     const handleOpenPatient = React.useCallback((patient: PatientRegistryRow) => {
-        setSelectedPatient(patient);
-        router.replace(`/patients?id=${patient.id}`);
-    }, [router]);
-
-    const handleClosePatient = React.useCallback(() => {
-        setSelectedPatient(null);
-        router.replace('/patients');
+        router.push(`/patients/${patient.id}`);
     }, [router]);
 
     const handleNewPatientComplete = React.useCallback(() => {
@@ -272,9 +299,11 @@ export default function PatientsClient() {
         if (activeUser) {
             setCursorStack([null]);
             setPageIndex(0);
-            loadPatients(activeUser, null).catch(() => undefined);
+            void queryClient.invalidateQueries({
+                queryKey: ['patients', activeUser.uid]
+            });
         }
-    }, [activeUser, loadPatients]);
+    }, [activeUser, queryClient]);
 
     const columns = React.useMemo<ColumnDef<PatientRegistryRow>[]>(() => [
         {
@@ -408,10 +437,6 @@ export default function PatientsClient() {
         enableRowSelection: true,
         manualSorting: true
     });
-
-    if (selectedPatient) {
-        return <PatientChart patient={selectedPatient as any} onBack={handleClosePatient} onAddNote={() => undefined} />;
-    }
 
     return (
         <div className="relative flex h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

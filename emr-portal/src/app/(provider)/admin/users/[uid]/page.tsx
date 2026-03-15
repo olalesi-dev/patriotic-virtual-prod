@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -7,12 +8,13 @@ import {
     ChevronLeft, User, Mail, Shield, Save,
     AlertCircle, CheckCircle2, ShieldAlert, Key, Trash2
 } from 'lucide-react';
+import { apiFetchJson } from '@/lib/api-client';
 
 export default function UserProfilePage({ params }: { params: { uid: string } }) {
+    const queryClient = useQueryClient();
     const router = useRouter();
     const { uid } = params;
 
-    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -26,38 +28,74 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
         lastSignInTime: ''
     });
 
-    useEffect(() => {
-        fetchUser();
-    }, [uid]);
+    const usersQueryKey = ['admin-users'] as const;
 
-    const fetchUser = async () => {
-        try {
-            setLoading(true);
-            const res = await fetch('/api/admin/users');
-            const data = await res.json();
-            if (data.success) {
-                const user = data.users.find((u: any) => u.uid === uid);
-                if (user) {
-                    setUserData({
-                        displayName: user.displayName || '',
-                        email: user.email || '',
-                        role: user.role || 'patient',
-                        disabled: user.disabled || false,
-                        creationTime: user.creationTime || '',
-                        lastSignInTime: user.lastSignInTime || ''
-                    });
-                } else {
-                    setError('User not found');
-                }
-            } else {
-                throw new Error(data.error);
+    const userQuery = useQuery({
+        queryKey: [...usersQueryKey, uid],
+        queryFn: async () => {
+            const data = await apiFetchJson<{
+                success?: boolean;
+                users?: Array<Record<string, unknown>>;
+                error?: string;
+            }>('/api/admin/users', {
+                method: 'GET',
+                cache: 'no-store'
+            });
+
+            if (!data.success || !data.users) {
+                throw new Error(data.error || 'Failed to load users.');
             }
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
+
+            const matchedUser = data.users.find((user) => user.uid === uid);
+            if (!matchedUser) {
+                throw new Error('User not found');
+            }
+
+            return {
+                displayName: String(matchedUser.displayName ?? ''),
+                email: String(matchedUser.email ?? ''),
+                role: String(matchedUser.role ?? 'patient'),
+                disabled: Boolean(matchedUser.disabled),
+                creationTime: String(matchedUser.creationTime ?? ''),
+                lastSignInTime: String(matchedUser.lastSignInTime ?? '')
+            };
         }
-    };
+    });
+
+    const updateUserMutation = useMutation({
+        mutationFn: (body: Record<string, unknown>) => apiFetchJson<{ success?: boolean; error?: string }>(`/api/admin/users/${uid}`, {
+            method: 'PATCH',
+            body
+        }),
+        onSettled: () => {
+            void queryClient.invalidateQueries({ queryKey: usersQueryKey });
+            void queryClient.invalidateQueries({ queryKey: [...usersQueryKey, uid] });
+        }
+    });
+
+    const resetPasswordMutation = useMutation({
+        mutationFn: () => apiFetchJson<{ success?: boolean; error?: string; link?: string }>(`/api/admin/users/${uid}/reset`, {
+            method: 'POST'
+        })
+    });
+
+    const deleteUserMutation = useMutation({
+        mutationFn: () => apiFetchJson<{ success?: boolean; error?: string }>(`/api/admin/users/${uid}`, {
+            method: 'DELETE'
+        }),
+        onSettled: () => {
+            void queryClient.invalidateQueries({ queryKey: usersQueryKey });
+        }
+    });
+
+    useEffect(() => {
+        if (!userQuery.data) return;
+
+        setUserData(userQuery.data);
+        setError(null);
+    }, [userQuery.data]);
+
+    const loading = userQuery.isLoading;
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,17 +104,11 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
             setError(null);
             setSuccess(null);
 
-            const res = await fetch(`/api/admin/users/${uid}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    displayName: userData.displayName,
-                    role: userData.role,
-                    disabled: userData.disabled
-                })
+            const data = await updateUserMutation.mutateAsync({
+                displayName: userData.displayName,
+                role: userData.role,
+                disabled: userData.disabled
             });
-
-            const data = await res.json();
             if (data.success) {
                 setSuccess('User profile updated successfully');
                 setTimeout(() => setSuccess(null), 3000);
@@ -93,8 +125,7 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
     const handleResetPassword = async () => {
         if (!confirm('Generate a password reset link for this user?')) return;
         try {
-            const res = await fetch(`/api/admin/users/${uid}/reset`, { method: 'POST' });
-            const data = await res.json();
+            const data = await resetPasswordMutation.mutateAsync();
             if (data.success) {
                 alert(`Reset link generated: ${data.link}`);
             } else {
@@ -147,10 +178,10 @@ export default function UserProfilePage({ params }: { params: { uid: string } })
                     </button>
                     <button
                         onClick={() => {
-                            if (confirm('Are you sure you want to delete this user?')) {
-                                fetch(`/api/admin/users/${uid}`, { method: 'DELETE' })
-                                    .then(() => router.push('/admin/users'));
-                            }
+                            if (!confirm('Are you sure you want to delete this user?')) return;
+                            void deleteUserMutation.mutateAsync()
+                                .then(() => router.push('/admin/users'))
+                                .catch(() => setError('Failed to delete user.'));
                         }}
                         className="p-3 bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl text-red-500 hover:bg-red-50 transition-all shadow-sm"
                         title="Delete User"

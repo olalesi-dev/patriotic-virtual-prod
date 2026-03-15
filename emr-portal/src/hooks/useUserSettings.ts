@@ -1,8 +1,8 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { useCallback, useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase';
+import { useCallback, useMemo, useState } from 'react';
 import {
     normalizeSettings,
     type SettingsPatch,
@@ -10,6 +10,8 @@ import {
     settingsPatchSchema,
     type UserSettings
 } from '@/lib/settings';
+import { useAuthUser } from '@/hooks/useAuthUser';
+import { apiFetchJson } from '@/lib/api-client';
 import { persistUserPreferences } from '@/lib/user-preferences';
 
 interface SettingsApiResponse {
@@ -56,104 +58,59 @@ function applyClientPreferences(settings: UserSettings) {
     });
 }
 
-async function getAuthHeaders(activeUser: FirebaseUser): Promise<Record<string, string>> {
-    const idToken = await activeUser.getIdToken();
-    return {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json'
-    };
-}
-
 export function useUserSettings(options: UseUserSettingsOptions = {}) {
     const { expectedRole } = options;
-    const [settings, setSettings] = useState<UserSettings | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [activeUser, setActiveUser] = useState<FirebaseUser | null>(null);
+    const queryClient = useQueryClient();
+    const { user: activeUser, isReady } = useAuthUser();
     const [savingSection, setSavingSection] = useState<SettingsPatch['section'] | null>(null);
 
-    const refresh = useCallback(async (userOverride?: FirebaseUser | null): Promise<UserSettings | null> => {
-        const currentUser = userOverride ?? auth.currentUser;
-        if (!currentUser) {
-            setSettings(null);
-            setError('Please sign in to manage your settings.');
-            setLoading(false);
-            return null;
-        }
+    const queryKey = useMemo(
+        () => ['settings', activeUser?.uid ?? 'anonymous', expectedRole ?? 'any'] as const,
+        [activeUser?.uid, expectedRole]
+    );
 
-        setLoading(true);
-        try {
-            const headers = await getAuthHeaders(currentUser);
-            const response = await fetch('/api/settings/me', {
-                method: 'GET',
-                headers,
-                cache: 'no-store'
-            });
-
-            const payload = await response.json() as SettingsApiResponse;
-            if (!response.ok || !payload.success || !payload.settings) {
-                throw new Error(payload.error || 'Failed to load settings.');
-            }
-
-            if (expectedRole && payload.settings.role !== expectedRole) {
-                throw new Error(`This settings page is limited to ${expectedRole} users.`);
-            }
-
-            setSettings(payload.settings);
-            applyClientPreferences(payload.settings);
-            setError(null);
-            return payload.settings;
-        } catch (loadError) {
-            const message = loadError instanceof Error ? loadError.message : 'Failed to load settings.';
-            setError(message);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, [expectedRole]);
-
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            setActiveUser(user);
-            refresh(user).catch(() => null);
+    const fetchSettings = useCallback(async (user: FirebaseUser) => {
+        const payload = await apiFetchJson<SettingsApiResponse>('/api/settings/me', {
+            method: 'GET',
+            user,
+            cache: 'no-store'
         });
 
-        return () => unsubscribe();
-    }, [refresh]);
-
-    const updateSection = useCallback(async (patch: SettingsPatch): Promise<boolean> => {
-        if (!activeUser) {
-            setError('Please sign in to update your settings.');
-            return false;
-        }
-        if (!settings) {
-            setError('Settings are still loading. Try again in a moment.');
-            return false;
+        if (!payload.success || !payload.settings) {
+            throw new Error(payload.error || 'Failed to load settings.');
         }
 
-        const validation = settingsPatchSchema.safeParse(patch);
-        if (!validation.success) {
-            setError('Invalid settings payload.');
-            return false;
+        if (expectedRole && payload.settings.role !== expectedRole) {
+            throw new Error(`This settings page is limited to ${expectedRole} users.`);
         }
 
-        const previousSettings = settings;
-        const optimisticSettings = applyPatchOptimistically(previousSettings, validation.data);
+        return payload.settings;
+    }, [expectedRole]);
 
-        setSavingSection(validation.data.section);
-        setSettings(optimisticSettings);
-        applyClientPreferences(optimisticSettings);
+    const settingsQuery = useQuery({
+        queryKey,
+        enabled: isReady && Boolean(activeUser),
+        queryFn: () => fetchSettings(activeUser as FirebaseUser)
+    });
 
-        try {
-            const headers = await getAuthHeaders(activeUser);
-            const response = await fetch('/api/settings/me', {
+    const updateMutation = useMutation({
+        mutationFn: async (patch: SettingsPatch) => {
+            if (!activeUser) {
+                throw new Error('Please sign in to update your settings.');
+            }
+
+            const validation = settingsPatchSchema.safeParse(patch);
+            if (!validation.success) {
+                throw new Error('Invalid settings payload.');
+            }
+
+            const payload = await apiFetchJson<SettingsApiResponse>('/api/settings/me', {
                 method: 'PATCH',
-                headers,
-                body: JSON.stringify(validation.data)
+                user: activeUser,
+                body: validation.data
             });
 
-            const payload = await response.json() as SettingsApiResponse;
-            if (!response.ok || !payload.success || !payload.settings) {
+            if (!payload.success || !payload.settings) {
                 throw new Error(payload.error || 'Failed to save settings.');
             }
 
@@ -161,20 +118,74 @@ export function useUserSettings(options: UseUserSettingsOptions = {}) {
                 throw new Error(`This settings page is limited to ${expectedRole} users.`);
             }
 
-            setSettings(payload.settings);
-            applyClientPreferences(payload.settings);
-            setError(null);
-            return true;
-        } catch (saveError) {
-            const message = saveError instanceof Error ? saveError.message : 'Failed to save settings.';
-            setSettings(previousSettings);
-            applyClientPreferences(previousSettings);
-            setError(message);
-            return false;
-        } finally {
+            return payload.settings;
+        },
+        onMutate: async (patch) => {
+            const validation = settingsPatchSchema.safeParse(patch);
+            if (!validation.success) {
+                throw new Error('Invalid settings payload.');
+            }
+
+            setSavingSection(validation.data.section);
+            await queryClient.cancelQueries({ queryKey });
+
+            const previousSettings = queryClient.getQueryData<UserSettings>(queryKey);
+            if (previousSettings) {
+                const optimisticSettings = applyPatchOptimistically(previousSettings, validation.data);
+                queryClient.setQueryData(queryKey, optimisticSettings);
+                applyClientPreferences(optimisticSettings);
+            }
+
+            return { previousSettings };
+        },
+        onSuccess: (nextSettings) => {
+            queryClient.setQueryData(queryKey, nextSettings);
+            applyClientPreferences(nextSettings);
+        },
+        onError: (_error, _patch, context) => {
+            if (context?.previousSettings) {
+                queryClient.setQueryData(queryKey, context.previousSettings);
+                applyClientPreferences(context.previousSettings);
+            }
+        },
+        onSettled: () => {
             setSavingSection(null);
         }
-    }, [activeUser, expectedRole, settings]);
+    });
+
+    const refresh = useCallback(async (userOverride?: FirebaseUser | null): Promise<UserSettings | null> => {
+        const currentUser = userOverride ?? activeUser;
+        if (!currentUser) {
+            return null;
+        }
+
+        const nextQueryKey = ['settings', currentUser.uid, expectedRole ?? 'any'] as const;
+        const nextSettings = await queryClient.fetchQuery({
+            queryKey: nextQueryKey,
+            queryFn: () => fetchSettings(currentUser)
+        });
+        applyClientPreferences(nextSettings);
+        return nextSettings;
+    }, [activeUser, expectedRole, fetchSettings, queryClient]);
+
+    const updateSection = useCallback(async (patch: SettingsPatch): Promise<boolean> => {
+        try {
+            await updateMutation.mutateAsync(patch);
+            return true;
+        } catch {
+            return false;
+        }
+    }, [updateMutation]);
+
+    const settings = settingsQuery.data ?? null;
+    const loading = !isReady || settingsQuery.isLoading;
+    const error = activeUser
+        ? (settingsQuery.error instanceof Error
+            ? settingsQuery.error.message
+            : updateMutation.error instanceof Error
+                ? updateMutation.error.message
+                : null)
+        : (isReady ? 'Please sign in to manage your settings.' : null);
 
     return {
         settings,

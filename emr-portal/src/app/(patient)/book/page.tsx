@@ -1,10 +1,12 @@
 "use client";
 
+import { useMutation } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Calendar, Clock, User, CreditCard, ChevronRight, CheckCircle2, ShieldCheck, Stethoscope, ChevronLeft } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { db, auth } from '@/lib/firebase';
+import { apiFetchJson } from '@/lib/api-client';
 import { collection, addDoc, serverTimestamp, getDoc, doc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
 
@@ -79,6 +81,12 @@ export default function BookingPage() {
     const [selectedTime, setSelectedTime] = useState('TBD');
     const [intakeAnswers, setIntakeAnswers] = useState<any>({});
     const [loading, setLoading] = useState(false);
+    const checkoutMutation = useMutation({
+        mutationFn: (body: Record<string, unknown>) => apiFetchJson<{ id: string }>('/api/checkout', {
+            method: 'POST',
+            body
+        })
+    });
 
     // Filter services based on active tab; popular tab shows only the 3 chosen; all tab pins them first
     const getTabServices = () => {
@@ -145,19 +153,14 @@ export default function BookingPage() {
             });
             appointmentId = docRef.id;
 
-            const res = await fetch('/api/checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    service: selectedService.name,
-                    price: selectedService.price,
-                    patientName,
-                    date: selectedDate,
-                    time: selectedTime,
-                    appointmentId: appointmentId
-                })
+            const { id } = await checkoutMutation.mutateAsync({
+                service: selectedService.name,
+                price: selectedService.price,
+                patientName,
+                date: selectedDate,
+                time: selectedTime,
+                appointmentId: appointmentId
             });
-            const { id } = await res.json();
             const stripe = await stripePromise;
             await (stripe as any)?.redirectToCheckout({ sessionId: id });
         } catch (err) {
