@@ -991,7 +991,7 @@ export default function AppointmentsPage() {
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                                     {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date) && isScheduledDetail
                                                         ? format(toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)!, 'PPPP p')
-                                                        : 'TBD — Provider will confirm within 24–48 hours'}
+                                                        : 'TBD — Provider will confirm within 24– hours'}
                                                 </p>
                                             </div>
                                             <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
@@ -1048,11 +1048,11 @@ export default function AppointmentsPage() {
                                         })()}
 
                                         {isWaitlistDetail && (
-                                            <div className="flex items-start gap-4 p-6 bg-[#FFFBF0] text-amber-700/80 rounded-[24px] border border-amber-100/60 mt-4">
+                                            <div className="flex items-start gap-4 p-6 bg-[#FFFBF0] dark:bg-amber-900/20 text-amber-700/80 dark:text-amber-400 rounded-[24px] border border-amber-100/60 dark:border-amber-800/50 mt-4">
                                                 <Info className="w-5 h-5 mt-0.5 shrink-0" />
                                                 <div>
-                                                    <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2">In Provider Queue</p>
-                                                    <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800">24–48 hours</strong> to confirm your appointment time.</p>
+                                                    <p className="text-[10px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest mb-2">In Provider Queue</p>
+                                                    <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800 dark:text-amber-300">24 hours</strong> to confirm your appointment time.</p>
                                                 </div>
                                             </div>
                                         )}
@@ -1134,7 +1134,7 @@ export default function AppointmentsPage() {
                                             <SummarySection title="Follow-Up Action" content={aiSummary.followUp} highlight />
                                         </div>
                                     ) : !isThinking && selectedSummary.status === 'scheduled' && (
-                                        <div className="p-8 bg-sky-50 rounded-3xl border border-sky-100 text-sky-700">
+                                        <div className="p-8 bg-sky-50 dark:bg-sky-900/30 rounded-3xl border border-sky-100 dark:border-sky-800/50 text-sky-700 dark:text-sky-400">
                                             <div className="flex items-center gap-3 mb-2">
                                                 <Info className="w-5 h-5" />
                                                 <h4 className="text-sm font-black uppercase tracking-widest">Appointment Confirmed</h4>
@@ -1183,9 +1183,9 @@ export default function AppointmentsPage() {
 
 function SummarySection({ title, content, highlight }: any) {
     return (
-        <div className={`p-6 rounded-3xl border transition-all ${highlight ? 'bg-sky-50 border-sky-100' : 'bg-slate-50 border-slate-100'}`}>
-            <h4 className={`text-[10px] font-black uppercase tracking-widest mb-3 ${highlight ? 'text-[#0EA5E9]' : 'text-slate-400'}`}>{title}</h4>
-            <p className={`text-sm leading-relaxed ${highlight ? 'text-[#0EA5E9] font-black' : 'text-slate-700 font-bold'}`}>{content}</p>
+        <div className={`p-6 rounded-3xl border transition-all ${highlight ? 'bg-sky-50 dark:bg-sky-900/30 border-sky-100 dark:border-sky-800/50' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700'}`}>
+            <h4 className={`text-[10px] font-black uppercase tracking-widest mb-3 ${highlight ? 'text-[#0EA5E9] dark:text-sky-400' : 'text-slate-400'}`}>{title}</h4>
+            <p className={`text-sm leading-relaxed ${highlight ? 'text-[#0EA5E9] dark:text-sky-300 font-black' : 'text-slate-700 dark:text-slate-200 font-bold'}`}>{content}</p>
         </div>
     );
 }

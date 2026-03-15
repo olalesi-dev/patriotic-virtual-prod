@@ -176,11 +176,11 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
 
                     {appt.status === 'PENDING_SCHEDULING' && (
                         <div className="p-6">
-                            <div className="flex items-start gap-4 p-5 bg-[#FFFBF0] rounded-[24px] border border-amber-100/60">
-                                <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0 text-amber-500" />
+                            <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-800/50">
+                                <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0 text-amber-500 dark:text-amber-400" />
                                 <div>
-                                    <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">In Provider Queue</p>
-                                    <p className="text-xs font-medium text-amber-700/80 leading-relaxed">A board-certified provider will review your intake and contact you within <strong className="font-bold">24–48 hours</strong> to confirm your appointment time.</p>
+                                    <p className="text-[10px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest mb-1">In Provider Queue</p>
+                                    <p className="text-xs font-medium text-amber-700/80 dark:text-amber-400 leading-relaxed">A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800 dark:text-amber-300">24 hours</strong> to confirm your appointment time.</p>
                                 </div>
                             </div>
                         </div>

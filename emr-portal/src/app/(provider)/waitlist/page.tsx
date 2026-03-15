@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, getDocs, doc } from 'firebase/firestore';
 import { Search, Filter, Clock, Video, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 
@@ -95,6 +95,7 @@ export default function WaitlistPage() {
             );
 
             const snapUnsub = onSnapshot(q, async (snap) => {
+                let newEntries: WaitlistEntry[] = [];
                 const fetched = await Promise.all(snap.docs.map(async (d) => {
                     const data = d.data();
                     let dateObj = new Date();
@@ -120,8 +121,44 @@ export default function WaitlistPage() {
                         priority,
                     } satisfies WaitlistEntry;
                 }));
+                newEntries.push(...fetched);
 
-                setEntries(fetched.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()));
+                try {
+                    const consultSnap = await getDocs(query(collection(db, 'consultations'), where('paymentStatus', '==', 'paid')));
+                    const consWaitlist = consultSnap.docs.filter((d: any) => !['scheduled', 'completed', 'cancelled'].includes((d.data().status || '').toLowerCase()));
+                    
+                    const enrichedCons = await Promise.all(consWaitlist.map(async (docSnap: any) => {
+                        if (newEntries.some(e => e.id === docSnap.id)) return null;
+                        const data = docSnap.data();
+                        let dateObj = new Date();
+                        if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
+                        else if (data.updatedAt?.toDate) dateObj = data.updatedAt.toDate();
+                        
+                        const enrichedData = await enrichFromConsultation(docSnap.id, data);
+                        const svcName = enrichedData.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+                        const priority: 'high' | 'normal' | 'low' =
+                            enrichedData.serviceKey.includes('diagnostic') || enrichedData.serviceKey.includes('imaging') ? 'high' : 'normal';
+
+                        return {
+                            id: docSnap.id,
+                            patientId: enrichedData.patientUid,
+                            patientName: enrichedData.patientName,
+                            patientEmail: enrichedData.patientEmail,
+                            serviceKey: enrichedData.serviceKey,
+                            serviceName: svcName,
+                            status: 'Waiting',
+                            createdAt: dateObj,
+                            meetingUrl: enrichedData.meetingUrl,
+                            intakeAnswers: enrichedData.intakeAnswers,
+                            priority,
+                        } satisfies WaitlistEntry;
+                    }));
+                    newEntries.push(...(enrichedCons.filter(Boolean) as WaitlistEntry[]));
+                } catch (e) {
+                    console.error('Error fetching consultations for waitlist', e);
+                }
+
+                setEntries(newEntries.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()));
                 setLoading(false);
             });
 
