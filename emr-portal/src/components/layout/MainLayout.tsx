@@ -204,6 +204,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <div className="space-y-1">
                         <NavSection label="Admin" collapsed={isSidebarCollapsed} />
                         <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/admin/doxy" icon={Video} label="Doxy Integration" active={pathname === '/admin/doxy'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
                     </div>

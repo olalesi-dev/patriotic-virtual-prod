@@ -1388,6 +1388,10 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             const consultSnap = await consultRef.get();
             const consultData = consultSnap.exists ? consultSnap.data() : {};
 
+            // Fetch dynamic doxy config
+            const doxySnap = await db.collection('settings').doc('doxy_integration').get();
+            const doxyUrl = doxySnap.exists ? (doxySnap.data().doxyUrl || "https://doxy.me/patriotictelehealth") : "https://doxy.me/patriotictelehealth";
+
             // 3. Create Waitlist Appointment in Patient Sub-collection AND Top-Level
             if (uid) {
                 const baseApptData = {
@@ -1396,7 +1400,7 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
                     type: "Telehealth",
                     status: "waitlist",
                     scheduledAt: null,
-                    meetingUrl: "https://doxy.me/patriotictelehealth",
+                    meetingUrl: doxyUrl,
                     consultationId: consultationId,
                     serviceKey: consultData.serviceKey || 'general_consultation',
                     intakeAnswers: consultData.intake || {},
