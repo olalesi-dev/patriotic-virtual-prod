@@ -16,7 +16,6 @@ if (typeof window !== 'undefined') {
     initializeTrustedTypes();
 }
 
-import { Toaster } from 'react-hot-toast';
 import AINavigator from '@/components/AINavigator';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -58,7 +57,6 @@ export default function RootLayout({
                 <MfaEnrollmentGate>
                     <SecurityShell>
                         <SonnerToaster position="top-right" richColors closeButton />
-                        <Toaster position="top-right" />
                         <AINavigator />
                         {children}
                     </SecurityShell>

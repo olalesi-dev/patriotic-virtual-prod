@@ -32,7 +32,7 @@ import {
     serverTimestamp
 } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { loadStripe } from '@stripe/stripe-js';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);

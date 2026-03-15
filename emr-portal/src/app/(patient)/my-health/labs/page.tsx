@@ -39,7 +39,7 @@ import {
 import { format } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface LabResult {
     id: string;

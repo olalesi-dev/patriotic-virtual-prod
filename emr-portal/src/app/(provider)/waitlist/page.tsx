@@ -90,6 +90,7 @@ export default function WaitlistPage() {
 
             const q = query(
                 collection(db, 'appointments'),
+                where('providerId', '==', user.uid),
                 where('status', 'in', ['waitlist', 'PENDING_SCHEDULING'])
             );
 

@@ -12,7 +12,7 @@ import {
     Timestamp
 } from 'firebase/firestore';
 import { format, isAfter, isBefore, addMinutes, subMinutes, formatDistanceToNow, isPast } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 
 /* ─── helpers ──────────────────────────────────────────────── */

@@ -36,7 +36,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // --- Types ---
 interface Thread {

@@ -1,624 +1,726 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
+import type { User as FirebaseUser } from 'firebase/auth';
+import {
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+    type ColumnDef,
+    type SortingState,
+    type VisibilityState
+} from '@tanstack/react-table';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
-    Search, Plus, Filter, Save, Eye, MoreHorizontal, ChevronDown,
-    Calendar, X, Users, Tag, ChevronRight, Settings, DollarSign, Activity, BookOpen,
-    CreditCard, FileText, Zap, Layout
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsUpDown,
+    Filter,
+    Plus,
+    Save,
+    Search,
+    Settings2,
+    Users
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { auth } from '@/lib/firebase';
 import { PatientChart } from '@/components/patient/PatientChart';
 import NewPatientRegistration from '@/components/patient/NewPatientRegistration';
+import type { PatientRegistryFacetOption, PatientRegistryResponse, PatientRegistryRow } from '@/lib/patient-registry-types';
 
-import { db } from '@/lib/firebase';
-import { collection, query, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
+const VIEW_STORAGE_KEY = 'provider_patients_registry_view_v2';
 
-export default function PatientsClient() {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const patientIdParam = searchParams.get('id');
+const DEFAULT_COLUMN_VISIBILITY: VisibilityState = {
+    select: true,
+    patient: true,
+    contact: true,
+    serviceLine: true,
+    tags: true,
+    status: true,
+    teams: true,
+    lastActivityAt: true
+};
 
-    const [patients, setPatients] = useState<any[]>([]);
-    const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
-    const [filters, setFilters] = useState({ tags: [] as string[], team: [] as string[], status: [] as string[] });
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
-    const [selectedPatientIds, setSelectedPatientIds] = useState<string[]>([]);
-    const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
+const DEFAULT_PAGE_SIZE = 25;
 
-    // Fetch Live Patients & Consultations from Firebase
-    React.useEffect(() => {
-        let unsubscribeConsults: any;
-        let unsubscribePatients: any;
-
-        const fetchData = async () => {
-            const tempPatientsMap = new Map();
-
-            // 1. Fetch logic for Patients Collection
-            const patientsQuery = query(collection(db, 'patients'));
-            unsubscribePatients = onSnapshot(patientsQuery, (snapshot) => {
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const name = data.name || (data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : 'Unknown Patient');
-
-                    const p = {
-                        id: docSnap.id, // Store doc ID as string
-                        name: name,
-                        email: data.email || 'N/A',
-                        phone: data.phone || 'N/A',
-                        dob: data.dob || 'Unknown',
-                        sex: data.sexAtBirth || data.sex || 'Unknown',
-                        state: data.state || 'Unknown',
-                        status: 'Active',
-                        statusColor: 'bg-emerald-100 text-emerald-700',
-                        mrn: docSnap.id.substring(0, 6).toUpperCase(),
-                        team: ['DO'],
-                        isDemo: false,
-                        tags: [],
-                        notes: [],
-                        allergies: ['NKDA'],
-                        alerts: [],
-                        consents: [],
-                        problemList: [],
-                        activeMedications: [],
-                        recentEncounters: [],
-                        upcomingAppointments: [],
-                        orders: [],
-                        imaging: [],
-                        weightTrend: [180, 178, 175],
-                        serviceLine: 'General Consultation',
-                        rawConsultations: [] // We'll map consultations here
-                    };
-
-                    // merge with existing map if any (e.g. from consult sync overlapping)
-                    if (tempPatientsMap.has(docSnap.id)) {
-                        tempPatientsMap.set(docSnap.id, { ...tempPatientsMap.get(docSnap.id), ...p, rawConsultations: tempPatientsMap.get(docSnap.id).rawConsultations });
-                    } else {
-                        tempPatientsMap.set(docSnap.id, p);
-                    }
-                });
-
-                // Update final array
-                updatePatientsState(tempPatientsMap);
-            });
-
-            // 2. Fetch logic for Consultations Collection (to get Intake Answers & Form types)
-            const consultQuery = query(collection(db, 'consultations'), orderBy('createdAt', 'desc'));
-            unsubscribeConsults = onSnapshot(consultQuery, (snapshot) => {
-                snapshot.forEach((docSnap) => {
-                    const cData = docSnap.data();
-                    const pId = cData.patientId || cData.userId;
-                    if (!pId) return;
-
-                    if (!tempPatientsMap.has(pId)) {
-                        // Create phantom patient if they don't exist in 'patients' collection yet but have a consult
-                        tempPatientsMap.set(pId, {
-                            id: pId,
-                            name: cData.patientName || 'Unknown Patient',
-                            email: cData.patientEmail || 'N/A',
-                            phone: cData.patientPhone || 'N/A',
-                            status: 'Pending Intake',
-                            statusColor: 'bg-amber-100 text-amber-700',
-                            mrn: pId.substring(0, 6).toUpperCase(),
-                            tags: [{ label: cData.symptom || 'Consult', color: 'bg-purple-50 text-purple-700' }],
-                            problemList: [],
-                            activeMedications: [],
-                            recentEncounters: [],
-                            upcomingAppointments: [],
-                            orders: [],
-                            imaging: [],
-                            weightTrend: [],
-                            allergies: ['NKDA'],
-                            alerts: [],
-                            consents: [],
-                            serviceLine: cData.symptom || 'General Consultation',
-                            rawConsultations: []
-                        });
-                    }
-
-                    const patient = tempPatientsMap.get(pId);
-
-                    // Prevent pushing duplicate consultations on re-renders
-                    if (!patient.rawConsultations.find((c: any) => c.id === docSnap.id)) {
-                        patient.rawConsultations.push({
-                            id: docSnap.id,
-                            ...cData,
-                            createdAt: cData.createdAt?.toDate ? cData.createdAt.toDate() : new Date()
-                        });
-
-                        // Dynamically update Problem list from Symptom
-                        if (cData.symptom && !patient.problemList.find((p: any) => p.description === cData.symptom)) {
-                            patient.problemList.push({
-                                code: 'INTAKE',
-                                description: cData.symptom
-                            });
-                        }
-
-                        // Add to recentEncounters
-                        if (!patient.recentEncounters.find((e: any) => e.id === docSnap.id)) {
-                            patient.recentEncounters.push({
-                                id: docSnap.id,
-                                date: cData.createdAt?.toDate ? formatFirestoreDate(cData.createdAt) : new Date().toISOString().split('T')[0],
-                                title: `${cData.symptom || 'General visit'} Intake`,
-                                provider: 'Patient Submission',
-                                type: 'Initial Consult',
-                                intake: cData.intake || {},
-                                status: 'Completed'
-                            });
-                        }
-                    }
-                });
-
-                updatePatientsState(tempPatientsMap);
-                setIsLoading(false);
-            }, (error) => {
-                console.error("Error fetching consultations:", error);
-                setIsLoading(false);
-            });
-        };
-
-        const formatFirestoreDate = (ts: any) => {
-            try {
-                const d = ts.toDate();
-                return d.toISOString().split('T')[0];
-            } catch (e) {
-                return new Date().toISOString().split('T')[0];
-            }
-        };
-
-        const updatePatientsState = (pMap: any) => {
-            const arr = Array.from(pMap.values());
-            setPatients(arr);
-        };
-
-        fetchData();
-
-        return () => {
-            if (unsubscribeConsults) unsubscribeConsults();
-            if (unsubscribePatients) unsubscribePatients();
-        };
-    }, []);
-
-    // Auto-select patient from URL
-    React.useEffect(() => {
-        if (patientIdParam && patients.length > 0) {
-            const patient = patients.find((entry) => String(entry.id) === patientIdParam);
-            if (patient) {
-                saveRecentPatient(patient);
-                setSelectedPatient(patient);
-            }
-        }
-    }, [patientIdParam, patients]);
-
-    // Filter Logic
-    React.useEffect(() => {
-        const results = patients.filter(patient => {
-            if (searchTerm) {
-                const terms = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
-                const searchableText = [
-                    patient.name,
-                    patient.mrn,
-                    patient.dob,
-                    patient.phone,
-                    patient.email
-                ]
-                    .filter(Boolean)
-                    .join(' ')
-                    .toLowerCase();
-
-                if (!terms.every((term) => searchableText.includes(term))) {
-                    return false;
-                }
-            }
-            // if (filters.tags.length > 0 && !patient.tags?.some((t: any) => filters.tags.includes(t.label))) return false;
-            if (filters.team.length > 0 && !patient.team?.some((t: string) => filters.team.includes(t))) return false;
-            if (filters.status.length > 0 && !filters.status.includes(patient.status)) return false;
-            return true;
-        });
-        setFilteredPatients(results);
-    }, [patients, filters, searchTerm]);
-
-    const toggleFilter = (type: 'tags' | 'team' | 'status', value: string) => {
-        setFilters(prev => {
-            const current = prev[type];
-            return {
-                ...prev,
-                [type]: current.includes(value) ? current.filter(v => v !== value) : [...current, value]
-            };
-        });
+async function buildHeaders(activeUser: FirebaseUser): Promise<Record<string, string>> {
+    const idToken = await activeUser.getIdToken();
+    return {
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
     };
+}
 
-    const saveRecentPatient = (patient: any) => {
-        if (typeof window === 'undefined') return;
+function formatDate(value: string | null): string {
+    if (!value) return '—';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '—';
+    return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    }).format(parsed);
+}
 
-        try {
-            const saved = window.localStorage.getItem('recent_patients');
-            const parsed = saved ? JSON.parse(saved) as any[] : [];
-            const updated = [patient, ...parsed.filter((entry) => String(entry.id) !== String(patient.id))].slice(0, 5);
-            window.localStorage.setItem('recent_patients', JSON.stringify(updated));
-        } catch (error) {
-            console.error('Failed to store recent patient', error);
-        }
-    };
+function formatRelative(value: string | null): string {
+    if (!value) return 'No recent activity';
 
-    const handleCreatePatient = (data: any) => {
-        const newPatient = {
-            id: data.id,
-            name: `${data.firstName} ${data.lastName}`,
-            mrn: data.mrn,
-            dob: data.dob,
-            sex: data.sexAtBirth,
-            state: data.state,
-            phone: data.phone,
-            email: data.email,
-            status: data.status,
-            statusColor:
-                data.status === 'Active' ? 'bg-emerald-100 text-emerald-700' :
-                    data.status === 'Pending Intake' ? 'bg-amber-100 text-amber-700' :
-                        'bg-slate-100 text-slate-700',
-            team: ['DO'],
-            isDemo: false,
-            tags: data.tags.map((t: string) => ({ label: t, color: 'bg-indigo-50 text-indigo-700' })),
-            notes: [],
-            address1: data.address1,
-            city: data.city,
-            zipCode: data.zipCode,
-            primaryConcern: data.primaryConcern
-        };
-        setPatients((currentPatients) => [newPatient, ...currentPatients]);
-        setIsNewPatientOpen(false);
-    };
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return 'No recent activity';
 
-    const updatePatientStatus = (patientId: string, newStatus: string) => {
-        setPatients(patients.map(c => {
-            if (String(c.id) === patientId) {
-                let newColor = 'bg-slate-100 text-slate-700';
-                if (newStatus === 'Active') newColor = 'bg-emerald-100 text-emerald-700';
-                if (newStatus === 'Lead') newColor = 'bg-purple-100 text-purple-700';
-                if (newStatus === 'Wait List') newColor = 'bg-orange-100 text-orange-700';
-                if (newStatus === 'Inactive') newColor = 'bg-red-100 text-red-700';
-                return { ...c, status: newStatus, statusColor: newColor };
-            }
-            return c;
-        }));
-    };
+    const diffMs = Date.now() - parsed.getTime();
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
 
-    const toggleSelect = (id: string) => {
-        if (selectedPatientIds.includes(id)) {
-            setSelectedPatientIds(selectedPatientIds.filter(cid => cid !== id));
-        } else {
-            setSelectedPatientIds([...selectedPatientIds, id]);
-        }
-    };
+    if (diffMs < minute) return 'just now';
+    if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
+    if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`;
+    if (diffMs < 7 * day) return `${Math.floor(diffMs / day)}d ago`;
+    return formatDate(value);
+}
 
-    const updatePatientNotes = (patientId: string, newNote: any) => {
-        setPatients(prevPatients => prevPatients.map(c => {
-            if (String(c.id) === patientId) {
-                return { ...c, notes: [newNote, ...(c.notes || [])] };
-            }
-            return c;
-        }));
-
-        if (selectedPatient && String(selectedPatient.id) === patientId) {
-            setSelectedPatient((prev: any) => ({ ...prev, notes: [newNote, ...(prev.notes || [])] }));
-        }
-    };
-
-    // If a patient is selected, show the detail view
-    if (selectedPatient) {
-        return <PatientChart patient={selectedPatient} onBack={() => setSelectedPatient(null)} onAddNote={(note: any) => updatePatientNotes(String(selectedPatient.id), note)} />;
+function parseSavedView() {
+    if (typeof window === 'undefined') {
+        return null;
     }
 
-    // Otherwise show the list view
-    return (
-        <div className="flex flex-col h-[calc(100vh-6rem)] font-sans bg-white dark:bg-slate-800 dark:bg-slate-800 relative">
+    try {
+        const raw = window.localStorage.getItem(VIEW_STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw) as {
+            query?: string;
+            statuses?: string[];
+            teamIds?: string[];
+            tags?: string[];
+            pageSize?: number;
+            sorting?: SortingState;
+            columnVisibility?: VisibilityState;
+        };
+    } catch {
+        return null;
+    }
+}
 
-            {/* HEADER */}
-            <div className="flex justify-between items-center px-8 py-6 pb-2">
-                <div className="flex items-center gap-3">
-                    <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-slate-600 dark:text-slate-300 dark:text-slate-300">
-                        <Users className="w-6 h-6" />
+export default function PatientsClient() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const patientIdParam = searchParams.get('id');
+
+    const [activeUser, setActiveUser] = React.useState<FirebaseUser | null>(auth.currentUser);
+    const [rows, setRows] = React.useState<PatientRegistryRow[]>([]);
+    const [selectedPatient, setSelectedPatient] = React.useState<PatientRegistryRow | null>(null);
+    const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
+    const [isNewPatientOpen, setIsNewPatientOpen] = React.useState(false);
+    const [searchInput, setSearchInput] = React.useState('');
+    const deferredSearch = React.useDeferredValue(searchInput);
+    const [statusFilters, setStatusFilters] = React.useState<string[]>([]);
+    const [teamFilters, setTeamFilters] = React.useState<string[]>([]);
+    const [tagFilters, setTagFilters] = React.useState<string[]>([]);
+    const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE);
+    const [sorting, setSorting] = React.useState<SortingState>([{ id: 'patient', desc: false }]);
+    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(DEFAULT_COLUMN_VISIBILITY);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
+    const [showColumnPanel, setShowColumnPanel] = React.useState(false);
+    const [facets, setFacets] = React.useState<PatientRegistryResponse['facets']>({
+        statuses: [],
+        teams: [],
+        tags: []
+    });
+    const [nextCursor, setNextCursor] = React.useState<string | null>(null);
+    const [cursorStack, setCursorStack] = React.useState<Array<string | null>>([null]);
+    const [pageIndex, setPageIndex] = React.useState(0);
+    const [viewLoaded, setViewLoaded] = React.useState(false);
+    const [totalCount, setTotalCount] = React.useState(0);
+
+    const currentCursor = cursorStack[pageIndex] ?? null;
+    const activeSort = sorting[0];
+    const sortField = activeSort?.id === 'lastActivityAt'
+        ? 'lastActivityAt'
+        : activeSort?.id === 'status'
+            ? 'statusLabel'
+            : 'name';
+    const sortDir = activeSort?.desc ? 'desc' : 'asc';
+
+    React.useEffect(() => {
+        const saved = parseSavedView();
+        if (saved) {
+            setSearchInput(saved.query ?? '');
+            setStatusFilters(saved.statuses ?? []);
+            setTeamFilters(saved.teamIds ?? []);
+            setTagFilters(saved.tags ?? []);
+            setPageSize(saved.pageSize ?? DEFAULT_PAGE_SIZE);
+            setSorting(saved.sorting?.length ? saved.sorting : [{ id: 'patient', desc: false }]);
+            setColumnVisibility(saved.columnVisibility ?? DEFAULT_COLUMN_VISIBILITY);
+        }
+        setViewLoaded(true);
+    }, []);
+
+    React.useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            setActiveUser(user);
+            if (!user) {
+                setRows([]);
+                setLoading(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    React.useEffect(() => {
+        if (!viewLoaded) return;
+        React.startTransition(() => {
+            setCursorStack([null]);
+            setPageIndex(0);
+            setRowSelection({});
+        });
+    }, [deferredSearch, pageSize, sortField, sortDir, statusFilters, teamFilters, tagFilters, viewLoaded]);
+
+    const loadPatients = React.useCallback(async (user: FirebaseUser, cursor: string | null) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const headers = await buildHeaders(user);
+            const params = new URLSearchParams();
+            if (deferredSearch.trim()) params.set('q', deferredSearch.trim());
+            statusFilters.forEach((status) => params.append('status', status));
+            teamFilters.forEach((teamId) => params.append('teamId', teamId));
+            tagFilters.forEach((tag) => params.append('tag', tag));
+            params.set('pageSize', String(pageSize));
+            params.set('sortField', sortField);
+            params.set('sortDir', sortDir);
+            if (cursor) params.set('cursor', cursor);
+
+            const response = await fetch(`/api/patients/list?${params.toString()}`, {
+                method: 'GET',
+                headers,
+                cache: 'no-store'
+            });
+            const payload = await response.json() as PatientRegistryResponse;
+
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.error || 'Failed to load patients.');
+            }
+
+            setRows(payload.patients);
+            setNextCursor(payload.nextCursor);
+            setTotalCount(payload.totalCount);
+            setFacets(payload.facets);
+        } catch (loadError) {
+            setError(loadError instanceof Error ? loadError.message : 'Failed to load patients.');
+        } finally {
+            setLoading(false);
+        }
+    }, [deferredSearch, pageSize, sortDir, sortField, statusFilters, tagFilters, teamFilters]);
+
+    React.useEffect(() => {
+        if (!activeUser || !viewLoaded) return;
+        loadPatients(activeUser, currentCursor).catch(() => undefined);
+    }, [activeUser, currentCursor, loadPatients, viewLoaded]);
+
+    React.useEffect(() => {
+        if (!patientIdParam) return;
+        const patient = rows.find((entry) => entry.id === patientIdParam);
+        if (patient) {
+            setSelectedPatient(patient);
+        }
+    }, [patientIdParam, rows]);
+
+    const saveView = React.useCallback(() => {
+        if (typeof window === 'undefined') return;
+        window.localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify({
+            query: searchInput,
+            statuses: statusFilters,
+            teamIds: teamFilters,
+            tags: tagFilters,
+            pageSize,
+            sorting,
+            columnVisibility
+        }));
+        toast.success('Patient table view saved.');
+    }, [columnVisibility, pageSize, searchInput, sorting, statusFilters, tagFilters, teamFilters]);
+
+    const resetFilters = React.useCallback(() => {
+        setSearchInput('');
+        setStatusFilters([]);
+        setTeamFilters([]);
+        setTagFilters([]);
+        setSorting([{ id: 'patient', desc: false }]);
+        setPageSize(DEFAULT_PAGE_SIZE);
+        setColumnVisibility(DEFAULT_COLUMN_VISIBILITY);
+        setCursorStack([null]);
+        setPageIndex(0);
+        setRowSelection({});
+    }, []);
+
+    const handleOpenPatient = React.useCallback((patient: PatientRegistryRow) => {
+        setSelectedPatient(patient);
+        router.replace(`/patients?id=${patient.id}`);
+    }, [router]);
+
+    const handleClosePatient = React.useCallback(() => {
+        setSelectedPatient(null);
+        router.replace('/patients');
+    }, [router]);
+
+    const handleNewPatientComplete = React.useCallback(() => {
+        setIsNewPatientOpen(false);
+        if (activeUser) {
+            setCursorStack([null]);
+            setPageIndex(0);
+            loadPatients(activeUser, null).catch(() => undefined);
+        }
+    }, [activeUser, loadPatients]);
+
+    const columns = React.useMemo<ColumnDef<PatientRegistryRow>[]>(() => [
+        {
+            id: 'select',
+            header: ({ table }) => (
+                <input
+                    type="checkbox"
+                    checked={table.getIsAllPageRowsSelected()}
+                    onChange={table.getToggleAllPageRowsSelectedHandler()}
+                    className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                    aria-label="Select all patients on this page"
+                />
+            ),
+            cell: ({ row }) => (
+                <input
+                    type="checkbox"
+                    checked={row.getIsSelected()}
+                    onChange={row.getToggleSelectedHandler()}
+                    className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                    aria-label={`Select ${row.original.name}`}
+                    onClick={(event) => event.stopPropagation()}
+                />
+            ),
+            enableSorting: false
+        },
+        {
+            id: 'patient',
+            accessorFn: (row) => row.name,
+            header: 'Patient',
+            cell: ({ row }) => {
+                const patient = row.original;
+                return (
+                    <div className="space-y-1">
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleOpenPatient(patient);
+                            }}
+                            className="text-left text-sm font-bold text-brand hover:underline"
+                        >
+                            {patient.name}
+                        </button>
+                        <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+                            <span>MRN: {patient.mrn}</span>
+                            <span>DOB: {patient.dob ?? '—'}</span>
+                        </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100">Patients</h1>
+                );
+            }
+        },
+        {
+            id: 'contact',
+            header: 'Contact',
+            enableSorting: false,
+            cell: ({ row }) => (
+                <div className="space-y-1 text-sm text-slate-600">
+                    <div>{row.original.email ?? 'No email'}</div>
+                    <div className="text-xs text-slate-500">{row.original.phone ?? 'No phone'}</div>
                 </div>
-                <button
-                    onClick={() => setIsNewPatientOpen(true)}
-                    className="bg-brand hover:bg-brand-600 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm flex items-center gap-2 transition-colors"
-                >
-                    <Plus className="w-5 h-5" /> New patient
-                </button>
-            </div>
+            )
+        },
+        {
+            accessorKey: 'serviceLine',
+            header: 'Service Line'
+        },
+        {
+            id: 'tags',
+            header: 'Tags',
+            enableSorting: false,
+            cell: ({ row }) => (
+                <div className="flex flex-wrap gap-2">
+                    {row.original.tags.length > 0 ? row.original.tags.map((tag) => (
+                        <span key={tag.label} className={`rounded-full px-2 py-0.5 text-xs font-bold ${tag.color}`}>
+                            {tag.label}
+                        </span>
+                    )) : <span className="text-xs text-slate-400">None</span>}
+                </div>
+            )
+        },
+        {
+            id: 'status',
+            accessorFn: (row) => row.statusLabel,
+            header: 'Status',
+            cell: ({ row }) => (
+                <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${row.original.statusColor}`}>
+                    {row.original.statusLabel}
+                </span>
+            )
+        },
+        {
+            id: 'teams',
+            accessorFn: (row) => row.teams.map((team) => team.name).join(', '),
+            header: 'Assigned Team',
+            enableSorting: false,
+            cell: ({ row }) => (
+                <div className="flex flex-wrap gap-2">
+                    {row.original.teams.length > 0 ? row.original.teams.map((team) => (
+                        <span key={team.id} className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-700">
+                            {team.name}
+                        </span>
+                    )) : <span className="text-xs text-slate-400">Unassigned</span>}
+                </div>
+            )
+        },
+        {
+            id: 'lastActivityAt',
+            accessorFn: (row) => row.lastActivityAt ?? '',
+            header: 'Last Activity',
+            cell: ({ row }) => (
+                <div className="space-y-1 text-sm text-slate-600">
+                    <div>{formatRelative(row.original.lastActivityAt)}</div>
+                    <div className="text-xs text-slate-500">{formatDate(row.original.lastActivityAt)}</div>
+                </div>
+            )
+        }
+    ], [handleOpenPatient]);
 
-            {/* FILTER BAR */}
-            <div className="px-8 py-4 flex items-center flex-wrap gap-4 border-b border-slate-100 dark:border-slate-700 dark:border-slate-700">
-                <span className="font-bold text-slate-900 dark:text-white dark:text-slate-100 whitespace-nowrap">{filteredPatients.length} Patients</span>
+    const table = useReactTable({
+        data: rows,
+        columns,
+        state: {
+            sorting,
+            rowSelection,
+            columnVisibility
+        },
+        onSortingChange: setSorting,
+        onRowSelectionChange: setRowSelection,
+        onColumnVisibilityChange: setColumnVisibility,
+        getCoreRowModel: getCoreRowModel(),
+        enableRowSelection: true,
+        manualSorting: true
+    });
 
-                {/* Search */}
-                <div className="relative flex-1 min-w-[300px] max-w-xl">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                    <input
-                        type="text"
-                        placeholder="Search by patient name, MRN, DOB, email, or phone..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-slate-400"
-                    />
+    if (selectedPatient) {
+        return <PatientChart patient={selectedPatient as any} onBack={handleClosePatient} onAddNote={() => undefined} />;
+    }
+
+    return (
+        <div className="relative flex h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-8 py-6">
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-2xl bg-slate-100 p-3 text-slate-600">
+                                <Users className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-black tracking-tight text-slate-900">Patients</h1>
+                                <p className="text-sm text-slate-500">
+                                    Only patients linked to your appointments, messages, or teams are listed here.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 text-xs font-semibold text-slate-500">
+                            <span className="rounded-full bg-slate-100 px-3 py-1">{totalCount} provider-scoped patients</span>
+                            <span className="rounded-full bg-slate-100 px-3 py-1">{Object.keys(rowSelection).length} selected</span>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setShowColumnPanel((current) => !current)}
+                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                        >
+                            <Settings2 className="h-4 w-4" />
+                            Show
+                        </button>
+                        <button
+                            type="button"
+                            onClick={saveView}
+                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                        >
+                            <Save className="h-4 w-4" />
+                            Save View
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsNewPatientOpen(true)}
+                            className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600"
+                        >
+                            <Plus className="h-4 w-4" />
+                            New patient
+                        </button>
+                    </div>
                 </div>
 
-                {/* Filter Chips */}
-                <div className="flex items-center gap-2">
-                    <FilterDropdown
-                        label="Tags" icon={Tag}
-                        options={Array.from(new Set(patients.flatMap(c => c.tags?.map((t: any) => t.label) || [])))}
-                        selected={filters.tags}
-                        onChange={(val: string) => toggleFilter('tags', val)}
-                    />
-                    <FilterDropdown
-                        label="Team" icon={Users}
-                        options={Array.from(new Set(patients.flatMap(c => c.team || [])))}
-                        selected={filters.team}
-                        onChange={(val: string) => toggleFilter('team', val)}
-                    />
-                    <FilterDropdown
+                <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.5fr),repeat(3,minmax(0,1fr)),auto]">
+                    <label className="relative block">
+                        <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={(event) => setSearchInput(event.target.value)}
+                            placeholder="Search name, MRN, DOB, phone, email, or patient ID..."
+                            className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-medium text-slate-800 outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/10"
+                        />
+                    </label>
+
+                    <FacetFilter
                         label="Status"
-                        options={['Active', 'Pending Intake', 'Inactive', 'Lead', 'Wait List']}
-                        selected={filters.status}
-                        onChange={(val: string) => toggleFilter('status', val)}
+                        options={facets.statuses}
+                        selected={statusFilters}
+                        onToggle={(value) => toggleFacet(value, statusFilters, setStatusFilters)}
                     />
-
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900/50 text-brand text-xs font-bold rounded-full border-2 border-transparent hover:bg-indigo-50 hover:border-indigo-100 transition-all">
-                        <Plus className="w-3 h-3 bg-brand text-white rounded-full p-0.5" />
-                        <span>View</span>
-                    </button>
+                    <FacetFilter
+                        label="Team"
+                        options={facets.teams}
+                        selected={teamFilters}
+                        onToggle={(value) => toggleFacet(value, teamFilters, setTeamFilters)}
+                    />
+                    <FacetFilter
+                        label="Tags"
+                        options={facets.tags}
+                        selected={tagFilters}
+                        onToggle={(value) => toggleFacet(value, tagFilters, setTagFilters)}
+                    />
 
                     <button
-                        onClick={() => setFilters({ tags: [], team: [], status: [] })}
-                        className="text-brand text-xs font-bold hover:underline ml-2"
+                        type="button"
+                        onClick={resetFilters}
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
                     >
+                        <Filter className="h-4 w-4" />
                         Reset
                     </button>
                 </div>
 
-                <div className="flex-1"></div>
-
-                {/* Right Actions */}
-                <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-2 text-brand text-sm font-bold hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
-                        <Filter className="w-4 h-4" /> Show
-                    </button>
-                    <button
-                        onClick={() => alert("View saved successfully!")}
-                        className="flex items-center gap-2 text-brand text-sm font-bold hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                        <Save className="w-4 h-4" /> Save view
-                    </button>
-                </div>
+                {showColumnPanel && (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-slate-500">Visible Columns</div>
+                        <div className="flex flex-wrap gap-3">
+                            {table.getAllLeafColumns()
+                                .filter((column) => column.id !== 'select')
+                                .map((column) => (
+                                    <label key={column.id} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+                                        <input
+                                            type="checkbox"
+                                            checked={column.getIsVisible()}
+                                            onChange={column.getToggleVisibilityHandler()}
+                                            className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                                        />
+                                        <span>{column.columnDef.header as string}</span>
+                                    </label>
+                                ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* TABLE */}
-            <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/30 relative">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-100 dark:bg-slate-700/80 text-xs font-bold text-slate-500 dark:text-slate-400 sticky top-0 z-10 shadow-sm">
-                        <tr>
-                            <th className="px-6 py-4 w-12 text-center">
-                                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand" />
-                            </th>
-                            <th className="px-6 py-4 cursor-pointer hover:text-brand flex items-center gap-1">
-                                Patient name <ChevronDown className="w-3 h-3" />
-                            </th>
-                            <th className="px-6 py-4">Phone number</th>
-                            <th className="px-6 py-4">Email</th>
-                            <th className="px-6 py-4">Tags</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4">Assigned Team</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-800 dark:bg-slate-800">
-                        {filteredPatients.length > 0 ? filteredPatients.map((patient) => (
-                            <tr key={patient.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors group">
-                                <td className="px-6 py-4 text-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedPatientIds.includes(String(patient.id))}
-                                        onChange={() => toggleSelect(String(patient.id))}
-                                        className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
-                                    />
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => {
-                                                saveRecentPatient(patient);
-                                                setSelectedPatient(patient);
-                                            }}
-                                            className="font-bold text-brand hover:underline"
-                                        >
-                                            {patient.name}
-                                        </button>
-                                        {patient.isDemo && (
-                                            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] uppercase font-bold rounded border border-slate-200 dark:border-slate-700">
-                                                Demo
-                                            </span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-200 dark:text-slate-300">{patient.phone}</td>
-                                <td className="px-6 py-4 text-slate-600 dark:text-slate-300 dark:text-slate-400">{patient.email}</td>
-                                <td className="px-6 py-4">
-                                    <div className="flex flex-wrap gap-2">
-                                        {patient.tags?.map((tag: any) => (
-                                            <span key={tag.label} className={`px-2 py-0.5 text-xs font-bold rounded-full border border-black/5 ${tag.color}`}>
-                                                {tag.label}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                        <StatusCell
-                                            status={patient.status}
-                                            color={patient.statusColor}
-                                            onUpdate={(newStatus: string) => updatePatientStatus(String(patient.id), newStatus)}
-                                        />
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex -space-x-2">
-                                        {patient.team?.map((member: any, i: number) => (
-                                            member === 'img' ? (
-                                                <img key={i} src={`https://i.pravatar.cc/150?u=${patient.id}`} alt="User" className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-700" />
+            <div className="flex-1 overflow-auto bg-slate-50">
+                {error ? (
+                    <div className="m-8 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+                        {error}
+                    </div>
+                ) : null}
+
+                <table className="min-w-full border-collapse text-left">
+                    <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <tr key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <th key={header.id} className="border-b border-slate-200 px-6 py-4">
+                                        {header.isPlaceholder ? null : (
+                                            header.column.getCanSort() ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={header.column.getToggleSortingHandler()}
+                                                    className="inline-flex items-center gap-2 font-black"
+                                                >
+                                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                                    <ChevronsUpDown className="h-3.5 w-3.5 text-slate-400" />
+                                                </button>
                                             ) : (
-                                                <div key={i} className="w-7 h-7 rounded-full bg-cyan-100 dark:bg-cyan-900/40 border-2 border-white dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-cyan-700 dark:text-cyan-400">
-                                                    {member}
-                                                </div>
+                                                flexRender(header.column.columnDef.header, header.getContext())
                                             )
-                                        ))}
-                                    </div>
-                                </td>
+                                        )}
+                                    </th>
+                                ))}
                             </tr>
-                        )) : (
+                        ))}
+                    </thead>
+
+                    <tbody className="divide-y divide-slate-200 bg-white">
+                        {loading ? (
                             <tr>
-                                <td colSpan={7} className="px-6 py-20 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                                            <Search className="w-6 h-6 text-slate-400" />
-                                        </div>
-                                        <p className="text-slate-800 dark:text-slate-100 dark:text-slate-100 font-bold">No patients found</p>
-                                        <p className="text-slate-400 dark:text-slate-500 text-sm">Try adjusting your filters or search term</p>
-                                        <button
-                                            onClick={() => {
-                                                setSearchTerm('');
-                                                setFilters({ tags: [], team: [], status: [] });
-                                            }}
-                                            className="mt-2 text-brand font-bold text-sm hover:underline"
-                                        >
-                                            Clear all filters
-                                        </button>
+                                <td colSpan={table.getVisibleLeafColumns().length} className="px-6 py-20 text-center">
+                                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-brand" />
+                                    <p className="mt-4 text-sm font-medium text-slate-500">Loading provider patient registry...</p>
+                                </td>
+                            </tr>
+                        ) : table.getRowModel().rows.length === 0 ? (
+                            <tr>
+                                <td colSpan={table.getVisibleLeafColumns().length} className="px-6 py-20 text-center">
+                                    <div className="space-y-3">
+                                        <p className="text-base font-bold text-slate-800">No patients match the current filters.</p>
+                                        <p className="text-sm text-slate-500">Adjust the filters or reset the saved view.</p>
                                     </div>
                                 </td>
                             </tr>
+                        ) : (
+                            table.getRowModel().rows.map((row) => (
+                                <tr
+                                    key={row.id}
+                                    onClick={() => handleOpenPatient(row.original)}
+                                    className="cursor-pointer transition hover:bg-slate-50"
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <td key={cell.id} className="px-6 py-4 align-top">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))
                         )}
                     </tbody>
                 </table>
+            </div>
 
-                {/* Floating Action Buttons */}
-                <div className="absolute right-8 bottom-8 flex flex-col gap-3">
-                    <FloatingButton icon={Calendar} />
-                    <FloatingButton icon={Calendar} label="2" />
-                    <FloatingButton icon={X} />
+            <div className="flex flex-col gap-4 border-t border-slate-200 bg-white px-8 py-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                    <span>Page {pageIndex + 1}</span>
+                    <span>Showing {rows.length} of {totalCount}</span>
+                    <label className="inline-flex items-center gap-2">
+                        <span>Rows</span>
+                        <select
+                            value={pageSize}
+                            onChange={(event) => setPageSize(Number(event.target.value))}
+                            className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-sm font-semibold text-slate-700 outline-none"
+                        >
+                            {[10, 25, 50].map((size) => (
+                                <option key={size} value={size}>{size}</option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+                        disabled={pageIndex === 0}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (!nextCursor) return;
+                            setCursorStack((current) => {
+                                const next = current.slice(0, pageIndex + 1);
+                                next.push(nextCursor);
+                                return next;
+                            });
+                            setPageIndex((current) => current + 1);
+                        }}
+                        disabled={!nextCursor}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                    </button>
                 </div>
             </div>
 
-            {/* NEW PATIENT REGISTRATION */}
-            {isNewPatientOpen && <NewPatientRegistration onClose={() => setIsNewPatientOpen(false)} onComplete={handleCreatePatient} />}
-        </div>
-    );
-}
-
-function FilterDropdown({ label, icon: Icon, options, selected, onChange }: any) {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-        function handleClickOutside(event: any) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [dropdownRef]);
-
-    return (
-        <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full border-2 transition-all ${selected.length > 0
-                    ? 'bg-brand-50 border-brand-100 text-brand'
-                    : 'bg-slate-50 border-transparent text-slate-700 hover:bg-indigo-50 hover:border-indigo-100' // Keeping it slate-700 similar to Status style
-                    }`}
-            >
-                {Icon ? (
-                    <Icon className={`w-3 h-3 ${selected.length > 0 ? 'text-brand' : 'bg-brand text-white rounded-full p-0.5'}`} />
-                ) : (
-                    <div className="w-3 h-3 flex items-center justify-center">
-                        <X className="w-3 h-3 bg-slate-400 text-white rounded-full p-0.5" />
-                    </div>
-                )}
-                <span className={selected.length > 0 ? 'text-brand' : 'text-slate-700'}>{label}</span>
-                {selected.length > 0 && (
-                    <span className="ml-1 bg-brand text-white text-[10px] px-1.5 py-0.5 rounded-full">{selected.length}</span>
-                )}
-            </button>
-
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                    <div className="p-2 max-h-60 overflow-y-auto">
-                        {options.map((option: string) => (
-                            <label key={option} className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={selected.includes(option)}
-                                    onChange={() => onChange(option)}
-                                    className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand"
-                                />
-                                <span className="text-sm text-slate-700 dark:text-slate-200 dark:text-slate-300 font-medium">{option}</span>
-                            </label>
-                        ))}
-                        {options.length === 0 && <div className="p-2 text-xs text-slate-400 text-center">No options available</div>}
-                    </div>
-                </div>
+            {isNewPatientOpen && (
+                <NewPatientRegistration
+                    onClose={() => setIsNewPatientOpen(false)}
+                    onComplete={handleNewPatientComplete}
+                />
             )}
         </div>
     );
 }
 
-function StatusCell({ status, color, onUpdate }: any) {
-    const [isOpen, setIsOpen] = useState(false);
-    const ref = React.useRef<HTMLDivElement>(null);
+function toggleFacet(
+    value: string,
+    selected: string[],
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+) {
+    setter((current) => current.includes(value)
+        ? current.filter((entry) => entry !== value)
+        : [...current, value]);
+}
+
+function FacetFilter({
+    label,
+    options,
+    selected,
+    onToggle
+}: {
+    label: string;
+    options: PatientRegistryFacetOption[];
+    selected: string[];
+    onToggle: (value: string) => void;
+}) {
+    const [open, setOpen] = React.useState(false);
+    const ref = React.useRef<HTMLDivElement | null>(null);
 
     React.useEffect(() => {
-        function handleClickOutside(event: any) {
-            if (ref.current && !ref.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [ref]);
-
-    const options = ['Active', 'Lead', 'Wait List', 'Inactive'];
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (!ref.current || ref.current.contains(event.target as Node)) return;
+            setOpen(false);
+        };
+        document.addEventListener('mousedown', handleOutsideClick);
+        return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, []);
 
     return (
         <div ref={ref} className="relative">
             <button
-                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold ${color} hover:opacity-80 transition-opacity`}
+                type="button"
+                onClick={() => setOpen((current) => !current)}
+                className={`inline-flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold transition ${selected.length > 0
+                    ? 'border-brand bg-brand-50 text-brand'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-white'
+                    }`}
             >
-                {status}
-                <ChevronDown className="w-3 h-3 opacity-50" />
+                <span>{label}{selected.length > 0 ? ` (${selected.length})` : ''}</span>
+                <ChevronDown className={`h-4 w-4 transition ${open ? 'rotate-180' : ''}`} />
             </button>
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                    {options.map(opt => (
-                        <button
-                            key={opt}
-                            onClick={(e) => { e.stopPropagation(); onUpdate(opt); setIsOpen(false); }}
-                            className="block w-full text-left px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                        >
-                            {opt}
-                        </button>
+
+            {open && (
+                <div className="absolute left-0 top-full z-20 mt-2 max-h-72 w-full min-w-[240px] overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                    {options.length === 0 ? (
+                        <div className="px-3 py-4 text-sm text-slate-400">No options available</div>
+                    ) : options.map((option) => (
+                        <label key={option.value} className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 hover:bg-slate-50">
+                            <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                <input
+                                    type="checkbox"
+                                    checked={selected.includes(option.value)}
+                                    onChange={() => onToggle(option.value)}
+                                    className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                                />
+                                {option.label}
+                            </span>
+                            <span className="text-xs font-bold text-slate-400">{option.count}</span>
+                        </label>
                     ))}
                 </div>
             )}
         </div>
-    )
-}
-
-function FloatingButton({ icon: Icon, label }: any) {
-    return (
-        <button className="w-12 h-12 bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group relative">
-            <Icon className="w-5 h-5 text-slate-500 group-hover:text-slate-700" />
-            {label && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs font-bold flex items-center justify-center border-2 border-white">{label}</span>}
-        </button>
-    )
+    );
 }
