@@ -649,7 +649,7 @@ export default function AppointmentsPage() {
                                     <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isScheduled ? 'bg-sky-50 text-[#0EA5E9] border-sky-100 dark:bg-sky-900/30 dark:border-sky-800/50' :
                                         isWaitlist ? 'bg-transparent text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800/50' :
                                             isCancelled ? 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/30 dark:border-rose-800/50' :
-                                                'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-700/50 dark:border-slate-600'
+                                                'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-700/50 dark:border-slate-600 dark:text-slate-300'
                                         }`}>
                                         {statusLabel}
                                     </span>
@@ -978,38 +978,38 @@ export default function AppointmentsPage() {
                                 return (
                                     <>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                            <div className="bg-slate-50/50 dark:bg-slate-800/50 p-5 rounded-[24px] border border-slate-100/60 dark:border-slate-700/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Provider</p>
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{intakeDetail.providerName || 'Patriotic Provider'}</p>
                                             </div>
-                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                            <div className="bg-slate-50/50 dark:bg-slate-800/50 p-5 rounded-[24px] border border-slate-100/60 dark:border-slate-700/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Visit Type</p>
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{intakeDetail.type || 'Telehealth'}</p>
                                             </div>
-                                            <div className="col-span-2 bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                            <div className="col-span-2 bg-slate-50/50 dark:bg-slate-800/50 p-5 rounded-[24px] border border-slate-100/60 dark:border-slate-700/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Scheduled Date & Time</p>
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                                     {toSafeDate(intakeDetail.scheduledAt || intakeDetail.date) && isScheduledDetail
                                                         ? format(toSafeDate(intakeDetail.scheduledAt || intakeDetail.date)!, 'PPPP p')
-                                                        : 'TBD — Provider will confirm within 24–48 hours'}
+                                                        : 'TBD — Provider will confirm within 24– hours'}
                                                 </p>
                                             </div>
-                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                            <div className="bg-slate-50/50 dark:bg-slate-800/50 p-5 rounded-[24px] border border-slate-100/60 dark:border-slate-700/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Status</p>
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${isScheduledDetail ? 'bg-sky-50 text-[#0EA5E9] border-sky-100' : 'bg-transparent text-amber-600 border-amber-200'
                                                     }`}>
                                                     {isWaitlistDetail ? 'AWAITING PROVIDER' : intakeDetail.status}
                                                 </span>
                                             </div>
-                                            <div className="bg-slate-50/50 p-5 rounded-[24px] border border-slate-100/60">
+                                            <div className="bg-slate-50/50 dark:bg-slate-800/50 p-5 rounded-[24px] border border-slate-100/60 dark:border-slate-700/60">
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Service</p>
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{intakeDetail.serviceKey?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Consultation'}</p>
                                             </div>
                                             {intakeDetail.meetingUrl && isScheduledDetail && (
-                                                <div className="col-span-2 bg-sky-50/50 p-5 rounded-[24px] border border-sky-100/60">
+                                                <div className="col-span-2 bg-sky-50/50 dark:bg-sky-900/20 p-5 rounded-[24px] border border-sky-100/60 dark:border-sky-900/50">
                                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Video Visit Link</p>
                                                     <a href={intakeDetail.meetingUrl} target="_blank" rel="noopener noreferrer"
-                                                        className="flex items-center gap-2 text-sm font-bold text-[#0EA5E9] hover:underline break-all">
+                                                        className="flex items-center gap-2 text-sm font-bold text-[#0EA5E9] dark:text-sky-400 hover:underline break-all">
                                                         <Video className="w-4 h-4 shrink-0" /> {intakeDetail.meetingUrl}
                                                     </a>
                                                 </div>
@@ -1021,9 +1021,9 @@ export default function AppointmentsPage() {
                                             const entries = Object.entries(answers);
                                             if (entries.length === 0) return null;
                                             return (
-                                                <div className="p-6 rounded-[32px] border bg-slate-50/50 border-slate-100/60 mt-4">
+                                                <div className="p-6 rounded-[32px] border bg-slate-50/50 dark:bg-slate-800/50 border-slate-100/60 dark:border-slate-700/60 mt-4">
                                                     <div className="flex items-center gap-2 mb-6 text-slate-400">
-                                                        <div className="w-6 h-6 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center border border-indigo-100">
+                                                        <div className="w-6 h-6 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-full flex items-center justify-center border border-indigo-100 dark:border-indigo-800/50">
                                                             <ClipboardCheck className="w-3 h-3" />
                                                         </div>
                                                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Clinical Intake Record</h4>
@@ -1048,11 +1048,11 @@ export default function AppointmentsPage() {
                                         })()}
 
                                         {isWaitlistDetail && (
-                                            <div className="flex items-start gap-4 p-6 bg-[#FFFBF0] text-amber-700/80 rounded-[24px] border border-amber-100/60 mt-4">
+                                            <div className="flex items-start gap-4 p-6 bg-[#FFFBF0] dark:bg-amber-900/10 text-amber-700/80 dark:text-amber-400/80 rounded-[24px] border border-amber-100/60 dark:border-amber-900/30 mt-4">
                                                 <Info className="w-5 h-5 mt-0.5 shrink-0" />
                                                 <div>
-                                                    <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2">In Provider Queue</p>
-                                                    <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800">24–48 hours</strong> to confirm your appointment time.</p>
+                                                    <p className="text-[10px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest mb-2">In Provider Queue</p>
+                                                    <p className="text-xs font-medium leading-relaxed">Your payment has been received. A board-certified provider will review your intake and contact you within <strong className="font-bold text-amber-800 dark:text-amber-400">24– hours</strong> to confirm your appointment time.</p>
                                                 </div>
                                             </div>
                                         )}

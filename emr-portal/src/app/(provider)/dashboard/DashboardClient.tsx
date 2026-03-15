@@ -66,7 +66,7 @@ interface DashboardApiResponse {
     error?: string;
 }
 
-const DASHBOARD_TABS: DashboardTab[] = ['Upcoming', 'Waitlist', 'Completed', 'Cancelled'];
+const DASHBOARD_TABS: DashboardTab[] = ['Waitlist', 'Upcoming', 'Completed', 'Cancelled'];
 const UPCOMING_STATUS_KEYS: DashboardStatusKey[] = ['upcoming', 'checked_in', 'confirmed', 'pending'];
 
 function getTabForStatus(statusKey: DashboardStatusKey): DashboardTab {
@@ -85,7 +85,7 @@ function pickActiveTab(appointments: DashboardAppointment[], preferredTab: Dashb
         return preferredTab;
     }
 
-    return DASHBOARD_TABS.find((tab) => countTabAppointments(appointments, tab) > 0) ?? 'Upcoming';
+    return DASHBOARD_TABS.find((tab) => countTabAppointments(appointments, tab) > 0) ?? 'Waitlist';
 }
 
 function formatTimestamp(value: string | null, fallback: string): string {
@@ -146,7 +146,7 @@ function getStatusTone(statusKey: DashboardStatusKey) {
 export default function DashboardClient() {
     const queryClient = useQueryClient();
     const { user: activeUser, isReady } = useAuthUser();
-    const [activeTab, setActiveTab] = React.useState<DashboardTab>('Upcoming');
+    const [activeTab, setActiveTab] = React.useState<DashboardTab>('Waitlist');
     const [selectedAppointmentId, setSelectedAppointmentId] = React.useState<string | null>(null);
 
     const dashboardQueryKey = React.useMemo(
@@ -311,12 +311,12 @@ export default function DashboardClient() {
 
     return (
         <div className="space-y-8 pb-8">
-            <section className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-sky-50 p-8 shadow-sm">
+            <section className="rounded-3xl border border-indigo-100 dark:border-slate-700 bg-gradient-to-br from-indigo-50 via-white to-sky-50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-800 p-8 shadow-sm">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-2xl space-y-3">
                         <p className="text-xs font-black uppercase tracking-[0.3em] text-indigo-500">Provider Dashboard</p>
-                        <h2 className="text-3xl font-black tracking-tight text-slate-900">Welcome back, {providerName}</h2>
-                        <p className="max-w-xl text-sm leading-6 text-slate-600">
+                        <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Welcome back, {providerName}</h2>
+                        <p className="max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
                             Real-time schedule, waitlist, and patient message activity for your current provider account.
                         </p>
                     </div>
@@ -336,7 +336,7 @@ export default function DashboardClient() {
                                 if (!activeUser) return;
                                 void dashboardQuery.refetch();
                             }}
-                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
                         >
                             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                             Refresh
@@ -345,10 +345,10 @@ export default function DashboardClient() {
                 </div>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-4">
-                    <MetricCard label="Upcoming" value={counts.Upcoming} tone="indigo" />
-                    <MetricCard label="Waitlist" value={counts.Waitlist} tone="violet" />
-                    <MetricCard label="Completed" value={counts.Completed} tone="slate" />
-                    <MetricCard label="Unread Messages" value={unreadMessageCount} tone="amber" />
+                    <MetricCard label="Upcoming" value={counts.Upcoming} tone="indigo" onClick={() => setActiveTab('Upcoming')} />
+                    <MetricCard label="Waitlist" value={counts.Waitlist} tone="violet" onClick={() => setActiveTab('Waitlist')} />
+                    <MetricCard label="Completed" value={counts.Completed} tone="slate" onClick={() => setActiveTab('Completed')} />
+                    <MetricCard label="Unread Messages" value={unreadMessageCount} tone="amber" onClick={() => window.location.href = '/inbox'} />
                 </div>
             </section>
 
@@ -391,18 +391,18 @@ export default function DashboardClient() {
                                     key={appointment.id}
                                     type="button"
                                     onClick={() => setSelectedAppointmentId(appointment.id)}
-                                    className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-brand/30 hover:shadow-md"
+                                    className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 text-left shadow-sm transition hover:border-brand/30 dark:hover:border-brand/50 hover:shadow-md"
                                 >
                                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                         <div className="space-y-2">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <h3 className="text-base font-bold text-slate-900">{appointment.patient}</h3>
+                                                <h3 className="text-base font-bold text-slate-900 dark:text-white">{appointment.patient}</h3>
                                                 <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${getStatusTone(appointment.statusKey)}`}>
                                                     {appointment.statusLabel}
                                                 </span>
                                             </div>
-                                            <p className="text-sm font-medium text-slate-600">{appointment.type}</p>
-                                            <p className="text-sm text-slate-500">
+                                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{appointment.type}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-500">
                                                 {appointment.statusKey === 'waitlist'
                                                     ? `Submitted ${formatTimestamp(appointment.submittedAt, 'recently')}`
                                                     : `${appointment.displayTime}${appointment.startAt ? ` • ${formatDateLabel(appointment.startAt, '')}` : ''}`}
@@ -442,9 +442,9 @@ export default function DashboardClient() {
                 </section>
 
                 <aside className="space-y-6">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Weekly Volume</h3>
+                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Weekly Volume</h3>
                             <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-bold text-brand">
                                 <Activity className="h-3 w-3" />
                                 {counts.Upcoming + counts.Completed} visits
@@ -486,11 +486,11 @@ export default function DashboardClient() {
                         </div>
                     </div>
 
-                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 px-5 py-4">
                             <div>
-                                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Messages</h3>
-                                <p className="mt-1 text-sm font-semibold text-slate-700">{unreadMessageCount} unread</p>
+                                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Messages</h3>
+                                <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-300">{unreadMessageCount} unread</p>
                             </div>
                             <Link href="/inbox" className="text-xs font-bold text-brand hover:underline">
                                 View all
@@ -508,14 +508,14 @@ export default function DashboardClient() {
                                     <Link
                                         key={message.id}
                                         href="/inbox"
-                                        className={`block px-5 py-4 transition hover:bg-slate-50 ${message.unread ? 'bg-indigo-50/40' : ''}`}
+                                        className={`block px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 ${message.unread ? 'bg-indigo-50/40 dark:bg-indigo-900/20' : ''}`}
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
-                                                <p className={`truncate text-sm ${message.unread ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'}`}>
+                                                <p className={`truncate text-sm ${message.unread ? 'font-bold text-slate-900 dark:text-white' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
                                                     {message.sender}
                                                 </p>
-                                                <p className="mt-1 truncate text-xs text-slate-500">{message.preview}</p>
+                                                <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{message.preview}</p>
                                             </div>
                                             <div className="shrink-0 text-right">
                                                 <p className="text-[11px] font-semibold text-slate-400">{message.time}</p>
@@ -543,17 +543,17 @@ export default function DashboardClient() {
                         }
                     }}
                 >
-                    <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl">
-                        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                    <div className="w-full max-w-2xl rounded-3xl bg-white dark:bg-slate-800 shadow-2xl dark:shadow-rose-900/20">
+                        <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-700 px-6 py-5">
                             <div>
                                 <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Appointment</p>
-                                <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{selectedAppointment.patient}</h3>
-                                <p className="mt-1 text-sm font-medium text-slate-500">{selectedAppointment.type}</p>
+                                <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">{selectedAppointment.patient}</h3>
+                                <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">{selectedAppointment.type}</p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setSelectedAppointmentId(null)}
-                                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-300"
                             >
                                 <XCircle className="h-5 w-5" />
                             </button>
@@ -596,7 +596,7 @@ export default function DashboardClient() {
                                 {selectedAppointment.statusKey === 'waitlist' && (
                                     <Link
                                         href="/waitlist"
-                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
                                     >
                                         <Calendar className="h-4 w-4" />
                                         Open Waitlist
@@ -637,31 +637,37 @@ export default function DashboardClient() {
     );
 }
 
-function MetricCard({ label, value, tone }: { label: string; value: number; tone: 'indigo' | 'violet' | 'slate' | 'amber' }) {
+function MetricCard({ label, value, tone, onClick }: { label: string; value: number; tone: 'indigo' | 'violet' | 'slate' | 'amber'; onClick?: () => void }) {
     const toneClass = tone === 'violet'
-        ? 'bg-violet-50 border-violet-100 text-violet-700'
+        ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-100 dark:border-violet-500/20 text-violet-700 dark:text-violet-300'
         : tone === 'slate'
-            ? 'bg-slate-100 border-slate-200 text-slate-700'
+            ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
             : tone === 'amber'
-                ? 'bg-amber-50 border-amber-100 text-amber-700'
-                : 'bg-indigo-50 border-indigo-100 text-indigo-700';
+                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-500/20 text-amber-700 dark:text-amber-300'
+                : 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-300';
 
-    return (
-        <div className={`rounded-2xl border px-4 py-4 ${toneClass}`}>
+    const inner = (
+        <div className={`rounded-2xl border px-4 py-4 ${toneClass} ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}>
             <p className="text-[11px] font-black uppercase tracking-[0.2em]">{label}</p>
             <p className="mt-2 text-3xl font-black tracking-tight">{value}</p>
         </div>
     );
+
+    if (onClick) {
+        return <div onClick={onClick} className="h-full" role="button" tabIndex={0} onKeyDown={(e) => { if(e.key === 'Enter') onClick(); }}>{inner}</div>;
+    }
+
+    return inner;
 }
 
 function DetailCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
     return (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-4">
             <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
                 {icon}
                 <span>{label}</span>
             </div>
-            <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">{value}</p>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{value}</p>
         </div>
     );
 }
@@ -683,8 +689,8 @@ function StatusActionButton({
             onClick={onClick}
             disabled={loading}
             className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${destructive
-                ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
                 } disabled:cursor-not-allowed disabled:opacity-60`}
         >
             {loading ? 'Saving...' : label}
