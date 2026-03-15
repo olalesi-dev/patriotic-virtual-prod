@@ -1,12 +1,65 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { collection, query, onSnapshot } from 'firebase/firestore';
 import {
-    Users, Briefcase, Database, BarChart, ClipboardList, ArrowRight, User
+    Users, Briefcase, Database, BarChart, ClipboardList, ArrowRight, User, AlertTriangle, Calendar
 } from 'lucide-react';
+import { format, differenceInDays } from 'date-fns';
+
+interface VendorAlert {
+    id: string;
+    name: string;
+    contractEndDate: string | any;
+    daysUntilExpiration: number;
+}
 
 export default function CrmDashboardClient() {
+    const [expiringVendors, setExpiringVendors] = useState<VendorAlert[]>([]);
+    
+    useEffect(() => {
+        const q = query(collection(db, 'crm', 'data', 'vendors'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const now = new Date();
+            const alerts: VendorAlert[] = [];
+            
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                if (data.contractEndDate && data.status !== 'Inactive' && data.status !== 'Archived') {
+                    // Try to parse contractEndDate
+                    let endDate: Date | null = null;
+                    if (data.contractEndDate?.toDate) {
+                        endDate = data.contractEndDate.toDate();
+                    } else if (typeof data.contractEndDate === 'string') {
+                        endDate = new Date(data.contractEndDate);
+                    }
+                    
+                    if (endDate && !isNaN(endDate.getTime())) {
+                        const days = differenceInDays(endDate, now);
+                        // Show if expiring within 90 days (and not already expired for more than 30 days)
+                        if (days <= 90 && days >= -30) {
+                            alerts.push({
+                                id: doc.id,
+                                name: data.name || 'Unnamed Vendor',
+                                contractEndDate: endDate,
+                                daysUntilExpiration: days
+                            });
+                        }
+                    }
+                }
+            });
+            
+            alerts.sort((a, b) => a.daysUntilExpiration - b.daysUntilExpiration);
+            setExpiringVendors(alerts);
+        }, (err) => {
+            console.error('Fetch vendors error (Dashboard):', err);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
     const modules = [
         {
             title: 'Patients',
@@ -65,6 +118,35 @@ export default function CrmDashboardClient() {
                     </p>
                 </div>
             </div>
+            
+            {expiringVendors.length > 0 && (
+                <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/50 p-6 rounded-[24px] shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                        <h2 className="text-lg font-black text-slate-800 dark:text-slate-200 tracking-tight">Action Required: Expiring Vendors</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {expiringVendors.map(v => (
+                            <Link 
+                                href={`/crm/vendors/${v.id}`} 
+                                key={v.id}
+                                className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-rose-100 dark:border-rose-800/50 hover:shadow-md transition-shadow group flex items-start justify-between"
+                            >
+                                <div>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">{v.name}</h3>
+                                    <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        Ends: {format(new Date(v.contractEndDate), 'MMM d, yyyy')}
+                                    </div>
+                                </div>
+                                <div className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${v.daysUntilExpiration <= 30 ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/50 dark:text-rose-300 dark:border-rose-800' : 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800'}`}>
+                                    {v.daysUntilExpiration < 0 ? 'Expired' : `${v.daysUntilExpiration} days`}
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {modules.map((mod) => (
