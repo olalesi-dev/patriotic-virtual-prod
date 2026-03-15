@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, Timestamp, arrayUnion } from 'firebase/firestore';
 import { 
-    ArrowLeft, Save, User, Briefcase, Users, BarChart, ClipboardList, Database, Loader2, X, Activity, Clock, Shield, Eye, EyeOff, Target, TrendingUp, Key
+    ArrowLeft, Save, User, Briefcase, Users, BarChart, ClipboardList, Database, Loader2, X, Activity, Clock, Shield, Eye, EyeOff, Target, TrendingUp, Key, Calendar, Flag, Trophy, CheckSquare, Square
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -23,7 +23,7 @@ const PIPELINE_STAGES: Record<string, string[]> = {
     facilities: ['Prospecting', 'Demo Scheduled', 'Contract Sent', 'Active Partner', 'Inactive'],
     vendors: ['Active', 'Pending', 'Expiring Soon', 'Inactive'],
     campaigns: ['Draft', 'Active', 'Paused', 'Completed'],
-    grants: ['Active', 'Pending', 'Archived'],
+    grants: ['Identifying', 'In Progress', 'Submitted', 'Under Review', 'Awarded', 'Rejected'],
 };
 
 interface ActivityLogEntry {
@@ -75,6 +75,18 @@ interface CrmEntity {
     leadsGenerated?: string;
     conversions?: string;
     clickThroughRate?: string;
+    // Grant specific
+    fundingOrg?: string;
+    grantType?: string;
+    awardAmount?: string;
+    deadline?: string;
+    assignedLead?: string;
+    supportingMembers?: string;
+    funderUrl?: string;
+    loiDeadline?: string;
+    fullAppDeadline?: string;
+    awardNotificationDate?: string;
+    checklist?: Record<string, boolean>;
     [key: string]: any;
 }
 
@@ -150,6 +162,16 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
 
     const removeTag = (tagToRemove: string) => {
         setFormData(prev => ({ ...prev, tags: (prev.tags || []).filter(t => t !== tagToRemove) }));
+    };
+
+    const toggleChecklist = (itemKey: string) => {
+        setFormData(prev => ({
+            ...prev,
+            checklist: {
+                ...(prev.checklist || {}),
+                [itemKey]: !prev.checklist?.[itemKey]
+            }
+        }));
     };
 
     const handleAddNote = async () => {
@@ -525,6 +547,48 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                                         <input type="number" name="clickThroughRate" value={formData.clickThroughRate || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
                                     </div>
                                 </>
+                            ) : entityType === 'grants' ? (
+                                <>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Grant Name <span className="text-rose-500">*</span></label>
+                                        <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Funding Organization</label>
+                                        <input name="fundingOrg" value={formData.fundingOrg || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Grant Type</label>
+                                        <select name="grantType" value={formData.grantType || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer">
+                                            <option value="">Select Type...</option>
+                                            <option value="Federal">Federal</option>
+                                            <option value="State">State</option>
+                                            <option value="Private Foundation">Private Foundation</option>
+                                            <option value="SBIR">SBIR</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total Award Amount ($)</label>
+                                        <input type="number" name="awardAmount" value={formData.awardAmount || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Application Deadline</label>
+                                        <input type="date" name="deadline" value={formData.deadline || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Assigned Lead</label>
+                                        <input name="assignedLead" value={formData.assignedLead || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Supporting Members</label>
+                                        <input name="supportingMembers" value={formData.supportingMembers || ''} onChange={handleChange} placeholder="e.g. John D, Jane S" className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Funder Website/Portal Link</label>
+                                        <input name="funderUrl" value={formData.funderUrl || ''} onChange={handleChange} placeholder="https://..." className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                </>
                             ) : (
                                 <div className="space-y-3 md:col-span-2">
                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{config.title} Name <span className="text-rose-500">*</span></label>
@@ -600,6 +664,73 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                             </div>
                         </div>
                     </div>
+
+                    {/* Grant Timeline & Checklist Tab */}
+                    {entityType === 'grants' && (
+                        <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm p-8 space-y-8">
+                            <div className="border-b border-slate-100 dark:border-slate-700/50 pb-4">
+                                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+                                    <Target className="w-5 h-5 text-rose-500" />
+                                    Grant Milestones & Requirements
+                                </h3>
+                            </div>
+                            
+                            {/* Horizontal Progress Stepper */}
+                            <div className="py-6 overflow-x-auto">
+                                <div className="min-w-[500px] flex items-center justify-between relative px-8">
+                                    {/* Connecting Line */}
+                                    <div className="absolute left-10 right-10 top-5 h-1 bg-slate-100 dark:bg-slate-700 -z-10"></div>
+                                    
+                                    {[ 
+                                        { label: 'LOI Deadline', field: 'loiDeadline', icon: Flag },
+                                        { label: 'Full Application', field: 'fullAppDeadline', icon: Calendar },
+                                        { label: 'Award Notification', field: 'awardNotificationDate', icon: Trophy }
+                                    ].map((step, idx) => {
+                                        const dateVal = formData[step.field];
+                                        const hasDate = !!dateVal;
+                                        const IconComp = step.icon;
+                                        
+                                        return (
+                                            <div key={idx} className="flex flex-col items-center gap-2 bg-white dark:bg-slate-800 px-4">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 ${hasDate ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}>
+                                                    <IconComp className="w-4 h-4" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{step.label}</p>
+                                                    <input 
+                                                        type="date" 
+                                                        value={dateVal || ''} 
+                                                        onChange={(e) => setFormData(prev => ({...prev, [step.field]: e.target.value}))}
+                                                        className="text-xs font-bold text-slate-800 dark:text-slate-100 bg-transparent border-none outline-none text-center p-0 mt-1 focus:ring-0" 
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            
+                            {/* Document Checklist */}
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Required Documents Checklist</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {['Project Narrative', 'Budget Justification', 'Letter of Support', 'Biosketches', 'Facilities Profile', 'Financial Disclosures'].map(doc => {
+                                        const isChecked = formData.checklist?.[doc] || false;
+                                        return (
+                                            <button 
+                                                key={doc}
+                                                onClick={() => toggleChecklist(doc)}
+                                                className={`flex items-center gap-3 p-3 rounded-2xl border transition-all text-left ${isChecked ? 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-900/20 dark:border-rose-800/50 dark:text-rose-300' : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100 dark:bg-slate-900/50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800'}`}
+                                            >
+                                                {isChecked ? <CheckSquare className="w-5 h-5 text-rose-500" /> : <Square className="w-5 h-5 text-slate-400" />}
+                                                <span className="text-sm font-bold">{doc}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Vendor Credentials Tab */}
                     {entityType === 'vendors' && (
