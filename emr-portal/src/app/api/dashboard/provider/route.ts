@@ -174,11 +174,13 @@ export async function GET(request: Request) {
     const firestore = db;
 
     try {
-        const [userDocSnap, patientDocSnap, providerAppointmentSnap, threadsSnap] = await Promise.all([
+        const [userDocSnap, patientDocSnap, providerAppointmentSnap, threadsSnap, waitlistAppointmentSnap, consultationsSnap] = await Promise.all([
             firestore.collection('users').doc(user.uid).get(),
             firestore.collection('patients').doc(user.uid).get(),
             firestore.collection('appointments').where('providerId', '==', user.uid).get(),
-            firestore.collection('threads').where('providerId', '==', user.uid).get()
+            firestore.collection('threads').where('providerId', '==', user.uid).get(),
+            firestore.collection('appointments').where('status', 'in', ['PENDING_SCHEDULING', 'waitlist', 'pending_scheduling']).get(),
+            firestore.collection('consultations').where('paymentStatus', '==', 'paid').get()
         ]);
 
         const userData = userDocSnap.exists ? userDocSnap.data() : undefined;
@@ -208,6 +210,33 @@ export async function GET(request: Request) {
                 id: docSnap.id,
                 data: docSnap.data()
             });
+        });
+
+        waitlistAppointmentSnap.docs.forEach((docSnap) => {
+            if (!appointmentRows.has(docSnap.id)) {
+                appointmentRows.set(docSnap.id, {
+                    id: docSnap.id,
+                    data: docSnap.data()
+                });
+            }
+        });
+
+        consultationsSnap.docs.forEach((docSnap) => {
+            const data = docSnap.data();
+            const statusRaw = (typeof data.status === 'string' ? data.status.toLowerCase() : '');
+            if (!['scheduled', 'completed', 'cancelled'].includes(statusRaw)) {
+                if (!appointmentRows.has(docSnap.id)) {
+                    appointmentRows.set(docSnap.id, {
+                        id: docSnap.id,
+                        data: {
+                            ...data,
+                            status: 'waitlist', // Force waitlist status
+                            patientId: data.patientUid,
+                            service: typeof data.serviceKey === 'string' ? data.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()) : 'Consultation'
+                        }
+                    });
+                }
+            }
         });
 
         const appointmentEntries = Array.from(appointmentRows.values());
