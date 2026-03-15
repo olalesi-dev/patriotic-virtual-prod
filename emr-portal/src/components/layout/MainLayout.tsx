@@ -8,10 +8,11 @@ import { useQuery } from '@tanstack/react-query';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut,
-    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert
+    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert, Megaphone
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
+import { GlobalNotificationDrawer } from '@/components/common/GlobalNotificationDrawer';
+import { GlobalBanner } from '@/components/common/GlobalBanner';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { GlobalSearch } from './GlobalSearch';
 import { AITextarea } from '@/components/ui/AITextarea';
@@ -251,6 +252,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/admin/communications" icon={Megaphone} label="Communications" active={pathname === '/admin/communications'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/doxy" icon={Video} label="Doxy Integration" active={pathname === '/admin/doxy'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
@@ -313,7 +315,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                         <ThemeToggle />
 
-                        <ProviderNotificationBell />
+                        <GlobalNotificationDrawer />
 
                         <button
                             onClick={() => setIsBookingModalOpen(true)}
@@ -324,6 +326,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </button>
                     </div>
                 </header>
+
+                <GlobalBanner surface="emr" />
 
                 {/* Page Content */}
                 <div className="flex-1 p-8 overflow-y-auto animate-fade-in relative">
