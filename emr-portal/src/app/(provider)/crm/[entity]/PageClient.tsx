@@ -24,7 +24,7 @@ const PIPELINE_STAGES: Record<string, string[]> = {
     facilities: ['Prospecting', 'Demo Scheduled', 'Contract Sent', 'Active Partner', 'Inactive'],
     vendors: ['Active', 'Pending', 'Expiring Soon', 'Inactive'],
     campaigns: ['Draft', 'Active', 'Paused', 'Completed'],
-    grants: ['Active', 'Pending', 'Archived'],
+    grants: ['Identifying', 'In Progress', 'Submitted', 'Under Review', 'Awarded', 'Rejected'],
 };
 
 interface CrmEntity {
@@ -43,6 +43,11 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar'>('table');
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterStatus, setFilterStatus] = useState<string>('');
+    const [filterOwner, setFilterOwner] = useState<string>('');
+    const [filterTag, setFilterTag] = useState<string>('');
+    const [filterDateRange, setFilterDateRange] = useState<string>('all'); // all, 7, 30, 90
 
     const config = ENTITY_CONFIG[entityType as keyof typeof ENTITY_CONFIG] || ENTITY_CONFIG.patients;
     const Icon = config.icon;
@@ -87,12 +92,36 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
         };
     }, [entityType]);
 
-    const filtered = entities.filter(e =>
-        e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.assignedOwner?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (e.tags || []).join(' ').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = entities.filter(e => {
+        // Text Search
+        const matchesSearch = e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            e.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            e.assignedOwner?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (e.tags || []).join(' ').toLowerCase().includes(searchTerm.toLowerCase());
+            
+        // Status Filter
+        const matchesStatus = filterStatus ? e.status === filterStatus : true;
+        
+        // Owner Filter
+        const matchesOwner = filterOwner ? e.assignedOwner?.toLowerCase() === filterOwner.toLowerCase() : true;
+        
+        // Tag Filter
+        const matchesTag = filterTag ? (e.tags || []).some((t: string) => t.toLowerCase() === filterTag.toLowerCase()) : true;
+        
+        // Date Range
+        let matchesDate = true;
+        if (filterDateRange !== 'all' && e.lastActivityDate) {
+            const date = 'toDate' in e.lastActivityDate ? e.lastActivityDate.toDate() : new Date((e.lastActivityDate as any));
+            const diffDays = (new Date().getTime() - date.getTime()) / (1000 * 3600 * 24);
+            if (filterDateRange === '7' && diffDays > 7) matchesDate = false;
+            if (filterDateRange === '30' && diffDays > 30) matchesDate = false;
+            if (filterDateRange === '90' && diffDays > 90) matchesDate = false;
+        } else if (filterDateRange !== 'all' && !e.lastActivityDate) {
+            matchesDate = false;
+        }
+
+        return matchesSearch && matchesStatus && matchesOwner && matchesTag && matchesDate;
+    });
 
     const handleInlineEdit = async (id: string, field: string, value: string, oldValue: string) => {
         if (value === oldValue) return;
@@ -272,7 +301,7 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
             </div>
 
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="bg-white dark:bg-slate-800 p-2 rounded-[20px] shadow-sm border border-slate-100 dark:border-slate-700 flex flex-1 w-full max-w-md">
+                <div className="bg-white dark:bg-slate-800 p-2 rounded-[20px] shadow-sm border border-slate-100 dark:border-slate-700 flex flex-1 w-full max-w-md items-center gap-2">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input 
@@ -283,6 +312,12 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
                             className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-[14px] py-2.5 pl-10 pr-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-900/50 transition-all placeholder:text-slate-400"
                         />
                     </div>
+                    <button 
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`p-2.5 rounded-[12px] flex items-center justify-center transition-colors ${showFilters ? 'bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:bg-slate-800/50'}`}
+                    >
+                        <Filter className="w-4 h-4" />
+                    </button>
                 </div>
                 
                 <div className="flex p-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
@@ -308,6 +343,55 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
                     )}
                 </div>
             </div>
+
+            {showFilters && (
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</label>
+                        <select 
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 outline-none"
+                        >
+                            <option value="">All Statuses</option>
+                            {stages.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assigned Owner</label>
+                        <input 
+                            type="text"
+                            placeholder="Any owner..."
+                            value={filterOwner}
+                            onChange={(e) => setFilterOwner(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 outline-none placeholder:text-slate-400/50"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tags</label>
+                        <input 
+                            type="text"
+                            placeholder="Any tag..."
+                            value={filterTag}
+                            onChange={(e) => setFilterTag(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 outline-none placeholder:text-slate-400/50"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Last Activity</label>
+                        <select 
+                            value={filterDateRange}
+                            onChange={(e) => setFilterDateRange(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 outline-none"
+                        >
+                            <option value="all">Any Time</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                    </div>
+                </div>
+            )}
 
             {loading ? (
                 <div className="p-10 text-center text-slate-400 flex flex-col items-center">
