@@ -131,9 +131,7 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    if (!item.interval) {
-      sessionConfig.customer_creation = 'always';
-    }
+    sessionConfig.billing_address_collection = 'required';
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
