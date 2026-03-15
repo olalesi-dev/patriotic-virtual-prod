@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { ShopProduct, ShopOrder, ShopDiscountCode, ProductCategory, ProductStatus } from '@/lib/shop-types';
 
 export function StoreAdminClient() {
-    const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'discounts' | 'analytics'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'discounts' | 'analytics' | 'partners'>('products');
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
@@ -37,6 +37,9 @@ export function StoreAdminClient() {
                 <button onClick={() => setActiveTab('discounts')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-all ${activeTab === 'discounts' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
                     <Tag className="w-5 h-5" /> Discounts
                 </button>
+                <button onClick={() => setActiveTab('partners')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-all ${activeTab === 'partners' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                    <ExternalLink className="w-5 h-5" /> Partners
+                </button>
                 <button onClick={() => setActiveTab('analytics')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-all ${activeTab === 'analytics' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
                     <BarChart2 className="w-5 h-5" /> Analytics
                 </button>
@@ -45,6 +48,7 @@ export function StoreAdminClient() {
             {activeTab === 'products' && <ProductsTab />}
             {activeTab === 'orders' && <OrdersTab />}
             {activeTab === 'discounts' && <DiscountsTab />}
+            {activeTab === 'partners' && <PartnersTab />}
             {activeTab === 'analytics' && <AnalyticsTab />}
         </div>
     );
@@ -461,6 +465,198 @@ function OrdersTab() {
                         )}
                     </tbody>
                 </table>
+        </div>
+    );
+}
+
+// ------------------------------------
+// PARTNERS TAB
+// ------------------------------------
+function PartnersTab() {
+    const [partners, setPartners] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+    const [editingPartner, setEditingPartner] = useState<any | null>(null);
+
+    useEffect(() => {
+        const q = query(collection(db, 'shop-partners'), orderBy('createdAt', 'desc'));
+        const unsub = onSnapshot(q, snap => {
+            setPartners(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setLoading(false);
+        });
+        return () => unsub();
+    }, []);
+
+    const toggleFeatured = async (id: string, featured: boolean) => {
+        try {
+            await updateDoc(doc(db, 'shop-partners', id), { isFeatured: !featured, updatedAt: serverTimestamp() });
+            toast.success("Partner featured status updated");
+        } catch(e) { toast.error("Failed to update status"); }
+    }
+
+    const toggleStatus = async (id: string, status: string) => {
+        try {
+            await updateDoc(doc(db, 'shop-partners', id), { status: status === 'Active' ? 'Inactive' : 'Active', updatedAt: serverTimestamp() });
+            toast.success("Partner status toggled");
+        } catch(e) { toast.error("Failed to update status"); }
+    }
+
+    return (
+        <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">External & Integrated Partners</h3>
+                <button onClick={() => { setEditingPartner(null); setIsPartnerModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-2xl shadow-md transition-colors flex items-center gap-2">
+                    <Plus className="w-5 h-5" /> Add Partner
+                </button>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                            <th className="p-4 text-xs font-black uppercase text-slate-500 tracking-wider">Partner</th>
+                            <th className="p-4 text-xs font-black uppercase text-slate-500 tracking-wider">Category</th>
+                            <th className="p-4 text-xs font-black uppercase text-slate-500 tracking-wider">Status</th>
+                            <th className="p-4 text-xs font-black uppercase text-slate-500 tracking-wider">Featured</th>
+                            <th className="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        {loading ? (
+                            <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-500"/></td></tr>
+                        ) : partners.length === 0 ? (
+                            <tr><td colSpan={5} className="p-8 text-center text-slate-500">No partners defined yet.</td></tr>
+                        ) : (
+                            partners.map(partner => (
+                                <tr key={partner.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 object-contain bg-center">
+                                                {partner.logo ? <img src={partner.logo} className="w-full h-full object-contain" /> : <ImageIcon className="w-4 h-4 text-slate-400" />}
+                                            </div>
+                                            <span className="font-bold text-slate-900 dark:text-white">{partner.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-slate-600 dark:text-slate-400 font-medium">{partner.category}</td>
+                                    <td className="p-4">
+                                        <button onClick={() => toggleStatus(partner.id, partner.status)} className={`px-2 py-1 rounded text-[10px] font-black uppercase transition-colors ${
+                                            partner.status === 'Active' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                        }`}>
+                                            {partner.status}
+                                        </button>
+                                    </td>
+                                    <td className="p-4">
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" checked={partner.isFeatured} onChange={() => toggleFeatured(partner.id, partner.isFeatured)} className="sr-only peer" />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-500"></div>
+                                        </label>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <button onClick={() => { setEditingPartner(partner); setIsPartnerModalOpen(true); }} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+            {isPartnerModalOpen && <PartnerEditorModal partner={editingPartner} onClose={() => setIsPartnerModalOpen(false)} />}
+        </div>
+    );
+}
+
+function PartnerEditorModal({ partner, onClose }: { partner: any, onClose: () => void }) {
+    const [saving, setSaving] = useState(false);
+    const [formData, setFormData] = useState<any>(partner || {
+        name: '', shortDescription: '', longDescription: '', category: 'Nutrition',
+        logo: '', affiliateUrl: '', status: 'Active', isFeatured: false, notes: ''
+    });
+
+    const handleSave = async () => {
+        if (!formData.name) {
+            toast.error("Name is required");
+            return;
+        }
+        setSaving(true);
+        try {
+            const dataToSave = { ...formData, updatedAt: serverTimestamp() };
+            if (partner?.id) {
+                await updateDoc(doc(db, 'shop-partners', partner.id), dataToSave);
+                toast.success("Partner updated");
+            } else {
+                dataToSave.createdAt = serverTimestamp();
+                await setDoc(doc(collection(db, 'shop-partners')), dataToSave);
+                toast.success("Partner created");
+            }
+            onClose();
+        } catch(e:any) { toast.error("Failed to save: " + e.message); }
+        finally { setSaving(false); }
+    }
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="relative bg-white dark:bg-slate-900 rounded-3xl w-full max-w-3xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                    <h2 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                        {partner ? <Edit className="w-5 h-5 text-indigo-500" /> : <Plus className="w-5 h-5 text-indigo-500" />} 
+                        {partner ? 'Edit Partner' : 'New Partner'}
+                    </h2>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X className="w-5 h-5" /></button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Partner Name</label>
+                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Category</label>
+                            <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none">
+                                <option value="Nutrition">Nutrition</option>
+                                <option value="Fitness">Fitness</option>
+                                <option value="Pharmacy">Pharmacy</option>
+                                <option value="Wellness">Wellness</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Short Description</label>
+                        <input type="text" value={formData.shortDescription} onChange={e => setFormData({...formData, shortDescription: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Long Description / Details</label>
+                        <textarea value={formData.longDescription} rows={3} onChange={e => setFormData({...formData, longDescription: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Affiliate URL / Tracking Link</label>
+                        <input type="text" value={formData.affiliateUrl} onChange={e => setFormData({...formData, affiliateUrl: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none" placeholder="https://..." />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Logo Media URL</label>
+                        <input type="text" value={formData.logo} onChange={e => setFormData({...formData, logo: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none" placeholder="https://..." />
+                    </div>
+                    
+                    <div className="flex gap-6 pt-2">
+                        <label className="flex items-center gap-2 cursor-pointer font-bold relative">
+                            <input type="checkbox" checked={formData.status === 'Active'} onChange={e => setFormData({...formData, status: e.target.checked ? 'Active' : 'Inactive'})} className="w-4 h-4" /> Active Status
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer font-bold text-indigo-600 dark:text-indigo-400">
+                            <input type="checkbox" checked={formData.isFeatured} onChange={e => setFormData({...formData, isFeatured: e.target.checked})} className="w-4 h-4" /> Feature this partner
+                        </label>
+                    </div>
+                </div>
+
+                <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-white dark:bg-slate-900">
+                    <button onClick={onClose} className="px-6 py-3 font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
+                    <button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl flex items-center gap-2">
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} Save Partner
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

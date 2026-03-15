@@ -15,6 +15,7 @@ export interface UserProfile {
     sourceCollection: 'users' | 'patients' | null;
     uid: string;
     authenticated: boolean;
+    referralCode?: string;
 }
 
 /** Resolves a user-friendly display name with multiple fallbacks — never returns "Unknown" */
@@ -122,6 +123,7 @@ export const useUserProfile = () => {
                     sourceCollection: source,
                     uid: user.uid,
                     authenticated: true,
+                    referralCode: profileData?.referralCode,
                 });
             } catch (error) {
                 console.error('Error fetching user profile:', error);

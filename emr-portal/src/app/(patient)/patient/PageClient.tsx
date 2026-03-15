@@ -16,7 +16,8 @@ import {
     X,
     Send,
     ShieldCheck,
-    Bell
+    Bell,
+    Gift
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -425,7 +426,24 @@ export default function PatientDashboard() {
                                 ))}
                             </div>
                         ) : <EmptyState message="All caught up! No unread messages." />}
-                    </DashboardCard>
+                                        </DashboardCard>
+
+                    {/* REFERRAL CARD */}
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[32px] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+                        <div className="relative z-10">
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 text-white">
+                                <Gift className="w-6 h-6" />
+                            </div>
+                            <h3 className="font-black text-xl tracking-tight mb-2">Give $50, Get $50</h3>
+                            <p className="text-indigo-100 text-sm mb-6 leading-relaxed">
+                                Share the gift of health. Invite friends to Patriotic Telehealth and earn rewards for every signup.
+                            </p>
+                            <Link href="/patient/referrals" className="inline-flex items-center justify-center w-full bg-white text-indigo-600 font-black tracking-widest uppercase text-xs rounded-xl py-3 hover:bg-slate-50 transition-colors">
+                                Get My Link
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
                 {/* RIGHT COLUMN */}
@@ -478,7 +496,24 @@ export default function PatientDashboard() {
                                 ))}
                             </div>
                         ) : <EmptyState message="No lab results found" />}
-                    </DashboardCard>
+                                        </DashboardCard>
+
+                    {/* REFERRAL CARD */}
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[32px] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+                        <div className="relative z-10">
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 text-white">
+                                <Gift className="w-6 h-6" />
+                            </div>
+                            <h3 className="font-black text-xl tracking-tight mb-2">Give $50, Get $50</h3>
+                            <p className="text-indigo-100 text-sm mb-6 leading-relaxed">
+                                Share the gift of health. Invite friends to Patriotic Telehealth and earn rewards for every signup.
+                            </p>
+                            <Link href="/patient/referrals" className="inline-flex items-center justify-center w-full bg-white text-indigo-600 font-black tracking-widest uppercase text-xs rounded-xl py-3 hover:bg-slate-50 transition-colors">
+                                Get My Link
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -666,3 +701,4 @@ function DashboardSkeleton() {
         </div>
     );
 }
+

@@ -9,7 +9,7 @@ import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut, ShoppingBag,
     Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert, Megaphone,
-    ChevronDown, ChevronRight, Puzzle, Key, Network
+    ChevronDown, ChevronRight, Puzzle, Key, Network, Share2, Sparkles
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { GlobalNotificationDrawer } from '@/components/common/GlobalNotificationDrawer';
@@ -236,6 +236,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <NavItem href="/crm/facilities" icon={Briefcase} label="Facilities" active={pathname.startsWith('/crm/facilities')} collapsed={isSidebarCollapsed} />
                             <NavItem href="/crm/vendors" icon={Users} label="Vendors" active={pathname.startsWith('/crm/vendors')} collapsed={isSidebarCollapsed} />
                             <NavItem href="/crm/campaigns" icon={BarChart} label="Campaigns" active={pathname.startsWith('/crm/campaigns')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/crm/social" icon={Share2} label="Social Media Hub" active={pathname.startsWith('/crm/social')} collapsed={isSidebarCollapsed} />
                             <NavItem href="/crm/grants" icon={ClipboardList} label="Grant Proposals" active={pathname.startsWith('/crm/grants')} collapsed={isSidebarCollapsed} />
                         </CollapsibleGroup>
 
