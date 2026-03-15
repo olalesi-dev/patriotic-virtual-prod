@@ -12848,6 +12848,60 @@
       }
     })();
   </script>
+  
+  <!-- Promotional Modal -->
+  <div id="promoModal" class="mo" style="z-index:99999">
+    <div class="modal sm" style="text-align:center;padding:40px 24px;">
+      <button class="modal-close" onclick="closePromoModal()">×</button>
+      <div style="font-size:40px;margin-bottom:16px;">🎁</div>
+      <h2 style="font-family:'Fraunces', serif;font-size:28px;margin-bottom:12px;color:var(--navy)">Welcome to Patriotic!</h2>
+      <p style="color:var(--g500);margin-bottom:24px;line-height:1.5">Enter your email to receive standard updates and get <strong>20% off</strong> any service with code <span style="background:var(--emerald-soft);color:var(--emerald);padding:2px 8px;border-radius:4px;font-weight:700">NEW2026</span></p>
+      <input type="email" id="promoEmail" placeholder="Your Email Address" style="width:100%;padding:14px;border:1px solid var(--g200);border-radius:12px;margin-bottom:16px;font-family:'Outfit', sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--g200)'">
+      <button id="promoBtn" class="btn btn-primary" style="width:100%;border-radius:12px;padding:14px" onclick="submitPromoEmail()">Get My Discount</button>
+      <div id="promoSuccess" style="display:none;color:var(--emerald);font-weight:600;margin-top:16px">Code NEW2026 unlocked! Enjoy 20% off.</div>
+    </div>
+  </div>
+
+  <script>
+    function closePromoModal() {
+      document.getElementById('promoModal').classList.remove('active');
+    }
+
+    async function submitPromoEmail() {
+      const em = document.getElementById('promoEmail').value.trim();
+      if(!em || !em.includes('@')) return alert('Please enter a valid email');
+      const btn = document.getElementById('promoBtn');
+      btn.innerText = 'Saving...';
+      btn.disabled = true;
+      try {
+        await db.collection('crm_leads').add({
+          email: em,
+          code: 'NEW2026',
+          source: 'landing_popup',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('promoSuccess').style.display = 'block';
+        setTimeout(closePromoModal, 3000);
+        localStorage.setItem('promo2026_seen', 'true');
+      } catch(e) {
+        console.error(e);
+        // Fallback even if firestore fails
+        document.getElementById('promoSuccess').style.display = 'block';
+        setTimeout(closePromoModal, 3000);
+        localStorage.setItem('promo2026_seen', 'true');
+      }
+    }
+
+    window.addEventListener('load', () => {
+      // Show after 3 seconds if not already seen
+      if(!localStorage.getItem('promo2026_seen')) {
+        setTimeout(() => {
+          document.getElementById('promoModal').classList.add('active');
+        }, 3000);
+      }
+    });
+  </script>
+
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015"
     integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ=="
     data-cf-beacon='{"version":"2024.11.0","token":"744d2ce6e9a8465286fadb498e87cee8","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}'
