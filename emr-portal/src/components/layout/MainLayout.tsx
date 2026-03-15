@@ -5,16 +5,15 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-    Search, Calendar, Video, User, LayoutDashboard, FileText, Settings,
-    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, ChevronRight, Menu, LogOut,
-    Pill, Microscope, Scan, Bot, BarChart, TrendingUp, ShieldCheck, ClipboardList, Activity, Clock
+    Calendar, Video, User, LayoutDashboard, Settings,
+    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut,
+    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { GlobalSearch } from './GlobalSearch';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 
@@ -117,12 +116,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <div className="space-y-1">
                         <NavSection label="Clinical" collapsed={isSidebarCollapsed} />
                         <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" active={pathname === '/dashboard'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname === '/calendar'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname.startsWith('/calendar')} collapsed={isSidebarCollapsed} />
                         <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/team" icon={Users} label="Team" active={pathname === '/team'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/patient-search" icon={Search} label="Patient Search" active={pathname === '/patient-search'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname === '/inbox'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname === '/waitlist'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/team" icon={Users} label="Team" active={pathname.startsWith('/team')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname.startsWith('/inbox')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname.startsWith('/waitlist')} collapsed={isSidebarCollapsed} />
                     </div>
 
                     {/* ORDERS & Rx */}
@@ -345,14 +343,14 @@ function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {
         <Link
             href={href}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-all group relative overflow-hidden ${active
-                ? 'bg-sidebar-active text-white font-medium shadow-inner shadow-black/20'
-                : 'text-slate-400 font-medium hover:bg-sidebar-hover hover:text-white'
+                ? 'bg-sidebar-active text-sidebar-foreground font-medium shadow-inner shadow-black/20'
+                : 'text-sidebar-muted font-medium hover:bg-sidebar-hover hover:text-sidebar-foreground'
                 } ${collapsed ? 'justify-center' : ''}`}
             title={collapsed ? label : ''}
         >
             {active && !collapsed && <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand rounded-r-full"></div>}
 
-            <Icon className={`w-5 h-5 relative z-10 transition-colors shrink-0 ${active ? 'text-indigo-400' : 'group-hover:text-indigo-300'}`} />
+            <Icon className={`w-5 h-5 relative z-10 transition-colors shrink-0 ${active ? 'text-white' : 'group-hover:text-white'}`} />
 
             {!collapsed && (
                 <>
@@ -374,11 +372,11 @@ function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {
 
 function NavSection({ label, collapsed }: { label: string, collapsed: boolean }) {
     if (collapsed) {
-        return <div className="h-px bg-slate-700/50 my-2 mx-2"></div>;
+        return <div className="my-2 mx-2 h-px bg-sidebar-hover/80"></div>;
     }
     return (
         <div className="px-3 pt-4 pb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+            <span className="text-[10px] font-black text-sidebar-muted uppercase tracking-widest leading-none">
                 {label}
             </span>
         </div>

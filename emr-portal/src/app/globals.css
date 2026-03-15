@@ -10,6 +10,11 @@
 
 /* ======= AI NAVIGATOR ======= */
 :root {
+  --sidebar-bg: 15 23 42;
+  --sidebar-active: 51 65 85;
+  --sidebar-hover: 30 41 59;
+  --sidebar-foreground: 248 250 252;
+  --sidebar-muted: 148 163 184;
   --ai-label-bg: #0f172a;
   --ai-label-text: #f8fafc;
   --ai-label-border: rgba(148, 163, 184, 0.32);
@@ -48,6 +53,11 @@
 }
 
 body.light-theme {
+  --sidebar-bg: 15 23 42;
+  --sidebar-active: 51 65 85;
+  --sidebar-hover: 30 41 59;
+  --sidebar-foreground: 248 250 252;
+  --sidebar-muted: 148 163 184;
   --ai-label-bg: #0f172a;
   --ai-label-text: #ffffff;
   --ai-label-border: rgba(15, 23, 42, 0.2);
