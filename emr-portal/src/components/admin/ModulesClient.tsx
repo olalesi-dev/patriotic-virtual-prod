@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { ShieldCheck, ArrowLeft, Settings, Info, Box } from 'lucide-react';
 import { useRouter } from 'next/navigation';
