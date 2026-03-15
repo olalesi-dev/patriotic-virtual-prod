@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Mail, Phone, MapPin, MoreHorizontal, UserPlus, X, MessageSquare, Clock, Search, Filter, Trash2, ArrowUpDown, Edit } from 'lucide-react';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 // --- Types ---
 interface Contact {
@@ -389,7 +390,7 @@ function AddContactModal({ onClose, onSave, initialData }: any) {
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Bio / Notes</label>
-                        <textarea className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand focus:border-transparent outline-none h-20 resize-none" placeholder="Short bio..." value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })}></textarea>
+                        <AITextarea className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand focus:border-transparent outline-none h-20 resize-none" placeholder="Short bio..." value={formData.bio} onValueChange={val => setFormData({ ...formData, bio: val })} />
                     </div>
 
                     <div className="pt-4 flex justify-end gap-3">
@@ -478,13 +479,13 @@ function MessageModal({ contact, onClose, onSend }: any) {
                     <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
                 </div>
                 <div className="p-6 space-y-4">
-                    <textarea
+                    <AITextarea
                         className="w-full h-32 p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand focus:border-transparent outline-none resize-none"
                         placeholder="Type your message here..."
                         autoFocus
                         value={msg}
-                        onChange={e => setMsg(e.target.value)}
-                    ></textarea>
+                        onValueChange={val => setMsg(val)}
+                    />
                     <div className="flex justify-end gap-3">
                         <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 rounded-lg">Cancel</button>
                         <button onClick={() => onSend(msg)} className="px-6 py-2 bg-brand text-white font-bold text-sm rounded-lg hover:bg-brand-600 shadow-md flex items-center gap-2">
