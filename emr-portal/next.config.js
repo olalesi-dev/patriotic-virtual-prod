@@ -1,3 +1,15 @@
+const contentSecurityPolicy = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com https://*.gstatic.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://www.recaptcha.net/recaptcha/ https://www.gstatic.cn/recaptcha/ https://doxy.me",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://accounts.google.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ https://api.stripe.com",
+    "img-src 'self' data: https://storage.googleapis.com https://*.googleusercontent.com https://*.gstatic.com https://www.google-analytics.com https://*.stripe.com",
+    "media-src 'self' https://cdn.prod.website-files.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "frame-src 'self' https://*.stripe.com https://*.firebaseapp.com https://accounts.google.com https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ https://doxy.me",
+    "trusted-types firebase-auth google-auth gapigapi 'allow-duplicates' goog#html default nextjs#bundler nextjs#hydrator dompurify firebase-js-sdk-policy",
+].join('; ');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // basePath: '/emr',
@@ -24,7 +36,7 @@ const nextConfig = {
                     { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
                     {
                         key: 'Content-Security-Policy',
-                        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://doxy.me; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.stripe.com; img-src 'self' data: https://storage.googleapis.com https://*.stripe.com; media-src 'self' https://cdn.prod.website-files.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.stripe.com https://doxy.me; trusted-types firebase-auth google-auth default nextjs#bundler nextjs#hydrator dompurify firebase-js-sdk-policy;"
+                        value: contentSecurityPolicy
                     }
                 ],
             },
