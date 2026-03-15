@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);

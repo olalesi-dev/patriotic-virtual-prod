@@ -174,11 +174,10 @@ export async function GET(request: Request) {
     const firestore = db;
 
     try {
-        const [userDocSnap, patientDocSnap, providerAppointmentSnap, waitlistAppointmentSnap, threadsSnap] = await Promise.all([
+        const [userDocSnap, patientDocSnap, providerAppointmentSnap, threadsSnap] = await Promise.all([
             firestore.collection('users').doc(user.uid).get(),
             firestore.collection('patients').doc(user.uid).get(),
             firestore.collection('appointments').where('providerId', '==', user.uid).get(),
-            firestore.collection('appointments').where('status', 'in', ['PENDING_SCHEDULING', 'waitlist']).get(),
             firestore.collection('threads').where('providerId', '==', user.uid).get()
         ]);
 
@@ -205,13 +204,6 @@ export async function GET(request: Request) {
         const appointmentRows = new Map<string, { id: string; data: Record<string, unknown> }>();
 
         providerAppointmentSnap.docs.forEach((docSnap) => {
-            appointmentRows.set(docSnap.id, {
-                id: docSnap.id,
-                data: docSnap.data()
-            });
-        });
-
-        waitlistAppointmentSnap.docs.forEach((docSnap) => {
             appointmentRows.set(docSnap.id, {
                 id: docSnap.id,
                 data: docSnap.data()

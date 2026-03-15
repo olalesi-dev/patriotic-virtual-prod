@@ -7,7 +7,7 @@ import { doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firest
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
 
 interface ProfileData {

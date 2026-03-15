@@ -20,7 +20,7 @@ import {
     CheckCircle2,
     X
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const TIMEOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const WARNING_THRESHOLD = 13 * 60 * 1000; // 13 minutes

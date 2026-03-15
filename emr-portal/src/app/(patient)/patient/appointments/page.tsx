@@ -47,7 +47,7 @@ import {
     serverTimestamp
 } from 'firebase/firestore';
 import { format, isAfter, subMinutes, addMinutes, isBefore, addDays } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 const Calendar = dynamic(() => import('react-calendar'), {

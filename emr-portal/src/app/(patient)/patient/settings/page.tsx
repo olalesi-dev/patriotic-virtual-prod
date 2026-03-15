@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Bell, Lock, Shield, ChevronRight, Save, CheckCircle2 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function PatientSettingsPage() {
     const [user, setUser] = useState<any>(null);

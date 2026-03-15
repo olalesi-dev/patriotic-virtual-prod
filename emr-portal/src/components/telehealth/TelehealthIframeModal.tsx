@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Mic, BrainCircuit, Activity, CheckCircle, Video, Loader2, ExternalLink } from 'lucide-react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface TelehealthIframeModalProps {
     isOpen: boolean;

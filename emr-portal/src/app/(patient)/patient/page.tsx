@@ -33,7 +33,7 @@ import {
 import { format, isSameDay, isAfter, subMinutes, addMinutes } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // --- Types ---
 interface Appointment {

@@ -25,7 +25,7 @@ import {
     doc,
     getDoc
 } from 'firebase/firestore';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { logAuditEvent } from '@/lib/audit';
 import { format } from 'date-fns';
 
@@ -335,4 +335,3 @@ export default function MedicationsPage() {
         </div>
     );
 }
-
