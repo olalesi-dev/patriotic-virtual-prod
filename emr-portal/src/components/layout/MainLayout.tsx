@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut,
-    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock
+    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
@@ -167,6 +167,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/team" icon={Users} label="Team" active={pathname.startsWith('/team')} collapsed={isSidebarCollapsed} />
                         <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname.startsWith('/inbox')} collapsed={isSidebarCollapsed} />
                         <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname.startsWith('/waitlist')} collapsed={isSidebarCollapsed} />
+                    </div>
+
+                    {/* CRM */}
+                    <div className="space-y-1">
+                        <NavSection label="CRM" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/crm" icon={Database} label="CRM Dashboard" active={pathname === '/crm'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/crm/patients" icon={User} label="Patients" active={pathname.startsWith('/crm/patients')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/crm/facilities" icon={Briefcase} label="Facilities" active={pathname.startsWith('/crm/facilities')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/crm/vendors" icon={Users} label="Vendors" active={pathname.startsWith('/crm/vendors')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/crm/campaigns" icon={BarChart} label="Campaigns" active={pathname.startsWith('/crm/campaigns')} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/crm/grants" icon={ClipboardList} label="Grant Proposals" active={pathname.startsWith('/crm/grants')} collapsed={isSidebarCollapsed} />
                     </div>
 
                     {/* ORDERS & Rx */}
