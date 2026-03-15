@@ -111,7 +111,10 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isStaff();
     }
-    match /community-posts/{id} {
+    match /community-profiles/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+    match /community-posts/{document=**} {
       allow read, write: if isAuthenticated();
     }
     match /community-events/{id} {
@@ -120,6 +123,10 @@ service cloud.firestore {
     }
     match /social-posts/{id} {
       allow read, write: if isStaff();
+    }
+    match /crm_leads/{id} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
     }
   }
 }
