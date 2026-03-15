@@ -8,7 +8,8 @@ import { useQuery } from '@tanstack/react-query';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut, ShoppingBag,
-    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert, Megaphone
+    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert, Megaphone,
+    ChevronDown, ChevronRight, Puzzle, Key, Network
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { GlobalNotificationDrawer } from '@/components/common/GlobalNotificationDrawer';
@@ -30,6 +31,36 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [bookingNote, setBookingNote] = useState('');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [activeUser, setActiveUser] = useState<FirebaseUser | null>(auth.currentUser);
+
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+        'Clinical': true, 'CRM': true, 'Social': true, 'Orders & Rx': true,
+        'Services': true, 'Specialty Modules': true, 'AI Tools': true,
+        'Analytics': true, 'Admin': true, 'Integrations': true
+    });
+
+    React.useEffect(() => {
+        try {
+            const saved = localStorage.getItem('nav_expanded');
+            if (saved) {
+                setExpandedSections(JSON.parse(saved));
+            }
+        } catch (e) { }
+    }, []);
+
+    const toggleSection = (section: string) => {
+        setExpandedSections(prev => {
+            const newState = { ...prev, [section]: !prev[section] };
+            localStorage.setItem('nav_expanded', JSON.stringify(newState));
+            return newState;
+        });
+    };
+
+    const toggleAllSections = (expand: boolean) => {
+        const sections = ['Clinical', 'CRM', 'Social', 'Orders & Rx', 'Services', 'Specialty Modules', 'AI Tools', 'Analytics', 'Admin', 'Integrations'];
+        const newState = sections.reduce((acc, curr) => ({ ...acc, [curr]: expand }), {});
+        setExpandedSections(newState);
+        localStorage.setItem('nav_expanded', JSON.stringify(newState));
+    };
 
     // Form State
     const [patient, setPatient] = useState('John Doe');
@@ -168,97 +199,117 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 {/* Navigation */}
-                <nav className={`flex-1 py-6 ${isSidebarCollapsed ? 'px-2' : 'px-3'} space-y-4 overflow-y-auto overflow-x-hidden scrollbar-hide`}>
+                <nav className={`flex-1 py-4 flex flex-col space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar`}>
 
-                    {/* CLINICAL */}
-                    <div className="space-y-1">
-                        <NavSection label="Clinical" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" active={pathname === '/dashboard'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname.startsWith('/calendar')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/team" icon={Users} label="Team" active={pathname.startsWith('/team')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname.startsWith('/inbox')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname.startsWith('/waitlist')} collapsed={isSidebarCollapsed} />
-                    </div>
-
-                    {/* CRM */}
-                    <div className="space-y-1">
-                        <NavSection label="CRM" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/crm" icon={Database} label="CRM Dashboard" active={pathname === '/crm'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/crm/patients" icon={User} label="Patients" active={pathname.startsWith('/crm/patients')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/crm/facilities" icon={Briefcase} label="Facilities" active={pathname.startsWith('/crm/facilities')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/crm/vendors" icon={Users} label="Vendors" active={pathname.startsWith('/crm/vendors')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/crm/campaigns" icon={BarChart} label="Campaigns" active={pathname.startsWith('/crm/campaigns')} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/crm/grants" icon={ClipboardList} label="Grant Proposals" active={pathname.startsWith('/crm/grants')} collapsed={isSidebarCollapsed} />
-                    </div>
-
-                    {/* COMMUNITY */}
-                    <div className="space-y-1">
-                        <NavSection label="Social" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/community" icon={Users} label="Community Feed" active={pathname.startsWith('/community')} collapsed={isSidebarCollapsed} />
-                    </div>
-
-                    {/* ORDERS & Rx */}
-                    <div className="space-y-1">
-                        <NavSection label="Orders & Rx" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/orders/erx" icon={Pill} label="eRx / Prescriptions" active={pathname === '/orders/erx'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/orders/labs" icon={Microscope} label="Lab Orders" active={pathname === '/orders/labs'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/orders/imaging" icon={Scan} label="Imaging Orders" active={pathname === '/orders/imaging'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/orders/pacs" icon={Scan} label="PACS" active={pathname === '/orders/pacs'} collapsed={isSidebarCollapsed} />
-                    </div>
-
-                    {/* SERVICES */}
-                    <div className="space-y-1">
-                        <NavSection label="Services" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/services" icon={Briefcase} label="Services Catalog" active={pathname === '/services'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/book" icon={Video} label="Booking" active={pathname === '/book'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
-                    </div>
-
-                    {/* SPECIALTY MODULES (DYNAMIC) */}
-                    {enabledModules.length > 0 && (
-                        <div className="space-y-1">
-                            <NavSection label="Specialty Modules" collapsed={isSidebarCollapsed} />
-                            {SPECIALTY_MODULES.filter(m => enabledModules.includes(m.id)).map(module => (
-                                <NavItem 
-                                    key={module.id} 
-                                    href={`/modules/${module.id}/${module.pages[0].id}`} 
-                                    icon={module.icon} 
-                                    label={module.name} 
-                                    active={pathname.startsWith(`/modules/${module.id}`)} 
-                                    collapsed={isSidebarCollapsed} 
-                                />
-                            ))}
+                    {/* Expand/Collapse Toggle inside small margin */}
+                    {!isSidebarCollapsed && (
+                        <div className="flex items-center justify-between px-6 pb-2 border-b border-sidebar-active/30 mb-2">
+                            <span className="text-[10px] text-sidebar-muted uppercase tracking-widest font-black">Menu</span>
+                            <div className="flex gap-2">
+                                <button onClick={() => toggleAllSections(true)} className="text-[10px] font-bold text-sidebar-muted hover:text-white transition-colors" title="Expand All">
+                                    Expand
+                                </button>
+                                <span className="text-sidebar-muted opacity-50">|</span>
+                                <button onClick={() => toggleAllSections(false)} className="text-[10px] font-bold text-sidebar-muted hover:text-white transition-colors" title="Collapse All">
+                                    Collapse
+                                </button>
+                            </div>
                         </div>
                     )}
 
-                    {/* AI TOOLS */}
-                    <div className="space-y-1">
-                        <NavSection label="AI Tools" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/ai/queue" icon={Bot} label="AI Action Queue" active={pathname === '/ai/queue'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/protocols" icon={ClipboardList} label="Protocols" active={pathname === '/protocols'} collapsed={isSidebarCollapsed} />
-                    </div>
+                    <div className={!isSidebarCollapsed ? "px-3 space-y-4" : "px-2 space-y-4"}>
 
-                    {/* ANALYTICS */}
-                    <div className="space-y-1">
-                        <NavSection label="Analytics" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/analytics/clinical" icon={Activity} label="Clinical Dashboard" active={pathname === '/analytics/clinical'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/analytics/business" icon={BarChart} label="Business Dashboard" active={pathname === '/analytics/business'} collapsed={isSidebarCollapsed} />
-                    </div>
+                        {/* CLINICAL */}
+                        <CollapsibleGroup label="Clinical" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Clinical']} onToggle={() => toggleSection('Clinical')}>
+                            <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" active={pathname === '/dashboard'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname.startsWith('/calendar')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/team" icon={Users} label="Team" active={pathname.startsWith('/team')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname.startsWith('/inbox')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname.startsWith('/waitlist')} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
 
-                    {/* ADMIN */}
-                    <div className="space-y-1">
-                        <NavSection label="Admin" collapsed={isSidebarCollapsed} />
-                        <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/admin/store" icon={ShoppingBag} label="Store Management" active={pathname === '/admin/store'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/admin/communications" icon={Megaphone} label="Communications" active={pathname === '/admin/communications'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/admin/doxy" icon={Video} label="Doxy Integration" active={pathname === '/admin/doxy'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
-                        <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
-                    </div>
+                        {/* CRM */}
+                        <CollapsibleGroup label="CRM" collapsed={isSidebarCollapsed} isExpanded={expandedSections['CRM']} onToggle={() => toggleSection('CRM')}>
+                            <NavItem href="/crm" icon={Database} label="CRM Dashboard" active={pathname === '/crm'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/crm/patients" icon={User} label="Patients" active={pathname.startsWith('/crm/patients')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/crm/facilities" icon={Briefcase} label="Facilities" active={pathname.startsWith('/crm/facilities')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/crm/vendors" icon={Users} label="Vendors" active={pathname.startsWith('/crm/vendors')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/crm/campaigns" icon={BarChart} label="Campaigns" active={pathname.startsWith('/crm/campaigns')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/crm/grants" icon={ClipboardList} label="Grant Proposals" active={pathname.startsWith('/crm/grants')} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
 
+                        {/* COMMUNITY */}
+                        <CollapsibleGroup label="Social" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Social']} onToggle={() => toggleSection('Social')}>
+                            <NavItem href="/community" icon={Users} label="Community Feed" active={pathname.startsWith('/community')} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
+
+                        {/* ORDERS & Rx */}
+                        <CollapsibleGroup label="Orders & Rx" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Orders & Rx']} onToggle={() => toggleSection('Orders & Rx')}>
+                            <NavItem href="/orders/erx" icon={Pill} label="eRx / Prescriptions" active={pathname === '/orders/erx'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/orders/labs" icon={Microscope} label="Lab Orders" active={pathname === '/orders/labs'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/orders/imaging" icon={Scan} label="Imaging Orders" active={pathname === '/orders/imaging'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/orders/pacs" icon={Scan} label="PACS" active={pathname === '/orders/pacs'} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
+
+                        {/* SERVICES */}
+                        <CollapsibleGroup label="Services" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Services']} onToggle={() => toggleSection('Services')}>
+                            <NavItem href="/services" icon={Briefcase} label="Services Catalog" active={pathname === '/services'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/book" icon={Video} label="Booking" active={pathname === '/book'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
+
+                        {/* SPECIALTY MODULES (DYNAMIC) */}
+                        {enabledModules.length > 0 && (
+                            <CollapsibleGroup label="Specialty Modules" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Specialty Modules']} onToggle={() => toggleSection('Specialty Modules')}>
+                                {SPECIALTY_MODULES.filter(m => enabledModules.includes(m.id)).map(module => (
+                                    <NavItem 
+                                        key={module.id} 
+                                        href={`/modules/${module.id}/${module.pages[0].id}`} 
+                                        icon={module.icon} 
+                                        label={module.name} 
+                                        active={pathname.startsWith(`/modules/${module.id}`)} 
+                                        collapsed={isSidebarCollapsed} 
+                                    />
+                                ))}
+                            </CollapsibleGroup>
+                        )}
+
+                        {/* AI TOOLS */}
+                        <CollapsibleGroup label="AI Tools" collapsed={isSidebarCollapsed} isExpanded={expandedSections['AI Tools']} onToggle={() => toggleSection('AI Tools')}>
+                            <NavItem href="/ai/queue" icon={Bot} label="AI Action Queue" active={pathname === '/ai/queue'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/protocols" icon={ClipboardList} label="Protocols" active={pathname === '/protocols'} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
+
+                        {/* ANALYTICS */}
+                        <CollapsibleGroup label="Analytics" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Analytics']} onToggle={() => toggleSection('Analytics')}>
+                            <NavItem href="/analytics/clinical" icon={Activity} label="Clinical Dashboard" active={pathname === '/analytics/clinical'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/analytics/business" icon={BarChart} label="Business Dashboard" active={pathname === '/analytics/business'} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
+
+                        {/* ADMIN */}
+                        <CollapsibleGroup label="Admin" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Admin']} onToggle={() => toggleSection('Admin')}>
+                            <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/store" icon={ShoppingBag} label="Store Management" active={pathname === '/admin/store'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/communications" icon={Megaphone} label="Communications" active={pathname === '/admin/communications'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
+
+                        {/* INTEGRATIONS HUB */}
+                        <CollapsibleGroup label="Integrations" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Integrations']} onToggle={() => toggleSection('Integrations')}>
+                            <NavItem href="/admin/integrations" icon={Network} label="Integrations Hub" active={pathname === '/admin/integrations'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/doxy" icon={Video} label="Doxy.me" active={pathname === '/admin/integrations/doxy'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/radiantlogiq" icon={DatabaseZap} label="RadiantLogiq" active={pathname === '/admin/integrations/radiantlogiq'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/powerscribe" icon={Activity} label="PowerScribe 360" active={pathname === '/admin/integrations/powerscribe'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/radai" icon={Bot} label="Rad AI" active={pathname === '/admin/integrations/radai'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/plugins" icon={Puzzle} label="Plugins & Extensions" active={pathname === '/admin/integrations/plugins'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/apis" icon={Key} label="API Keys" active={pathname === '/admin/integrations/apis'} collapsed={isSidebarCollapsed} />
+                        </CollapsibleGroup>
+
+                    </div>
                 </nav>
 
                 {/* Bottom Action */}
@@ -474,15 +525,51 @@ function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {
     )
 }
 
-function NavSection({ label, collapsed }: { label: string, collapsed: boolean }) {
+function CollapsibleGroup({ label, collapsed, isExpanded, onToggle, children }: any) {
     if (collapsed) {
-        return <div className="my-2 mx-2 h-px bg-sidebar-hover/80"></div>;
+        return (
+            <div className="space-y-1 mb-4">
+                <NavSection label={label} collapsed={collapsed} />
+                {children}
+            </div>
+        );
     }
     return (
-        <div className="px-3 pt-4 pb-1">
-            <span className="text-[10px] font-black text-sidebar-muted uppercase tracking-widest leading-none">
+        <div className="space-y-1 mb-4">
+            <NavSection label={label} collapsed={collapsed} isExpanded={isExpanded} onToggle={onToggle} />
+            <div 
+                className={`grid transition-all duration-300 ease-in-out ${isExpanded === false ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}
+            >
+                <div className="overflow-hidden space-y-1">
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function NavSection({ label, collapsed, isExpanded, onToggle }: { label: string, collapsed: boolean, isExpanded?: boolean, onToggle?: () => void }) {
+    if (collapsed) {
+        return <div className="my-2 h-px bg-sidebar-hover/80 mx-2"></div>;
+    }
+    return (
+        <div 
+            className="flex items-center justify-between px-3 pt-3 pb-1 cursor-pointer group select-none"
+            onClick={onToggle}
+            title={onToggle ? `Toggle ${label}` : undefined}
+        >
+            <span className="text-[10px] font-black text-sidebar-muted uppercase tracking-widest leading-none group-hover:text-white transition-colors duration-200">
                 {label}
             </span>
+            {onToggle && (
+                <span className="text-sidebar-muted group-hover:text-white transition-transform duration-200 flex items-center justify-center">
+                    {isExpanded ? (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                    ) : (
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    )}
+                </span>
+            )}
         </div>
     );
 }
