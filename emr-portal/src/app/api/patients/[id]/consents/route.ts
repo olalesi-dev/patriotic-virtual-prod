@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
+import { resolveProviderScopedPatientDetail } from '@/lib/provider-patient-detail-route';
 
 export async function GET(
     request: Request,
     { params }: { params: { id: string } }
 ) {
+    const { patient, errorResponse } = await resolveProviderScopedPatientDetail(request, params.id);
+    if (errorResponse || !patient) return errorResponse;
+
     return NextResponse.json({
         success: true,
         patientId: params.id,
-        consents: [
-            { id: 'CONS-1', title: 'Telehealth Consent', status: 'Signed', date: '2026-01-06' }
-        ]
+        consents: patient.documents.filter((document) => document.category === 'Consent Forms')
     });
 }
