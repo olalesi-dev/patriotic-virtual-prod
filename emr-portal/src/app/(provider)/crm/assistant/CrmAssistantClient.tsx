@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, setDoc, serverTimestamp, getDocs, addDoc } from 'firebase/firestore';
 import { 
-    Send, Bot, User, Copy, Plus, MessageSquare, Loader2, Sparkles, Check
+    Send, Bot, User, Copy, Plus, MessageSquare, Loader2, Sparkles, Check, Bird
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -181,19 +181,19 @@ export default function CrmAssistantClient() {
             <div className="flex-1 flex flex-col bg-white dark:bg-slate-800 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
                 <div className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-sky-900/20 dark:to-indigo-900/20 p-6 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-sky-500">
-                        <Sparkles className="w-5 h-5" />
+                        <Bird className="w-5 h-5 text-indigo-500" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-black text-slate-800 dark:text-white">CRM AI Assistant</h2>
-                        <p className="text-xs font-bold text-slate-500">Powered by Gemini Processor</p>
+                        <h2 className="text-lg font-black text-slate-800 dark:text-white">Eagle Marketing Agent</h2>
+                        <p className="text-xs font-bold text-slate-500">AI-powered marketing mascot</p>
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 scroll-smooth">
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto opacity-50 space-y-4">
-                            <Sparkles className="w-12 h-12 text-slate-400" />
-                            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200">How can I help you today?</h3>
+                            <Bird className="w-12 h-12 text-slate-400" />
+                            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200">Hello! I'm Eagle, your Marketing Agent.</h3>
                             <p className="text-sm font-semibold text-slate-500">Draft outreach emails, summarize lead activities, brainstorm campaigns, or get grant writing suggestions.</p>
                         </div>
                     ) : (

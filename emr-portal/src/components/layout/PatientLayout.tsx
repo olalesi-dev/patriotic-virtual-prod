@@ -24,7 +24,8 @@ import {
     AlertCircle,
     Users,
     ShoppingBag,
-    ShoppingCart
+    ShoppingCart,
+    Gift
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
@@ -183,6 +184,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
         { name: 'Community Feed', href: '/patient/community', icon: Users },
         { name: 'Medications', href: '/my-health/medications', icon: Pill },
         { name: 'Shop', href: '/patient/shop', icon: ShoppingBag },
+        { name: 'Refer & Earn', href: '/patient/referrals', icon: Gift },
         { name: 'Lab Results', href: '/my-health/labs', icon: Activity },
         { name: 'Imaging', href: '/my-health/imaging', icon: FileText },
         { name: 'Billing', href: '/patient/billing', icon: CreditCard },
@@ -366,3 +368,4 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
         </div>
     );
 }
+

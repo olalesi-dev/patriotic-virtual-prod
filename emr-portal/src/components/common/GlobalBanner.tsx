@@ -6,6 +6,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Info, AlertTriangle, AlertCircle, Sparkles, X, HeartHandshake } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface BannerConfig {
     message: string;
@@ -25,6 +26,7 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
     const [dismissedAt, setDismissedAt] = useState<string | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const router = useRouter();
+    const profile = useUserProfile();
 
     useEffect(() => {
         // Hydrate dismissal state
@@ -112,7 +114,7 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
 
     if (!isVisible || !banner) return null;
 
-    const referralLink = auth.currentUser ? `https://patriotictelehealth.com/signup?ref=${auth.currentUser.uid}` : null;
+    const referralLink = profile.referralCode ? `https://patriotictelehealth.com?ref=${profile.referralCode}` : null;
 
     return (
         <div className={`w-full ${getColorClasses(banner.type)} px-4 py-3 relative z-50 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6 shadow-md shadow-black/10`}>
@@ -136,7 +138,7 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
                 {banner.type === 'Promotional' && referralLink && (
                     <div className="hidden lg:flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-full text-xs font-bold shrink-0">
                         <HeartHandshake className="w-3.5 h-3.5" />
-                        <span>Refer a friend & get 30% off!</span>
+                        <span>Refer a friend & get $50!</span>
                         <button 
                             onClick={async () => {
                                 await navigator.clipboard.writeText(referralLink);
