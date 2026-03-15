@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, Timestamp, arrayUnion } from 'firebase/firestore';
 import { 
-    ArrowLeft, Save, User, Briefcase, Users, BarChart, ClipboardList, Database, Loader2, X, Activity, Clock
+    ArrowLeft, Save, User, Briefcase, Users, BarChart, ClipboardList, Database, Loader2, X, Activity, Clock, Shield, Eye, EyeOff, Target, TrendingUp, Key
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -21,8 +21,8 @@ const ENTITY_CONFIG = {
 const PIPELINE_STAGES: Record<string, string[]> = {
     patients: ['New Lead', 'Contacted', 'Consultation Scheduled', 'Active Patient', 'Churned'],
     facilities: ['Prospecting', 'Demo Scheduled', 'Contract Sent', 'Active Partner', 'Inactive'],
-    vendors: ['Active', 'Pending', 'Archived'],
-    campaigns: ['Active', 'Pending', 'Archived'],
+    vendors: ['Active', 'Pending', 'Expiring Soon', 'Inactive'],
+    campaigns: ['Draft', 'Active', 'Paused', 'Completed'],
     grants: ['Active', 'Pending', 'Archived'],
 };
 
@@ -57,6 +57,24 @@ interface CrmEntity {
     stateLicenseNumber?: string;
     npi?: string;
     contractedServices?: string;
+    // Vendor specific
+    vendorCategory?: string;
+    websiteUrl?: string;
+    contractStartDate?: string;
+    contractEndDate?: string;
+    geographicServiceRegion?: string;
+    licenseOrApiKey?: string;
+    integrationName?: string;
+    // Campaign specific
+    campaignType?: string;
+    targetAudienceSegment?: string;
+    startDate?: string;
+    endDate?: string;
+    budget?: string;
+    actualSpend?: string;
+    leadsGenerated?: string;
+    conversions?: string;
+    clickThroughRate?: string;
     [key: string]: any;
 }
 
@@ -78,6 +96,7 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
     const [formData, setFormData] = useState<CrmEntity>(DEFAULT_RECORD);
     const [tagInput, setTagInput] = useState('');
     const [noteInput, setNoteInput] = useState('');
+    const [showCredentials, setShowCredentials] = useState(false);
 
     const config = ENTITY_CONFIG[entityType as keyof typeof ENTITY_CONFIG] || ENTITY_CONFIG.patients;
     const Icon = config.icon;
@@ -275,6 +294,39 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                 </div>
             </div>
 
+            {/* Campaign Summary Card */}
+            {entityType === 'campaigns' && !isNew && (
+                <div className="bg-slate-800 dark:bg-slate-900 p-8 rounded-[32px] text-white shadow-lg overflow-hidden relative">
+                    <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -mr-10 -mt-20"></div>
+                    <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
+                        <div>
+                            <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Campaign Performance</p>
+                            <h3 className="text-2xl font-black tracking-tight">{formData.name}</h3>
+                            <div className="flex items-center gap-3 mt-3">
+                                <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg ${formData.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-slate-300'}`}>
+                                    {formData.status || 'Draft'}
+                                </span>
+                                <span className="text-slate-400 text-sm font-semibold">{formData.campaignType || 'Unknown Type'}</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-8">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 flex items-center gap-1.5"><Users className="w-3.5 h-3.5"/> Leads</p>
+                                <p className="text-3xl font-black">{formData.leadsGenerated || '0'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 flex items-center gap-1.5"><Target className="w-3.5 h-3.5"/> Conversions</p>
+                                <p className="text-3xl font-black text-emerald-400">{formData.conversions || '0'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5"/> CTR</p>
+                                <p className="text-3xl font-black text-sky-400">{formData.clickThroughRate || '0'}%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Left Column: Form Fields */}
@@ -309,6 +361,18 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Lead Source</label>
                                         <input name="leadSource" value={formData.leadSource || ''} onChange={handleChange} placeholder="e.g. Google Ads, Referral" className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
                                     </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Email Address</label>
+                                        <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Phone Number</label>
+                                        <input type="tel" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Insurance Information</label>
+                                        <input name="insuranceInfo" value={formData.insuranceInfo || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
                                 </>
                             ) : entityType === 'facilities' ? (
                                 <>
@@ -318,7 +382,7 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Facility Type</label>
-                                        <select name="facilityType" value={formData.facilityType || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none">
+                                        <select name="facilityType" value={formData.facilityType || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer">
                                             <option value="">Select Type...</option>
                                             <option value="Urgent Care">Urgent Care</option>
                                             <option value="Hospital">Hospital</option>
@@ -334,66 +398,18 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Primary Contact Title</label>
                                         <input name="primaryContactTitle" value={formData.primaryContactTitle || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
                                     </div>
-                                </>
-                            ) : (
-                                <div className="space-y-3 md:col-span-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{config.title} Name <span className="text-rose-500">*</span></label>
-                                    <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" placeholder={`Enter name...`} />
-                                </div>
-                            )}
-
-                            {/* Standard Fields */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Email Address</label>
-                                <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Phone Number</label>
-                                <input type="tel" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
-                            </div>
-                            
-                            {/* Address for facilities */}
-                            {entityType === 'facilities' && (
-                                <div className="space-y-3 md:col-span-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Facility Address</label>
-                                    <input name="address" value={formData.address || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
-                                </div>
-                            )}
-
-                            {/* Pipeline Status */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Pipeline Stage</label>
-                                <select 
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleChange}
-                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer"
-                                >
-                                    {stages.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-
-                            {/* Assigned Owner */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Assigned Provider/Owner</label>
-                                <input 
-                                    name="assignedOwner"
-                                    value={formData.assignedOwner}
-                                    onChange={handleChange}
-                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none"
-                                />
-                            </div>
-
-                            {/* Specific extra fields */}
-                            {entityType === 'patients' && (
-                                <div className="space-y-3 md:col-span-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Insurance Information</label>
-                                    <input name="insuranceInfo" value={formData.insuranceInfo || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
-                                </div>
-                            )}
-
-                            {entityType === 'facilities' && (
-                                <>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Email Address</label>
+                                        <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Phone Number</label>
+                                        <input type="tel" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Facility Address</label>
+                                        <input name="address" value={formData.address || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
                                     <div className="space-y-3">
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">State License Number</label>
                                         <input name="stateLicenseNumber" value={formData.stateLicenseNumber || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
@@ -407,51 +423,230 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                                         <input name="contractedServices" value={formData.contractedServices || ''} onChange={handleChange} placeholder="e.g. Telehealth Coverage, Locum Tenens" className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
                                     </div>
                                 </>
+                            ) : entityType === 'vendors' ? (
+                                <>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vendor Name <span className="text-rose-500">*</span></label>
+                                        <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vendor Category</label>
+                                        <select name="vendorCategory" value={formData.vendorCategory || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer">
+                                            <option value="">Select Category...</option>
+                                            <option value="Pharmacy">Pharmacy</option>
+                                            <option value="Merchandise Supplier">Merchandise Supplier</option>
+                                            <option value="Technology Partner">Technology Partner</option>
+                                            <option value="Integration">Integration</option>
+                                            <option value="General Supplier">General Supplier</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Website URL</label>
+                                        <input name="websiteUrl" value={formData.websiteUrl || ''} onChange={handleChange} placeholder="https://..." className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Primary Contact Name</label>
+                                        <input name="primaryContactName" value={formData.primaryContactName || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Geographic Service Region</label>
+                                        <input name="geographicServiceRegion" value={formData.geographicServiceRegion || ''} onChange={handleChange} placeholder="e.g. Nationwide, TX, FL" className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Email Address</label>
+                                        <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Phone Number</label>
+                                        <input type="tel" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contract Start Date</label>
+                                        <input type="date" name="contractStartDate" value={formData.contractStartDate || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contract End Date</label>
+                                        <input type="date" name="contractEndDate" value={formData.contractEndDate || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                </>
+                            ) : entityType === 'campaigns' ? (
+                                <>
+                                    <div className="space-y-3 md:col-span-2">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Campaign Name <span className="text-rose-500">*</span></label>
+                                        <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Campaign Type</label>
+                                        <select name="campaignType" value={formData.campaignType || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer">
+                                            <option value="">Select Type...</option>
+                                            <option value="Email">Email</option>
+                                            <option value="SMS">SMS</option>
+                                            <option value="Social Media">Social Media</option>
+                                            <option value="Paid Ad">Paid Ad</option>
+                                            <option value="Event">Event</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Target Audience Segment</label>
+                                        <select name="targetAudienceSegment" value={formData.targetAudienceSegment || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer">
+                                            <option value="">Select Audience...</option>
+                                            <option value="Patient Leads">Patient Leads</option>
+                                            <option value="Facility Prospects">Facility Prospects</option>
+                                            <option value="General">General</option>
+                                            <option value="Current Patients">Current Patients</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Start Date</label>
+                                        <input type="date" name="startDate" value={formData.startDate || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">End Date</label>
+                                        <input type="date" name="endDate" value={formData.endDate || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Goal Budget ($)</label>
+                                        <input type="number" name="budget" value={formData.budget || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Actual Spend ($)</label>
+                                        <input type="number" name="actualSpend" value={formData.actualSpend || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Leads Generated</label>
+                                        <input type="number" name="leadsGenerated" value={formData.leadsGenerated || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Conversions</label>
+                                        <input type="number" name="conversions" value={formData.conversions || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Click-Through Rate (%)</label>
+                                        <input type="number" name="clickThroughRate" value={formData.clickThroughRate || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" />
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="space-y-3 md:col-span-2">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{config.title} Name <span className="text-rose-500">*</span></label>
+                                    <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none" placeholder={`Enter name...`} />
+                                </div>
                             )}
 
-                            {/* Tags */}
-                            <div className="space-y-3 md:col-span-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center justify-between">
-                                    <span>Tags / Interests (Press Enter to Add)</span>
-                                </label>
-                                <div className="w-full bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 focus-within:ring-2 focus-within:ring-sky-500/50 transition-all min-h-[56px] flex flex-wrap gap-2 items-center">
-                                    {(formData.tags || []).map(tag => (
-                                        <span key={tag} className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-xl text-xs font-bold">
-                                            {tag}
-                                            <button 
-                                                type="button"
-                                                onClick={() => removeTag(tag)}
-                                                className="text-slate-400 hover:text-rose-500 transition-colors ml-1"
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </span>
-                                    ))}
+                            {/* Core Stage, Assignment & Tags */}
+                            <div className="col-span-full border-t border-slate-100 dark:border-slate-700/50 pt-8 mt-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Pipeline Stage</label>
+                                    <select 
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer"
+                                    >
+                                        {stages.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Assigned Provider/Owner</label>
                                     <input 
-                                        value={tagInput}
-                                        onChange={e => setTagInput(e.target.value)}
-                                        onKeyDown={handleAddTag}
-                                        className="flex-1 min-w-[120px] bg-transparent border-none p-0 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                                        placeholder={(!formData.tags || formData.tags.length === 0) ? "Type a tag..." : ""}
+                                        name="assignedOwner"
+                                        value={formData.assignedOwner}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none"
                                     />
                                 </div>
-                                {entityType === 'patients' && (
-                                    <div className="flex gap-2 flex-wrap mt-2">
-                                        {['GLP-1', 'Testosterone', 'Hair Growth', 'Pediatrics', 'Mental Health'].map(t => (
-                                            <button 
-                                                key={t}
-                                                type="button"
-                                                onClick={(e) => handleAddTag(e, t)}
-                                                className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 px-2 py-1 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition-colors"
-                                            >
-                                                + {t}
-                                            </button>
+
+                                {/* Tags */}
+                                <div className="space-y-3 md:col-span-2">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center justify-between">
+                                        <span>Tags (Press Enter to Add)</span>
+                                    </label>
+                                    <div className="w-full bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 focus-within:ring-2 focus-within:ring-sky-500/50 transition-all min-h-[56px] flex flex-wrap gap-2 items-center">
+                                        {(formData.tags || []).map(tag => (
+                                            <span key={tag} className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-xl text-xs font-bold">
+                                                {tag}
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => removeTag(tag)}
+                                                    className="text-slate-400 hover:text-rose-500 transition-colors ml-1"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
                                         ))}
+                                        <input 
+                                            value={tagInput}
+                                            onChange={e => setTagInput(e.target.value)}
+                                            onKeyDown={handleAddTag}
+                                            className="flex-1 min-w-[120px] bg-transparent border-none p-0 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                            placeholder={(!formData.tags || formData.tags.length === 0) ? "Type a tag..." : ""}
+                                        />
                                     </div>
-                                )}
+                                    {entityType === 'patients' && (
+                                        <div className="flex gap-2 flex-wrap mt-2">
+                                            {['GLP-1', 'Testosterone', 'Hair Growth', 'Pediatrics', 'Mental Health'].map(t => (
+                                                <button 
+                                                    key={t}
+                                                    type="button"
+                                                    onClick={(e) => handleAddTag(e, t)}
+                                                    className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 px-2 py-1 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition-colors"
+                                                >
+                                                    + {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Vendor Credentials Tab */}
+                    {entityType === 'vendors' && (
+                        <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 shadow-sm p-8 space-y-8">
+                            <div className="border-b border-slate-100 dark:border-slate-700/50 pb-4">
+                                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+                                    <Shield className="w-5 h-5 text-emerald-500" />
+                                    Vendor Credentials
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Integration System Name</label>
+                                    <select name="integrationName" value={formData.integrationName || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-4 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none appearance-none cursor-pointer">
+                                        <option value="">None / Custom</option>
+                                        <option value="DoseSpot">DoseSpot</option>
+                                        <option value="Doxy.me">Doxy.me</option>
+                                        <option value="Stripe">Stripe</option>
+                                        <option value="SendGrid">SendGrid</option>
+                                        <option value="Twilio">Twilio</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-3 md:col-span-2">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">License or API Key</label>
+                                    <div className="relative">
+                                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input 
+                                            name="licenseOrApiKey" 
+                                            type={showCredentials ? "text" : "password"}
+                                            value={formData.licenseOrApiKey || ''} 
+                                            onChange={handleChange} 
+                                            placeholder="Enter secure key..."
+                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl py-4 pl-12 pr-12 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/50 focus:outline-none" 
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowCredentials(!showCredentials)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                        >
+                                            {showCredentials ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1 pl-1">Keys are visually masked by default to prevent shoulder-surfing.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Column: Activity Log */}

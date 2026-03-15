@@ -6,7 +6,7 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, arrayUnion, Timestamp } from 'firebase/firestore';
 import {
     Plus, Search, User as UserIcon, Briefcase, Users, BarChart, ClipboardList,
-    Database, ArrowRight, Activity, Filter, LayoutGrid, List, MoreVertical
+    Database, ArrowRight, Activity, Filter, LayoutGrid, List, MoreVertical, Calendar as CalendarIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -22,8 +22,8 @@ const ENTITY_CONFIG = {
 const PIPELINE_STAGES: Record<string, string[]> = {
     patients: ['New Lead', 'Contacted', 'Consultation Scheduled', 'Active Patient', 'Churned'],
     facilities: ['Prospecting', 'Demo Scheduled', 'Contract Sent', 'Active Partner', 'Inactive'],
-    vendors: ['Active', 'Pending', 'Archived'],
-    campaigns: ['Active', 'Pending', 'Archived'],
+    vendors: ['Active', 'Pending', 'Expiring Soon', 'Inactive'],
+    campaigns: ['Draft', 'Active', 'Paused', 'Completed'],
     grants: ['Active', 'Pending', 'Archived'],
 };
 
@@ -42,7 +42,7 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
     const [entities, setEntities] = useState<CrmEntity[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+    const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar'>('table');
 
     const config = ENTITY_CONFIG[entityType as keyof typeof ENTITY_CONFIG] || ENTITY_CONFIG.patients;
     const Icon = config.icon;
@@ -195,6 +195,58 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
             </div>
         );
     };
+    const renderCalendar = () => {
+        // Very lightweight pseudo-calendar view showing the current month
+        const today = new Date();
+        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+        const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+        return (
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+                <div className="flex justify-between items-center mb-6 px-2">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{format(today, 'MMMM yyyy')}</h2>
+                </div>
+                <div className="grid grid-cols-7 gap-4">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                        <div key={d} className="text-center text-xs font-black uppercase text-slate-400 mb-2">{d}</div>
+                    ))}
+                    {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} className="h-24"></div>)}
+                    {days.map(d => {
+                        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        // find campaigns with start/end date intersecting this day, but for now just match start date
+                        const dayEvents = filtered.filter(e => {
+                            let eventDateStr = '';
+                            if (e.startDate) eventDateStr = e.startDate;
+                            else if (e.lastActivityDate) {
+                                const d = (e.lastActivityDate as any).toDate ? (e.lastActivityDate as any).toDate() : (e.lastActivityDate as Date);
+                                eventDateStr = format(d, 'yyyy-MM-dd');
+                            }
+                            return eventDateStr === dateString;
+                        });
+                        
+                        return (
+                            <div key={d} className="h-32 border border-slate-100 dark:border-slate-700/50 rounded-2xl p-2 bg-slate-50/50 dark:bg-slate-900/20 overflow-y-auto">
+                                <div className="text-right text-xs font-bold text-slate-400 mb-1">{d}</div>
+                                <div className="space-y-1">
+                                    {dayEvents.map(ev => (
+                                        <div 
+                                            key={ev.id} 
+                                            onClick={() => router.push(`/crm/${entityType}/${ev.id}`)}
+                                            className="text-[10px] font-bold p-1 rounded bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 truncate cursor-pointer hover:bg-sky-200 dark:hover:bg-sky-800 transition-colors"
+                                        >
+                                            {ev.name || 'Unnamed'}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
 
     return (
         <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-24">
@@ -246,6 +298,14 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
                     >
                         <LayoutGrid className="w-4 h-4" /> Kanban
                     </button>
+                    {entityType === 'campaigns' && (
+                        <button 
+                            onClick={() => setViewMode('calendar')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'calendar' ? 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        >
+                            <CalendarIcon className="w-4 h-4" /> Calendar
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -256,6 +316,8 @@ export default function CrmEntityListClient({ entityType }: { entityType: string
                 </div>
             ) : viewMode === 'kanban' ? (
                 renderKanban()
+            ) : viewMode === 'calendar' && entityType === 'campaigns' ? (
+                renderCalendar()
             ) : (
                 <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
                     <div className="overflow-x-auto">
