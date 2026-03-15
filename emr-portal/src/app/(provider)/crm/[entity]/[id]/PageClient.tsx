@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 const ENTITY_CONFIG = {
     patients: { title: 'Patient', icon: User, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30' },
@@ -819,9 +820,9 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
 
                         {!isNew && (
                             <div className="mt-6 shrink-0 space-y-3 pt-6 border-t border-slate-100 dark:border-slate-700/50">
-                                <textarea 
+                                <AITextarea 
                                     value={noteInput}
-                                    onChange={e => setNoteInput(e.target.value)}
+                                    onValueChange={setNoteInput}
                                     placeholder="Add a new note..."
                                     rows={2}
                                     className="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-sky-500/50 focus:outline-none"

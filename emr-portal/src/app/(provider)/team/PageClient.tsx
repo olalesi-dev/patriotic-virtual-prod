@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { apiFetchJson } from '@/lib/api-client';
 import type { PatientSummary, ProviderSummary, TeamSummary } from '@/lib/team-types';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 interface TeamsApiResponse {
     success?: boolean;
@@ -623,8 +624,9 @@ export default function ProviderTeamPage() {
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Description</label>
-                            <textarea
-                                {...createTeamForm.register('description')}
+                            <AITextarea
+                                value={createTeamForm.watch('description') || ''}
+                                onValueChange={(val) => createTeamForm.setValue('description', val)}
                                 disabled={isMutating === 'create-team'}
                                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm min-h-20"
                                 placeholder="Optional team notes"

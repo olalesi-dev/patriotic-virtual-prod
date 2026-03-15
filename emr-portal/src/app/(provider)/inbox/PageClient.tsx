@@ -5,6 +5,7 @@ import {
     Inbox, Send, File, ChevronDown, Plus, MessageSquare,
     Search, User, Users, MoreHorizontal, ShieldCheck, X, Paperclip, ArrowLeft, FileText, Lock
 } from 'lucide-react';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 // --- TYPES ---
 type Message = {
@@ -77,6 +78,7 @@ export default function InboxPage() {
     // Data State
     const [threads, setThreads] = useState<Thread[]>(INITIAL_THREADS);
     const [replyText, setReplyText] = useState('');
+    const [composeMessage, setComposeMessage] = useState('');
 
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
     const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
@@ -371,11 +373,11 @@ export default function InboxPage() {
                                 <Paperclip className="w-5 h-5" />
                             </button>
                             <div className="flex-1 relative">
-                                <textarea
+                                <AITextarea
                                     value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
+                                    onValueChange={setReplyText}
                                     placeholder="Type your secure response..."
-                                    className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 resize-none h-12 min-h-[48px] max-h-32 shadow-inner"
+                                    className="w-full min-h-[120px] pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 resize-y shadow-inner"
                                 />
                             </div>
                             <button
@@ -489,7 +491,7 @@ export default function InboxPage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Message</label>
-                                <textarea required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none min-h-[150px] resize-none" placeholder="Type your secure message..."></textarea>
+                                <AITextarea required value={composeMessage} onValueChange={setComposeMessage} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none min-h-[150px] resize-y" placeholder="Type your secure message..." />
                             </div>
                             <div className="flex justify-end pt-2">
                                 <button type="submit" className="bg-brand hover:bg-brand-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2">

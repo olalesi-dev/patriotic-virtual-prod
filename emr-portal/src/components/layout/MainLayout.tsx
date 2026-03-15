@@ -8,21 +8,25 @@ import { useQuery } from '@tanstack/react-query';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut,
-    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap
+    Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { GlobalSearch } from './GlobalSearch';
+import { AITextarea } from '@/components/ui/AITextarea';
 import { auth } from '@/lib/firebase';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 import { apiFetchJson } from '@/lib/api-client';
-import type { PatientDetailResponse } from '@/lib/patient-registry-types';
+import { PatientDetailResponse } from '@/lib/patient-registry-types';
+import { usePracticeModules, initializeModulesListener } from '@/hooks/usePracticeModules';
+import { SPECIALTY_MODULES } from '@/lib/module-registry';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [bookingNote, setBookingNote] = useState('');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [activeUser, setActiveUser] = useState<FirebaseUser | null>(auth.currentUser);
 
@@ -64,8 +68,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             setActiveUser(nextUser);
         });
 
-        return () => unsubscribe();
+        const unsubModules = initializeModulesListener();
+
+        return () => {
+            unsubscribe();
+            unsubModules();
+        };
     }, []);
+
+    const { enabledModules } = usePracticeModules();
 
     React.useEffect(() => {
         if (!profile.loading) {
@@ -180,6 +191,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/crm/grants" icon={ClipboardList} label="Grant Proposals" active={pathname.startsWith('/crm/grants')} collapsed={isSidebarCollapsed} />
                     </div>
 
+                    {/* COMMUNITY */}
+                    <div className="space-y-1">
+                        <NavSection label="Social" collapsed={isSidebarCollapsed} />
+                        <NavItem href="/community" icon={Users} label="Community Feed" active={pathname.startsWith('/community')} collapsed={isSidebarCollapsed} />
+                    </div>
+
                     {/* ORDERS & Rx */}
                     <div className="space-y-1">
                         <NavSection label="Orders & Rx" collapsed={isSidebarCollapsed} />
@@ -196,6 +213,23 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/book" icon={Video} label="Booking" active={pathname === '/book'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
                     </div>
+
+                    {/* SPECIALTY MODULES (DYNAMIC) */}
+                    {enabledModules.length > 0 && (
+                        <div className="space-y-1">
+                            <NavSection label="Specialty Modules" collapsed={isSidebarCollapsed} />
+                            {SPECIALTY_MODULES.filter(m => enabledModules.includes(m.id)).map(module => (
+                                <NavItem 
+                                    key={module.id} 
+                                    href={`/modules/${module.id}/${module.pages[0].id}`} 
+                                    icon={module.icon} 
+                                    label={module.name} 
+                                    active={pathname.startsWith(`/modules/${module.id}`)} 
+                                    collapsed={isSidebarCollapsed} 
+                                />
+                            ))}
+                        </div>
+                    )}
 
                     {/* AI TOOLS */}
                     <div className="space-y-1">
@@ -215,6 +249,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <div className="space-y-1">
                         <NavSection label="Admin" collapsed={isSidebarCollapsed} />
                         <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/doxy" icon={Video} label="Doxy Integration" active={pathname === '/admin/doxy'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
@@ -372,7 +408,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 mb-1">Notes</label>
-                                    <textarea className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" placeholder="Reason for visit..."></textarea>
+                                    <AITextarea 
+                                        value={bookingNote}
+                                        onValueChange={setBookingNote}
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none transition-shadow" 
+                                        placeholder="Reason for visit..."
+                                    />
                                 </div>
                             </div>
 

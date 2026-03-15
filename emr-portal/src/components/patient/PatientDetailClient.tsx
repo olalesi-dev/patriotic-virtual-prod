@@ -40,6 +40,7 @@ import type {
     PatientDetailRecord,
     PatientDetailResponse
 } from '@/lib/patient-registry-types';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 type PatientDetailTab =
     | 'Overview'
@@ -1786,10 +1787,10 @@ function TextAreaField({
     return (
         <label className="block space-y-1">
             <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">{label}</span>
-            <textarea
+            <AITextarea
                 rows={rows}
                 value={value}
-                onChange={(event) => onChange(event.target.value)}
+                onValueChange={onChange}
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-brand"
             />
         </label>

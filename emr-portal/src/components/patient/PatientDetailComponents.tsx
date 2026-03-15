@@ -10,6 +10,7 @@ import {
     Scale, Thermometer, Droplets, Download, TrendingDown, TrendingUp, Heart, Sparkles, LucideIcon, Send, Paperclip, Smile, Phone, Video
 } from 'lucide-react';
 import { iQs } from '@/lib/catalog';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 export function MedicationsTab({ patient }: { patient: any }) {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -480,6 +481,9 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
     const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
     const [urgency, setUrgency] = useState('Routine');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [ptInstructions, setPtInstructions] = useState('');
+    const [referralReason, setReferralReason] = useState('');
+    const [otherDesc, setOtherDesc] = useState('');
 
     const labPanels = [
         { name: 'GLP-1 Panel', tests: 'CMP, A1C, Lipid, TSH' },
@@ -602,10 +606,12 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Instructions</label>
-                                <textarea
+                                <AITextarea
+                                    value={ptInstructions}
+                                    onValueChange={setPtInstructions}
                                     placeholder="e.g. Fasting 12 hours required..."
                                     className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-24 focus:outline-none"
-                                ></textarea>
+                                />
                             </div>
                         </>
                     )}
@@ -634,10 +640,12 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason / ICD-10</label>
-                                <textarea
+                                <AITextarea
+                                    value={referralReason}
+                                    onValueChange={setReferralReason}
                                     placeholder="Clinical reason for referral and diagnosis codes..."
                                     className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-32 focus:outline-none"
-                                ></textarea>
+                                />
                             </div>
                         </>
                     )}
@@ -654,10 +662,12 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</label>
-                                <textarea
+                                <AITextarea
+                                    value={otherDesc}
+                                    onValueChange={setOtherDesc}
                                     placeholder="Detailed description of the order..."
                                     className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-32 focus:outline-none"
-                                ></textarea>
+                                />
                             </div>
                         </>
                     )}
@@ -850,6 +860,7 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
     const [urgency, setUrgency] = useState('Routine');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedSet, setSelectedSet] = useState<string | null>(null);
+    const [clinicalIndication, setClinicalIndication] = useState('');
 
     const bodyParts: any = {
         'MRI': ['Brain', 'Spine', 'Knee', 'Shoulder', 'Abdomen'],
@@ -978,10 +989,12 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Clinical Indication / Reason</label>
-                        <textarea
+                        <AITextarea
+                            value={clinicalIndication}
+                            onValueChange={setClinicalIndication}
                             placeholder="Reason for study and clinical background..."
                             className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-32 focus:outline-none"
-                        ></textarea>
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -1631,10 +1644,10 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                                     ))}
                                     {isSigned && (
                                         <div className="space-y-2">
-                                            <textarea
+                                            <AITextarea
                                                 placeholder="Add post-signature note..."
                                                 value={newAddendum}
-                                                onChange={(e: any) => setNewAddendum(e.target.value)}
+                                                onValueChange={(val: string) => setNewAddendum(val)}
                                                 className="w-full h-20 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 resize-none"
                                             />
                                             <button
@@ -1693,10 +1706,10 @@ function EncounterField({ label, placeholder, value, onChange, textarea, disable
         <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
             {textarea ? (
-                <textarea
+                <AITextarea
                     placeholder={placeholder}
-                    value={value}
-                    onChange={(e: any) => onChange(e.target.value)}
+                    value={value || ''}
+                    onValueChange={(val: string) => onChange(val)}
                     disabled={disabled}
                     className="w-full h-32 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/10 focus:border-brand transition-all resize-none disabled:opacity-70 disabled:bg-slate-50"
                 />
@@ -2628,24 +2641,17 @@ export function InboxTab({ patient }: { patient: any }) {
                         <button className="p-2 text-slate-400 hover:text-brand bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:-translate-y-0.5" title="Attach File">
                             <Paperclip className="w-5 h-5" />
                         </button>
-                        <textarea
+                        <AITextarea
                             value={newMessage}
-                            onChange={(e) => {
-                                setNewMessage(e.target.value);
-                                e.target.style.height = 'auto';
-                                e.target.style.height = `${e.target.scrollHeight}px`;
-                            }}
-                            onKeyDown={(e) => {
+                            onValueChange={setNewMessage}
+                            onKeyDown={(e: any) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
                                     handleSendMessage();
-                                    const target = e.target as HTMLTextAreaElement;
-                                    target.style.height = 'auto';
                                 }
                             }}
                             placeholder="Type a secure message..."
-                            className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 resize-none py-2 max-h-32 focus:outline-none"
-                            rows={1}
+                            className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 resize-none py-2 max-h-32 focus:outline-none min-h-[48px]"
                         />
                         <button className="p-2 text-slate-400 hover:text-brand hover:bg-white rounded-xl transition-all">
                             <Smile className="w-5 h-5" />

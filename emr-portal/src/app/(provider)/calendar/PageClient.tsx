@@ -18,6 +18,7 @@ import {
     collection, onSnapshot, query, orderBy, addDoc, getDocs,
     limit, where, updateDoc, doc, Timestamp, getDoc
 } from 'firebase/firestore';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 // â”€â”€â”€ CONSTANTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -342,11 +343,11 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
                                         Clinical SOAP Notes
                                     </label>
-                                    <textarea
+                                    <AITextarea
                                         className="w-full h-32 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="S: Subjective&#10;O: Objective&#10;A: Assessment&#10;P: Plan"
                                         value={soapNotes}
-                                        onChange={(e) => setSoapNotes(e.target.value)}
+                                        onValueChange={setSoapNotes}
                                     />
                                     <div className="flex justify-end">
                                         <button
@@ -792,8 +793,8 @@ export default function CalendarPage() {
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300">Notes</label>
-                                <textarea placeholder="Reason for visit..." value={apptForm.notes}
-                                    onChange={e => setApptForm({ ...apptForm, notes: e.target.value })}
+                                <AITextarea placeholder="Reason for visit..." value={apptForm.notes}
+                                    onValueChange={val => setApptForm({ ...apptForm, notes: val })}
                                     className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 min-h-[80px] resize-none" />
                             </div>
                         </div>
