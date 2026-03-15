@@ -1289,6 +1289,8 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
         // Add recurring config if subscription
         if (item.interval) {
             sessionConfig.line_items[0].price_data.recurring = { interval: item.interval };
+        } else {
+            sessionConfig.customer_creation = 'always';
         }
 
         const session = await stripe.checkout.sessions.create(sessionConfig);

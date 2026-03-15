@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       allow_promotion_codes: true,
       line_items: [lineItem],
@@ -129,7 +129,13 @@ export async function POST(req: NextRequest) {
         consultationId: consultationId || '',
         uid,
       },
-    });
+    };
+
+    if (!item.interval) {
+      sessionConfig.customer_creation = 'always';
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
