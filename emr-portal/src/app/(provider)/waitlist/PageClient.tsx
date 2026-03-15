@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
-import { Search, Filter, Clock, Video, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { Search, Filter, Clock, Video, FileText, AlertCircle, CheckCircle, Stethoscope, CalendarPlus } from 'lucide-react';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 
 interface WaitlistEntry {
@@ -88,14 +88,68 @@ export default function WaitlistPage() {
         const unsubAuth = auth.onAuthStateChanged((user) => {
             if (!user) return;
 
-            const q = query(
+            const apptQuery = query(
                 collection(db, 'appointments'),
                 where('providerId', '==', user.uid),
                 where('status', 'in', ['waitlist', 'PENDING_SCHEDULING'])
             );
 
-            const snapUnsub = onSnapshot(q, async (snap) => {
-                const fetched = await Promise.all(snap.docs.map(async (d) => {
+            const consultQuery = query(
+                collection(db, 'consultations'),
+                where('paymentStatus', '==', 'paid')
+            );
+
+            let apptEntries: WaitlistEntry[] = [];
+            let consultEntries: WaitlistEntry[] = [];
+
+            const updateCombined = () => {
+                const combined = [...apptEntries];
+                const apptIds = new Set(apptEntries.map(a => a.id));
+                consultEntries.forEach(ce => {
+                   if (!apptIds.has(ce.id)) {
+                       combined.push(ce);
+                   }
+                });
+                setEntries(combined.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()));
+                setLoading(false);
+            };
+
+            const unsubAppt = onSnapshot(apptQuery, async (snap) => {
+                apptEntries = await Promise.all(snap.docs.map(async (d) => {
+                    const data = d.data();
+                    let dateObj = new Date();
+                    if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
+                    else if (data.updatedAt?.toDate) dateObj = data.updatedAt.toDate();
+
+                    const enriched = await enrichFromConsultation(d.id, data);
+                    const svcName = enriched.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+                    const priority: 'high' | 'normal' | 'low' =
+                        enriched.serviceKey.includes('diagnostic') || enriched.serviceKey.includes('imaging') ? 'high' : 'normal';
+
+                    return {
+                        id: d.id,
+                        patientId: enriched.patientUid,
+                        patientName: enriched.patientName,
+                        patientEmail: enriched.patientEmail,
+                        serviceKey: enriched.serviceKey,
+                        serviceName: svcName,
+                        status: 'Waiting',
+                        createdAt: dateObj,
+                        meetingUrl: enriched.meetingUrl,
+                        intakeAnswers: enriched.intakeAnswers,
+                        priority,
+                    } satisfies WaitlistEntry;
+                }));
+                updateCombined();
+            });
+
+            const unsubConsult = onSnapshot(consultQuery, async (snap) => {
+                const waitlistConsults = snap.docs.filter(d => {
+                   const status = (d.data().status || '').toLowerCase();
+                   return !['scheduled', 'completed', 'cancelled'].includes(status);
+                });
+
+                const enrichedCons = await Promise.all(waitlistConsults.map(async (d) => {
                     const data = d.data();
                     let dateObj = new Date();
                     if (data.createdAt?.toDate) dateObj = data.createdAt.toDate();
@@ -121,11 +175,14 @@ export default function WaitlistPage() {
                     } satisfies WaitlistEntry;
                 }));
 
-                setEntries(fetched.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()));
-                setLoading(false);
+                consultEntries = enrichedCons;
+                updateCombined();
             });
 
-            return () => snapUnsub();
+            return () => {
+                unsubAppt();
+                unsubConsult();
+            }
         });
 
         return () => unsubAuth();
@@ -287,10 +344,14 @@ export default function WaitlistPage() {
                                     <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
                                         <span className="text-slate-400 truncate">{entry.patientEmail || '—'}</span>
                                         <span className="w-1 h-1 rounded-full bg-slate-200 shrink-0" />
-                                        <span className="text-indigo-500 truncate">{entry.serviceName}</span>
+                                        <span className="flex items-center gap-1.5 text-indigo-500 truncate">
+                                            <Stethoscope className="w-3.5 h-3.5" />
+                                            {entry.serviceName}
+                                        </span>
                                         <span className="w-1 h-1 rounded-full bg-slate-200 shrink-0" />
-                                        <span className="text-slate-400">
-                                            Submitted {entry.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        <span className="text-slate-400 flex items-center gap-1.5">
+                                            <Clock className="w-3.5 h-3.5 opacity-60" />
+                                            Submitted {entry.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {entry.createdAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                                         </span>
                                     </div>
                                 </div>
@@ -310,9 +371,15 @@ export default function WaitlistPage() {
                                             intake: entry.intakeAnswers,
                                             name: entry.patientName,
                                         })}
-                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-indigo-200 hover:shadow-indigo-300 active:scale-95"
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-colors border border-slate-100 dark:border-slate-700 dark:border-slate-600 shadow-sm"
                                     >
                                         <Video className="w-4 h-4" /> Admit
+                                    </button>
+                                    <button
+                                        onClick={() => window.location.href = `/dashboard?tab=upcoming&schedule=${entry.id}`}
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40 hover:shadow-indigo-300 dark:hover:shadow-indigo-900/60 active:scale-95"
+                                    >
+                                        <CalendarPlus className="w-4 h-4 opacity-90" /> Review & Schedule
                                     </button>
                                 </div>
                             </div>
