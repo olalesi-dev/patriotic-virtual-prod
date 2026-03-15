@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react'; 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react'; 
 import {
     Users, Search, Shield, User,
     UserPlus, Mail, Key, Trash2, Edit2, ShieldAlert,
     CheckCircle2, XCircle, AlertCircle, Phone, Check, X, Save
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
+import { apiFetchJson } from '@/lib/api-client';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 interface UserData {
@@ -25,8 +27,7 @@ interface UserData {
 }
 
 export default function UserManagementPage() {
-    const [users, setUsers] = useState<UserData[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,26 +68,80 @@ export default function UserManagementPage() {
 
     const [filterRole, setFilterRole] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    const usersQueryKey = ['admin-users'] as const;
 
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const res = await fetch('/api/admin/users');
-            const data = await res.json();
-            if (data.success) {
-                setUsers(data.users);
-            } else {
-                throw new Error(data.error);
+    const usersQuery = useQuery({
+        queryKey: usersQueryKey,
+        queryFn: async () => {
+            const data = await apiFetchJson<{
+                success?: boolean;
+                users?: UserData[];
+                error?: string;
+            }>('/api/admin/users', {
+                method: 'GET',
+                cache: 'no-store'
+            });
+
+            if (!data.success || !data.users) {
+                throw new Error(data.error || 'Failed to load users.');
             }
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
+
+            return data.users;
         }
-    };
+    });
+
+    const updateUserMutation = useMutation({
+        mutationFn: ({
+            uid,
+            body
+        }: {
+            uid: string;
+            body: Record<string, unknown>;
+        }) => apiFetchJson<{ success?: boolean; error?: string }>(`/api/admin/users/${uid}`, {
+            method: 'PATCH',
+            body
+        }),
+        onSettled: () => {
+            void queryClient.invalidateQueries({ queryKey: usersQueryKey });
+        }
+    });
+
+    const createUserMutation = useMutation({
+        mutationFn: (body: Record<string, unknown>) => apiFetchJson<{
+            success?: boolean;
+            error?: string;
+            uid?: string;
+        }>('/api/admin/users', {
+            method: 'POST',
+            body
+        }),
+        onSettled: () => {
+            void queryClient.invalidateQueries({ queryKey: usersQueryKey });
+        }
+    });
+
+    const deleteUserMutation = useMutation({
+        mutationFn: (uid: string) => apiFetchJson<{ success?: boolean; error?: string }>(`/api/admin/users/${uid}`, {
+            method: 'DELETE'
+        }),
+        onSettled: () => {
+            void queryClient.invalidateQueries({ queryKey: usersQueryKey });
+        }
+    });
+
+    const resetPasswordMutation = useMutation({
+        mutationFn: (uid: string) => apiFetchJson<{
+            success?: boolean;
+            error?: string;
+            link?: string;
+        }>(`/api/admin/users/${uid}/reset`, {
+            method: 'POST'
+        })
+    });
+
+    const users = usersQuery.data ?? [];
+    const loading = usersQuery.isLoading;
+    const effectiveError = error ?? (usersQuery.error instanceof Error ? usersQuery.error.message : null);
 
     // Open detail panel and fetch full profile from Firestore
     const handleSelectUser = async (user: UserData) => {
@@ -141,16 +196,14 @@ export default function UserManagementPage() {
         try {
             // 1. Update Firebase Auth fields via API (displayName, email, role)
             const displayName = `${editForm.firstName} ${editForm.lastName}`.trim();
-            const res = await fetch(`/api/admin/users/${selectedUser.uid}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            const data = await updateUserMutation.mutateAsync({
+                uid: selectedUser.uid,
+                body: {
                     displayName,
                     email: editForm.email,
                     role: editForm.role,
-                })
+                }
             });
-            const data = await res.json();
             if (!data.success) throw new Error(data.error || 'Failed to update Auth record');
 
             // 2. Update Firestore users doc with all profile fields
@@ -180,7 +233,6 @@ export default function UserManagementPage() {
                 sex: editForm.sex,
             } : prev);
             setIsEditModalOpen(false);
-            fetchUsers();
         } catch (err: any) {
             setEditError(err.message || 'An error occurred while saving.');
         } finally {
@@ -208,12 +260,7 @@ export default function UserManagementPage() {
         try {
             setIsSubmitting(true);
             setError(null);
-            const res = await fetch('/api/admin/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, phone: newUserPhone })
-            });
-            const data = await res.json();
+            const data = await createUserMutation.mutateAsync({ ...formData, phone: newUserPhone });
             if (data.success) {
                 if (data.uid && newUserPhone) {
                     try {
@@ -223,7 +270,6 @@ export default function UserManagementPage() {
                 setIsCreateModalOpen(false);
                 setFormData({ firstName: '', lastName: '', dob: '', sex: '', email: '', password: '', role: 'patient' });
                 setNewUserPhone('');
-                fetchUsers();
             } else {
                 throw new Error(data.error);
             }
@@ -236,14 +282,11 @@ export default function UserManagementPage() {
 
     const handleToggleStatus = async (user: UserData) => {
         try {
-            const res = await fetch(`/api/admin/users/${user.uid}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ disabled: !user.disabled })
+            const data = await updateUserMutation.mutateAsync({
+                uid: user.uid,
+                body: { disabled: !user.disabled }
             });
-            const data = await res.json();
             if (data.success) {
-                fetchUsers();
                 if (selectedUser?.uid === user.uid) {
                     setSelectedUser(prev => prev ? { ...prev, disabled: !prev.disabled } : prev);
                 }
@@ -256,10 +299,8 @@ export default function UserManagementPage() {
     const handleDeleteUser = async (uid: string) => {
         if (!confirm('Are you sure you want to delete this user? This cannot be undone.')) return;
         try {
-            const res = await fetch(`/api/admin/users/${uid}`, { method: 'DELETE' });
-            const data = await res.json();
+            const data = await deleteUserMutation.mutateAsync(uid);
             if (data.success) {
-                fetchUsers();
                 if (selectedUser?.uid === uid) setSelectedUser(null);
             }
         } catch (err: any) {
@@ -414,15 +455,16 @@ export default function UserManagementPage() {
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => {
+                                                        onClick={async () => {
                                                             const confirmReset = confirm("Generate a password reset link for this user?");
                                                             if (!confirmReset) return;
-                                                            fetch(`/api/admin/users/${user.uid}/reset`, { method: 'POST' })
-                                                                .then(res => res.json())
-                                                                .then(data => {
-                                                                    if (data.success) alert(`Reset link: ${data.link}`);
-                                                                    else alert('Error: ' + data.error);
-                                                                });
+                                                            try {
+                                                                const data = await resetPasswordMutation.mutateAsync(user.uid);
+                                                                if (data.success) alert(`Reset link: ${data.link}`);
+                                                                else alert('Error: ' + data.error);
+                                                            } catch {
+                                                                alert('Failed to generate reset link');
+                                                            }
                                                         }}
                                                         className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                                                         title="Generate Reset Link"
@@ -714,9 +756,9 @@ export default function UserManagementPage() {
                         </div>
 
                         <form onSubmit={handleCreateUser} className="p-6 space-y-4">
-                            {error && (
+                            {effectiveError && (
                                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 text-sm">
-                                    <AlertCircle className="w-5 h-5 shrink-0" /> {error}
+                                    <AlertCircle className="w-5 h-5 shrink-0" /> {effectiveError}
                                 </div>
                             )}
                             <div className="space-y-4">

@@ -4,17 +4,10 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import { getToken, onMessage } from 'firebase/messaging';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { apiFetchJson } from '@/lib/api-client';
 import { getFirebaseMessaging } from '@/lib/firebase-messaging';
 
 const FIREBASE_MESSAGING_SW_PATH = '/firebase-messaging-sw.js';
-
-async function buildAuthHeaders(activeUser: FirebaseUser): Promise<Record<string, string>> {
-    const idToken = await activeUser.getIdToken();
-    return {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json'
-    };
-}
 
 function asNonEmptyString(value: unknown): string | null {
     if (typeof value !== 'string') return null;
@@ -24,6 +17,7 @@ function asNonEmptyString(value: unknown): string | null {
 
 export function usePushNotifications(activeUser: FirebaseUser | null) {
     const currentTokenRef = useRef<string | null>(null);
+    const inFlightTokenRef = useRef<string | null>(null);
     const unsubscribeForegroundRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
@@ -33,6 +27,7 @@ export function usePushNotifications(activeUser: FirebaseUser | null) {
                 unsubscribeForegroundRef.current = null;
             }
             currentTokenRef.current = null;
+            inFlightTokenRef.current = null;
             return;
         }
 
@@ -70,31 +65,26 @@ export function usePushNotifications(activeUser: FirebaseUser | null) {
                 });
 
                 if (!token || cancelled) return;
+                if (currentTokenRef.current === token || inFlightTokenRef.current === token) return;
 
-                const headers = await buildAuthHeaders(activeUser);
+                inFlightTokenRef.current = token;
 
                 if (currentTokenRef.current && currentTokenRef.current !== token) {
-                    await fetch('/api/notifications/push-token', {
+                    await apiFetchJson<{ success?: boolean; error?: string }>('/api/notifications/push-token', {
                         method: 'DELETE',
-                        headers,
-                        body: JSON.stringify({ token: currentTokenRef.current })
+                        user: activeUser,
+                        body: { token: currentTokenRef.current }
                     });
                 }
 
-                if (currentTokenRef.current !== token) {
-                    const response = await fetch('/api/notifications/push-token', {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({ token })
-                    });
-
-                    if (!response.ok) {
-                        const payload = await response.json() as { error?: string };
-                        throw new Error(payload.error || 'Failed to register push token.');
-                    }
-                }
+                await apiFetchJson<{ success?: boolean; error?: string }>('/api/notifications/push-token', {
+                    method: 'POST',
+                    user: activeUser,
+                    body: { token }
+                });
 
                 currentTokenRef.current = token;
+                inFlightTokenRef.current = null;
 
                 if (unsubscribeForegroundRef.current) {
                     unsubscribeForegroundRef.current();
@@ -107,6 +97,7 @@ export function usePushNotifications(activeUser: FirebaseUser | null) {
                     toast.message(title, { description: body });
                 });
             } catch (error) {
+                inFlightTokenRef.current = null;
                 console.error('Push notification setup failed:', error);
             }
         };

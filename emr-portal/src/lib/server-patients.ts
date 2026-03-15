@@ -1,4 +1,8 @@
 import type {
+    PatientDetailEncounter,
+    PatientDetailMedication,
+    PatientDetailProblem,
+    PatientDetailRecord,
     PatientRegistryFacetOption,
     PatientRegistryResponse,
     PatientRegistryRow,
@@ -34,6 +38,13 @@ interface PatientDraftRow extends Partial<PatientRegistryRow> {
     _sources?: string[];
 }
 
+interface ProviderScopedPatientContext {
+    patientIds: string[];
+    draftRows: Map<string, PatientDraftRow>;
+    teamMemberships: Map<string, PatientRegistryTeam[]>;
+    appointmentRows: Map<string, Record<string, unknown>[]>;
+}
+
 function asNonEmptyString(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const normalized = value.trim();
@@ -60,7 +71,12 @@ function readDisplayName(value: Record<string, unknown> | undefined): string | n
 function asDate(value: unknown): Date | null {
     if (!value) return null;
     if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-    if (typeof value === 'object' && value !== null && 'toDate' in value && typeof (value as { toDate?: unknown }).toDate === 'function') {
+    if (
+        typeof value === 'object' &&
+        value !== null &&
+        'toDate' in value &&
+        typeof (value as { toDate?: unknown }).toDate === 'function'
+    ) {
         const parsed = (value as { toDate: () => Date }).toDate();
         return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
@@ -232,11 +248,53 @@ function buildFacets(patients: PatientRegistryRow[]): PatientRegistryResponse['f
     };
 }
 
-export async function loadProviderScopedPatients(
+function buildEncounterRows(patientId: string, appointmentRows: Record<string, unknown>[]): PatientDetailEncounter[] {
+    return appointmentRows
+        .map((appointment, index) => {
+            const encounterDate =
+                asDate(appointment.startTime) ??
+                toDateTime(appointment.date, appointment.time) ??
+                asDate(appointment.updatedAt) ??
+                asDate(appointment.createdAt);
+
+            return {
+                id: asNonEmptyString(appointment.id) ?? `${patientId}-${index}`,
+                date: encounterDate ? encounterDate.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+                title: asNonEmptyString(appointment.service) ?? asNonEmptyString(appointment.type) ?? 'Telehealth Visit',
+                provider: asNonEmptyString(appointment.providerName) ?? 'Assigned Provider',
+                type: asNonEmptyString(appointment.type) ?? 'Telehealth',
+                status: asNonEmptyString(appointment.status) ?? 'scheduled'
+            } satisfies PatientDetailEncounter;
+        })
+        .sort((first, second) => second.date.localeCompare(first.date));
+}
+
+function normalizePreferredPharmacy(value: unknown): string | null {
+    const direct = asNonEmptyString(value);
+    if (direct) return direct;
+
+    if (typeof value === 'object' && value !== null) {
+        const record = value as Record<string, unknown>;
+        const parts = [
+            asNonEmptyString(record.name),
+            asNonEmptyString(record.address),
+            asNonEmptyString(record.city),
+            asNonEmptyString(record.state),
+            asNonEmptyString(record.zipCode)
+        ].filter(Boolean);
+
+        if (parts.length > 0) {
+            return parts.join(', ');
+        }
+    }
+
+    return null;
+}
+
+async function loadProviderScopedPatientContext(
     firestore: FirebaseFirestore.Firestore,
-    providerId: string,
-    options: LoadScopedPatientsOptions = {}
-): Promise<ProviderScopedPatientsResult> {
+    providerId: string
+): Promise<ProviderScopedPatientContext> {
     const [appointmentsSnap, threadsSnap, teamsSnap] = await Promise.all([
         firestore.collection('appointments').where('providerId', '==', providerId).limit(500).get(),
         firestore.collection('threads').where('providerId', '==', providerId).limit(500).get(),
@@ -249,7 +307,10 @@ export async function loadProviderScopedPatients(
     const draftRows = new Map<string, PatientDraftRow>();
 
     appointmentsSnap.docs.forEach((docSnap) => {
-        const data = docSnap.data() as Record<string, unknown>;
+        const data = {
+            id: docSnap.id,
+            ...docSnap.data()
+        } as Record<string, unknown>;
         const patientId = asNonEmptyString(data.patientId) ?? asNonEmptyString(data.patientUid);
         if (!patientId || patientId === providerId) return;
 
@@ -264,29 +325,16 @@ export async function loadProviderScopedPatients(
             toDateTime(data.date, data.time) ??
             asDate(data.updatedAt) ??
             asDate(data.createdAt);
-
-        const nextLastActivityAt = appointmentDate?.toISOString() ?? draft.lastActivityAt ?? null;
-        const nextServiceLine =
-            asNonEmptyString(data.service) ??
-            asNonEmptyString(data.type) ??
-            draft.serviceLine ??
-            'General Consultation';
-        const nextName =
-            asNonEmptyString(data.patientName) ??
-            asNonEmptyString(data.patient) ??
-            draft.name ??
-            `Patient ${patientId.slice(0, 6)}`;
-        const existingStatuses = draft._rawStatuses ?? [];
         const rawStatus = asNonEmptyString(data.status);
 
         draftRows.set(patientId, {
             ...draft,
-            name: nextName,
+            name: asNonEmptyString(data.patientName) ?? asNonEmptyString(data.patient) ?? draft.name ?? `Patient ${patientId.slice(0, 6)}`,
             email: asNonEmptyString(data.patientEmail) ?? draft.email ?? null,
-            serviceLine: nextServiceLine,
-            lastActivityAt: nextLastActivityAt,
-            _rawStatuses: rawStatus ? [...existingStatuses, rawStatus] : existingStatuses,
-            _sources: ['appointment']
+            serviceLine: asNonEmptyString(data.service) ?? asNonEmptyString(data.type) ?? draft.serviceLine ?? 'General Consultation',
+            lastActivityAt: appointmentDate?.toISOString() ?? draft.lastActivityAt ?? null,
+            _rawStatuses: rawStatus ? [...(draft._rawStatuses ?? []), rawStatus] : (draft._rawStatuses ?? []),
+            _sources: Array.from(new Set([...(draft._sources ?? []), 'appointment']))
         });
     });
 
@@ -316,6 +364,7 @@ export async function loadProviderScopedPatients(
 
         asStringArray(data.patientIds).forEach((patientId) => {
             if (!patientId || patientId === providerId) return;
+
             accessiblePatientIds.add(patientId);
             const currentTeams = teamMemberships.get(patientId) ?? [];
             if (!currentTeams.some((currentTeam) => currentTeam.id === teamId)) {
@@ -331,17 +380,18 @@ export async function loadProviderScopedPatients(
         });
     });
 
-    const patientIds = Array.from(accessiblePatientIds);
-    if (patientIds.length === 0) {
-        return {
-            patients: [],
-            nextCursor: null,
-            totalCount: 0,
-            pageSize: options.pageSize ?? 25,
-            facets: { statuses: [], teams: [], tags: [] }
-        };
-    }
+    return {
+        patientIds: Array.from(accessiblePatientIds),
+        draftRows,
+        teamMemberships,
+        appointmentRows
+    };
+}
 
+async function loadPatientDocumentMaps(
+    firestore: FirebaseFirestore.Firestore,
+    patientIds: string[]
+) {
     const [patientDocs, userDocs] = await Promise.all([
         getDocsByIds(firestore, 'patients', patientIds),
         getDocsByIds(firestore, 'users', patientIds)
@@ -359,122 +409,117 @@ export async function loadProviderScopedPatients(
         userDocsById.set(docSnap.id, docSnap.data() as Record<string, unknown>);
     });
 
-    const hydratedPatients = patientIds.reduce<PatientRegistryRow[]>((accumulator, patientId) => {
-        const patientDoc = patientDocsById.get(patientId);
-        const userDoc = userDocsById.get(patientId);
-        const userRole = asNonEmptyString(userDoc?.role)?.toLowerCase() ?? null;
-        const draft = draftRows.get(patientId) ?? {};
-        const sources = asStringArray(draft._sources);
+    return {
+        patientDocsById,
+        userDocsById
+    };
+}
 
-        const qualifiesAsPatient = Boolean(patientDoc) || userRole === 'patient' || sources.length > 0;
-        if (!qualifiesAsPatient) return accumulator;
+function buildSummaryRow({
+    patientId,
+    patientDoc,
+    userDoc,
+    draft,
+    teamRows
+}: {
+    patientId: string;
+    patientDoc: Record<string, unknown> | undefined;
+    userDoc: Record<string, unknown> | undefined;
+    draft: PatientDraftRow;
+    teamRows: PatientRegistryTeam[];
+}): PatientRegistryRow | null {
+    const userRole = asNonEmptyString(userDoc?.role)?.toLowerCase() ?? null;
+    const sources = asStringArray(draft._sources);
+    const qualifiesAsPatient = Boolean(patientDoc) || userRole === 'patient' || sources.length > 0;
+    if (!qualifiesAsPatient) return null;
 
-        const merged = {
-            ...userDoc,
-            ...patientDoc
-        } as Record<string, unknown>;
+    const merged = {
+        ...userDoc,
+        ...patientDoc
+    } as Record<string, unknown>;
 
-        const teamRows = teamMemberships.get(patientId) ?? [];
-        const rawStatuses = [
-            ...asStringArray(draft._rawStatuses),
-            ...asStringArray(merged.status)
-        ];
+    const rawStatuses = [
+        ...asStringArray(draft._rawStatuses),
+        ...asStringArray(merged.status)
+    ];
+    const derivedStatusKey = rawStatuses
+        .map((value) => normalizeStatusKey(value))
+        .sort((first, second) => statusRank(first) - statusRank(second))[0]
+        ?? normalizeStatusKey(merged.status);
 
-        const derivedStatusKey = rawStatuses
-            .map((value) => normalizeStatusKey(value))
-            .sort((first, second) => statusRank(first) - statusRank(second))[0]
-            ?? normalizeStatusKey(merged.status);
+    const serviceLine =
+        asNonEmptyString(merged.serviceLine) ??
+        asNonEmptyString(merged.primaryConcern) ??
+        asNonEmptyString(draft.serviceLine) ??
+        'General Consultation';
+    const displayName =
+        readDisplayName(merged) ??
+        asNonEmptyString(draft.name) ??
+        asNonEmptyString(merged.email)?.split('@')[0] ??
+        `Patient ${patientId.slice(0, 6)}`;
+    const tagLabels = Array.from(new Set([
+        ...asStringArray(merged.tags),
+        ...(serviceLine ? [serviceLine] : []),
+        ...(derivedStatusKey === 'wait_list' ? ['Waitlist'] : [])
+    ]));
 
-        const serviceLine =
-            asNonEmptyString(merged.serviceLine) ??
-            asNonEmptyString(merged.primaryConcern) ??
-            asNonEmptyString(draft.serviceLine) ??
-            'General Consultation';
-        const displayName =
-            readDisplayName(merged) ??
-            asNonEmptyString(draft.name) ??
-            asNonEmptyString(merged.email)?.split('@')[0] ??
-            `Patient ${patientId.slice(0, 6)}`;
-        const careTeam = teamRows.length > 0
-            ? teamRows.map((team) => ({ role: 'Team', name: team.name }))
-            : [{ role: 'Primary', name: 'Assigned Provider' }];
-        const tagLabels = Array.from(new Set([
-            ...asStringArray(merged.tags),
-            ...(serviceLine ? [serviceLine] : []),
-            ...(derivedStatusKey === 'wait_list' ? ['Waitlist'] : [])
-        ]));
+    return {
+        id: patientId,
+        name: displayName,
+        email: asNonEmptyString(merged.email) ?? asNonEmptyString(draft.email),
+        phone: asNonEmptyString(merged.phone),
+        dob: asNonEmptyString(merged.dob),
+        sex: asNonEmptyString(merged.sexAtBirth) ?? asNonEmptyString(merged.sex),
+        state: asNonEmptyString(merged.state),
+        mrn: asNonEmptyString(merged.mrn) ?? buildMrn(patientId),
+        statusKey: derivedStatusKey,
+        statusLabel: statusLabel(derivedStatusKey),
+        statusColor: statusColor(derivedStatusKey),
+        serviceLine,
+        teamIds: teamRows.map((team) => team.id),
+        teams: teamRows,
+        tags: tagLabels.map((label) => normalizeTag(label)),
+        lastActivityAt: asNonEmptyString(draft.lastActivityAt)
+    };
+}
 
-        const encounterRows = (appointmentRows.get(patientId) ?? [])
-            .map((appointment, index) => {
-                const encounterDate =
-                    asDate(appointment.startTime) ??
-                    toDateTime(appointment.date, appointment.time) ??
-                    asDate(appointment.updatedAt) ??
-                    asDate(appointment.createdAt);
+export async function loadProviderScopedPatients(
+    firestore: FirebaseFirestore.Firestore,
+    providerId: string,
+    options: LoadScopedPatientsOptions = {}
+): Promise<ProviderScopedPatientsResult> {
+    const context = await loadProviderScopedPatientContext(firestore, providerId);
+    if (context.patientIds.length === 0) {
+        return {
+            patients: [],
+            nextCursor: null,
+            totalCount: 0,
+            pageSize: options.pageSize ?? 25,
+            facets: { statuses: [], teams: [], tags: [] }
+        };
+    }
 
-                return {
-                    id: `${patientId}-${index}`,
-                    date: encounterDate ? encounterDate.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-                    title: asNonEmptyString(appointment.service) ?? asNonEmptyString(appointment.type) ?? 'Telehealth Visit',
-                    provider: asNonEmptyString(appointment.providerName) ?? 'Assigned Provider',
-                    type: asNonEmptyString(appointment.type) ?? 'Telehealth',
-                    status: asNonEmptyString(appointment.status) ?? 'scheduled'
-                };
-            })
-            .sort((first, second) => second.date.localeCompare(first.date));
-
-        const upcomingAppointments = encounterRows
-            .filter((encounter) => {
-                const encounterDate = new Date(encounter.date);
-                return !Number.isNaN(encounterDate.getTime()) && encounterDate.getTime() >= Date.now();
-            })
-            .slice(0, 3)
-            .map((encounter) => ({
-                date: encounter.date,
-                time: 'TBD',
-                title: encounter.title,
-                type: encounter.type.toLowerCase().includes('in-person') ? 'In-person' as const : 'Video' as const
-            }));
-
-        accumulator.push({
-            id: patientId,
-            name: displayName,
-            email: asNonEmptyString(merged.email) ?? asNonEmptyString(draft.email),
-            phone: asNonEmptyString(merged.phone),
-            dob: asNonEmptyString(merged.dob),
-            sex: asNonEmptyString(merged.sexAtBirth) ?? asNonEmptyString(merged.sex),
-            state: asNonEmptyString(merged.state),
-            mrn: asNonEmptyString(merged.mrn) ?? buildMrn(patientId),
-            statusKey: derivedStatusKey,
-            statusLabel: statusLabel(derivedStatusKey),
-            statusColor: statusColor(derivedStatusKey),
-            serviceLine,
-            teamIds: teamRows.map((team) => team.id),
-            teams: teamRows,
-            tags: tagLabels.map((label) => normalizeTag(label)),
-            isDemo: false,
-            allergies: asStringArray(merged.allergies).length > 0 ? asStringArray(merged.allergies) : ['NKDA'],
-            alerts: [],
-            problemList: [],
-            activeMedications: [],
-            recentEncounters: encounterRows.slice(0, 10),
-            upcomingAppointments,
-            weightTrend: [],
-            consents: [],
-            careTeam,
-            notes: [],
-            orders: [],
-            imaging: [],
-            lastActivityAt: asNonEmptyString(draft.lastActivityAt)
+    const { patientDocsById, userDocsById } = await loadPatientDocumentMaps(firestore, context.patientIds);
+    const hydratedPatients = context.patientIds.reduce<PatientRegistryRow[]>((accumulator, patientId) => {
+        const row = buildSummaryRow({
+            patientId,
+            patientDoc: patientDocsById.get(patientId),
+            userDoc: userDocsById.get(patientId),
+            draft: context.draftRows.get(patientId) ?? {},
+            teamRows: context.teamMemberships.get(patientId) ?? []
         });
+
+        if (row) {
+            accumulator.push(row);
+        }
 
         return accumulator;
     }, []);
 
     const facets = buildFacets(hydratedPatients);
-
     let filteredPatients = hydratedPatients;
     const normalizedQuery = asNonEmptyString(options.query)?.toLowerCase() ?? null;
+
     if (normalizedQuery) {
         const queryTerms = normalizedQuery.split(/\s+/).filter(Boolean);
         filteredPatients = filteredPatients.filter((patient) => {
@@ -517,6 +562,7 @@ export async function loadProviderScopedPatients(
         if (comparison !== 0) {
             return sortDir === 'asc' ? comparison : -comparison;
         }
+
         return sortDir === 'asc'
             ? first.id.localeCompare(second.id)
             : second.id.localeCompare(first.id);
@@ -564,5 +610,81 @@ export async function loadProviderScopedPatients(
         totalCount,
         pageSize,
         facets
+    };
+}
+
+export async function loadProviderScopedPatientDetail(
+    firestore: FirebaseFirestore.Firestore,
+    providerId: string,
+    patientId: string
+): Promise<PatientDetailRecord | null> {
+    const context = await loadProviderScopedPatientContext(firestore, providerId);
+    if (!context.patientIds.includes(patientId)) {
+        return null;
+    }
+
+    const { patientDocsById, userDocsById } = await loadPatientDocumentMaps(firestore, [patientId]);
+    const summary = buildSummaryRow({
+        patientId,
+        patientDoc: patientDocsById.get(patientId),
+        userDoc: userDocsById.get(patientId),
+        draft: context.draftRows.get(patientId) ?? {},
+        teamRows: context.teamMemberships.get(patientId) ?? []
+    });
+
+    if (!summary) {
+        return null;
+    }
+
+    const merged = {
+        ...(userDocsById.get(patientId) ?? {}),
+        ...(patientDocsById.get(patientId) ?? {})
+    } as Record<string, unknown>;
+
+    const [problemsSnap, medicationsSnap] = await Promise.all([
+        firestore.collection('patients').doc(patientId).collection('problems').get(),
+        firestore.collection('patients').doc(patientId).collection('medications').get()
+    ]);
+
+    const problemList = problemsSnap.docs
+        .map((docSnap) => {
+            const data = docSnap.data() as Record<string, unknown>;
+            return {
+                id: docSnap.id,
+                code: asNonEmptyString(data.code) ?? 'DX',
+                description: asNonEmptyString(data.description) ?? 'Untitled problem',
+                createdAt: asDate(data.createdAt)?.toISOString() ?? null
+            } satisfies PatientDetailProblem;
+        })
+        .sort((first, second) => (second.createdAt ?? '').localeCompare(first.createdAt ?? ''));
+
+    const activeMedications = medicationsSnap.docs
+        .map((docSnap) => {
+            const data = docSnap.data() as Record<string, unknown>;
+            return {
+                id: docSnap.id,
+                name: asNonEmptyString(data.name) ?? 'Medication',
+                dosage: asNonEmptyString(data.dosage) ?? 'N/A',
+                frequency: asNonEmptyString(data.frequency) ?? 'Unspecified',
+                route: asNonEmptyString(data.route),
+                status: asNonEmptyString(data.status) ?? 'Active',
+                startDate: asDate(data.startDate)?.toISOString().slice(0, 10) ?? asNonEmptyString(data.startDate)
+            } satisfies PatientDetailMedication;
+        })
+        .sort((first, second) => (second.startDate ?? '').localeCompare(first.startDate ?? ''));
+
+    const recentEncounters = buildEncounterRows(patientId, context.appointmentRows.get(patientId) ?? []).slice(0, 10);
+
+    return {
+        ...summary,
+        allergies: asStringArray(merged.allergies).length > 0 ? asStringArray(merged.allergies) : ['NKDA'],
+        primaryConcern: asNonEmptyString(merged.primaryConcern) ?? summary.serviceLine,
+        preferredPharmacy: normalizePreferredPharmacy(merged.preferredPharmacy),
+        careTeam: summary.teams.length > 0
+            ? summary.teams.map((team) => ({ role: 'Team', name: team.name }))
+            : [{ role: 'Primary', name: 'Assigned Provider' }],
+        problemList,
+        activeMedications,
+        recentEncounters
     };
 }

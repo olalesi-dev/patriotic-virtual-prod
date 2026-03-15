@@ -1,13 +1,14 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { User as FirebaseUser } from 'firebase/auth';
 import { Plus, Send, Shield, Trash2, UserPlus, Users, UserX } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { auth } from '@/lib/firebase';
+import { useAuthUser } from '@/hooks/useAuthUser';
+import { apiFetchJson } from '@/lib/api-client';
 import type { PatientSummary, ProviderSummary, TeamSummary } from '@/lib/team-types';
 
 interface TeamsApiResponse {
@@ -38,27 +39,21 @@ type CreateTeamValues = z.infer<typeof createTeamSchema>;
 type TeamDoctorValues = z.infer<typeof teamDoctorSchema>;
 type AssignPatientValues = z.infer<typeof assignPatientSchema>;
 
-async function buildHeaders(activeUser: FirebaseUser): Promise<Record<string, string>> {
-    const idToken = await activeUser.getIdToken();
-    return {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json'
-    };
-}
-
 function asNonEmptyString(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const normalized = value.trim();
     return normalized.length > 0 ? normalized : null;
 }
 
+interface TeamsWorkspaceData {
+    teams: TeamSummary[];
+    providers: ProviderSummary[];
+    patients: PatientSummary[];
+}
+
 export default function ProviderTeamPage() {
-    const [teams, setTeams] = useState<TeamSummary[]>([]);
-    const [providers, setProviders] = useState<ProviderSummary[]>([]);
-    const [patients, setPatients] = useState<PatientSummary[]>([]);
-    const [activeUser, setActiveUser] = useState<FirebaseUser | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
+    const { user: activeUser, isReady } = useAuthUser();
     const [isMutating, setIsMutating] = useState<string | null>(null);
 
     const createTeamForm = useForm<CreateTeamValues>({
@@ -93,75 +88,177 @@ export default function ProviderTeamPage() {
         }
     });
 
-    const loadTeamsWorkspace = React.useCallback(async (user: FirebaseUser) => {
-        setLoading(true);
-        setError(null);
+    const teamsWorkspaceKey = React.useMemo(
+        () => ['teams-workspace', activeUser?.uid ?? 'anonymous'] as const,
+        [activeUser?.uid]
+    );
 
-        try {
-            const headers = await buildHeaders(user);
-            const response = await fetch('/api/teams', {
+    const teamsWorkspaceQuery = useQuery({
+        queryKey: teamsWorkspaceKey,
+        enabled: isReady && Boolean(activeUser),
+        queryFn: async () => {
+            const payload = await apiFetchJson<TeamsApiResponse>('/api/teams', {
                 method: 'GET',
-                headers,
+                user: activeUser,
                 cache: 'no-store'
             });
 
-            const payload = await response.json() as TeamsApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to load team workspace.');
             }
 
-            const nextTeams = payload.teams ?? [];
-            const nextProviders = payload.providers ?? [];
-            const nextPatients = payload.patients ?? [];
-
-            setTeams(nextTeams);
-            setProviders(nextProviders);
-            setPatients(nextPatients);
-
-            const ownerTeam = nextTeams.find((team) => team.ownerId === user.uid) ?? nextTeams[0];
-            if (ownerTeam) {
-                const nextTeamId = ownerTeam.id;
-                addDoctorForm.setValue('teamId', nextTeamId);
-                inviteDoctorForm.setValue('teamId', nextTeamId);
-                assignPatientForm.setValue('teamId', nextTeamId);
-            }
-
-            const firstProvider = nextProviders.find((provider) => provider.id !== user.uid);
-            if (firstProvider) {
-                addDoctorForm.setValue('doctorId', firstProvider.id);
-                inviteDoctorForm.setValue('doctorId', firstProvider.id);
-            }
-
-            const firstPatient = nextPatients[0];
-            if (firstPatient) {
-                assignPatientForm.setValue('patientId', firstPatient.id);
-            }
-
-            setError(null);
-        } catch (loadError) {
-            const message = loadError instanceof Error ? loadError.message : 'Failed to load team workspace.';
-            setError(message);
-        } finally {
-            setLoading(false);
+            return {
+                teams: payload.teams ?? [],
+                providers: payload.providers ?? [],
+                patients: payload.patients ?? []
+            } satisfies TeamsWorkspaceData;
         }
-    }, [addDoctorForm, assignPatientForm, inviteDoctorForm]);
+    });
+
+    const teams = React.useMemo(
+        () => teamsWorkspaceQuery.data?.teams ?? [],
+        [teamsWorkspaceQuery.data?.teams]
+    );
+    const providers = React.useMemo(
+        () => teamsWorkspaceQuery.data?.providers ?? [],
+        [teamsWorkspaceQuery.data?.providers]
+    );
+    const patients = React.useMemo(
+        () => teamsWorkspaceQuery.data?.patients ?? [],
+        [teamsWorkspaceQuery.data?.patients]
+    );
+    const loading = !isReady || teamsWorkspaceQuery.isLoading;
+    const error = teamsWorkspaceQuery.error instanceof Error
+        ? teamsWorkspaceQuery.error.message
+        : (activeUser || !isReady ? null : 'Please sign in to manage teams.');
 
     React.useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-            setActiveUser(user);
-            if (!user) {
-                setTeams([]);
-                setProviders([]);
-                setPatients([]);
-                setLoading(false);
-                return;
+        if (!activeUser) return;
+
+        const ownerTeam = teams.find((team) => team.ownerId === activeUser.uid) ?? teams[0];
+        if (ownerTeam) {
+            const nextTeamId = ownerTeam.id;
+            addDoctorForm.setValue('teamId', nextTeamId);
+            inviteDoctorForm.setValue('teamId', nextTeamId);
+            assignPatientForm.setValue('teamId', nextTeamId);
+        }
+
+        const firstProvider = providers.find((provider) => provider.id !== activeUser.uid);
+        if (firstProvider) {
+            addDoctorForm.setValue('doctorId', firstProvider.id);
+            inviteDoctorForm.setValue('doctorId', firstProvider.id);
+        }
+
+        const firstPatient = patients[0];
+        if (firstPatient) {
+            assignPatientForm.setValue('patientId', firstPatient.id);
+        }
+    }, [activeUser, addDoctorForm, assignPatientForm, inviteDoctorForm, patients, providers, teams]);
+
+    const createTeamMutation = useMutation({
+        mutationFn: async (values: CreateTeamValues) => {
+            if (!activeUser) {
+                throw new Error('Please sign in again to create teams.');
             }
 
-            loadTeamsWorkspace(user).catch(() => undefined);
-        });
+            const payload = await apiFetchJson<TeamsApiResponse>('/api/teams', {
+                method: 'POST',
+                user: activeUser,
+                body: values
+            });
 
-        return () => unsubscribeAuth();
-    }, [loadTeamsWorkspace]);
+            if (!payload.success || !payload.team) {
+                throw new Error(payload.error || 'Failed to create team.');
+            }
+
+            return payload.team as TeamSummary;
+        },
+        onMutate: async (values) => {
+            if (!activeUser) {
+                throw new Error('Please sign in again to create teams.');
+            }
+
+            await queryClient.cancelQueries({ queryKey: teamsWorkspaceKey });
+            const previousWorkspace = queryClient.getQueryData<TeamsWorkspaceData>(teamsWorkspaceKey);
+            const optimisticId = `optimistic-team-${Date.now()}`;
+            const optimisticTeam: TeamSummary = {
+                id: optimisticId,
+                name: values.name.trim(),
+                description: asNonEmptyString(values.description ?? ''),
+                ownerId: activeUser.uid,
+                ownerName: activeUser.displayName ?? activeUser.email?.split('@')[0] ?? 'Provider',
+                memberIds: [activeUser.uid],
+                members: [
+                    {
+                        id: activeUser.uid,
+                        name: activeUser.displayName ?? activeUser.email?.split('@')[0] ?? 'Provider',
+                        email: activeUser.email,
+                        role: 'provider'
+                    }
+                ],
+                patientIds: [],
+                pendingInviteDoctorIds: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => ({
+                teams: [optimisticTeam, ...(current?.teams ?? [])],
+                providers: current?.providers ?? [],
+                patients: current?.patients ?? []
+            }));
+
+            return { previousWorkspace, optimisticId };
+        },
+        onSuccess: (team, _values, context) => {
+            queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => ({
+                teams: [
+                    team,
+                    ...(current?.teams ?? []).filter((existingTeam) => existingTeam.id !== context?.optimisticId)
+                ],
+                providers: current?.providers ?? [],
+                patients: current?.patients ?? []
+            }));
+            createTeamForm.reset({ name: '', description: '' });
+            toast.success('Team created successfully.');
+        },
+        onError: (mutationError, _values, context) => {
+            if (context?.previousWorkspace) {
+                queryClient.setQueryData(teamsWorkspaceKey, context.previousWorkspace);
+            }
+            toast.error(mutationError instanceof Error ? mutationError.message : 'Failed to create team.');
+        },
+        onSettled: () => {
+            setIsMutating(null);
+            void queryClient.invalidateQueries({ queryKey: teamsWorkspaceKey });
+        }
+    });
+
+    const mutateTeamMember = useMutation({
+        mutationFn: async ({
+            path,
+            method,
+            body
+        }: {
+            path: string;
+            method: 'POST' | 'DELETE';
+            body?: Record<string, unknown>;
+        }) => {
+            if (!activeUser) {
+                throw new Error('Please sign in again to update team members.');
+            }
+
+            return apiFetchJson<TeamsApiResponse>(path, {
+                method,
+                user: activeUser,
+                body
+            });
+        },
+        onSettled: () => {
+            setIsMutating(null);
+            void queryClient.invalidateQueries({ queryKey: teamsWorkspaceKey });
+        }
+    });
 
     const ownerTeams = useMemo(() => {
         if (!activeUser) return [];
@@ -182,59 +279,8 @@ export default function ProviderTeamPage() {
             toast.error('Please sign in again to create teams.');
             return;
         }
-
-        const optimisticId = `optimistic-team-${Date.now()}`;
-        const optimisticTeam: TeamSummary = {
-            id: optimisticId,
-            name: values.name.trim(),
-            description: asNonEmptyString(values.description ?? ''),
-            ownerId: activeUser.uid,
-            ownerName: activeUser.displayName ?? activeUser.email?.split('@')[0] ?? 'Provider',
-            memberIds: [activeUser.uid],
-            members: [
-                {
-                    id: activeUser.uid,
-                    name: activeUser.displayName ?? activeUser.email?.split('@')[0] ?? 'Provider',
-                    email: activeUser.email,
-                    role: 'provider'
-                }
-            ],
-            patientIds: [],
-            pendingInviteDoctorIds: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        const previousTeams = teams;
-        setTeams((current) => [optimisticTeam, ...current]);
         setIsMutating('create-team');
-
-        try {
-            const headers = await buildHeaders(activeUser);
-            const response = await fetch('/api/teams', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(values)
-            });
-
-            const payload = await response.json() as TeamsApiResponse;
-            if (!response.ok || !payload.success || !payload.team) {
-                throw new Error(payload.error || 'Failed to create team.');
-            }
-
-            setTeams((current) => [
-                payload.team as TeamSummary,
-                ...current.filter((team) => team.id !== optimisticId)
-            ]);
-            createTeamForm.reset({ name: '', description: '' });
-            toast.success('Team created successfully.');
-        } catch (createError) {
-            const message = createError instanceof Error ? createError.message : 'Failed to create team.';
-            setTeams(previousTeams);
-            toast.error(message);
-        } finally {
-            setIsMutating(null);
-        }
+        await createTeamMutation.mutateAsync(values);
     });
 
     const handleAddDoctor = addDoctorForm.handleSubmit(async (values) => {
@@ -244,53 +290,67 @@ export default function ProviderTeamPage() {
         }
 
         const provider = providers.find((item) => item.id === values.doctorId);
-        const previousTeams = teams;
         setIsMutating(`add-${values.teamId}-${values.doctorId}`);
 
-        setTeams((current) => current.map((team) => {
-            if (team.id !== values.teamId) return team;
-            if (team.memberIds.includes(values.doctorId)) return team;
+        await queryClient.cancelQueries({ queryKey: teamsWorkspaceKey });
+        const previousWorkspace = queryClient.getQueryData<TeamsWorkspaceData>(teamsWorkspaceKey);
+
+        queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => {
+            if (!current) return current;
 
             return {
-                ...team,
-                memberIds: [...team.memberIds, values.doctorId],
-                members: [
-                    ...team.members,
-                    {
-                        id: values.doctorId,
-                        name: provider?.name ?? 'Provider',
-                        email: provider?.email ?? null,
-                        role: provider?.role ?? null
-                    }
-                ]
+                ...current,
+                teams: current.teams.map((team) => {
+                    if (team.id !== values.teamId) return team;
+                    if (team.memberIds.includes(values.doctorId)) return team;
+
+                    return {
+                        ...team,
+                        memberIds: [...team.memberIds, values.doctorId],
+                        members: [
+                            ...team.members,
+                            {
+                                id: values.doctorId,
+                                name: provider?.name ?? 'Provider',
+                                email: provider?.email ?? null,
+                                role: provider?.role ?? null
+                            }
+                        ]
+                    };
+                })
             };
-        }));
+        });
 
         try {
-            const headers = await buildHeaders(activeUser);
-            const response = await fetch(`/api/teams/${values.teamId}/members`, {
+            const payload = await mutateTeamMember.mutateAsync({
+                path: `/api/teams/${values.teamId}/members`,
                 method: 'POST',
-                headers,
-                body: JSON.stringify({ doctorId: values.doctorId })
+                body: { doctorId: values.doctorId }
             });
 
-            const payload = await response.json() as TeamsApiResponse;
-            if (!response.ok || !payload.success || !payload.team) {
+            if (!payload.success || !payload.team) {
                 throw new Error(payload.error || 'Failed to add provider to team.');
             }
 
-            setTeams((current) => current.map((team) => (
-                team.id === values.teamId
-                    ? payload.team as TeamSummary
-                    : team
-            )));
+            queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => (
+                current
+                    ? {
+                        ...current,
+                        teams: current.teams.map((team) => (
+                            team.id === values.teamId
+                                ? payload.team as TeamSummary
+                                : team
+                        ))
+                    }
+                    : current
+            ));
             toast.success('Provider added to team.');
         } catch (addError) {
             const message = addError instanceof Error ? addError.message : 'Failed to add provider to team.';
-            setTeams(previousTeams);
+            if (previousWorkspace) {
+                queryClient.setQueryData(teamsWorkspaceKey, previousWorkspace);
+            }
             toast.error(message);
-        } finally {
-            setIsMutating(null);
         }
     });
 
@@ -300,45 +360,59 @@ export default function ProviderTeamPage() {
             return;
         }
 
-        const previousTeams = teams;
         setIsMutating(`invite-${values.teamId}-${values.doctorId}`);
 
-        setTeams((current) => current.map((team) => (
-            team.id === values.teamId
+        await queryClient.cancelQueries({ queryKey: teamsWorkspaceKey });
+        const previousWorkspace = queryClient.getQueryData<TeamsWorkspaceData>(teamsWorkspaceKey);
+
+        queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => (
+            current
                 ? {
-                    ...team,
-                    pendingInviteDoctorIds: Array.from(new Set([...team.pendingInviteDoctorIds, values.doctorId]))
+                    ...current,
+                    teams: current.teams.map((team) => (
+                        team.id === values.teamId
+                            ? {
+                                ...team,
+                                pendingInviteDoctorIds: Array.from(new Set([...team.pendingInviteDoctorIds, values.doctorId]))
+                            }
+                            : team
+                    ))
                 }
-                : team
-        )));
+                : current
+        ));
 
         try {
-            const headers = await buildHeaders(activeUser);
-            const response = await fetch(`/api/teams/${values.teamId}/invite`, {
+            const payload = await mutateTeamMember.mutateAsync({
+                path: `/api/teams/${values.teamId}/invite`,
                 method: 'POST',
-                headers,
-                body: JSON.stringify({ doctorId: values.doctorId })
+                body: { doctorId: values.doctorId }
             });
 
-            const payload = await response.json() as TeamsApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to send invitation.');
             }
 
             if (payload.team) {
-                setTeams((current) => current.map((team) => (
-                    team.id === values.teamId
-                        ? payload.team as TeamSummary
-                        : team
-                )));
+                queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => (
+                    current
+                        ? {
+                            ...current,
+                            teams: current.teams.map((team) => (
+                                team.id === values.teamId
+                                    ? payload.team as TeamSummary
+                                    : team
+                            ))
+                        }
+                        : current
+                ));
             }
             toast.success('Invitation sent.');
         } catch (inviteError) {
             const message = inviteError instanceof Error ? inviteError.message : 'Failed to send invitation.';
-            setTeams(previousTeams);
+            if (previousWorkspace) {
+                queryClient.setQueryData(teamsWorkspaceKey, previousWorkspace);
+            }
             toast.error(message);
-        } finally {
-            setIsMutating(null);
         }
     });
 
@@ -348,38 +422,45 @@ export default function ProviderTeamPage() {
             return;
         }
 
-        const previousTeams = teams;
         setIsMutating(`remove-${teamId}-${memberId}`);
 
-        setTeams((current) => current.map((team) => (
-            team.id === teamId
+        await queryClient.cancelQueries({ queryKey: teamsWorkspaceKey });
+        const previousWorkspace = queryClient.getQueryData<TeamsWorkspaceData>(teamsWorkspaceKey);
+
+        queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => (
+            current
                 ? {
-                    ...team,
-                    memberIds: team.memberIds.filter((id) => id !== memberId),
-                    members: team.members.filter((member) => member.id !== memberId)
+                    ...current,
+                    teams: current.teams.map((team) => (
+                        team.id === teamId
+                            ? {
+                                ...team,
+                                memberIds: team.memberIds.filter((id) => id !== memberId),
+                                members: team.members.filter((member) => member.id !== memberId)
+                            }
+                            : team
+                    ))
                 }
-                : team
-        )));
+                : current
+        ));
 
         try {
-            const headers = await buildHeaders(activeUser);
-            const response = await fetch(`/api/teams/${teamId}/members/${memberId}`, {
-                method: 'DELETE',
-                headers
+            const payload = await mutateTeamMember.mutateAsync({
+                path: `/api/teams/${teamId}/members/${memberId}`,
+                method: 'DELETE'
             });
 
-            const payload = await response.json() as TeamsApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to remove member from team.');
             }
 
             toast.success('Provider removed from team.');
         } catch (removeError) {
             const message = removeError instanceof Error ? removeError.message : 'Failed to remove member from team.';
-            setTeams(previousTeams);
+            if (previousWorkspace) {
+                queryClient.setQueryData(teamsWorkspaceKey, previousWorkspace);
+            }
             toast.error(message);
-        } finally {
-            setIsMutating(null);
         }
     };
 
@@ -389,52 +470,56 @@ export default function ProviderTeamPage() {
             return;
         }
 
-        const previousTeams = teams;
-        const previousPatients = patients;
         setIsMutating(`assign-${values.teamId}-${values.patientId}`);
 
-        setTeams((current) => current.map((team) => {
-            const withoutPatient = team.patientIds.filter((patientId) => patientId !== values.patientId);
-            if (team.id !== values.teamId) {
-                return {
-                    ...team,
-                    patientIds: withoutPatient
-                };
-            }
+        await queryClient.cancelQueries({ queryKey: teamsWorkspaceKey });
+        const previousWorkspace = queryClient.getQueryData<TeamsWorkspaceData>(teamsWorkspaceKey);
+
+        queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => {
+            if (!current) return current;
 
             return {
-                ...team,
-                patientIds: Array.from(new Set([...withoutPatient, values.patientId]))
-            };
-        }));
+                ...current,
+                teams: current.teams.map((team) => {
+                    const withoutPatient = team.patientIds.filter((patientId) => patientId !== values.patientId);
+                    if (team.id !== values.teamId) {
+                        return {
+                            ...team,
+                            patientIds: withoutPatient
+                        };
+                    }
 
-        setPatients((current) => current.map((patient) => (
-            patient.id === values.patientId
-                ? { ...patient, teamId: values.teamId }
-                : patient
-        )));
+                    return {
+                        ...team,
+                        patientIds: Array.from(new Set([...withoutPatient, values.patientId]))
+                    };
+                }),
+                patients: current.patients.map((patient) => (
+                    patient.id === values.patientId
+                        ? { ...patient, teamId: values.teamId }
+                        : patient
+                ))
+            };
+        });
 
         try {
-            const headers = await buildHeaders(activeUser);
-            const response = await fetch(`/api/teams/${values.teamId}/patients`, {
+            const payload = await mutateTeamMember.mutateAsync({
+                path: `/api/teams/${values.teamId}/patients`,
                 method: 'POST',
-                headers,
-                body: JSON.stringify({ patientId: values.patientId })
+                body: { patientId: values.patientId }
             });
 
-            const payload = await response.json() as TeamsApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to assign patient to team.');
             }
 
             toast.success('Patient assigned to team.');
         } catch (assignError) {
             const message = assignError instanceof Error ? assignError.message : 'Failed to assign patient to team.';
-            setTeams(previousTeams);
-            setPatients(previousPatients);
+            if (previousWorkspace) {
+                queryClient.setQueryData(teamsWorkspaceKey, previousWorkspace);
+            }
             toast.error(message);
-        } finally {
-            setIsMutating(null);
         }
     });
 
@@ -444,43 +529,47 @@ export default function ProviderTeamPage() {
             return;
         }
 
-        const previousTeams = teams;
-        const previousPatients = patients;
         setIsMutating(`unassign-${teamId}-${patientId}`);
 
-        setTeams((current) => current.map((team) => (
-            team.id === teamId
-                ? { ...team, patientIds: team.patientIds.filter((id) => id !== patientId) }
-                : team
-        )));
+        await queryClient.cancelQueries({ queryKey: teamsWorkspaceKey });
+        const previousWorkspace = queryClient.getQueryData<TeamsWorkspaceData>(teamsWorkspaceKey);
 
-        setPatients((current) => current.map((patient) => (
-            patient.id === patientId
-                ? { ...patient, teamId: null }
-                : patient
-        )));
+        queryClient.setQueryData<TeamsWorkspaceData>(teamsWorkspaceKey, (current) => (
+            current
+                ? {
+                    ...current,
+                    teams: current.teams.map((team) => (
+                        team.id === teamId
+                            ? { ...team, patientIds: team.patientIds.filter((id) => id !== patientId) }
+                            : team
+                    )),
+                    patients: current.patients.map((patient) => (
+                        patient.id === patientId
+                            ? { ...patient, teamId: null }
+                            : patient
+                    ))
+                }
+                : current
+        ));
 
         try {
-            const headers = await buildHeaders(activeUser);
-            const response = await fetch(`/api/teams/${teamId}/patients`, {
+            const payload = await mutateTeamMember.mutateAsync({
+                path: `/api/teams/${teamId}/patients`,
                 method: 'DELETE',
-                headers,
-                body: JSON.stringify({ patientId })
+                body: { patientId }
             });
 
-            const payload = await response.json() as TeamsApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to unassign patient from team.');
             }
 
             toast.success('Patient unassigned from team.');
         } catch (unassignError) {
             const message = unassignError instanceof Error ? unassignError.message : 'Failed to unassign patient from team.';
-            setTeams(previousTeams);
-            setPatients(previousPatients);
+            if (previousWorkspace) {
+                queryClient.setQueryData(teamsWorkspaceKey, previousWorkspace);
+            }
             toast.error(message);
-        } finally {
-            setIsMutating(null);
         }
     };
 
@@ -504,11 +593,7 @@ export default function ProviderTeamPage() {
                     </div>
                     <button
                         type="button"
-                        onClick={() => {
-                            if (activeUser) {
-                                loadTeamsWorkspace(activeUser).catch(() => undefined);
-                            }
-                        }}
+                        onClick={() => void teamsWorkspaceQuery.refetch()}
                         className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                     >
                         Refresh

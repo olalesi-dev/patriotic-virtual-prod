@@ -9,6 +9,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { initializeTrustedTypes } from '@/lib/trusted-types';
 import { useEffect } from 'react';
 import { Toaster as SonnerToaster } from 'sonner';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 
 // Initialize Trusted Types immediately
 if (typeof window !== 'undefined') {
@@ -54,13 +55,15 @@ export default function RootLayout({
                 <link rel="icon" href="/favicon.ico" sizes="any" />
             </head>
             <body className={`${inter.className} bg-slate-50 dark:bg-slate-900/50 text-navy antialiased min-h-screen`}>
-                <MfaEnrollmentGate>
-                    <SecurityShell>
-                        <SonnerToaster position="top-right" richColors closeButton />
-                        <AINavigator />
-                        {children}
-                    </SecurityShell>
-                </MfaEnrollmentGate>
+                <QueryProvider>
+                    <MfaEnrollmentGate>
+                        <SecurityShell>
+                            <SonnerToaster position="top-right" richColors closeButton />
+                            <AINavigator />
+                            {children}
+                        </SecurityShell>
+                    </MfaEnrollmentGate>
+                </QueryProvider>
             </body>
         </html>
     );

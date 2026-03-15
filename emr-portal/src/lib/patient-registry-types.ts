@@ -31,20 +31,43 @@ export interface PatientRegistryRow {
     teamIds: string[];
     teams: PatientRegistryTeam[];
     tags: PatientRegistryTag[];
-    isDemo: boolean;
-    allergies: string[];
-    alerts: Array<{ label: string; type: 'warning' | 'error' | 'info' | 'success' }>;
-    problemList: Array<{ code: string; description: string }>;
-    activeMedications: Array<{ name: string; dosage: string; frequency: string }>;
-    recentEncounters: Array<{ id: string; date: string; title: string; provider: string; type: string; status: string }>;
-    upcomingAppointments: Array<{ date: string; time: string; title: string; type: 'Video' | 'In-person' }>;
-    weightTrend: number[];
-    consents: Array<{ title: string; date: string; status: 'Signed' | 'Acknowledged' | 'Pending' }>;
-    careTeam: Array<{ role: string; name: string }>;
-    notes: any[];
-    orders: any[];
-    imaging: any[];
     lastActivityAt: string | null;
+}
+
+export interface PatientDetailProblem {
+    id: string;
+    code: string;
+    description: string;
+    createdAt: string | null;
+}
+
+export interface PatientDetailMedication {
+    id: string;
+    name: string;
+    dosage: string;
+    frequency: string;
+    route: string | null;
+    status: string;
+    startDate: string | null;
+}
+
+export interface PatientDetailEncounter {
+    id: string;
+    date: string;
+    title: string;
+    provider: string;
+    type: string;
+    status: string;
+}
+
+export interface PatientDetailRecord extends PatientRegistryRow {
+    allergies: string[];
+    primaryConcern: string | null;
+    preferredPharmacy: string | null;
+    careTeam: Array<{ role: string; name: string }>;
+    problemList: PatientDetailProblem[];
+    activeMedications: PatientDetailMedication[];
+    recentEncounters: PatientDetailEncounter[];
 }
 
 export interface PatientRegistryFacetOption {
@@ -75,5 +98,11 @@ export interface PatientRegistryResponse {
         teams: PatientRegistryFacetOption[];
         tags: PatientRegistryFacetOption[];
     };
+    error?: string;
+}
+
+export interface PatientDetailResponse {
+    success: boolean;
+    patient?: PatientDetailRecord;
     error?: string;
 }

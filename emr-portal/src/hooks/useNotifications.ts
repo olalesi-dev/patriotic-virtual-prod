@@ -1,6 +1,6 @@
 "use client";
 
-import type { User as FirebaseUser } from 'firebase/auth';
+import { useMutation } from '@tanstack/react-query';
 import {
     collection,
     onSnapshot,
@@ -9,7 +9,9 @@ import {
 } from 'firebase/firestore';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { auth, db } from '@/lib/firebase';
+import { useAuthUser } from '@/hooks/useAuthUser';
+import { apiFetchJson } from '@/lib/api-client';
+import { db } from '@/lib/firebase';
 import type {
     AppNotification,
     AppNotificationType,
@@ -111,42 +113,49 @@ function sortNotifications(items: AppNotification[]): AppNotification[] {
     return [...items].sort((first, second) => second.createdAt.localeCompare(first.createdAt));
 }
 
-async function buildAuthHeaders(activeUser: FirebaseUser): Promise<Record<string, string>> {
-    const idToken = await activeUser.getIdToken();
-    return {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json'
-    };
-}
-
 export function useNotifications(options: UseNotificationsOptions = {}) {
     const { limit = 30, toastOnNew = false } = options;
 
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
-    const [activeUser, setActiveUser] = useState<FirebaseUser | null>(null);
+    const { user: activeUser, isReady } = useAuthUser();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const hydratedRef = useRef(false);
+    const notificationMutation = useMutation({
+        mutationFn: ({
+            path,
+            method,
+            body
+        }: {
+            path: string;
+            method: 'PATCH' | 'DELETE' | 'POST';
+            body?: Record<string, unknown>;
+        }) => {
+            if (!activeUser) {
+                throw new Error('Please sign in again to update notifications.');
+            }
+
+            return apiFetchJson<NotificationApiResponse>(path, {
+                method,
+                user: activeUser,
+                body
+            });
+        }
+    });
+    const mutateNotification = notificationMutation.mutateAsync;
 
     const unreadCount = notifications.reduce((total, notification) => (
         notification.read ? total : total + 1
     ), 0);
 
     useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-            hydratedRef.current = false;
-            setActiveUser(user);
-            if (!user) {
-                setNotifications([]);
-                setLoading(false);
-            }
-        });
-
-        return () => unsubscribeAuth();
-    }, []);
-
-    useEffect(() => {
-        if (!activeUser) return;
+        hydratedRef.current = false;
+        if (!isReady) return;
+        if (!activeUser) {
+            setNotifications([]);
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         setError(null);
@@ -154,15 +163,13 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
         const fetchByApi = async () => {
             try {
-                const headers = await buildAuthHeaders(activeUser);
-                const response = await fetch(`/api/notifications?limit=${Math.max(1, limit)}`, {
+                const payload = await apiFetchJson<NotificationListApiResponse>(`/api/notifications?limit=${Math.max(1, limit)}`, {
                     method: 'GET',
-                    headers,
+                    user: activeUser,
                     cache: 'no-store'
                 });
 
-                const payload = await response.json() as NotificationListApiResponse;
-                if (!response.ok || !payload.success) {
+                if (!payload.success) {
                     throw new Error(payload.error || 'Failed to load notifications.');
                 }
 
@@ -233,7 +240,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
                 clearInterval(pollTimer);
             }
         };
-    }, [activeUser, limit, toastOnNew]);
+    }, [activeUser, isReady, limit, toastOnNew]);
 
     const updateNotificationReadState = useCallback(async (id: string, read: boolean): Promise<boolean> => {
         if (!activeUser) {
@@ -249,15 +256,12 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         )));
 
         try {
-            const headers = await buildAuthHeaders(activeUser);
-            const response = await fetch(`/api/notifications/${id}`, {
+            const payload = await mutateNotification({
+                path: `/api/notifications/${id}`,
                 method: 'PATCH',
-                headers,
-                body: JSON.stringify({ action: read ? 'mark_read' : 'mark_unread' })
+                body: { action: read ? 'mark_read' : 'mark_unread' }
             });
-
-            const payload = await response.json() as NotificationApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to update notification.');
             }
             return true;
@@ -267,7 +271,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
             setError(message);
             return false;
         }
-    }, [activeUser, notifications]);
+    }, [activeUser, notifications, mutateNotification]);
 
     const deleteNotification = useCallback(async (id: string): Promise<boolean> => {
         if (!activeUser) {
@@ -279,14 +283,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         setNotifications((current) => current.filter((notification) => notification.id !== id));
 
         try {
-            const headers = await buildAuthHeaders(activeUser);
-            const response = await fetch(`/api/notifications/${id}`, {
-                method: 'DELETE',
-                headers
+            const payload = await mutateNotification({
+                path: `/api/notifications/${id}`,
+                method: 'DELETE'
             });
-
-            const payload = await response.json() as NotificationApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to delete notification.');
             }
             return true;
@@ -296,7 +297,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
             setError(message);
             return false;
         }
-    }, [activeUser, notifications]);
+    }, [activeUser, notifications, mutateNotification]);
 
     const respondToTeamInvite = useCallback(async (
         id: string,
@@ -318,15 +319,12 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         }));
 
         try {
-            const headers = await buildAuthHeaders(activeUser);
-            const response = await fetch(`/api/notifications/${id}/respond`, {
+            const payload = await mutateNotification({
+                path: `/api/notifications/${id}/respond`,
                 method: 'POST',
-                headers,
-                body: JSON.stringify({ decision })
+                body: { decision }
             });
-
-            const payload = await response.json() as NotificationApiResponse;
-            if (!response.ok || !payload.success) {
+            if (!payload.success) {
                 throw new Error(payload.error || 'Failed to respond to invitation.');
             }
             return true;
@@ -336,7 +334,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
             setError(message);
             return false;
         }
-    }, [activeUser, notifications]);
+    }, [activeUser, notifications, mutateNotification]);
 
     return {
         notifications,

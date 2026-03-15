@@ -1,20 +1,23 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, Clock, X, Command, Loader2 } from 'lucide-react';
+import { Search, User, Clock, X, Command } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { PATIENTS, Patient } from '@/lib/data';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiFetchJson } from '@/lib/api-client';
+import { useAuthUser } from '@/hooks/useAuthUser';
+import type { PatientRegistryRow } from '@/lib/patient-registry-types';
 
 export function GlobalSearch() {
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<Patient[]>([]);
+    const [results, setResults] = useState<PatientRegistryRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
+    const [recentPatients, setRecentPatients] = useState<PatientRegistryRow[]>([]);
     const router = useRouter();
     const searchRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const { user: activeUser } = useAuthUser();
 
     // Keyboard shortcut Cmd/Ctrl + K
     useEffect(() => {
@@ -71,19 +74,46 @@ export function GlobalSearch() {
         setIsLoading(true);
         const timer = setTimeout(() => {
             const searchTerms = query.toLowerCase().split(' ');
-            const matched = PATIENTS.filter(p => {
-                const searchStr = `${p.name} ${p.mrn} ${p.dob} ${p.phone} ${p.email} ${p.serviceLine}`.toLowerCase();
-                return searchTerms.every(term => searchStr.includes(term));
-            }).slice(0, 20);
+            if (!activeUser) {
+                setResults([]);
+                setIsLoading(false);
+                return;
+            }
 
-            setResults(matched);
-            setIsLoading(false);
+            apiFetchJson<{
+                success?: boolean;
+                results?: PatientRegistryRow[];
+                error?: string;
+            }>(`/api/patients/search?q=${encodeURIComponent(query.trim())}&limit=20`, {
+                method: 'GET',
+                user: activeUser,
+                cache: 'no-store'
+            })
+                .then((payload) => {
+                    if (!payload.success || !payload.results) {
+                        throw new Error(payload.error || 'Search failed.');
+                    }
+
+                    const queryTerms = searchTerms.filter(Boolean);
+                    const matched = payload.results.filter((patient) => {
+                        const searchStr = `${patient.name} ${patient.mrn} ${patient.dob} ${patient.phone} ${patient.email} ${patient.serviceLine}`.toLowerCase();
+                        return queryTerms.every((term) => searchStr.includes(term));
+                    });
+
+                    setResults(matched);
+                })
+                .catch(() => {
+                    setResults([]);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
         }, 300); // 300ms debounce
 
         return () => clearTimeout(timer);
-    }, [query]);
+    }, [activeUser, query]);
 
-    const handleSelectPatient = (patient: Patient) => {
+    const handleSelectPatient = (patient: PatientRegistryRow) => {
         // Save to recent
         const updatedRecent = [
             patient,
@@ -95,7 +125,7 @@ export function GlobalSearch() {
 
         setIsOpen(false);
         setQuery('');
-        router.push(`/patients?id=${patient.id}`); // Navigating to patients page with id
+        router.push(`/patients/${patient.id}`);
     };
 
     return (
@@ -194,7 +224,7 @@ export function GlobalSearch() {
     );
 }
 
-function SearchResultItem({ patient, onClick, icon: Icon }: { patient: Patient; onClick: () => void; icon: any }) {
+function SearchResultItem({ patient, onClick, icon: Icon }: { patient: PatientRegistryRow; onClick: () => void; icon: any }) {
     return (
         <div
             onClick={onClick}
@@ -209,7 +239,7 @@ function SearchResultItem({ patient, onClick, icon: Icon }: { patient: Patient; 
                         {patient.name}
                     </h4>
                     <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded leading-none ${patient.statusColor}`}>
-                        {patient.status}
+                        {patient.statusLabel}
                     </span>
                 </div>
                 <div className="flex gap-3 text-[10px] text-slate-500 font-medium mt-0.5">

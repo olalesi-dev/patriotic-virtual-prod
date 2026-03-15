@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { 
   signInWithEmailAndPassword, 
@@ -8,6 +9,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup 
 } from "firebase/auth";
+import { apiFetchJson } from "@/lib/api-client";
 import { auth, db } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { svcs, iQs } from "./landingModalsData";
@@ -54,6 +56,58 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   const [regSex, setRegSex] = useState("");
   const [regDob, setRegDob] = useState("");
   const [regPhone, setRegPhone] = useState("");
+  const checkoutMutation = useMutation({
+    mutationFn: async ({
+      token,
+      serviceKey,
+      intake,
+      priceId,
+      uid,
+      returnUrl,
+      cancelUrl,
+    }: {
+      token: string;
+      serviceKey: string;
+      intake: Record<string, any>;
+      priceId: string;
+      uid: string;
+      returnUrl: string;
+      cancelUrl: string;
+    }) => {
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const consultation = await apiFetchJson<{ id: string }>("/api/v1/consultations", {
+        method: "POST",
+        headers,
+        body: {
+          serviceKey,
+          intake,
+          stripeProductId: priceId,
+        },
+      });
+
+      const payment = await apiFetchJson<{ url?: string }>("/api/v1/payments/create-checkout-session", {
+        method: "POST",
+        headers,
+        body: {
+          priceId,
+          serviceKey,
+          consultationId: consultation.id,
+          uid,
+          returnUrl,
+          cancelUrl,
+        },
+      });
+
+      return {
+        consultationId: consultation.id,
+        url: payment.url,
+      };
+    },
+  });
 
   React.useEffect(() => {
     if (consultModalOpen && initialConsultStep > 1) {
@@ -99,43 +153,17 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       if (!sv) throw new Error("Service not found");
 
       const tok = await auth.currentUser.getIdToken();
-      // Use window.location.origin as base instead of empty API
-      const consRes = await fetch(`/api/v1/consultations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tok}`,
-        },
-        body: JSON.stringify({
-          serviceKey: sv.k,
-          intake: intake,
-          stripeProductId: sv.priceId,
-        }),
+      const payData = await checkoutMutation.mutateAsync({
+        token: tok,
+        serviceKey: sv.k,
+        intake,
+        priceId: sv.priceId,
+        uid: auth.currentUser.uid,
+        returnUrl: window.location.origin + "/?payment=success",
+        cancelUrl: window.location.origin + "/?payment=cancelled",
       });
-
-      if (!consRes.ok) throw new Error("Failed to create consultation");
-      const consData = await consRes.json();
-      const consultationId = consData.id;
-      sessionStorage.setItem("pendingConsultationId", consultationId);
-      localStorage.setItem("pendingConsultationId", consultationId);
-
-      const payRes = await fetch(`/api/v1/payments/create-checkout-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tok}`,
-        },
-        body: JSON.stringify({
-          priceId: sv.priceId,
-          serviceKey: sv.k,
-          consultationId: consultationId,
-          uid: auth.currentUser.uid,
-          returnUrl: window.location.origin + "/?payment=success",
-          cancelUrl: window.location.origin + "/?payment=cancelled",
-        }),
-      });
-
-      const payData = await payRes.json();
+      sessionStorage.setItem("pendingConsultationId", payData.consultationId);
+      localStorage.setItem("pendingConsultationId", payData.consultationId);
       if (payData.url) {
         window.location.href = payData.url;
       } else {

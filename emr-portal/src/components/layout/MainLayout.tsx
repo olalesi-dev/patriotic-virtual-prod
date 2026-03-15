@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import type { User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut,
@@ -16,6 +17,8 @@ import { GlobalSearch } from './GlobalSearch';
 import { auth } from '@/lib/firebase';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
+import { apiFetchJson } from '@/lib/api-client';
+import type { PatientDetailResponse } from '@/lib/patient-registry-types';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -33,6 +36,28 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     usePushNotifications(activeUser);
 
     const profile = useUserProfile();
+    const patientDetailId = React.useMemo(() => {
+        const match = pathname.match(/^\/patients\/([^/]+)$/);
+        return match?.[1] ?? null;
+    }, [pathname]);
+
+    const patientHeaderQuery = useQuery({
+        queryKey: ['patient-detail', activeUser?.uid ?? 'anonymous', patientDetailId],
+        enabled: Boolean(patientDetailId && activeUser),
+        staleTime: 60_000,
+        queryFn: async () => {
+            const payload = await apiFetchJson<PatientDetailResponse>(`/api/patients/${patientDetailId}`, {
+                method: 'GET',
+                user: activeUser
+            });
+
+            if (!payload.success || !payload.patient) {
+                throw new Error(payload.error || 'Failed to load patient header.');
+            }
+
+            return payload.patient;
+        }
+    });
 
     React.useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((nextUser) => {
@@ -81,6 +106,27 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
         );
     }
+
+    const pageTitle = (() => {
+        if (pathname === '/dashboard') return 'Dashboard';
+        if (patientHeaderQuery.data?.name) return patientHeaderQuery.data.name;
+
+        const segments = pathname.split('/').filter(Boolean);
+        if (segments.length === 0) return 'Dashboard';
+
+        return segments
+            .map((segment, index) => {
+                if (index > 0 && /^[A-Za-z0-9_-]{10,}$/.test(segment)) {
+                    return '';
+                }
+
+                return segment
+                    .replace(/[-_]/g, ' ')
+                    .replace(/\b\w/g, (char) => char.toUpperCase());
+            })
+            .filter(Boolean)
+            .join(' / ');
+    })();
 
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 font-sans text-slate-900 dark:text-white dark:text-slate-100">
@@ -195,7 +241,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <header className="h-16 bg-white dark:bg-slate-800 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90 dark:bg-slate-800/90">
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 dark:text-slate-100 capitalize">
-                            {pathname === '/dashboard' ? 'Dashboard' : pathname.replace('/', '')}
+                            {pageTitle}
                         </h1>
                     </div>
 
