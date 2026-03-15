@@ -22,13 +22,17 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    Users
+    Users,
+    ShoppingBag,
+    ShoppingCart
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 import { ConsentModal } from '@/components/patient/ConsentModal';
+import { useCart } from '@/hooks/useCart';
+import { CartDrawer } from '@/components/shop/CartDrawer';
 
 
 export function PatientLayout({ children }: { children: React.ReactNode }) {
@@ -40,7 +44,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     const [notifications, setNotifications] = useState<any[]>([]);
     const notifRef = useRef<HTMLDivElement>(null);
     // Direct Firebase Auth user — always has the real displayName (set during signup)
-    const [authUser, setAuthUser] = useState<any>(null);
+    const authUser = auth.currentUser;
+    const cart = useCart();
 
     const profile = useUserProfile();
 
@@ -62,8 +67,9 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || 'P';
 
     useEffect(() => {
-        // Listen to Firebase Auth directly — most reliable source for displayName
-        const unsub = auth.onAuthStateChanged((u) => setAuthUser(u));
+        const unsub = auth.onAuthStateChanged((u) => {
+            // keep forced render to match top level auth changes
+        });
         return () => unsub();
     }, []);
 
@@ -176,6 +182,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
         { name: 'Messages', href: '/patient/messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount.toString() : undefined },
         { name: 'Community Feed', href: '/patient/community', icon: Users },
         { name: 'Medications', href: '/my-health/medications', icon: Pill },
+        { name: 'Shop', href: '/patient/shop', icon: ShoppingBag },
         { name: 'Lab Results', href: '/my-health/labs', icon: Activity },
         { name: 'Imaging', href: '/my-health/imaging', icon: FileText },
         { name: 'Billing', href: '/patient/billing', icon: CreditCard },
@@ -273,6 +280,19 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                             />
                         </div>
 
+                        {/* Cart Button */}
+                        <button
+                            onClick={() => cart.toggleCart()}
+                            className="p-2.5 text-slate-400 hover:text-[#0EA5E9] hover:bg-sky-50 rounded-xl transition-all relative"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                            {cart.getCartCount() > 0 && (
+                                <span className="absolute top-1.5 right-1.5 min-w-[12px] h-[12px] bg-[#0EA5E9] rounded-full border border-white text-[8px] flex items-center justify-center font-bold text-white shadow-sm px-0.5" >
+                                    {cart.getCartCount()}
+                                </span>
+                            )}
+                        </button>
+
                         {/* Notification Bell */}
                         <div className="relative" ref={notifRef}>
                             <button
@@ -339,6 +359,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                 <main className="flex-1 p-6 md:p-8 overflow-y-auto">
                     <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
                         {children}
+                        <CartDrawer />
                     </div>
                 </main>
             </div>

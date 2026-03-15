@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
-    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut,
+    Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut, ShoppingBag,
     Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert, Megaphone
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -252,6 +252,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
+                        <NavItem href="/admin/store" icon={ShoppingBag} label="Store Management" active={pathname === '/admin/store'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/communications" icon={Megaphone} label="Communications" active={pathname === '/admin/communications'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/doxy" icon={Video} label="Doxy Integration" active={pathname === '/admin/doxy'} collapsed={isSidebarCollapsed} />
                         <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
