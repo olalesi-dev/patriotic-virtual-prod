@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
 import {
     Users, Briefcase, Database, BarChart, ClipboardList, ArrowRight, User, AlertTriangle, Calendar,
-    Search, Sparkles, Activity, Tag, Plus, Target
+    Search, Sparkles, Activity, Tag, Plus, Target, ShieldCheck
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ interface MetricSummary {
     activeVendorsCount: number;
     activeCampaignsCount: number;
     openGrantsCount: number;
+    complianceDocsCount: number;
 }
 
 interface RecentActivity {
@@ -45,7 +46,8 @@ export default function CrmDashboardClient() {
         facilitiesCount: 0,
         activeVendorsCount: 0,
         activeCampaignsCount: 0,
-        openGrantsCount: 0
+        openGrantsCount: 0,
+        complianceDocsCount: 0
     });
     const [recentActivies, setRecentActivities] = useState<RecentActivity[]>([]);
     const [globalSearch, setGlobalSearch] = useState('');
@@ -57,7 +59,14 @@ export default function CrmDashboardClient() {
 
     useEffect(() => {
         const entityTypes = ['patients', 'facilities', 'vendors', 'campaigns', 'grants'];
-        const unsubscribes: any[] = [];
+        
+        // Also fetch compliance documents separately as it's in crm-compliance
+        const qDocs = query(collection(db, 'crm-compliance', 'data', 'document-records'));
+        const unsubDocs = onSnapshot(qDocs, (snap) => {
+            setMetrics(prev => ({ ...prev, complianceDocsCount: snap.docs.length }));
+        });
+
+        const unsubscribes: any[] = [unsubDocs];
         const dataStore: Record<string, any[]> = {};
         
         entityTypes.forEach(type => {
@@ -74,13 +83,14 @@ export default function CrmDashboardClient() {
                 const allCampaigns = dataStore['campaigns'] || [];
                 const allGrants = dataStore['grants'] || [];
 
-                setMetrics({
+                setMetrics(prev => ({
                     patientsCount: allPatients.filter(p => !['Churned'].includes(p.status)).length,
                     facilitiesCount: allFacilities.filter(f => !['Inactive'].includes(f.status)).length,
                     activeVendorsCount: allVendors.filter(v => ['Active'].includes(v.status)).length,
                     activeCampaignsCount: allCampaigns.filter(c => ['Active'].includes(c.status)).length,
                     openGrantsCount: allGrants.filter(g => !['Archived', 'Rejected'].includes(g.status)).length,
-                });
+                    complianceDocsCount: prev.complianceDocsCount, // Preserved from the compliance docs listener
+                }));
 
                 // --- Process Expiring Vendors ---
                 const now = new Date();
@@ -192,7 +202,8 @@ export default function CrmDashboardClient() {
         { title: 'Facilities', icon: Briefcase, href: '/crm/facilities', color: 'sky', count: metrics.facilitiesCount, label: 'Active Prospects' },
         { title: 'Vendors', icon: Users, href: '/crm/vendors', color: 'emerald', count: metrics.activeVendorsCount, label: 'Active Vendors' },
         { title: 'Campaigns', icon: BarChart, href: '/crm/campaigns', color: 'amber', count: metrics.activeCampaignsCount, label: 'Active Campaigns' },
-        { title: 'Grants', icon: ClipboardList, href: '/crm/grants', color: 'rose', count: metrics.openGrantsCount, label: 'Open Proposals' }
+        { title: 'Grants', icon: ClipboardList, href: '/crm/grants', color: 'rose', count: metrics.openGrantsCount, label: 'Open Proposals' },
+        { title: 'Compliance', icon: ShieldCheck, href: '/crm/compliance', color: 'teal', count: metrics.complianceDocsCount || 0, label: 'Documents' }
     ];
 
     const formatActivityTimestamp = (ts: any) => {

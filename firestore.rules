@@ -88,10 +88,23 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
-    // --- NOTIFICATIONS (client reads only own notifications) ---
+    // --- NOTIFICATIONS ---
     match /notifications/{id} {
-      allow read: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
-      allow create, update, delete: if false;
+      // Allow read if this notification belongs to the current user (userId field)
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isStaff());
+      allow create: if isAuthenticated();
+      allow update, delete: if isStaff();
+    }
+
+    // --- CRM MODULE (vendors, campaigns, grants, facilities, patients/leads) ---
+    match /crm/{document=**} {
+      allow read, write: if isStaff();
+    }
+
+    // --- CRM COMPLIANCE DOCUMENTS ---
+    // Staff-level access only — no patient read access to compliance docs
+    match /crm-compliance/{document=**} {
+      allow read, write: if isStaff();
     }
 
     // --- API & SYSTEM ---
