@@ -18,6 +18,8 @@ export interface ShopProduct {
     images: string[];
     weight?: string;
     dimensions?: string;
+    stripeLink?: string;
+    iframeUrl?: string;
     tags: string[];
     createdAt?: any;
     updatedAt?: any;
