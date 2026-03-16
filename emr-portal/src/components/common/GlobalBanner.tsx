@@ -36,6 +36,10 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
         }
 
         const loadBanner = async () => {
+            // Don't attempt to load banner if not signed in — avoids permission-denied errors
+            // on unauthenticated pages like /login
+            if (!auth.currentUser) return;
+
             try {
                 const docSnap = await getDoc(doc(db, 'platform-config', 'active-banner'));
                 if (docSnap.exists()) {
@@ -43,7 +47,8 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
                     setBanner(data);
                 }
             } catch (e) {
-                console.warn("Failed to load banner", e);
+                // Silently fail — banner simply won't render
+                console.warn("Failed to load banner config:", e);
             }
         };
         
