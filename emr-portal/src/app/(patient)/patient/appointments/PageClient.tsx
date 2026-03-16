@@ -294,7 +294,7 @@ export default function AppointmentsPage() {
                     intakeAnswers: raw.intake || {},
                     intake: raw.intake || {},
                     serviceKey: raw.serviceKey,
-                    meetingUrl: raw.meetingUrl || 'https://doxy.me/patriotictelehealth',
+                    meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
                     patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
                     patientEmail: raw.intake?.email || '',
                 };

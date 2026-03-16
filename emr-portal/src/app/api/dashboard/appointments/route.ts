@@ -40,7 +40,7 @@ function sanitizePlainText(value: string): string {
 }
 
 function buildTelehealthUrl(): string {
-    return `https://doxy.me/patriotic-visit-${randomUUID().slice(0, 8)}`;
+    return 'https://PVT.doxy.me/patrioticvirtualtelehealth';
 }
 
 function formatDisplayTime(startAt: Date): string {

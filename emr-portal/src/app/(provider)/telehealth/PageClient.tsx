@@ -7,7 +7,7 @@ import { VisitRoom } from '@/components/telehealth/VisitRoom';
 // Simulate API Response for now (until backend is fully CORS enabled for local dev)
 const MOCK_SESSION = {
     provider: 'DOXY',
-    joinLink: 'https://doxy.me/DrStrange',
+    joinLink: 'https://PVT.doxy.me/patrioticvirtualtelehealth',
     patientName: 'John Doe',
     providerName: 'Dr. Patriotic'
 };
