@@ -18,12 +18,23 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
+      - name: Configure npm for retries
+        run: |
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set fetch-retries 5
+          npm config set prefer-online true
+
       - name: Install root dependencies
         run: npm ci
+        env:
+          npm_config_prefer_online: true
 
       - name: Install EMR portal dependencies
         run: npm ci
         working-directory: emr-portal
+        env:
+          npm_config_prefer_online: true
 
       - name: Authenticate to Google Cloud
         id: auth
