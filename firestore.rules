@@ -107,7 +107,22 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // --- PLATFORM CONFIG (banner, feature flags) ---
+    // All authenticated users can read (banner loads on every page for all roles)
+    // Only staff/admin can write (managed via Communications admin panel)
+    match /platform-config/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // --- INTEGRATION SETTINGS (Doxy.me, etc.) ---
+    // Staff-only: read and write integration configuration
+    match /settings/{document} {
+      allow read, write: if isStaff();
+    }
+
     // --- API & SYSTEM ---
+
     match /appointments/{id} {
       allow read, write: if isAuthenticated();
     }
