@@ -356,6 +356,19 @@ function ProductEditorModal({ product, onClose }: { product: ShopProduct | null,
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Stripe Payment Link (Optional)</label>
+                            <input type="url" placeholder="https://buy.stripe.com/..." value={formData.stripeLink || ''} onChange={e => setFormData({...formData, stripeLink: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <p className="text-xs text-slate-500 mt-1 mt-1">Directly links buyer to Stripe checkout.</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">iFrame Link (Optional)</label>
+                            <input type="url" placeholder="https://external-partner.com/buy" value={formData.iframeUrl || ''} onChange={e => setFormData({...formData, iframeUrl: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <p className="text-xs text-slate-500 mt-1">If provided, opens this site in an iFrame pop-up.</p>
+                        </div>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Product Images</label>
                         <div className="flex gap-4 items-start">
@@ -373,7 +386,7 @@ function ProductEditorModal({ product, onClose }: { product: ShopProduct | null,
                                         try {
                                             const { storage } = await import('@/lib/firebase');
                                             const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-                                            const newUrls = [];
+                                            const newUrls: string[] = [];
                                             for (const file of files) {
                                                 const fileRef = ref(storage, `shop_images/${Date.now()}_${file.name}`);
                                                 await uploadBytes(fileRef, file);
