@@ -90,10 +90,20 @@ service cloud.firestore {
 
     // --- NOTIFICATIONS ---
     match /notifications/{id} {
-      // Allow read if this notification belongs to the current user (userId field)
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isStaff());
+      // Accept both field names: recipientId (useNotifications hook query) and userId (some write paths)
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         resource.data.recipientId == request.auth.uid ||
+         isStaff());
       allow create: if isAuthenticated();
       allow update, delete: if isStaff();
+    }
+
+    // --- PRACTICE SETTINGS (module toggles, feature flags) ---
+    // Used by usePracticeModules onSnapshot in MainLayout — staff can read/write, all auth users can read
+    match /practice-settings/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
     }
 
     // --- CRM MODULE (vendors, campaigns, grants, facilities, patients/leads) ---
