@@ -17,7 +17,7 @@ export async function GET() {
         } else {
             // Defaults
             data = {
-                doxyUrl: 'https://doxy.me/patrioticvirtualtelehealth',
+                doxyUrl: 'https://PVT.doxy.me/patrioticvirtualtelehealth',
                 isActive: true,
                 clinicName: 'Patriotic Virtual Telehealth'
             };
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         
         const updateData = {
-            doxyUrl: body.doxyUrl || 'https://doxy.me/patrioticvirtualtelehealth',
+            doxyUrl: body.doxyUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
             isActive: body.isActive !== false,
             clinicName: body.clinicName || 'Patriotic Virtual Telehealth',
             updatedAt: new Date()
