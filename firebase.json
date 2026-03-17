@@ -17,6 +17,14 @@
           }
         },
         {
+          "source": "/weight-loss",
+          "destination": "/weight-loss/index.html"
+        },
+        {
+          "source": "/weight-loss/**",
+          "destination": "/weight-loss/index.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
