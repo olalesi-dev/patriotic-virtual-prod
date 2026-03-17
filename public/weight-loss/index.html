@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -279,7 +280,7 @@ footer{background:#060F1C;border-top:1px solid rgba(201,151,58,.1);padding:60px 
       </div>
       <div class="hero-proof">
         <span class="stars-gold">★★★★★</span>
-        <span>Trusted by <strong style="color:#fff">10,000+ patients</strong> | Licensed in Florida &amp; beyond</span>
+        <span>Trusted by <strong style="color:#fff">patients</strong> | Licensed in Florida</span>
       </div>
     </div>
     <div>
@@ -681,9 +682,43 @@ document.getElementById('success-done').addEventListener('click',closeModal);
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay'))closeModal();});
 
 document.getElementById('modal-back').addEventListener('click',()=>{if(cur>0){cur--;renderStep();}});
-document.getElementById('modal-next').addEventListener('click',()=>{
+// ── EmailJS init (replace with your actual Service/Template/Public Key) ──
+// Sign up free at emailjs.com → create a service → create 2 templates (see below)
+const EJS_SERVICE   = 'service_pvt';          // Your EmailJS service ID
+const EJS_TPL_LEAD  = 'template_pvt_lead';    // Template: internal lead notification
+const EJS_TPL_CONF  = 'template_pvt_confirm'; // Template: patient confirmation email
+const EJS_PUBLIC    = 'YOUR_EMAILJS_PUBLIC_KEY'; // Your EmailJS public key
+try { emailjs.init({ publicKey: EJS_PUBLIC }); } catch(e) {}
+
+async function sendAssessmentEmails(data) {
+  try {
+    const params = {
+      patient_email : data.email,
+      bmi_range     : data.bmi,
+      tried_before  : data.tried,
+      conditions    : data.conditions.length ? data.conditions.join(', ') : 'None selected',
+      to_email      : 'hello@patriotictelehealth.com',
+      reply_to      : data.email,
+    };
+    // Send internal lead notification to practice
+    await emailjs.send(EJS_SERVICE, EJS_TPL_LEAD, params);
+    // Send confirmation email to patient
+    await emailjs.send(EJS_SERVICE, EJS_TPL_CONF, params);
+  } catch(err) {
+    console.warn('EmailJS send failed (non-blocking):', err);
+  }
+}
+
+document.getElementById('modal-next').addEventListener('click',async ()=>{
   if(cur<3){cur++;renderStep();}
   else{
+    // Show loading state on button
+    const btn=document.getElementById('modal-next');
+    btn.disabled=true;
+    btn.textContent='Sending...';
+    // Send emails in background (non-blocking)
+    await sendAssessmentEmails(answers);
+    // Show success regardless of email outcome
     document.getElementById('modal-form').style.display='none';
     document.getElementById('success-state').classList.add('show');
   }
