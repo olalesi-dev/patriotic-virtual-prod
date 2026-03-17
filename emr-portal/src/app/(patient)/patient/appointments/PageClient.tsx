@@ -294,7 +294,10 @@ export default function AppointmentsPage() {
                     intakeAnswers: raw.intake || {},
                     intake: raw.intake || {},
                     serviceKey: raw.serviceKey,
-                    meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                    meetingUrl: (() => {
+                        const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+                        return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
+                    })(),
                     patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
                     patientEmail: raw.intake?.email || '',
                 };
@@ -351,7 +354,10 @@ export default function AppointmentsPage() {
                         intakeAnswers: raw.intakeAnswers || {},
                         intake: raw.intakeAnswers || {},
                         serviceKey: raw.serviceKey,
-                        meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                        meetingUrl: (() => {
+                            const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+                            return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
+                        })(),
                     } as Appointment;
                 });
                 merge();
@@ -394,7 +400,10 @@ export default function AppointmentsPage() {
                         intakeAnswers: raw.intakeAnswers || raw.intake || {},
                         intake: raw.intakeAnswers || raw.intake || {},
                         serviceKey: raw.serviceKey || raw.service,
-                        meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                        meetingUrl: (() => {
+                            const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+                            return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
+                        })(),
                         patientName: raw.patientName || '',
                         patientEmail: raw.patientEmail || '',
                     } as Appointment;

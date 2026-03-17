@@ -46,6 +46,10 @@ export default function WaitlistPage() {
         let serviceKey = data.serviceKey || data.service || data.type || 'consultation';
         let intakeAnswers: Record<string, any> = data.intakeAnswers || {};
         let meetingUrl = data.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+        // Normalize any old per-appointment random URLs to the canonical clinic waiting room
+        if (meetingUrl && meetingUrl.includes('doxy.me/patriotic-visit-')) {
+            meetingUrl = 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+        }
 
         try {
             const consultSnap = await getDoc(doc(db, 'consultations', apptId));
@@ -365,12 +369,11 @@ export default function WaitlistPage() {
                                         <FileText className="w-3.5 h-3.5" /> Intake
                                     </button>
                                     <button
-                                        onClick={() => setActiveCall({
-                                            url: 'https://doxy.me/sign-in',
-                                            apptId: entry.id,
-                                            intake: entry.intakeAnswers,
-                                            name: entry.patientName,
-                                        })}
+                                        onClick={() => {
+                                            // Doxy's provider auth (Frontegg) cannot authenticate inside an iframe
+                                            // due to third-party cookie restrictions. Open in new tab instead.
+                                            window.open('https://doxy.me/sign-in', '_blank', 'noopener,noreferrer');
+                                        }}
                                         className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-colors border border-slate-100 dark:border-slate-700 dark:border-slate-600 shadow-sm"
                                     >
                                         <Video className="w-4 h-4" /> Admit
