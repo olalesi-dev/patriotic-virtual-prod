@@ -156,7 +156,7 @@ export default function ScheduledAppointmentsPage() {
                             providerName: raw.providerName || 'Patriotic Provider',
                             serviceKey: raw.serviceKey || 'Consultation',
                             type: 'Telehealth',
-                            meetingUrl: (() => { const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'; return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u; })(),
+                            meetingUrl: (() => { const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'; const isStale = u.includes('check-in') || u.includes('patriotic-visit-') || (u.includes('doxy.me') && !u.startsWith('https://PVT.doxy.me')); return isStale ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u; })(),
                             intakeAnswers: raw.intakeAnswers || {},
                         };
                     });
@@ -180,7 +180,7 @@ export default function ScheduledAppointmentsPage() {
                             providerName: raw.providerName || 'Patriotic Provider',
                             serviceKey: raw.serviceKey || raw.service || raw.type || 'Consultation',
                             type: 'Telehealth',
-                            meetingUrl: (() => { const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'; return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u; })(),
+                            meetingUrl: (() => { const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'; const isStale = u.includes('check-in') || u.includes('patriotic-visit-') || (u.includes('doxy.me') && !u.startsWith('https://PVT.doxy.me')); return isStale ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u; })(),
                             intakeAnswers: raw.intakeAnswers || raw.intake || {},
                             patientName: raw.patientName || '',
                             patientEmail: raw.patientEmail || '',
