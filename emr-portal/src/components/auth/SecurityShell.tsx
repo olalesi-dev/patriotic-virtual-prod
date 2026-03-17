@@ -15,7 +15,8 @@ const isPublicRoute = (pathname: string) =>
     pathname === '/privacy' ||
     pathname === '/terms' ||
     pathname === '/forgot-password' ||
-    pathname.startsWith('/book');
+    pathname.startsWith('/book') ||
+    pathname.startsWith('/weight-loss');
 
 export function SecurityShell({ children }: { children: React.ReactNode }) {
     const [lastActivity, setLastActivity] = useState(Date.now());
