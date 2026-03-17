@@ -3,6 +3,19 @@ import { db, auth } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
+const CANONICAL_DOXY_URL = 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+
+function isStaleDoxyUrl(url: string): boolean {
+    if (!url) return true;
+    // Old check-in widget URL, random per-visit URLs, or any non-PVT clinic URLs
+    return (
+        url.includes('check-in') ||
+        url.includes('doxy.me/patriotic-visit-') ||
+        url === 'https://doxy.me/patrioticvirtualtelehealth' ||
+        (url.includes('doxy.me') && !url.startsWith('https://PVT.doxy.me'))
+    );
+}
+
 export async function GET() {
     try {
         if (!db) {
@@ -10,18 +23,26 @@ export async function GET() {
         }
         
         const docRef = await db.collection('settings').doc('doxy_integration').get();
-        let data = {};
+        let data: Record<string, any> = {};
         
         if (docRef.exists) {
             data = docRef.data() || {};
         } else {
-            // Defaults
             data = {
-                doxyUrl: 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                doxyUrl: CANONICAL_DOXY_URL,
                 isActive: true,
                 clinicName: 'Patriotic Virtual Telehealth'
             };
             await db.collection('settings').doc('doxy_integration').set(data);
+        }
+
+        // Self-heal: if the stored URL is any stale variant, correct it in-place
+        if (isStaleDoxyUrl(data.doxyUrl)) {
+            data.doxyUrl = CANONICAL_DOXY_URL;
+            await db.collection('settings').doc('doxy_integration').set(
+                { doxyUrl: CANONICAL_DOXY_URL },
+                { merge: true }
+            );
         }
 
         return NextResponse.json({ success: true, data });
@@ -39,7 +60,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         
         const updateData = {
-            doxyUrl: body.doxyUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+            doxyUrl: body.doxyUrl || CANONICAL_DOXY_URL,
             isActive: body.isActive !== false,
             clinicName: body.clinicName || 'Patriotic Virtual Telehealth',
             updatedAt: new Date()

@@ -296,7 +296,8 @@ export default function AppointmentsPage() {
                     serviceKey: raw.serviceKey,
                     meetingUrl: (() => {
                         const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
-                        return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
+                        const isStale = u.includes('check-in') || u.includes('patriotic-visit-') || (u.includes('doxy.me') && !u.startsWith('https://PVT.doxy.me'));
+                        return isStale ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
                     })(),
                     patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
                     patientEmail: raw.intake?.email || '',
@@ -356,7 +357,8 @@ export default function AppointmentsPage() {
                         serviceKey: raw.serviceKey,
                         meetingUrl: (() => {
                             const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
-                            return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
+                            const isStale = u.includes('check-in') || u.includes('patriotic-visit-') || (u.includes('doxy.me') && !u.startsWith('https://PVT.doxy.me'));
+                            return isStale ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
                         })(),
                     } as Appointment;
                 });
@@ -402,7 +404,8 @@ export default function AppointmentsPage() {
                         serviceKey: raw.serviceKey || raw.service,
                         meetingUrl: (() => {
                             const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
-                            return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
+                            const isStale = u.includes('check-in') || u.includes('patriotic-visit-') || (u.includes('doxy.me') && !u.startsWith('https://PVT.doxy.me'));
+                            return isStale ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u;
                         })(),
                         patientName: raw.patientName || '',
                         patientEmail: raw.patientEmail || '',
