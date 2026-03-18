@@ -12829,6 +12829,36 @@
             console.error("Missing UID on element:", e.target);
           }
         }
+
+        // Cross-domain SSO Interceptor
+        const anchor = e.target.closest("a");
+        if (anchor && anchor.href && anchor.href.includes("patriotic-virtual-emr.web.app")) {
+          // If logged in, generate a custom token to carry over the session
+          if (auth && auth.currentUser) {
+            e.preventDefault();
+            const originalText = anchor.innerText;
+            anchor.innerText = 'Redirecting...';
+            anchor.style.pointerEvents = 'none';
+            
+            auth.currentUser.getIdToken()
+              .then(idToken => fetch('/api/v1/auth/bridge-token', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' }
+              }))
+              .then(res => res.json())
+              .then(data => {
+                const url = new URL(anchor.href);
+                if (data.customToken) {
+                  url.searchParams.set('token', data.customToken);
+                }
+                window.location.href = url.toString();
+              })
+              .catch(err => {
+                console.error('SSO Bridge Token Error:', err);
+                window.location.href = anchor.href;
+              });
+          }
+        }
       });
     });
 
