@@ -25,6 +25,26 @@
           "destination": "/weight-loss/index.html"
         },
         {
+          "source": "/sitemap.xml",
+          "destination": "/sitemap.xml"
+        },
+        {
+          "source": "/privacy",
+          "destination": "/privacy/index.html"
+        },
+        {
+          "source": "/terms",
+          "destination": "/terms/index.html"
+        },
+        {
+          "source": "/refund",
+          "destination": "/refund/index.html"
+        },
+        {
+          "source": "/contact",
+          "destination": "/contact/index.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
