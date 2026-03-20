@@ -53,6 +53,16 @@ export default function TermsPage() {
                             <p>Your use of the portal is also governed by our Privacy Policy. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
                         </section>
 
+                        <section>
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
+                                <div className="w-8 h-8 bg-sky-50 rounded-lg flex items-center justify-center text-[#0EA5E9]">
+                                    <Shield className="w-4 h-4" />
+                                </div>
+                                4. Compliance & Certification
+                            </h2>
+                            <p>Patriotic Virtual Telehealth exclusively utilizes NABP and LegitScript certified compounding pharmacies like Strive Pharmacy. All online prescriptions are subject strictly to the provider’s independent clinical judgment after an interactive evaluation.</p>
+                        </section>
+
                         <div className="pt-12 border-t border-slate-100 dark:border-slate-700 italic text-sm text-slate-400">
                             Questions regarding these terms? Please contact our compliance office at compliance@patriotictelehealth.com
                         </div>
