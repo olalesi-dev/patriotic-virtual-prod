@@ -56,8 +56,8 @@ export const svcs = [
       {
         id: "weight-loss",
         k: "weight_loss",
-        name: "GLP-1 & Weight Loss",
-        desc: "Comprehensive medical weight loss evaluation. GLP-1 eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
+        name: "Rx Weight Loss",
+        desc: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
         icon: "💊",
         ic: "blue",
         c: "blue",
