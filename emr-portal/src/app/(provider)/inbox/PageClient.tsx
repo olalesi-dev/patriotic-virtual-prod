@@ -45,6 +45,10 @@ export default function InboxPage() {
     const [messages, setMessages] = useState<any[]>([]);
     const [replyText, setReplyText] = useState('');
     const [composeMessage, setComposeMessage] = useState('');
+    const [composeRecipient, setComposeRecipient] = useState('');
+    const [composeSubject, setComposeSubject] = useState('');
+    
+    const [patients, setPatients] = useState<any[]>([]);
 
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
     const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
@@ -65,6 +69,12 @@ export default function InboxPage() {
                             status: 'open'
                         })));
                     });
+                    
+                    const pQuery = query(collection(db, 'users'), where('role', '==', 'patient'));
+                    onSnapshot(pQuery, (snap: any) => {
+                        setPatients(snap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
+                    });
+                    
                     return () => unsub();
                 }
             });
@@ -121,8 +131,43 @@ export default function InboxPage() {
     // --- HANDLERS ---
     const handleCompose = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Skip compose for now as patients initialize threads usually, or add full implementation
-        setIsComposeOpen(false);
+        if (!composeRecipient || !composeSubject || !composeMessage) return;
+        
+        const { db, auth } = await import('@/lib/firebase');
+        const { collection, addDoc, serverTimestamp, updateDoc, doc } = await import('firebase/firestore');
+        
+        try {
+            const patient = patients.find(p => p.id === composeRecipient);
+            const threadRef = await addDoc(collection(db, 'threads'), {
+                providerId: auth.currentUser?.uid,
+                providerName: auth.currentUser?.displayName || 'Provider',
+                patientId: patient?.id,
+                patientName: patient?.name || patient?.displayName || 'Patient',
+                subject: composeSubject,
+                category: 'General',
+                lastMessage: composeMessage,
+                lastMessageAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                unreadCount: 1,
+                providerUnreadCount: 0
+            });
+            
+            await addDoc(collection(db, 'threads', threadRef.id, 'messages'), {
+                senderId: auth.currentUser?.uid,
+                senderType: 'provider',
+                body: composeMessage,
+                createdAt: serverTimestamp(),
+                read: false
+            });
+            
+            setIsComposeOpen(false);
+            setComposeMessage('');
+            setComposeSubject('');
+            setComposeRecipient('');
+            setSelectedThreadId(threadRef.id);
+        } catch(err) {
+            console.error(err);
+        }
     };
 
     const handleReply = async (e: React.FormEvent) => {
@@ -249,14 +294,23 @@ export default function InboxPage() {
                 <div className="px-4 py-2 flex-1 overflow-y-auto">
                     <CollapsibleSection icon={User} label="Patient" defaultOpen>
                         <div className="space-y-1 mt-1 pl-2">
-                            <div
-                                onClick={() => handlePatientClick('Wendy Smith')}
-                                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg cursor-pointer transition-colors"
-                            >
-                                <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">W</div>
-                                <span>Wendy</span>
-                                <span className="ml-auto bg-indigo-100 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded">Demo</span>
-                            </div>
+                            {patients.slice(0, 10).map(p => {
+                                const name = p.name || p.displayName || p.email || 'Patient';
+                                const initials = name.substring(0, 2).toUpperCase();
+                                return (
+                                    <div
+                                        key={p.id}
+                                        onClick={() => handlePatientClick(name)}
+                                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg cursor-pointer transition-colors"
+                                    >
+                                        <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">{initials}</div>
+                                        <span className="truncate">{name.split(' ')[0]}</span>
+                                    </div>
+                                );
+                            })}
+                            {patients.length === 0 && (
+                                <div className="text-xs text-slate-400 italic px-3">No patients found</div>
+                            )}
                         </div>
                     </CollapsibleSection>
 
@@ -444,7 +498,9 @@ export default function InboxPage() {
                                                         {thread.patientName || 'Patient'}
                                                     </span>
                                                 </div>
-                                                <span className="text-xs text-slate-400">{new Date(thread.lastMessageAt?.toDate ? thread.lastMessageAt.toDate() : thread.lastMessageAt).toLocaleDateString()}</span>
+                                                <span className="text-xs text-slate-400">
+                                                    {thread.lastMessageAt ? new Date(thread.lastMessageAt.toDate ? thread.lastMessageAt.toDate() : thread.lastMessageAt).toLocaleDateString() : 'New'}
+                                                </span>
                                             </div>
                                             <div className="text-sm font-medium text-slate-800 dark:text-slate-100 dark:text-slate-200 mb-1">{thread.subject}</div>
                                             <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{thread.lastMessage}</div>
@@ -479,16 +535,20 @@ export default function InboxPage() {
                         <form onSubmit={handleCompose} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">To</label>
-                                <select className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium">
-                                    <option>Select Recipient...</option>
-                                    <option>Wendy Smith (Patient)</option>
-                                    <option>Michael Brown (Patient)</option>
-                                    <option>Sarah Connor (Patient)</option>
+                                <select 
+                                    value={composeRecipient}
+                                    onChange={e => setComposeRecipient(e.target.value)}
+                                    required
+                                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium">
+                                    <option value="">Select Recipient...</option>
+                                    {patients.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name || p.displayName || p.email}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Subject</label>
-                                <input type="text" placeholder="e.g. Lab Results" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium" />
+                                <input value={composeSubject} onChange={e => setComposeSubject(e.target.value)} type="text" placeholder="e.g. Lab Results" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium" />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Message</label>
