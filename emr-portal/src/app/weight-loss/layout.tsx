@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
     title: 'GLP-1 Weight Loss Program | Patriotic Telehealth',
-    description: 'FDA-approved GLP-1 prescriptions for sustainable weight loss. Semaglutide and Tirzepatide from licensed providers, delivered to your door. Starting from $149/mo.',
+    description: 'Prescription GLP-1 weight management for sustainable weight loss. Semaglutide and Tirzepatide from licensed providers, delivered to your door. Starting from $149/mo.',
     keywords: 'GLP-1, weight loss, semaglutide, tirzepatide, Wegovy, Zepbound, telehealth, online prescription',
     openGraph: {
         title: 'Lose Weight with GLP-1 | Patriotic Telehealth',

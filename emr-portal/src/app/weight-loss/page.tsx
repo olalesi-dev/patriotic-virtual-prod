@@ -707,26 +707,27 @@ export default function WeightLossPage() {
                             className="text-4xl md:text-5xl font-bold mb-4"
                             style={{ fontFamily: "'Playfair Display', serif", color: BRAND.navy }}
                         >
-                            FDA-Approved GLP-1 Medications We Offer
+                            GLP-1 Weight Management Medications We Offer
                         </h2>
                         <p className="text-lg max-w-2xl mx-auto" style={{ color: BRAND.mutedText }}>
-                            Our providers prescribe based on your health profile, not a one-size-fits-all formula.
+                            Our providers prescribe based on your health profile, not a one-size-fits-all formula.<br/>
+                            <i className="text-sm">*Compounded medications are not evaluated by the FDA for safety, effectiveness, or quality.</i>
                         </p>
                     </FadeSection>
 
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
                             {
-                                name: 'Semaglutide',
-                                sub: 'Generic',
+                                name: 'Compounded Semaglutide',
+                                sub: 'Compounded',
                                 badge: 'Most Popular',
                                 price: 'From $149/mo',
-                                desc: 'Weekly injection. Clinically proven to reduce appetite, blood sugar, and body weight.',
+                                desc: 'Weekly injection. May help reduce appetite, blood sugar, and body weight when combined with diet and exercise.',
                                 hot: true,
                             },
                             {
-                                name: 'Tirzepatide',
-                                sub: 'Generic',
+                                name: 'Compounded Tirzepatide',
+                                sub: 'Compounded',
                                 badge: 'Highest Efficacy',
                                 price: 'From $249/mo',
                                 desc: 'Dual-action GIP + GLP-1. Clinically superior weight loss results in head-to-head trials.',
@@ -785,6 +786,12 @@ export default function WeightLossPage() {
                             </FadeSection>
                         ))}
                     </div>
+                    
+                    <FadeSection className="mt-8">
+                        <div className="p-4 rounded-xl text-sm text-center" style={{ background: `${BRAND.navy}08`, color: BRAND.mutedText, border: `1px solid ${BRAND.navy}20` }}>
+                            <strong>Pharmacy Disclosure:</strong> Compounded medications are prepared by a licensed 503A compounding pharmacy at the direction of a clinical provider. We proudly partner with <strong>Strive Pharmacy</strong> as the dispensing compounding pharmacy, which is PCAB-accredited, NABP-accredited, and LegitScript-certified.
+                        </div>
+                    </FadeSection>
                 </div>
             </section>
 
@@ -998,7 +1005,7 @@ export default function WeightLossPage() {
                             },
                             {
                                 q: 'Are GLP-1 medications safe?',
-                                a: 'Yes. Semaglutide and tirzepatide have been extensively studied in large clinical trials and are FDA-approved for weight management. Your provider will review your full health history to confirm eligibility.',
+                                a: 'The active ingredients, semaglutide and tirzepatide, have been extensively studied in their FDA-approved, brand-name formulations. While compounded medications themselves are not FDA-approved, they are prepared in state-licensed pharmacies using strictly sourced, high-quality ingredients. Your provider will review your full health history to confirm safety and appropriateness.',
                             },
                             {
                                 q: 'Will my insurance cover this?',

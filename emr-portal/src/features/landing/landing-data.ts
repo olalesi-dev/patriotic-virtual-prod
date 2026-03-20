@@ -376,7 +376,7 @@ export const RADIOLOGY_EDUCATION_CARDS: RadiologyCard[] = [
         price: '$99 / analysis',
         title: 'AI-Powered Analysis',
         description:
-            'Physician-supervised AI interpretation of your radiology reports. We help explain complex findings in plain English.',
+            'Physician-supervised AI interpretation of your radiology reports for educational and informational purposes only. This does not constitute a clinical diagnosis. We help explain complex findings in plain English.',
     },
     {
         id: 'report-interpretation',
@@ -495,7 +495,7 @@ export const ABOUT_PROFILES: ClinicianProfile[] = [
         ],
         extraCardTitle: 'Partnership',
         extraCardBody:
-            'We partner with Sterling Union for operations, compliance, and administrative excellence, and with Orosun Health for advanced imaging and radiology support. Those partnerships help us deliver safe, coordinated, and compassionate virtual care.',
+            'We partner with Strive Pharmacy (LegitScript-certified and NABP-accredited) and Empower Pharmacy as our compounding pharmacy partners. Our licensed providers exclusively review and approve all prescriptions before securely transmitting them to these accredited pharmacies, ensuring you receive the highest quality, most reliable medications when appropriate for your personalized treatment plan. Together, these partnerships help us deliver safe, coordinated, and compassionate virtual care you can trust.',
     },
     {
         id: 'berrios',

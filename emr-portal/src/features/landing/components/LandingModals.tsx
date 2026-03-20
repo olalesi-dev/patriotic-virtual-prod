@@ -133,6 +133,12 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       showToast("Select a service.");
       return;
     }
+    if (s === 3) {
+      if (intake['florida_confirmation'] !== 'Yes') {
+        showToast("Services are currently available to patients located in Florida only.");
+        return;
+      }
+    }
     setConsultStep(s);
   };
 
@@ -552,7 +558,20 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 )
               )}
             </div>
-            <div className="ia">
+            <div className="iq" style={{ marginTop: "16px", padding: "16px", background: "rgba(16, 185, 129, 0.05)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "8px" }}>
+              <h3 style={{ color: "var(--navy)", marginBottom: "4px" }}>Florida Residency Confirmation <span style={{color: "red"}}>*</span></h3>
+              <p style={{ fontSize: "12px", marginBottom: "12px", color: "var(--g500)" }}>Are you physically located in the state of Florida at this time?</p>
+              <select 
+                value={intake['florida_confirmation'] || ''} 
+                onChange={(e) => setIntake({ ...intake, florida_confirmation: e.target.value })}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--g200)" }}
+              >
+                <option value="">Select an option</option>
+                <option value="Yes">Yes, I am located in Florida</option>
+                <option value="No">No, I am not in Florida</option>
+              </select>
+            </div>
+            <div className="ia" style={{ marginTop: "24px" }}>
               <button className="btn btn-ghost" onClick={() => cB(1)}>
                 ← Back
               </button>
