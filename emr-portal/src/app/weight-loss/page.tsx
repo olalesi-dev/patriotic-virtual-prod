@@ -477,7 +477,7 @@ export default function WeightLossPage() {
                                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-[0.2em]"
                                 style={{ background: 'rgba(201,151,58,0.15)', color: BRAND.gold, border: `1px solid rgba(201,151,58,0.3)` }}
                             >
-                                <Shield className="w-3.5 h-3.5" /> FDA-Approved GLP-1 Program
+                                <Shield className="w-3.5 h-3.5" /> FDA-Approved Rx Program
                             </span>
                             <span
                                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-[0.1em]"
@@ -499,7 +499,7 @@ export default function WeightLossPage() {
 
                         {/* Subheadline */}
                         <p className="text-lg md:text-xl leading-relaxed max-w-lg" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                            Personalized GLP-1 prescriptions, licensed providers, and ongoing support — all from home.
+                            Personalized Rx prescriptions, licensed providers, and ongoing support — all from home.
                         </p>
 
                         {/* CTAs */}
@@ -661,13 +661,13 @@ export default function WeightLossPage() {
                                 icon: <Stethoscope className="w-7 h-7" />,
                                 num: '02',
                                 title: 'Meet Your Provider',
-                                desc: 'A licensed clinician reviews your profile and creates your personalized GLP-1 treatment plan.',
+                                desc: 'A licensed clinician reviews your profile and creates your personalized Rx treatment plan.',
                             },
                             {
                                 icon: <Package className="w-7 h-7" />,
                                 num: '03',
                                 title: 'Start Your Treatment',
-                                desc: 'Your GLP-1 medication ships discreetly to your door. Ongoing monthly check-ins included.',
+                                desc: 'Your Rx medication ships discreetly to your door. Ongoing monthly check-ins included.',
                             },
                         ].map((step, i) => (
                             <FadeSection key={i} delay={i * 120}>
@@ -707,7 +707,7 @@ export default function WeightLossPage() {
                             className="text-4xl md:text-5xl font-bold mb-4"
                             style={{ fontFamily: "'Playfair Display', serif", color: BRAND.navy }}
                         >
-                            GLP-1 Weight Management Medications We Offer
+                            Rx Weight Management Medications We Offer
                         </h2>
                         <p className="text-lg max-w-2xl mx-auto" style={{ color: BRAND.mutedText }}>
                             Our providers prescribe based on your health profile, not a one-size-fits-all formula.<br/>
@@ -730,7 +730,7 @@ export default function WeightLossPage() {
                                 sub: 'Compounded',
                                 badge: 'Highest Efficacy',
                                 price: 'From $249/mo',
-                                desc: 'Dual-action GIP + GLP-1. Clinically superior weight loss results in head-to-head trials.',
+                                desc: 'Dual-action GIP + Rx. Clinically superior weight loss results in head-to-head trials.',
                                 hot: false,
                             },
                             {
@@ -828,7 +828,7 @@ export default function WeightLossPage() {
                             {
                                 name: 'Diane R.',
                                 loc: 'Orlando, FL',
-                                quote: 'After trying every diet and program, GLP-1 finally worked. The providers actually listened and personalized my plan.',
+                                quote: 'After trying every diet and program, Rx finally worked. The providers actually listened and personalized my plan.',
                                 result: 'Lost 18 lbs',
                                 time: '3 months',
                             },
@@ -1010,12 +1010,12 @@ export default function WeightLossPage() {
                                 a: 'Most patients notice appetite changes within the first 1–4 weeks. Significant weight loss (10–15% body weight) typically occurs over 3–6 months of consistent treatment.',
                             },
                             {
-                                q: 'Are GLP-1 medications safe?',
+                                q: 'Are Rx medications safe?',
                                 a: 'The active ingredients, semaglutide and tirzepatide, have been extensively studied in their FDA-approved, brand-name formulations. While compounded medications themselves are not FDA-approved, they are prepared in state-licensed pharmacies using strictly sourced, high-quality ingredients. Your provider will review your full health history to confirm safety and appropriateness.',
                             },
                             {
                                 q: 'Will my insurance cover this?',
-                                a: 'Generic GLP-1 medications are typically not covered by insurance. Brand-name Wegovy® and Zepbound® may be covered by select commercial plans. We can help you check your benefits.',
+                                a: 'Generic Rx medications are typically not covered by insurance. Brand-name Wegovy® and Zepbound® may be covered by select commercial plans. We can help you check your benefits.',
                             },
                             {
                                 q: 'What if I want to stop treatment?',
@@ -1052,7 +1052,7 @@ export default function WeightLossPage() {
                                 className="text-4xl md:text-6xl font-bold mb-5"
                                 style={{ fontFamily: "'Playfair Display', serif", color: BRAND.white }}
                             >
-                                Find out if GLP-1 is right for you.
+                                Find out if Rx is right for you.
                             </h2>
                             <p className="text-lg md:text-xl" style={{ color: 'rgba(255,255,255,0.65)' }}>
                                 Takes 3 minutes. No commitment required. A licensed provider reviews every submission.
@@ -1113,7 +1113,7 @@ export default function WeightLossPage() {
                         <div className="flex flex-wrap gap-x-16 gap-y-8">
                             <div className="space-y-3">
                                 <div className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND.gold }}>Programs</div>
-                                {['Weight Loss', 'GLP-1 Overview', 'Semaglutide', 'Tirzepatide'].map(l => (
+                                {['Weight Loss', 'Rx Overview', 'Semaglutide', 'Tirzepatide'].map(l => (
                                     <div key={l}>
                                         <a href="#" className="text-sm hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>{l}</a>
                                     </div>
@@ -1152,7 +1152,7 @@ export default function WeightLossPage() {
                         style={{ borderTop: `1px solid rgba(255,255,255,0.06)` }}
                     >
                         <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                            Patriotic Telehealth is not a pharmacy. Prescriptions are fulfilled by licensed pharmacy partners. GLP-1 medications require a valid prescription from a licensed provider. Results may vary. Not all patients will be determined eligible. This website is for informational purposes only and does not constitute medical advice.
+                            Patriotic Telehealth is not a pharmacy. Prescriptions are fulfilled by licensed pharmacy partners. Rx medications require a valid prescription from a licensed provider. Results may vary. Not all patients will be determined eligible. This website is for informational purposes only and does not constitute medical advice.
                         </p>
                         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
                             © 2025 Patriotic Telehealth. All rights reserved.
