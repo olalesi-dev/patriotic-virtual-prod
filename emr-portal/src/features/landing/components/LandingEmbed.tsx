@@ -79,12 +79,12 @@ const POPULAR_SERVICES: ServiceCard[] = [
     color: "blue",
     price: 129,
     title: {
-      en: "GLP-1 & Weight Loss",
-      es: "GLP-1 y Pérdida de Peso",
+      en: "Rx Weight Loss",
+      es: "Rx y Pérdida de Peso",
     },
     description: {
-      en: "Comprehensive medical weight loss evaluation. GLP-1 eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
-      es: "Evaluación médica integral de pérdida de peso. Detección para elegibilidad de GLP-1, titulación personalizada y orientación dietética. Costo del medicamento por separado.",
+      en: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
+      es: "Evaluación médica integral de pérdida de peso. Detección para elegibilidad de Rx, titulación personalizada y orientación dietética. Costo del medicamento por separado.",
     },
   },
 ];
@@ -310,7 +310,7 @@ const MARQUEE_ITEMS = [
   { icon: "📱", label: "Digital Health Platform" },
   { icon: "🌴", label: "Available in Florida" },
   { icon: "🩺", label: "General Telehealth" },
-  { icon: "💊", label: "GLP-1 Weight Loss" },
+  { icon: "💊", label: "Rx Weight Loss" },
   { icon: "⚡", label: "Erectile Dysfunction" },
 ] as const;
 const PROTOCOL_METRICS = [
@@ -324,7 +324,7 @@ const TESTIMONIALS = [
     initials: "MR",
     avatarClass: "ta1",
     quote:
-      '"Got my GLP-1 prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right."',
+      '"Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right."',
     name: "Marcus R.",
     details: "Weight Loss · Jacksonville, FL",
   },
@@ -1028,11 +1028,13 @@ export function LandingEmbed() {
                   <h3>AI-Powered Analysis</h3>
                   <p className="rd">
                     Physician-supervised AI interpretation of your radiology
-                    reports for educational and informational purposes only. This 
-                    does not constitute a clinical diagnosis. We help explain 
+                    reports. We help explain 
                     complex findings in plain English.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $99 <span>/ analysis</span>
                   </div>
                 </div>
@@ -1051,7 +1053,10 @@ export function LandingEmbed() {
                     translate medical jargon into clear, understandable
                     language.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $149 <span>/ report</span>
                   </div>
                 </div>
@@ -1069,7 +1074,10 @@ export function LandingEmbed() {
                     A complete educational over-read of your actual images
                     (X-Ray, CT, MRI) by a board-certified radiologist.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $249 <span>/ study</span>
                   </div>
                 </div>
@@ -1113,7 +1121,10 @@ export function LandingEmbed() {
                     video consultation to discuss findings directly with Dr.
                     Olalesi Osunsade, MD.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $449 <span>/ consult</span>
                   </div>
                 </div>
@@ -1938,10 +1949,10 @@ export function LandingEmbed() {
               </p>
 
               <h4 style={{ color: "white", marginBottom: 6 }}>
-                4. GLP-1 & Weight Loss
+                4. Rx Weight Loss
               </h4>
               <p style={{ marginBottom: 12 }}>
-                For GLP-1 agonist prescriptions (e.g., Semaglutide/Tirzepatide),
+                For Rx agonist prescriptions (e.g., Semaglutide/Tirzepatide),
                 you acknowledge potential side effects including nausea,
                 vomiting, and risk of thyroid C-cell tumors. You confirm you do
                 not have a personal or family history of Medullary Thyroid

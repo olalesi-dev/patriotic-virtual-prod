@@ -338,12 +338,12 @@ export const HERO_SERVICES: LandingService[] = [
         tone: 'blue',
         price: 129,
         title: {
-            en: 'GLP-1 & Weight Loss',
-            es: 'GLP-1 y Perdida de Peso',
+            en: 'Rx Weight Loss',
+            es: 'Rx y Perdida de Peso',
         },
         description: {
-            en: 'Comprehensive medical weight loss evaluation with GLP-1 eligibility screening, personalized titration, and dietary guidance.',
-            es: 'Evaluacion medica integral de perdida de peso con elegibilidad para GLP-1, titulacion personalizada y orientacion dietetica.',
+            en: 'Comprehensive medical weight loss evaluation with Rx eligibility screening, personalized titration, and dietary guidance.',
+            es: 'Evaluacion medica integral de perdida de peso con elegibilidad para Rx, titulacion personalizada y orientacion dietetica.',
         },
     },
 ];
@@ -363,7 +363,7 @@ export const MARQUEE_ITEMS = [
     { label: 'Digital Health Platform', icon: MonitorSmartphone },
     { label: 'Available in Florida', icon: MapPinned },
     { label: 'General Telehealth', icon: Stethoscope },
-    { label: 'GLP-1 Weight Loss', icon: Pill },
+    { label: 'Rx Weight Loss', icon: Pill },
     { label: 'Erectile Dysfunction', icon: Zap },
 ] as const;
 
@@ -447,7 +447,7 @@ export const TESTIMONIALS = [
     {
         initials: 'MR',
         quote:
-            'Got my GLP-1 prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right.',
+            'Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right.',
         name: 'Marcus R.',
         details: 'Weight Loss - Jacksonville, FL',
     },
