@@ -244,6 +244,54 @@ footer{background:#060F1C;border-top:1px solid rgba(201,151,58,.1);padding:60px 
 .footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:28px}
 .footer-disclaimer{font-size:.75rem;color:rgba(255,255,255,.22);line-height:1.75;margin-bottom:12px}
 .footer-copy{font-size:.78rem;color:rgba(255,255,255,.18)}
+
+/* ── Dark Mode Support ── */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #060F1C;
+    color: #f1f5f9;
+  }
+  .section-title { color: #f8fafc; }
+  .section-sub { color: #94a3b8; }
+  .nav-inner { background: rgba(6, 15, 28, 0.9); }
+  #navbar.scrolled { background: rgba(6, 15, 28, 0.97); border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .nav-links a { color: #f1f5f9; }
+  #navbar.scrolled .nav-links a { color: #f1f5f9; }
+  #mobile-menu { background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  #mobile-menu a { color: #f1f5f9; border-color: rgba(255,255,255,0.05); }
+
+  .bg-light-gray { background: #0f172a !important; color: #f8fafc !important; }
+  .bg-light-gray h2, .bg-light-gray strong { color: #f8fafc !important; }
+  .bg-light-gray span { color: #94a3b8 !important; }
+
+  .disclaimer-box {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+  }
+  .disclaimer-box strong { color: #f1f5f9 !important; }
+
+  .med-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+  .med-head { border-color: rgba(255,255,255,0.05); }
+  .med-name { color: #f8fafc; }
+  .med-desc { color: #94a3b8; }
+
+  #trust { background: #0A1128; border-color: rgba(201,151,58,0.2); }
+  .trust-label { color: rgba(255,255,255,0.4); }
+  .trust-media { color: rgba(255,255,255,0.7); }
+
+  .faq-q { background: #0f172a; color: #f8fafc; border-color: rgba(255,255,255,0.05); }
+  .faq-icon { background: rgba(255,255,255,0.05); color: #f8fafc; }
+  .faq-item.open .faq-q { background: rgba(201,151,58,0.1); }
+  .faq-a { background: rgba(201,151,58,0.05); }
+  .faq-a p { color: #cbd5e1; }
+
+  .price-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+  .price-amount { color: #f8fafc; }
+  .price-feature { color: #cbd5e1; }
+  .price-btn-dark { background: #334155; }
+  .price-btn-dark:hover { background: #475569; }
+}
 </style>
 </head>
 <body>
@@ -360,7 +408,7 @@ footer{background:#060F1C;border-top:1px solid rgba(201,151,58,.1);padding:60px 
 </div>
 
 <!-- ── HOW IT WORKS ── -->
-<section style="padding:3rem 1rem;background:#f9fafb;" id="how-it-works">
+<section style="padding:3rem 1rem;background:#f9fafb;" class="bg-light-gray" id="how-it-works">
   <div style="max-width:56rem;margin:0 auto;">
     <h2 style="font-size:1.5rem;font-weight:700;text-align:center;color:#1f2937;margin-bottom:2.5rem;">
       How It Works
@@ -390,8 +438,12 @@ footer{background:#060F1C;border-top:1px solid rgba(201,151,58,.1);padding:60px 
   </div>
 </section>
 
-<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0.5rem;padding:1rem;margin:1.5rem auto;font-size:0.875rem;color:#374151;max-width:56rem;">
+<div class="disclaimer-box" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0.5rem;padding:1rem;margin:1.5rem auto;font-size:0.875rem;color:#374151;max-width:56rem;">
   <strong>Medical Disclaimer:</strong> This platform provides telehealth services. A licensed provider will evaluate each patient to determine clinical appropriateness. No treatment is guaranteed. Individual results vary.
+</div>
+
+<div class="disclaimer-box" style="background:#fff1f2;border:1px solid #fecdd3;border-radius:0.5rem;padding:1rem;margin:1.5rem auto;font-size:0.875rem;color:#881337;max-width:56rem;">
+  <strong>Controlled Substance Disclaimer:</strong> No DEA-Scheduled Controlled Substances (such as Adderall, Xanax, or Phentermine) will be prescribed under any circumstances on this platform.
 </div>
 
 <!-- ── MEDICATIONS ── -->
