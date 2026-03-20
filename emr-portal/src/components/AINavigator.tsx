@@ -23,6 +23,59 @@ export default function AINavigator() {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // DRAG STATE
+  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, startX: 0, startY: 0 });
+  const hasDraggedRef = useRef(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartRef.current.startX;
+      const dy = dragStartRef.current.startY - e.clientY; // Note: bottom-based logic
+      
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        hasDraggedRef.current = true;
+      }
+
+      let newX = dragStartRef.current.x - dx; // right based
+      let newY = dragStartRef.current.y - dy; // bottom based
+      
+      // Simple bounds
+      if (newX < 0) newX = 0;
+      if (newY < 0) newY = 0;
+      if (newX > window.innerWidth - 60) newX = window.innerWidth - 60;
+      if (newY > window.innerHeight - 60) newY = window.innerHeight - 60;
+
+      setPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    hasDraggedRef.current = false;
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: position.x,
+      y: position.y,
+      startX: e.clientX,
+      startY: e.clientY
+    };
+  };
+
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       aiStart();
@@ -262,25 +315,29 @@ export default function AINavigator() {
   };
 
   return (
-    <>
+    <div style={{ position: 'fixed', right: `${position.x}px`, bottom: `${position.y}px`, zIndex: 999999 }}>
       <button
         className={`ai-fab ${isOpen ? "open" : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
-        style={{ zIndex: 999999 }}
+        onClick={() => {
+          if (!hasDraggedRef.current) setIsOpen(!isOpen);
+        }}
+        onMouseDown={handleDragStart}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
-        <div className="ai-pulse"></div>
-        <span className="fab-icon">💬</span>
-        <span className="fab-close">✕</span>
-        <div className="ai-label">AI Health Navigator</div>
+        <div className="ai-pulse" style={{ pointerEvents: 'none' }}></div>
+        <span className="fab-icon" style={{ pointerEvents: 'none' }}>💬</span>
+        <span className="fab-close" style={{ pointerEvents: 'none' }}>✕</span>
+        <div className="ai-label" style={{ pointerEvents: 'none' }}>Drag or Click</div>
       </button>
 
-      <div className={`ai-chat ${isOpen ? "open" : ""}`} style={{ zIndex: 999999 }}>
-        <div className="ai-chat-head">
+      <div className={`ai-chat ${isOpen ? "open" : ""}`} style={{ right: 0, bottom: '80px', position: 'absolute' }}>
+        <div className="ai-chat-head" onMouseDown={handleDragStart} style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
           <div className="ai-chat-dot">🤖</div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div className="ai-chat-title">AI Health Navigator</div>
             <div className="ai-chat-sub">Check eligibility · Find services · Get started</div>
           </div>
+          <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="text-white hover:text-indigo-200">✕</button>
         </div>
         <div className="ai-chat-body">
           {messages.map((m) => (
@@ -340,6 +397,6 @@ export default function AINavigator() {
           <button onClick={handleSend}>→</button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
