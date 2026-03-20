@@ -6242,6 +6242,42 @@
     body:not(.light-theme) #landingPage footer a:hover {
       color: #ffffff !important;
     }
+
+    /* FIX PROVIDERS AND MED DISCLAIMER DARK MODE */
+    body:not(.light-theme) #providers {
+      background: #000000 !important;
+    }
+    body:not(.light-theme) #providers .sec-sub {
+      color: #94a3b8 !important;
+    }
+    body:not(.light-theme) #providers h2,
+    body:not(.light-theme) #providers h3 {
+      color: #ffffff !important;
+    }
+    body:not(.light-theme) #providers .provider-card {
+      background: #0f172a !important;
+      border-color: #1e293b !important;
+    }
+    body:not(.light-theme) #providers .provider-card p {
+      color: #94a3b8 !important;
+    }
+
+    .med-disclaimer {
+      background: #eff6ff !important;
+      border: 1px solid #bfdbfe !important;
+      color: #374151 !important;
+    }
+    .med-disclaimer strong {
+      color: #1e3a8a !important;
+    }
+    body:not(.light-theme) .med-disclaimer {
+      background: #0f172a !important;
+      border-color: #1e293b !important;
+      color: #94a3b8 !important;
+    }
+    body:not(.light-theme) .med-disclaimer strong {
+      color: #cbd5e1 !important;
+    }
   </style>
 </head>
 
@@ -6691,8 +6727,8 @@
 
     <!-- MED DISCLAIMER BLOCK -->
     <div class="container" style="margin-top:2rem;margin-bottom:2rem;">
-      <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:0.5rem;padding:1.5rem;font-size:0.875rem;color:#cbd5e1;max-width:56rem;">
-        <strong style="color:#93c5fd;">Medical Disclaimer:</strong> This platform provides telehealth services. A licensed provider will evaluate each patient to determine clinical appropriateness. No treatment is guaranteed. Individual results vary.
+      <div class="med-disclaimer" style="border-radius:0.5rem;padding:1.5rem;font-size:0.875rem;max-width:56rem;">
+        <strong>Medical Disclaimer:</strong> This platform provides telehealth services. A licensed provider will evaluate each patient to determine clinical appropriateness. No treatment is guaranteed. Individual results vary.
       </div>
     </div>
 
@@ -6878,7 +6914,7 @@
         <p class="sec-sub">Get to know the specific medical professionals evaluating your health.</p>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 40px;">
-          <div style="padding: 32px; border: 1px solid var(--g200); border-radius: 12px; background: #fff;">
+          <div class="provider-card" style="padding: 32px; border: 1px solid var(--g200); border-radius: 12px; background: #fff;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
               <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--base-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">OO</div>
               <div>
@@ -6891,7 +6927,7 @@
               ✓ Active Florida Medical License
             </div>
           </div>
-          <div style="padding: 32px; border: 1px solid var(--g200); border-radius: 12px; background: #fff;">
+          <div class="provider-card" style="padding: 32px; border: 1px solid var(--g200); border-radius: 12px; background: #fff;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
               <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--base-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">AB</div>
               <div>
