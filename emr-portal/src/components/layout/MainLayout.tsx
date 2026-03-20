@@ -32,6 +32,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [activeUser, setActiveUser] = useState<FirebaseUser | null>(auth.currentUser);
 
+    const [unreadInbox, setUnreadInbox] = useState(0);
+    const [unreadWaitlist, setUnreadWaitlist] = useState(0);
+
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         'Clinical': true, 'CRM': true, 'Social': true, 'Orders & Rx': true,
         'Services': true, 'Specialty Modules': true, 'AI Tools': true,
@@ -102,9 +105,31 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
         const unsubModules = initializeModulesListener();
 
+        let unsubInbox = () => {};
+        let unsubWaitlist = () => {};
+
+        const setupListeners = async (user: FirebaseUser) => {
+            const { db } = await import('@/lib/firebase');
+            const { collection, query, where, onSnapshot } = await import('firebase/firestore');
+            
+            // Inbox Listener
+            const inboxQuery = query(collection(db, 'threads'), where('providerId', '==', user.uid), where('providerUnreadCount', '>', 0));
+            unsubInbox = onSnapshot(inboxQuery, (snap) => setUnreadInbox(snap.docs.length));
+            
+            // Waitlist Listener
+            const waitlistQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
+            unsubWaitlist = onSnapshot(waitlistQuery, (snap) => setUnreadWaitlist(snap.docs.length));
+        };
+
+        if (auth.currentUser) {
+            setupListeners(auth.currentUser);
+        }
+
         return () => {
             unsubscribe();
             unsubModules();
+            unsubInbox();
+            unsubWaitlist();
         };
     }, []);
 
@@ -225,8 +250,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname.startsWith('/calendar')} collapsed={isSidebarCollapsed} />
                             <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
                             <NavItem href="/team" icon={Users} label="Team" active={pathname.startsWith('/team')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge="3" active={pathname.startsWith('/inbox')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" active={pathname.startsWith('/waitlist')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge={unreadInbox > 0 ? unreadInbox.toString() : undefined} active={pathname.startsWith('/inbox')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" badge={unreadWaitlist > 0 ? unreadWaitlist.toString() : undefined} active={pathname.startsWith('/waitlist')} collapsed={isSidebarCollapsed} />
                         </CollapsibleGroup>
 
                         {/* CRM */}

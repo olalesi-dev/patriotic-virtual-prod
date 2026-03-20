@@ -188,7 +188,8 @@ export default function MessagesPage() {
             await updateDoc(doc(db, 'threads', activeThread.id), {
                 lastMessage: text || 'View Attachment',
                 lastMessageAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                providerUnreadCount: 1
             });
         } catch (error) {
             toast.error('Failed to send message');
@@ -237,7 +238,8 @@ export default function MessagesPage() {
                 lastMessage: composeData.body,
                 lastMessageAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                unreadCount: 0
+                unreadCount: 0,
+                providerUnreadCount: 1,
             });
 
             await addDoc(collection(db, 'threads', threadRef.id, 'messages'), {
