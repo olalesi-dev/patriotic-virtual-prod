@@ -725,6 +725,9 @@ export function LandingEmbed() {
                   <div className="bdot" />
                   <span>{copy.hero.badge}</span>
                 </div>
+                <div className="hero-badge" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#00d9a3', marginLeft: '8px' }}>
+                  <span>📍 Services are currently available to patients located in Florida only.</span>
+                </div>
                 <h1 dangerouslySetInnerHTML={{ __html: copy.hero.titleHtml }} />
                 <p className="hero-sub">{copy.hero.subtitle}</p>
                 <div className="hero-ctas">
@@ -1338,11 +1341,12 @@ export function LandingEmbed() {
                   {copy.footer.contact}
                 </a>
                 <a
-                  href="#"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    openConsent();
-                  }}
+                  href="/terms"
+                >
+                  Terms of Service
+                </a>
+                <a
+                  href="/privacy-policy"
                 >
                   {copy.footer.privacy}
                 </a>
@@ -1353,6 +1357,10 @@ export function LandingEmbed() {
               <span>{copy.footer.copy}</span>
               <span>{copy.footer.badges}</span>
             </div>
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', maxWidth: '48rem', margin: '1rem auto 0' }}>
+              All treatments are prescribed only after evaluation by a licensed medical provider.
+              Not all patients qualify. Results may vary.
+            </p>
           </div>
         </footer>
       </main>

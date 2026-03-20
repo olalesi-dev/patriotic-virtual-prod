@@ -472,12 +472,18 @@ export default function WeightLossPage() {
                         }}
                     >
                         {/* Eyebrow */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <span
                                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-[0.2em]"
                                 style={{ background: 'rgba(201,151,58,0.15)', color: BRAND.gold, border: `1px solid rgba(201,151,58,0.3)` }}
                             >
                                 <Shield className="w-3.5 h-3.5" /> FDA-Approved GLP-1 Program
+                            </span>
+                            <span
+                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-[0.1em]"
+                                style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#00d9a3', border: `1px solid rgba(16, 185, 129, 0.3)` }}
+                            >
+                                📍 Services currently available in Florida only
                             </span>
                         </div>
 
@@ -1102,11 +1108,18 @@ export default function WeightLossPage() {
                             </div>
                             <div className="space-y-3">
                                 <div className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND.gold }}>Legal</div>
-                                {['Privacy Policy', 'Terms of Service', 'HIPAA Notice', 'Contact'].map(l => (
-                                    <div key={l}>
-                                        <a href="#" className="text-sm hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>{l}</a>
-                                    </div>
-                                ))}
+                                <div>
+                                    <a href="/privacy-policy" className="text-sm hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>Privacy Policy</a>
+                                </div>
+                                <div>
+                                    <a href="/terms" className="text-sm hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>Terms of Service</a>
+                                </div>
+                                <div>
+                                    <a href="/privacy-policy" className="text-sm hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>HIPAA Notice</a>
+                                </div>
+                                <div>
+                                    <a href="mailto:hello@patriotictelehealth.com" className="text-sm hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>Contact</a>
+                                </div>
                             </div>
                         </div>
                     </div>

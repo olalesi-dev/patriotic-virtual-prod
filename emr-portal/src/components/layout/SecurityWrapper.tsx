@@ -165,7 +165,7 @@ export function SecurityWrapper({ children }: { children: React.ReactNode }) {
                         <div className="p-10 flex-1">
                             <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-4">Privacy & Health Data Consent</h3>
                             <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed mb-8">
-                                By continuing, you acknowledge that you have read and agree to our <a href="/privacy" className="text-[#0EA5E9] underline">Privacy Policy</a>. We process your data in accordance with HIPAA-readiness standards to ensure maximum medical privacy.
+                                By continuing, you acknowledge that you have read and agree to our <a href="/privacy-policy" className="text-[#0EA5E9] underline">Privacy Policy</a>. We process your data in accordance with HIPAA-readiness standards to ensure maximum medical privacy.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <button
