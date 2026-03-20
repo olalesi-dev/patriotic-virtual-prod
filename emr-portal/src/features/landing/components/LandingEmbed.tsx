@@ -1334,11 +1334,7 @@ export function LandingEmbed() {
               <div className="footer-col">
                 <h4>{copy.footer.support}</h4>
                 <a
-                  href="#"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    showToast("FAQ coming soon!");
-                  }}
+                  href="/faq"
                 >
                   {copy.footer.faq}
                 </a>

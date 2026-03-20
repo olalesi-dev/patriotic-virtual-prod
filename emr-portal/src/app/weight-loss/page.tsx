@@ -792,6 +792,12 @@ export default function WeightLossPage() {
                             <strong>Pharmacy Disclosure:</strong> Compounded medications are prepared by a licensed 503A compounding pharmacy at the direction of a clinical provider. We proudly partner with <strong>Strive Pharmacy</strong> as the dispensing compounding pharmacy, which is PCAB-accredited, NABP-accredited, and LegitScript-certified. For pharmacy support or medication tracking, patients may contact Strive Pharmacy directly at <b>(480) 626-4366</b> or their centralized support line.
                         </div>
                     </FadeSection>
+                    
+                    <FadeSection className="mt-4">
+                        <div className="p-4 rounded-xl text-sm text-center" style={{ background: '#fff1f2', color: '#be123c', border: `1px solid #fda4af` }}>
+                            <strong>⚠️ Controlled Substances Disclaimer:</strong> No DEA-Scheduled Controlled Substances (such as Adderall, Xanax, or Phentermine) will be prescribed under any circumstances on this platform. All prescribing is subject to the strict clinical evaluation of our licensed providers.
+                        </div>
+                    </FadeSection>
                 </div>
             </section>
 
