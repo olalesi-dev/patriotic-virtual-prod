@@ -1028,7 +1028,9 @@ export function LandingEmbed() {
                   <h3>AI-Powered Analysis</h3>
                   <p className="rd">
                     Physician-supervised AI interpretation of your radiology
-                    reports. We help explain complex findings in plain English.
+                    reports for educational and informational purposes only. This 
+                    does not constitute a clinical diagnosis. We help explain 
+                    complex findings in plain English.
                   </p>
                   <div className="rpt">
                     $99 <span>/ analysis</span>
@@ -1629,17 +1631,10 @@ export function LandingEmbed() {
                       lineHeight: 1.6,
                     }}
                   >
-                    We believe exceptional care is built on strong
-                    collaboration. That&apos;s why we proudly partner with
-                    Sterling Union, a trusted Management Services Organization
-                    (MSO) that supports our operations, compliance, and
-                    administrative excellence, allowing our clinical team to
-                    stay focused on what matters most: you. For advanced imaging
-                    and radiology expertise, we work closely with Orosun Health,
-                    ensuring seamless access to high-quality diagnostic support
-                    when specialized insight is needed. Together, these
-                    partnerships help us deliver safe, coordinated, and
-                    compassionate virtual care you can trust.
+                    We believe exceptional care is built on strong collaboration.
+                    That&apos;s why we proudly partner with Strive Pharmacy
+                    (LegitScript-certified and NABP-accredited) and Empower
+                    Pharmacy as our compounding pharmacy partners. Our licensed providers exclusively review and approve all prescriptions before securely transmitting them to these accredited pharmacies, ensuring you receive the highest quality, most reliable medications when appropriate for your personalized treatment plan. Together, these partnerships help us deliver safe, coordinated, and compassionate virtual care you can trust.
                   </p>
                 </div>
               </div>
