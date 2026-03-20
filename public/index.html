@@ -10023,36 +10023,35 @@
       document.getElementById("dashboardPage").style.display = "none";
     }
     async function showDashboard() {
+      toast("Redirecting to your EMR portal...");
       document.getElementById("landingPage").style.display = "none";
-      document.getElementById("dashboardPage").style.display = "block";
-      if (user)
-        document.getElementById("dashWelcome").textContent =
-          "Welcome back, " + user.firstName;
-      await fetchConsultations();
-
-      // Initialize Calendar
-      setTimeout(() => {
-        if (patientCalendar) patientCalendar.updateSize();
-        else initPatientCalendar();
-      }, 100);
-
-      // Reset tabs to default
-      switchDashTab("visits");
-
-      // Check for Payment Success Return
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("payment") === "success") {
-        const consultationId = params.get("consultationId");
-        console.log(
-          "Payment success detected, consultationId:",
-          consultationId,
-        );
-
-        if (consultationId) {
-          handlePaymentSuccess(consultationId);
-        } else {
-          toast("Payment received! Please check your dashboard.");
+      const EMR_BASE = 'https://patriotic-virtual-emr.web.app';
+      const isAdmin = user && ['admin', 'provider', 'doctor'].includes(user.role);
+      const endpoint = isAdmin ? '/admin' : '/patient';
+      
+      try {
+        let tokenParam = '';
+        if (auth && auth.currentUser) {
+          try {
+            const idTok = await auth.currentUser.getIdToken();
+            const bridgeRes = await fetch(`${API}/api/v1/auth/bridge-token`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${idTok}`, 'Content-Type': 'application/json' }
+            });
+            if (bridgeRes.ok) {
+              const data = await bridgeRes.json();
+              if (data.customToken) {
+                tokenParam = `?token=${encodeURIComponent(data.customToken)}`;
+              }
+            }
+          } catch (bridgeErr) {
+            console.warn('Bridge token failed:', bridgeErr.message);
+          }
         }
+        window.location.href = `${EMR_BASE}${endpoint}${tokenParam}`;
+      } catch (err) {
+        console.error("Dashboard redirect error:", err);
+        window.location.href = EMR_BASE;
       }
     }
 
