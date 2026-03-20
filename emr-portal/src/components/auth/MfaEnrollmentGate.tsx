@@ -9,7 +9,7 @@ const isPublicRoute = (pathname: string) =>
     pathname === '/' ||
     pathname === '/login' ||
     pathname === '/signup' ||
-    pathname === '/privacy' ||
+    pathname === '/privacy-policy' ||
     pathname === '/terms' ||
     pathname === '/forgot-password' ||
     pathname.startsWith('/book');

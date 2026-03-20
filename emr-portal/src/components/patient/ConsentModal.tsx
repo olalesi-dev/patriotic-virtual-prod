@@ -139,7 +139,7 @@ export function ConsentModal() {
                     <div className="flex items-start gap-3 mb-4 bg-sky-50 border border-sky-100 rounded-2xl p-4">
                         <CheckCircle2 className="w-5 h-5 text-sky-500 mt-0.5 shrink-0" />
                         <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                            By clicking <strong>"I Accept"</strong>, you confirm that you have read and agree to Patriotic Virtual Telehealth's Privacy Policy, HIPAA Notice of Privacy Practices, Telehealth Informed Consent, and Patient Rights & Responsibilities.
+                            By clicking <strong>"I Accept"</strong>, you confirm that you have read and agree to Patriotic Virtual Telehealth's <a href="/privacy-policy" className="text-[#0EA5E9] underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>, HIPAA Notice of Privacy Practices, Telehealth Informed Consent, and Patient Rights & Responsibilities.
                         </p>
                     </div>
                     <button
