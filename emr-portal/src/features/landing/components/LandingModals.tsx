@@ -653,6 +653,20 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               board-certified provider will review your medical information against our treatment
               protocols. No prescription will be generated prior to a clinical encounter, and a licensed provider must review and approve all compounded medication orders before transmission to the pharmacy.
             </p>
+            <div style={{ marginTop: "16px", display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px", background: "rgba(255, 255, 255, 0.5)", border: "1px solid var(--g200)", borderRadius: "var(--r-sm)" }}>
+              <input type="checkbox" id="npp-consent" checked={intake.nppConsent || false} onChange={e => sIntake({...intake, nppConsent: e.target.checked})} style={{ marginTop: "2px", cursor: "pointer" }} />
+              <label htmlFor="npp-consent" style={{ fontSize: "13px", color: "var(--navy)", lineHeight: "1.4", cursor: "pointer" }}>
+                I acknowledge receipt of the <a href="/npp" target="_blank" style={{ color: "var(--primary)", textDecoration: "underline", fontWeight: 600 }}>Notice of Privacy Practices</a>.
+              </label>
+            </div>
+            
+            <div style={{ marginTop: "12px", marginBottom: "32px", display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px", background: "rgba(255, 255, 255, 0.5)", border: "1px solid var(--g200)", borderRadius: "var(--r-sm)" }}>
+              <input type="checkbox" id="th-consent" checked={intake.telehealthConsent || false} onChange={e => sIntake({...intake, telehealthConsent: e.target.checked})} style={{ marginTop: "2px", cursor: "pointer" }} />
+              <label htmlFor="th-consent" style={{ fontSize: "13px", color: "var(--navy)", lineHeight: "1.4", cursor: "pointer" }}>
+                I agree to the <a href="/telehealth-consent" target="_blank" style={{ color: "var(--primary)", textDecoration: "underline", fontWeight: 600 }}>Informed Consent for Telehealth Services</a>.
+              </label>
+            </div>
+
             <div className="ia">
               <button className="btn btn-ghost" onClick={() => cB(2)}>
                 ← Back
@@ -660,7 +674,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               <button
                 className="btn btn-primary"
                 onClick={subC}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !intake.nppConsent || !intake.telehealthConsent}
               >
                 {isSubmitting ? "Processing..." : "Submit Visit →"}
               </button>

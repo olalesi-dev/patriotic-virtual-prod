@@ -789,7 +789,7 @@ export default function WeightLossPage() {
                     
                     <FadeSection className="mt-8">
                         <div className="p-4 rounded-xl text-sm text-center" style={{ background: `${BRAND.navy}08`, color: BRAND.mutedText, border: `1px solid ${BRAND.navy}20` }}>
-                            <strong>Pharmacy Disclosure:</strong> Compounded medications are prepared by a licensed 503A compounding pharmacy at the direction of a clinical provider. We proudly partner with <strong>Strive Pharmacy</strong> as the dispensing compounding pharmacy, which is PCAB-accredited, NABP-accredited, and LegitScript-certified.
+                            <strong>Pharmacy Disclosure:</strong> Compounded medications are prepared by a licensed 503A compounding pharmacy at the direction of a clinical provider. We proudly partner with <strong>Strive Pharmacy</strong> as the dispensing compounding pharmacy, which is PCAB-accredited, NABP-accredited, and LegitScript-certified. For pharmacy support or medication tracking, patients may contact Strive Pharmacy directly at <b>(480) 626-4366</b> or their centralized support line.
                         </div>
                     </FadeSection>
                 </div>
