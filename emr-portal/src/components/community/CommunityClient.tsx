@@ -106,10 +106,10 @@ export function CommunityClient({ role }: { role: 'patient' | 'provider' }) {
                 displayName: formName.trim(),
                 bio: formBio.trim(),
                 journeyTag: formTag,
-                avatarUrl,
                 streak: 1,
                 score: 10
             };
+            if (avatarUrl) newProfile.avatarUrl = avatarUrl;
 
             await setDoc(doc(db, 'community-profiles', auth.currentUser.uid), newProfile);
             setProfile(newProfile);

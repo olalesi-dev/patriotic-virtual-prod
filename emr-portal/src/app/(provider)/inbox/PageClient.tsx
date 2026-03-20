@@ -28,43 +28,7 @@ type Thread = {
     tags?: string[];
 };
 
-// --- MOCK DATA ---
-const INITIAL_THREADS: Thread[] = [
-    {
-        id: 't1',
-        subject: 'Follow-up on blood work',
-        participants: ['Wendy Smith'],
-        folder: 'inbox',
-        status: 'open',
-        lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        messages: [
-            { id: 'm1', sender: 'Wendy Smith', senderType: 'patient', content: 'Hi Dr. Dayo, I received my results. Can we discuss them?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), read: true },
-            { id: 'm2', sender: 'Dr. Dayo', senderType: 'provider', content: 'Certainly Wendy. Everything looks stable, but I have a few notes.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), read: true }
-        ]
-    },
-    {
-        id: 't2',
-        subject: 'Prescription Renewal',
-        participants: ['Michael Brown'],
-        folder: 'inbox',
-        status: 'open',
-        lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 5),
-        messages: [
-            { id: 'm3', sender: 'Michael Brown', senderType: 'patient', content: 'I am running low on my medication. Can I get a refill?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), read: false }
-        ]
-    },
-    {
-        id: 't3',
-        subject: 'Referral Letter',
-        participants: ['Sarah Connor'],
-        folder: 'sent',
-        status: 'closed',
-        lastActivity: new Date(Date.now() - 1000 * 60 * 60 * 48),
-        messages: [
-            { id: 'm4', sender: 'Dr. Dayo', senderType: 'provider', content: 'Attached is the referral letter we discussed.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48), read: true }
-        ]
-    }
-];
+// --- MOCK DATA REMOVED ---
 
 export default function InboxPage() {
     // --- STATE ---
@@ -76,7 +40,9 @@ export default function InboxPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Data State
-    const [threads, setThreads] = useState<Thread[]>(INITIAL_THREADS);
+    // Data State
+    const [threads, setThreads] = useState<any[]>([]);
+    const [messages, setMessages] = useState<any[]>([]);
     const [replyText, setReplyText] = useState('');
     const [composeMessage, setComposeMessage] = useState('');
 
@@ -84,12 +50,58 @@ export default function InboxPage() {
     const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
     const [connectedInboxes, setConnectedInboxes] = useState<{ id: string, name: string, type: 'google' | 'microsoft' | string }[]>([]);
 
+    useEffect(() => {
+        import('@/lib/firebase').then(({ db, auth }) => {
+            const { collection, query, where, onSnapshot, orderBy } = require('firebase/firestore');
+            const unsubscribeAuth = auth.onAuthStateChanged((user: any) => {
+                if (user) {
+                    const q = query(collection(db, 'threads'), where('providerId', '==', user.uid), orderBy('lastMessageAt', 'desc'));
+                    const unsub = onSnapshot(q, (snap: any) => {
+                        setThreads(snap.docs.map((d: any) => ({
+                            id: d.id,
+                            ...d.data(),
+                            participants: ['Patient'], // fallback if patientName is missing
+                            folder: 'inbox',
+                            status: 'open'
+                        })));
+                    });
+                    return () => unsub();
+                }
+            });
+            return () => unsubscribeAuth();
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!selectedThreadId) return;
+        import('@/lib/firebase').then(({ db }) => {
+            const { collection, query, onSnapshot, orderBy, doc, updateDoc } = require('firebase/firestore');
+            const q = query(collection(db, 'threads', selectedThreadId, 'messages'), orderBy('createdAt', 'asc'));
+            const unsub = onSnapshot(q, (snap: any) => {
+                const msgs = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+                setMessages(msgs);
+
+                // Mark patient messages as read
+                snap.docs.forEach((d: any) => {
+                    const msg = d.data();
+                    if (msg.senderType === 'patient' && !msg.read) {
+                        updateDoc(doc(db, 'threads', selectedThreadId, 'messages', d.id), { read: true });
+                    }
+                });
+                
+                // Set unread count to 0 for provider
+                updateDoc(doc(db, 'threads', selectedThreadId), { providerUnreadCount: 0 }).catch(() => {});
+            });
+            return () => unsub();
+        });
+    }, [selectedThreadId]);
+
     // --- DERIVED STATE ---
     const filteredThreads = threads.filter(t => {
         // Folder Filter
         if (activeFolder === 'sent' && t.folder !== 'sent') return false;
         if (activeFolder === 'draft' && t.folder !== 'draft') return false;
-        if (activeFolder === 'all' && t.folder === 'deleted') return false; // All doesn't show deleted usually
+        if (activeFolder === 'all' && t.folder === 'deleted') return false;
 
         // Tab Filter (Status)
         if (activeTab === 'Open' && t.status !== 'open') return false;
@@ -98,73 +110,57 @@ export default function InboxPage() {
         // Search Filter
         if (searchTerm) {
             const lowerSearch = searchTerm.toLowerCase();
-            return t.subject.toLowerCase().includes(lowerSearch) ||
-                t.participants.some(p => p.toLowerCase().includes(lowerSearch));
+            return (t.subject || '').toLowerCase().includes(lowerSearch) ||
+                (t.patientName || '').toLowerCase().includes(lowerSearch);
         }
-
         return true;
     });
 
     const selectedThread = threads.find(t => t.id === selectedThreadId);
 
     // --- HANDLERS ---
-    const handleCompose = (e: React.FormEvent) => {
+    const handleCompose = async (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, this would use form data. Mocking a new sent message.
-        const newThread: Thread = {
-            id: `t${Date.now()}`,
-            subject: 'New Secure Message',
-            participants: ['Unknown Recipient'],
-            folder: 'sent',
-            status: 'open',
-            lastActivity: new Date(),
-            messages: [
-                { id: `m${Date.now()}`, sender: 'Dr. Dayo', senderType: 'provider', content: 'This is a secure message.', timestamp: new Date(), read: true }
-            ]
-        };
-        setThreads([newThread, ...threads]);
+        // Skip compose for now as patients initialize threads usually, or add full implementation
         setIsComposeOpen(false);
-        setActiveFolder('sent');
-        setSelectedThreadId(newThread.id);
     };
 
-    const handleReply = (e: React.FormEvent) => {
+    const handleReply = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!replyText.trim() || !selectedThreadId) return;
 
-        const updatedThreads = threads.map(t => {
-            if (t.id === selectedThreadId) {
-                return {
-                    ...t,
-                    lastActivity: new Date(),
-                    messages: [
-                        ...t.messages,
-                        {
-                            id: `m${Date.now()}`,
-                            sender: 'Dr. Dayo',
-                            senderType: 'provider' as const, // Fix literal type
-                            content: replyText,
-                            timestamp: new Date(),
-                            read: true
-                        }
-                    ]
-                };
-            }
-            return t;
-        });
-
-        setThreads(updatedThreads);
+        const { db, auth } = await import('@/lib/firebase');
+        const { collection, addDoc, serverTimestamp, updateDoc, doc } = await import('firebase/firestore');
+        
+        const text = replyText;
         setReplyText('');
+        
+        try {
+            await addDoc(collection(db, 'threads', selectedThreadId, 'messages'), {
+                senderId: auth.currentUser?.uid,
+                senderType: 'provider',
+                body: text,
+                createdAt: serverTimestamp(),
+                read: false
+            });
+            await updateDoc(doc(db, 'threads', selectedThreadId), {
+                lastMessage: text,
+                lastMessageAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                unreadCount: 1 // patient unread
+            });
+        } catch(err) {
+            console.error(err);
+        }
     };
 
     // Auto-select 'open' patient thread when clicking sidebar
     const handlePatientClick = (patientName: string) => {
-        const thread = threads.find(t => t.participants.includes(patientName));
+        const thread = threads.find(t => (t.patientName || '').includes(patientName));
         if (thread) {
             setSelectedThreadId(thread.id);
-            setActiveFolder('all'); // Ensure it's visible
+            setActiveFolder('all');
         } else {
-            // If no thread exists, standard behavior is often to start a compose flow
             setIsComposeOpen(true);
         }
     };
@@ -342,25 +338,30 @@ export default function InboxPage() {
 
                         {/* Messages Area */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {selectedThread.messages.map((msg) => {
+                            {messages.map((msg: any) => {
                                 const isMe = msg.senderType === 'provider';
                                 return (
                                     <div key={msg.id} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''}`}>
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isMe ? 'bg-indigo-100 text-indigo-700' : 'bg-teal-100 text-teal-700'}`}>
-                                            <span className="text-xs font-bold">{msg.sender.charAt(0)}</span>
+                                            <span className="text-xs font-bold">{isMe ? 'P' : 'Pt'}</span>
                                         </div>
                                         <div className={`max-w-[70%] space-y-1 ${isMe ? 'text-right' : ''}`}>
                                             <div className="flex items-center gap-2 text-xs text-slate-400">
-                                                <span>{msg.sender}</span>
+                                                <span>{isMe ? 'Provider' : 'Patient'}</span>
                                                 <span>•</span>
-                                                <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span>{new Date(msg.createdAt?.toDate ? msg.createdAt.toDate() : msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                             </div>
                                             <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe
                                                 ? 'bg-brand text-white rounded-tr-none'
                                                 : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none'
                                                 }`}>
-                                                {msg.content}
+                                                {msg.body}
                                             </div>
+                                            {msg.attachment && (
+                                                <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer" className="block mt-2 text-xs text-brand hover:underline">
+                                                    📎 {msg.attachment.name}
+                                                </a>
+                                            )}
                                         </div>
                                     </div>
                                 )
@@ -436,17 +437,17 @@ export default function InboxPage() {
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <div className="flex items-center gap-2">
-                                                    {!thread.messages[thread.messages.length - 1].read && (
+                                                    {thread.providerUnreadCount > 0 && (
                                                         <div className="w-2 h-2 bg-brand rounded-full"></div>
                                                     )}
-                                                    <span className={`text-sm ${!thread.messages[thread.messages.length - 1].read ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
-                                                        {thread.participants.join(', ')}
+                                                    <span className={`text-sm ${thread.providerUnreadCount > 0 ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
+                                                        {thread.patientName || 'Patient'}
                                                     </span>
                                                 </div>
-                                                <span className="text-xs text-slate-400">{new Date(thread.lastActivity).toLocaleDateString()}</span>
+                                                <span className="text-xs text-slate-400">{new Date(thread.lastMessageAt?.toDate ? thread.lastMessageAt.toDate() : thread.lastMessageAt).toLocaleDateString()}</span>
                                             </div>
                                             <div className="text-sm font-medium text-slate-800 dark:text-slate-100 dark:text-slate-200 mb-1">{thread.subject}</div>
-                                            <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{thread.messages[thread.messages.length - 1].content}</div>
+                                            <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{thread.lastMessage}</div>
                                         </div>
                                     ))}
                                 </div>
