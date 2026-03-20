@@ -6243,6 +6243,37 @@
       color: #ffffff !important;
     }
 
+    /* PROVIDER TRANSPARENCY SECTION - LIGHT/DARK */
+    .prov-transp-section {
+      padding: 3rem 1rem;
+      background: #f8fafc;
+    }
+    .prov-transp-heading { color: #0f172a; margin-bottom: 0.5rem; }
+    .prov-transp-subheading { color: #475569; margin-bottom: 2rem; }
+    .prov-transp-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      background: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .prov-transp-name { font-weight: 600; color: #0f172a; font-size: 1.1rem; }
+    .prov-transp-desc { font-size: 0.875rem; color: #475569; margin-top: 0.5rem; }
+
+    body:not(.light-theme) .prov-transp-section {
+      background: #020617;
+    }
+    body:not(.light-theme) .prov-transp-heading { color: #f8fafc; }
+    body:not(.light-theme) .prov-transp-subheading { color: #94a3b8; }
+    body:not(.light-theme) .prov-transp-card {
+      border-color: #1e293b;
+      background: #0f172a;
+      box-shadow: none;
+    }
+    body:not(.light-theme) .prov-transp-name { color: #f8fafc; }
+    body:not(.light-theme) .prov-transp-desc { color: #94a3b8; }
+
+
     /* FIX PROVIDERS AND MED DISCLAIMER DARK MODE */
     body:not(.light-theme) #providers {
       background: #000000 !important;
@@ -6659,19 +6690,24 @@
     </section>
 
     <!-- PROVIDER TRANSPARENCY -->
-    <section class="how-section" style="padding:3rem 1rem;background:#020617;" id="providers">
+    <section class="how-section prov-transp-section" id="providers-transparency">
       <div class="container">
         <div class="sec-eye eye-em">
           <div class="eye-line"></div>
           <span>Our Practitioners</span>
         </div>
-        <h2 class="sec-title">Our Licensed Medical Providers</h2>
-        <p class="sec-sub">All care is delivered by licensed U.S. providers.</p>
+        <h2 class="sec-title prov-transp-heading">Our Licensed Medical Providers</h2>
+        <p class="sec-sub prov-transp-subheading">All care is delivered by licensed U.S. providers.</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;text-align:left;">
-          <div style="border:1px solid #1e293b;border-radius:0.75rem;padding:1.5rem;background:#0f172a;">
-            <p style="font-weight:600;color:#f8fafc;font-size:1.1rem;">Dr. Olalesi Osunsade, MD</p>
-            <p style="font-size:0.875rem;color:#94a3b8;margin-top:0.5rem;">Board Certified — Diagnostic Radiology &amp; Interventional Radiology (ABMS®)</p>
-            <p style="font-size:0.875rem;color:#94a3b8;margin-top:0.5rem;">Licensed in: FL, MI, DC, CA, MD, OH, NY, WI</p>
+          <div class="prov-transp-card">
+            <p class="prov-transp-name">Dr. Olalesi Osunsade, MD</p>
+            <p class="prov-transp-desc">Board Certified — Diagnostic Radiology &amp; Interventional Radiology (ABMS®)</p>
+            <p class="prov-transp-desc">Licensed in: FL, MI, DC, CA, MD, OH, NY, WI</p>
+          </div>
+          <div class="prov-transp-card">
+            <p class="prov-transp-name">Alvaro Berrios, MS, FNP-BC</p>
+            <p class="prov-transp-desc">Board Certified — Family Nurse Practitioner (ANCC®)</p>
+            <p class="prov-transp-desc">Licensed in: FL, CA</p>
           </div>
         </div>
       </div>
