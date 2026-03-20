@@ -234,6 +234,20 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       showToast("Please fill in first name, last name, email and password.");
       return;
     }
+    
+    if (regDob) {
+      const birthDate = new Date(regDob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+      }
+      if (age < 18) {
+        showToast("You must be at least 18 years old to use this service.");
+        return;
+      }
+    }
     setIsSubmitting(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, regEmail, regPassword);
