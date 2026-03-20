@@ -1363,6 +1363,9 @@ export function LandingEmbed() {
                 >
                   {copy.footer.privacy}
                 </a>
+                <a href="/npp" target="_blank">Notice of Privacy Practices</a>
+                <a href="/telehealth-consent" target="_blank">Telehealth Consent</a>
+                <span style={{ color: '#9ca3af', fontSize: '14px', marginTop: '12px', display: 'block' }}>📞 (202) 215-0636<br/>📍 176 NW 25th St, Miami, FL 33127</span>
               </div>
             </div>
 
