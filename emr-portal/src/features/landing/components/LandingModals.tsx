@@ -650,8 +650,8 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               }}
             >
               By submitting you confirm the information is accurate. A
-              board-certified provider will review against our treatment
-              protocols within 24 hours.
+              board-certified provider will review your medical information against our treatment
+              protocols. No prescription will be generated prior to a clinical encounter, and a licensed provider must review and approve all compounded medication orders before transmission to the pharmacy.
             </p>
             <div className="ia">
               <button className="btn btn-ghost" onClick={() => cB(2)}>
