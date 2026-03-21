@@ -59,20 +59,36 @@ export default function InboxPage() {
             const { collection, query, where, onSnapshot, orderBy } = require('firebase/firestore');
             const unsubscribeAuth = auth.onAuthStateChanged((user: any) => {
                 if (user) {
-                    const q = query(collection(db, 'threads'), where('providerId', '==', user.uid), orderBy('lastMessageAt', 'desc'));
+                    // Fetch Threads (removed orderBy to avoid missing Index error; sorted in-memory)
+                    const q = query(collection(db, 'threads'), where('providerId', '==', user.uid));
                     const unsub = onSnapshot(q, (snap: any) => {
-                        setThreads(snap.docs.map((d: any) => ({
+                        const loadedThreads = snap.docs.map((d: any) => ({
                             id: d.id,
                             ...d.data(),
-                            participants: ['Patient'], // fallback if patientName is missing
                             folder: 'inbox',
                             status: 'open'
-                        })));
+                        }));
+                        
+                        // Sort in-memory
+                        loadedThreads.sort((a: any, b: any) => {
+                            const timeA = a.lastMessageAt?.toMillis ? a.lastMessageAt.toMillis() : Date.now();
+                            const timeB = b.lastMessageAt?.toMillis ? b.lastMessageAt.toMillis() : Date.now();
+                            return timeB - timeA;
+                        });
+
+                        setThreads(loadedThreads);
                     });
                     
-                    const pQuery = query(collection(db, 'users'), where('role', '==', 'patient'));
+                    // Fetch all users to find patients securely regardless of uppercase/lowercase role assignment
+                    const pQuery = query(collection(db, 'users'));
                     onSnapshot(pQuery, (snap: any) => {
-                        setPatients(snap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
+                        const allUsers = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+                        // Consider them patients if they are NOT clearly providers/admins
+                        const validPatients = allUsers.filter(u => {
+                            const r = (u.role || '').toLowerCase();
+                            return !['admin', 'systems admin', 'doctor', 'provider'].includes(r);
+                        });
+                        setPatients(validPatients);
                     });
                     
                     return () => unsub();
@@ -535,14 +551,17 @@ export default function InboxPage() {
                         <form onSubmit={handleCompose} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">To</label>
-                                <select 
-                                    value={composeRecipient}
-                                    onChange={e => setComposeRecipient(e.target.value)}
+                                <select
                                     required
-                                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 dark:border-slate-600 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand/20 outline-none font-medium">
-                                    <option value="">Select Recipient...</option>
+                                    value={composeRecipient}
+                                    onChange={(e) => setComposeRecipient(e.target.value)}
+                                    className="w-full bg-slate-800 border bg-transparent outline-none border-brand/40 text-sm text-white rounded-lg px-4 py-2.5"
+                                >
+                                    <option value="" className="text-slate-900">Select Recipient...</option>
                                     {patients.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name || p.displayName || p.email}</option>
+                                        <option key={p.id} value={p.id} className="text-slate-900">
+                                            {p.displayName || p.name || p.email}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
