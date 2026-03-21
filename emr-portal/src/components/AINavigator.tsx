@@ -30,10 +30,10 @@ export default function AINavigator() {
   const hasDraggedRef = useRef(false);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (clientX: number, clientY: number) => {
       if (!isDragging) return;
-      const dx = e.clientX - dragStartRef.current.startX;
-      const dy = dragStartRef.current.startY - e.clientY; // Note: bottom-based logic
+      const dx = clientX - dragStartRef.current.startX;
+      const dy = dragStartRef.current.startY - clientY; // Note: bottom-based logic
       
       if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
         hasDraggedRef.current = true;
@@ -42,38 +42,52 @@ export default function AINavigator() {
       let newX = dragStartRef.current.x - dx; // right based
       let newY = dragStartRef.current.y - dy; // bottom based
       
-      // Simple bounds
+      const maxX = window.innerWidth - 60;
+      const maxY = window.innerHeight - 60;
       if (newX < 0) newX = 0;
       if (newY < 0) newY = 0;
-      if (newX > window.innerWidth - 60) newX = window.innerWidth - 60;
-      if (newY > window.innerHeight - 60) newY = window.innerHeight - 60;
+      if (newX > maxX) newX = maxX;
+      if (newY > maxY) newY = maxY;
 
       setPosition({ x: newX, y: newY });
     };
 
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientX, e.touches[0].clientY);
+
+    const handleMouseUp = () => setIsDragging(false);
 
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleMouseUp);
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
     };
   }, [isDragging]);
 
-  const handleDragStart = (e: React.MouseEvent) => {
+  const handleDragStartEvent = (clientX: number, clientY: number) => {
     hasDraggedRef.current = false;
     setIsDragging(true);
     dragStartRef.current = {
       x: position.x,
       y: position.y,
-      startX: e.clientX,
-      startY: e.clientY
+      startX: clientX,
+      startY: clientY
     };
+  };
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    handleDragStartEvent(e.clientX, e.clientY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    handleDragStartEvent(e.touches[0].clientX, e.touches[0].clientY);
   };
 
   useEffect(() => {
@@ -318,11 +332,14 @@ export default function AINavigator() {
     <div style={{ position: 'fixed', right: `${position.x}px`, bottom: `${position.y}px`, zIndex: 999999 }}>
       <button
         className={`ai-fab ${isOpen ? "open" : ""}`}
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault();
           if (!hasDraggedRef.current) setIsOpen(!isOpen);
         }}
         onMouseDown={handleDragStart}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        onTouchStart={handleTouchStart}
+        onDragStart={(e) => e.preventDefault()}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none' }}
       >
         <div className="ai-pulse" style={{ pointerEvents: 'none' }}></div>
         <span className="fab-icon" style={{ pointerEvents: 'none' }}>💬</span>
@@ -330,8 +347,14 @@ export default function AINavigator() {
         <div className="ai-label" style={{ pointerEvents: 'none' }}>Drag or Click</div>
       </button>
 
-      <div className={`ai-chat ${isOpen ? "open" : ""}`} style={{ right: 0, bottom: '80px', position: 'absolute' }}>
-        <div className="ai-chat-head" onMouseDown={handleDragStart} style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
+      <div className={`ai-chat ${isOpen ? "open" : ""}`} style={{ right: 0, bottom: '80px', position: 'absolute', opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }}>
+        <div 
+          className="ai-chat-head" 
+          onMouseDown={handleDragStart} 
+          onTouchStart={handleTouchStart}
+          onDragStart={(e) => e.preventDefault()}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none' }}
+        >
           <div className="ai-chat-dot">🤖</div>
           <div style={{ flex: 1 }}>
             <div className="ai-chat-title">AI Health Navigator</div>
