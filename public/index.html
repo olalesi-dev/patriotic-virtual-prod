@@ -6359,25 +6359,31 @@
     }
 
 
-    /* OVERRIDE HARDCODED WHITE FONTS IN LIGHT THEME */
-    body.light-theme .how-section .sec-title,
-    body.light-theme .how-section .sec-sub,
-    body.light-theme .how-section .theme-text,
-    body.light-theme .how-section .theme-subtext,
-    body.light-theme .prov-transp-section .sec-title,
-    body.light-theme .prov-transp-section .sec-sub,
-    body.light-theme .prov-transp-section .theme-text,
-    body.light-theme .prov-transp-section .theme-subtext {
-        color: #0f172a !important; /* Forces dark navy text */
+        /* OVERRIDE HARDCODED WHITE FONTS IN LIGHT THEME */
+    body.light-theme #landingPage .how-section,
+    body.light-theme #landingPage .prov-transp-section {
+        color: #000000 !important;
+    }
+    body.light-theme #landingPage .how-section *,
+    body.light-theme #landingPage .prov-transp-section * {
+        color: #000000 !important;
     }
     
-    body.light-theme .how-section .sec-sub,
-    body.light-theme .prov-transp-section .sec-sub,
-    body.light-theme .theme-subtext {
-        color: #475569 !important; /* Soft dark slate for subtext */
+    /* Exceptions for specific colorful badges inside the sections */
+    body.light-theme #landingPage .how-section .sec-eye span,
+    body.light-theme #landingPage .prov-transp-section .sec-eye span {
+        color: var(--blue) !important;
     }
-
-  </style>
+    body.light-theme #landingPage .how-section [style*="background:#ef4444"],
+    body.light-theme #landingPage .prov-transp-section [style*="background:#ef4444"] {
+        color: #ffffff !important; /* Keep the Rx badge text white */
+    }
+    body.light-theme #landingPage .how-section [style*="background:#3B82F6"],
+    body.light-theme #landingPage .prov-transp-section [style*="background:#3B82F6"] {
+        color: #ffffff !important; /* Keep the 1 2 3 4 5 number badges text white */
+    }
+    
+</style>
 </head>
 
 <body>
