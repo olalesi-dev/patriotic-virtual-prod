@@ -730,6 +730,9 @@ export function LandingEmbed() {
                 </div>
                 <h1 dangerouslySetInnerHTML={{ __html: copy.hero.titleHtml }} />
                 <p className="hero-sub">{copy.hero.subtitle}</p>
+                <p className="hero-sub" style={{ fontSize: "0.85em", color: "var(--g400)" }}>
+                  Powered by RadiantLogiq, an AI-driven clinical platform for decision support and workflow optimization. RadiantLogiq is a member of the NVIDIA Inception program.
+                </p>
                 <div className="hero-ctas">
                   <button
                     className="btn btn-primary btn-large"
@@ -738,6 +741,9 @@ export function LandingEmbed() {
                   >
                     {copy.hero.cta}
                   </button>
+                </div>
+                <div style={{ marginTop: "16px", fontSize: "0.9em", color: "var(--g400)", textAlign: "center", maxWidth: "560px" }}>
+                  Our platform integrates advanced clinical software and AI to support efficient, high-quality care delivery.
                 </div>
 
                 <div
@@ -974,6 +980,33 @@ export function LandingEmbed() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="tech-section" id="technology-platform" style={{ padding: "80px 0", background: "var(--g50)" }}>
+          <div className="container">
+            <div className="sec-eye eye-blue">
+              <div className="eye-line" style={{ background: "var(--blue)" }} />
+              <span style={{ color: "var(--blue)" }}>Technology & Platform</span>
+            </div>
+            <h2 className="sec-title" style={{ maxWidth: "800px", color: "var(--navy)" }}>
+              Powered by RadiantLogiq
+            </h2>
+            <p className="sec-sub" style={{ maxWidth: "800px", marginBottom: "32px" }}>
+              Patriotic Virtual Telehealth is powered by RadiantLogiq, a physician-founded clinical platform designed to enhance care delivery through workflow optimization and intelligent data processing. RadiantLogiq supports scalable telehealth operations today, with ongoing development of advanced clinical decision support tools for healthcare providers.
+            </p>
+            <div style={{ background: "white", padding: "24px", borderRadius: "16px", border: "1px solid var(--g200)", display: "flex", gap: "16px", alignItems: "flex-start", marginBottom: "24px", maxWidth: "800px" }}>
+              <div style={{ fontSize: "24px" }}>🔒</div>
+              <div>
+                <h3 style={{ fontSize: "16px", marginBottom: "8px", color: "var(--navy)" }}>Secure Medication Management</h3>
+                <p style={{ fontSize: "14px", color: "var(--g600)", margin: 0 }}>
+                  We utilize a secure, integrated e-prescribing platform (DoseSpot) to support safe, compliant, and efficient medication management.
+                </p>
+              </div>
+            </div>
+            <p style={{ fontSize: "13px", color: "var(--g500)", fontStyle: "italic", margin: 0, maxWidth: "800px" }}>
+              * For providers and health systems, RadiantLogiq is being developed to support workflow optimization and clinical decision support.
+            </p>
           </div>
         </section>
 
@@ -1369,7 +1402,21 @@ export function LandingEmbed() {
               <span>{copy.footer.copy}</span>
               <span>{copy.footer.badges}</span>
             </div>
-            <p style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', maxWidth: '48rem', margin: '1rem auto 0' }}>
+            
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginTop: "24px", paddingTop: "24px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <img src="/assets/nvidia-inception.jpg" alt="NVIDIA Inception Program member badge" style={{ maxHeight: "30px", width: "auto" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <span style={{ fontSize: "12px", color: "#e5e7eb", fontWeight: 500 }}>Powered by RadiantLogiq</span>
+                  <span style={{ fontSize: "12px", color: "#9ca3af" }}>Member, NVIDIA Inception Program</span>
+                </div>
+              </div>
+              <p style={{ fontSize: "10px", color: "#6b7280", maxWidth: "600px", margin: 0, textAlign: "right" }}>
+                © 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries.
+              </p>
+            </div>
+
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', maxWidth: '48rem', margin: '2rem auto 0' }}>
               All treatments are prescribed only after evaluation by a licensed medical provider.
               Not all patients qualify. Results may vary.
             </p>
@@ -1415,6 +1462,20 @@ export function LandingEmbed() {
               >
                 Alvaro Berrios, MS, FNP-BC
               </button>
+            </div>
+
+            <div
+              style={{
+                textAlign: "center",
+                marginBottom: "32px",
+                padding: "16px",
+                background: "var(--blue-soft)",
+                borderRadius: "12px",
+              }}
+            >
+              <p style={{ fontSize: "14px", color: "var(--navy)", margin: 0, fontWeight: 500 }}>
+                Built by a physician-led team, RadiantLogiq is designed to improve efficiency and scalability in modern healthcare delivery.
+              </p>
             </div>
 
             <div
