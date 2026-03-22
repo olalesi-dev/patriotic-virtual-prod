@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
+import { resolveProviderScopedPatientDetail } from '@/lib/provider-patient-detail-route';
 
 export async function GET(
     request: Request,
     { params }: { params: { id: string } }
 ) {
+    const { patient, errorResponse } = await resolveProviderScopedPatientDetail(request, params.id);
+    if (errorResponse || !patient) return errorResponse;
+
     return NextResponse.json({
         success: true,
         patientId: params.id,
-        billing: {
-            balance: 0.00,
-            subscription: { plan: 'Elite', status: 'Active' },
-            history: [{ id: 'INV-1', date: '2026-02-01', amount: 199.00, status: 'Paid' }]
-        }
+        billing: patient.billing
     });
 }

@@ -9,17 +9,9 @@ if (Test-Path $EnvFile) {
     
     # Read .env file, ignore comments and empty lines
     $content = Get-Content $EnvFile | Where-Object { $_ -notmatch '^\s*#' -and $_ -notmatch '^\s*$' }
-    
-    # Escape commas inside values to prevent gcloud from parsing them as variable separators
-    $content = $content -replace ',', '^,'
-
-    # Ensure variables are joined with commas and wrapped in quotes to prevent shell parsing issues
-    $vars = $content -join ","
-    
-    if ($vars) {
-        $EnvArgs = "--set-env-vars=`"$vars`""
-    }
-} else {
+    $EnvArgs = "--env-vars-file=`"$EnvFile`""
+}
+else {
     Write-Host "⚠️  backend/.env not found, proceeding without setting new env vars..." -ForegroundColor Yellow
 }
 
@@ -31,6 +23,7 @@ Invoke-Expression $deployCmd
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "✅ Backend Deployed Successfully!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "❌ Backend Deployment Failed!" -ForegroundColor Red
 }

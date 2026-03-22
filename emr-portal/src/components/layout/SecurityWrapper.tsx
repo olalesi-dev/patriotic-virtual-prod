@@ -20,7 +20,7 @@ import {
     CheckCircle2,
     X
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const TIMEOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const WARNING_THRESHOLD = 13 * 60 * 1000; // 13 minutes
@@ -128,11 +128,11 @@ export function SecurityWrapper({ children }: { children: React.ReactNode }) {
             {/* SESSION WARNING MODAL */}
             {showWarning && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden p-10 text-center animate-in zoom-in slide-in-from-bottom-8 duration-500 border border-amber-100">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden p-10 text-center animate-in zoom-in slide-in-from-bottom-8 duration-500 border border-amber-100">
                         <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mx-auto mb-8 shadow-inner">
                             <Clock className="w-10 h-10 animate-pulse" />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-4">Security Timeout</h2>
+                        <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-4">Security Timeout</h2>
                         <p className="text-slate-500 font-bold mb-8 leading-relaxed">
                             For your privacy, sessions expire after 15 minutes of inactivity. You will be logged out in <span className="text-amber-500 underline underline-offset-4 decoration-2">2 minutes</span>.
                         </p>
@@ -145,7 +145,7 @@ export function SecurityWrapper({ children }: { children: React.ReactNode }) {
                             </button>
                             <button
                                 onClick={() => handleLogout('manual')}
-                                className="w-full bg-slate-50 text-slate-400 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-slate-50 dark:bg-slate-900/50 text-slate-400 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center gap-2"
                             >
                                 <LogOut className="w-4 h-4" /> Log Out Now
                             </button>
@@ -157,15 +157,15 @@ export function SecurityWrapper({ children }: { children: React.ReactNode }) {
             {/* CONSENT BANNER */}
             {showConsent && (
                 <div className="fixed inset-0 z-[201] flex items-end justify-center p-6 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-500">
-                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border border-sky-100 flex flex-col md:flex-row animate-in slide-in-from-bottom-full duration-700">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border border-sky-100 flex flex-col md:flex-row animate-in slide-in-from-bottom-full duration-700">
                         <div className="bg-[#0EA5E9] md:w-48 p-8 flex flex-col items-center justify-center text-white shrink-0">
                             <ShieldAlert className="w-12 h-12 mb-4" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-center">Compliance Notice</span>
                         </div>
                         <div className="p-10 flex-1">
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-4">Privacy & Health Data Consent</h3>
-                            <p className="text-sm text-slate-600 font-bold leading-relaxed mb-8">
-                                By continuing, you acknowledge that you have read and agree to our <a href="/privacy" className="text-[#0EA5E9] underline">Privacy Policy</a>. We process your data in accordance with HIPAA-readiness standards to ensure maximum medical privacy.
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-4">Privacy & Health Data Consent</h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed mb-8">
+                                By continuing, you acknowledge that you have read and agree to our <a href="/privacy-policy" className="text-[#0EA5E9] underline">Privacy Policy</a>. We process your data in accordance with HIPAA-readiness standards to ensure maximum medical privacy.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <button
@@ -205,11 +205,11 @@ export class ErrorBoundary extends React.Component<
         if (this.state.hasError) {
             return (
                 <div className="min-h-screen bg-[#F0F9FF] flex items-center justify-center p-6">
-                    <div className="bg-white w-full max-w-sm rounded-[40px] shadow-2xl p-12 text-center border border-sky-50">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[40px] shadow-2xl p-12 text-center border border-sky-50">
                         <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mx-auto mb-8">
                             <AlertTriangle className="w-10 h-10" />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-4">Application Error</h2>
+                        <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-4">Application Error</h2>
                         <p className="text-slate-500 font-bold mb-8 italic">We encountered a temporary technical issue. For your security, please refresh the page or try again later.</p>
                         <button
                             onClick={() => window.location.reload()}

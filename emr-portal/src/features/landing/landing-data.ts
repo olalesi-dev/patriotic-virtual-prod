@@ -338,12 +338,12 @@ export const HERO_SERVICES: LandingService[] = [
         tone: 'blue',
         price: 129,
         title: {
-            en: 'GLP-1 & Weight Loss',
-            es: 'GLP-1 y Perdida de Peso',
+            en: 'Rx Weight Loss',
+            es: 'Rx y Perdida de Peso',
         },
         description: {
-            en: 'Comprehensive medical weight loss evaluation with GLP-1 eligibility screening, personalized titration, and dietary guidance.',
-            es: 'Evaluacion medica integral de perdida de peso con elegibilidad para GLP-1, titulacion personalizada y orientacion dietetica.',
+            en: 'Comprehensive medical weight loss evaluation with Rx eligibility screening, personalized titration, and dietary guidance.',
+            es: 'Evaluacion medica integral de perdida de peso con elegibilidad para Rx, titulacion personalizada y orientacion dietetica.',
         },
     },
 ];
@@ -363,7 +363,7 @@ export const MARQUEE_ITEMS = [
     { label: 'Digital Health Platform', icon: MonitorSmartphone },
     { label: 'Available in Florida', icon: MapPinned },
     { label: 'General Telehealth', icon: Stethoscope },
-    { label: 'GLP-1 Weight Loss', icon: Pill },
+    { label: 'Rx Weight Loss', icon: Pill },
     { label: 'Erectile Dysfunction', icon: Zap },
 ] as const;
 
@@ -376,7 +376,7 @@ export const RADIOLOGY_EDUCATION_CARDS: RadiologyCard[] = [
         price: '$99 / analysis',
         title: 'AI-Powered Analysis',
         description:
-            'Physician-supervised AI interpretation of your radiology reports. We help explain complex findings in plain English.',
+            'Physician-supervised AI interpretation of your radiology reports for educational and informational purposes only. This does not constitute a clinical diagnosis. We help explain complex findings in plain English.',
     },
     {
         id: 'report-interpretation',
@@ -406,7 +406,7 @@ export const RADIOLOGY_EDUCATION_CARDS: RadiologyCard[] = [
         price: '$449 / consult',
         title: 'Imaging + Video Consult',
         description:
-            'Full educational image review plus a 30 to 60 minute secure video consultation to discuss findings directly with Dr. Osunsade.',
+            'Full educational image review plus a 30 to 60 minute secure video consultation to discuss findings directly with Dr. Olalesi Osunsade, MD.',
     },
 ];
 
@@ -447,7 +447,7 @@ export const TESTIMONIALS = [
     {
         initials: 'MR',
         quote:
-            'Got my GLP-1 prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right.',
+            'Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right.',
         name: 'Marcus R.',
         details: 'Weight Loss - Jacksonville, FL',
     },
@@ -470,7 +470,7 @@ export const TESTIMONIALS = [
 export const ABOUT_PROFILES: ClinicianProfile[] = [
     {
         id: 'osunsade',
-        name: 'Dr. Olalesi Osunsade',
+        name: 'Dr. Olalesi Osunsade, MD',
         role: 'Dr. "O" - Diagnostic & Interventional Radiologist',
         imageSrc: '/assets/dr_osunsade_new.jpg',
         imageAlt: 'Dr. Osunsade',
@@ -495,7 +495,7 @@ export const ABOUT_PROFILES: ClinicianProfile[] = [
         ],
         extraCardTitle: 'Partnership',
         extraCardBody:
-            'We partner with Sterling Union for operations, compliance, and administrative excellence, and with Orosun Health for advanced imaging and radiology support. Those partnerships help us deliver safe, coordinated, and compassionate virtual care.',
+            'We partner with Strive Pharmacy (LegitScript-certified and NABP-accredited) and Empower Pharmacy as our compounding pharmacy partners. Our licensed providers exclusively review and approve all prescriptions before securely transmitting them to these accredited pharmacies, ensuring you receive the highest quality, most reliable medications when appropriate for your personalized treatment plan. Together, these partnerships help us deliver safe, coordinated, and compassionate virtual care you can trust.',
     },
     {
         id: 'berrios',

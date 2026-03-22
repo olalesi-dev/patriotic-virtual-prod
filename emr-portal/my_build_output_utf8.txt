@@ -1,0 +1,82 @@
+﻿
+> patriotic-emr-frontend@1.0.0 build
+> next build
+
+   Γû▓ Next.js 14.1.0
+   - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/(patient)/patient/profile/PageClient.tsx
+96:8  Warning: React Hook useEffect has missing dependencies: 'userProfile.displayName' and 'userProfile.photoURL'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/admin/communications/CommunicationsAdminClient.tsx
+350:8  Warning: React Hook useEffect has a missing dependency: 'calculateRecipients'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/admin/store/StoreAdminClient.tsx
+535:65  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./src/app/(provider)/crm/[entity]/[id]/PageClient.tsx
+144:8  Warning: React Hook useEffect has a missing dependency: 'stages'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/dashboard/profile/PageClient.tsx
+105:8  Warning: React Hook useEffect has missing dependencies: 'userProfile.displayName' and 'userProfile.photoURL'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/services/PageClient.tsx
+89:15  Warning: Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./src/components/auth/MfaSetup.tsx
+39:8  Warning: React Hook useEffect has a missing dependency: 'recaptchaVerifier'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/layout/SecurityWrapper.tsx
+67:8  Warning: React Hook useEffect has a missing dependency: 'resetTimers'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+node.exe : Failed to compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (Failed   
+  to compile.:String) [],    
+ RemoteException
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+
+./src/app/(patient)/patient/r
+eferrals/ReferralsClient.tsx:
+21:25
+Type error: Property 
+'referralCode' does not 
+exist on type 'UserProfile'.
+
+[0m [90m 19 |[39m[0m
+[0m [90m 20 |[39m         
+[36mconst[39m 
+loadOrCreateReferralCode 
+[33m=[39m [36masync[39m 
+() [33m=>[39m {[0m
+[0m[31m[1m>[22m[39m[90m
+ 21 |[39m             
+[36mif[39m (profile[33m.[
+39mreferralCode) {[0m
+[0m [90m    |[39m         
+                
+[31m[1m^[22m[39m[0m
+[0m [90m 22 |[39m         
+        setReferralCode(profi
+le[33m.[39mreferralCode)[3
+3m;[39m[0m
+[0m [90m 23 |[39m         
+    } [36melse[39m {[0m
+[0m [90m 24 |[39m         
+        setGenerating([36mtr
+ue[39m)[33m;[39m[0m

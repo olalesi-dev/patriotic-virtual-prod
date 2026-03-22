@@ -10,6 +10,7 @@ import {
     Scale, Thermometer, Droplets, Download, TrendingDown, TrendingUp, Heart, Sparkles, LucideIcon, Send, Paperclip, Smile, Phone, Video
 } from 'lucide-react';
 import { iQs } from '@/lib/catalog';
+import { AITextarea } from '@/components/ui/AITextarea';
 
 export function MedicationsTab({ patient }: { patient: any }) {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -27,12 +28,12 @@ export function MedicationsTab({ patient }: { patient: any }) {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* TOP ACTIONS BAR */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-brand">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                 <div className="flex flex-wrap items-center gap-3">
                     <button className="bg-brand hover:bg-brand-600 text-white font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-brand/20 transition-all active:scale-95">
                         <Plus className="w-4 h-4" /> New Prescription
                     </button>
-                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
+                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
                         <RotateCcw className="w-4 h-4" /> Refill Selected
                     </button>
                     <button className="bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all border border-amber-100">
@@ -50,13 +51,13 @@ export function MedicationsTab({ patient }: { patient: any }) {
             </div>
 
             {/* SECTION 1: ACTIVE MEDICATIONS */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
                             <Pill className="w-5 h-5 text-emerald-600" />
                         </div>
-                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Active Medications</h2>
+                        <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Active Medications</h2>
                     </div>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-full uppercase tracking-widest">
                         {activeMeds.length} CURRENT
@@ -65,7 +66,7 @@ export function MedicationsTab({ patient }: { patient: any }) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
                                 <th className="px-6 py-4">Drug Information</th>
                                 <th className="px-6 py-4">Protocol & Frequency</th>
                                 <th className="px-6 py-4">Titration Status</th>
@@ -76,7 +77,7 @@ export function MedicationsTab({ patient }: { patient: any }) {
                             {activeMeds.length > 0 ? activeMeds.map((med: any, i: number) => (
                                 <tr key={i} className="hover:bg-slate-50 transition-colors group">
                                     <td className="px-6 py-5">
-                                        <div className="font-bold text-slate-900 text-sm mb-0.5">{med.name}</div>
+                                        <div className="font-bold text-slate-900 dark:text-white text-sm mb-0.5">{med.name}</div>
                                         <div className="text-xs text-slate-500 font-medium flex items-center gap-2">
                                             <span>{med.dosage}</span>
                                             <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
@@ -84,7 +85,7 @@ export function MedicationsTab({ patient }: { patient: any }) {
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className="text-sm font-bold text-slate-700 mb-0.5">{med.frequency}</div>
+                                        <div className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-0.5">{med.frequency}</div>
                                         <div className="text-[10px] font-black text-slate-400 uppercase">Start: {med.startDate || '2026-01-15'}</div>
                                     </td>
                                     <td className="px-6 py-5">
@@ -129,23 +130,23 @@ export function MedicationsTab({ patient }: { patient: any }) {
             </div>
 
             {/* SECTION 2: PENDING PRESCRIPTIONS */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-amber-50/30">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-700 bg-amber-50/30">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
                             <Clock className="w-5 h-5 text-amber-600" />
                         </div>
-                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Pending Prescriptions</h2>
+                        <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Pending Prescriptions</h2>
                     </div>
                 </div>
                 <div className="p-6">
                     {pendingMeds.length > 0 ? (
                         <div className="space-y-4">
                             {pendingMeds.map((med, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 border-l-4 border-l-amber-400">
+                                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700 border-l-4 border-l-amber-400">
                                     <div className="flex items-center gap-6">
                                         <div>
-                                            <div className="font-bold text-slate-900 text-sm">{med.name} {med.dosage}</div>
+                                            <div className="font-bold text-slate-900 dark:text-white text-sm">{med.name} {med.dosage}</div>
                                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Sent: {med.date}</div>
                                         </div>
                                         <div className="h-8 w-px bg-slate-200"></div>
@@ -165,7 +166,7 @@ export function MedicationsTab({ patient }: { patient: any }) {
             </div>
 
             {/* SECTION 3: PRESCRIPTION HISTORY */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <button
                     onClick={() => setIsHistoryOpen(!isHistoryOpen)}
                     className="w-full p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"
@@ -174,7 +175,7 @@ export function MedicationsTab({ patient }: { patient: any }) {
                         <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
                             <HistoryIcon className="w-5 h-5 text-slate-500" />
                         </div>
-                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Prescription History</h2>
+                        <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Prescription History</h2>
                     </div>
                     <ChevronDown className={`w-6 h-6 text-slate-400 transition-transform duration-300 ${isHistoryOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -183,10 +184,10 @@ export function MedicationsTab({ patient }: { patient: any }) {
                     <div className="px-6 pb-6 animate-in slide-in-from-top-2 duration-300">
                         <div className="space-y-3">
                             {historicalMeds.map((med, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                                <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                                     <div className="flex items-center gap-6">
                                         <div className="opacity-60">
-                                            <div className="font-bold text-slate-900 text-sm">{med.name} {med.dosage}</div>
+                                            <div className="font-bold text-slate-900 dark:text-white text-sm">{med.name} {med.dosage}</div>
                                             <div className="text-[10px] font-black text-slate-400 uppercase">{med.date}</div>
                                         </div>
                                         <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${med.status === 'Discontinued' ? 'bg-red-50 text-red-600' : 'bg-slate-200 text-slate-600'
@@ -220,8 +221,8 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
                 onClick={onClose}
             ></div>
-            <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-                <div className="p-8 border-b border-slate-100 bg-amber-50/50">
+            <div className="relative w-full max-w-md bg-white dark:bg-slate-800 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
+                <div className="p-8 border-b border-slate-100 dark:border-slate-700 bg-amber-50/50">
                     <div className="flex justify-between items-start mb-6">
                         <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
                             <Zap className="w-6 h-6 text-amber-600 fill-amber-500" />
@@ -230,7 +231,7 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
                             <X className="w-5 h-5 text-slate-400" />
                         </button>
                     </div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">AI Titration Engine</h2>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">AI Titration Engine</h2>
                     <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest">Running protocol analysis...</p>
                 </div>
 
@@ -242,7 +243,7 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
                     </div>
 
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-slate-800 font-bold uppercase text-sm tracking-tight">
+                        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold uppercase text-sm tracking-tight">
                             <ArrowUpRight className="w-4 h-4 text-emerald-500" />
                             <span>Recommendation</span>
                         </div>
@@ -255,7 +256,7 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
                     </div>
 
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-slate-800 font-bold uppercase text-sm tracking-tight">
+                        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold uppercase text-sm tracking-tight">
                             <FileText className="w-4 h-4 text-slate-400" />
                             <span>Clinical Reasoning</span>
                         </div>
@@ -267,7 +268,7 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
                     </div>
                 </div>
 
-                <div className="p-8 bg-slate-50 border-t border-slate-100 space-y-3">
+                <div className="p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 space-y-3">
                     <button
                         onClick={() => {
                             alert('Prescription approved and sent to DoseSpot!');
@@ -282,7 +283,7 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
                             onClick={() => {
                                 alert('Dose modification interface coming soon!');
                             }}
-                            className="py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-all"
+                            className="py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-sm hover:bg-slate-50 transition-all"
                         >
                             Modify Dose
                         </button>
@@ -292,7 +293,7 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
                                     onClose();
                                 }
                             }}
-                            className="py-3 bg-white border border-slate-200 text-red-600 font-bold rounded-xl text-sm hover:bg-red-50 transition-all"
+                            className="py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-red-600 font-bold rounded-xl text-sm hover:bg-red-50 transition-all"
                         >
                             Reject
                         </button>
@@ -305,7 +306,7 @@ function TitrationPanel({ medication, onClose }: { medication: any, onClose: () 
 
 function ReasonItem({ text }: { text: string }) {
     return (
-        <div className="flex items-center gap-3 text-xs font-bold text-slate-600">
+        <div className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
             <div className="w-1.5 h-1.5 bg-brand rounded-full"></div>
             {text}
         </div>
@@ -329,7 +330,7 @@ export function OrdersTab({ patient }: { patient: any }) {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* TOP ACTIONS BAR */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-brand">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                 <div className="flex flex-wrap items-center gap-3">
                     <button
                         onClick={() => handleNewOrder('lab')}
@@ -339,13 +340,13 @@ export function OrdersTab({ patient }: { patient: any }) {
                     </button>
                     <button
                         onClick={() => handleNewOrder('referral')}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all"
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all"
                     >
                         <UserPlus className="w-4 h-4" /> New Referral
                     </button>
                     <button
                         onClick={() => handleNewOrder('other')}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all"
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all"
                     >
                         <Plus className="w-4 h-4" /> Other Order
                     </button>
@@ -361,19 +362,19 @@ export function OrdersTab({ patient }: { patient: any }) {
             </div>
 
             {/* SECTION 1: PENDING ORDERS */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/30">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
                             <Clock className="w-5 h-5 text-brand" />
                         </div>
-                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Pending Orders</h2>
+                        <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Pending Orders</h2>
                     </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
                                 <th className="px-6 py-4">Order Type</th>
                                 <th className="px-6 py-4">Description</th>
                                 <th className="px-6 py-4">Date Ordered</th>
@@ -385,8 +386,8 @@ export function OrdersTab({ patient }: { patient: any }) {
                         <tbody className="divide-y divide-slate-100">
                             {pendingOrders.length > 0 ? pendingOrders.map((order: any, i: number) => (
                                 <tr key={i} className="hover:bg-slate-50 transition-colors group">
-                                    <td className="px-6 py-5 capitalize font-bold text-slate-700 text-sm">{order.type}</td>
-                                    <td className="px-6 py-5 text-sm font-medium text-slate-900">{order.description}</td>
+                                    <td className="px-6 py-5 capitalize font-bold text-slate-700 dark:text-slate-200 text-sm">{order.type}</td>
+                                    <td className="px-6 py-5 text-sm font-medium text-slate-900 dark:text-white">{order.description}</td>
                                     <td className="px-6 py-5 text-sm text-slate-500">{order.date}</td>
                                     <td className="px-6 py-5">
                                         <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${order.status === 'Ordered' ? 'bg-blue-50 text-blue-600' :
@@ -396,7 +397,7 @@ export function OrdersTab({ patient }: { patient: any }) {
                                             {order.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-5 text-sm font-medium text-slate-600">{order.orderedBy}</td>
+                                    <td className="px-6 py-5 text-sm font-medium text-slate-600 dark:text-slate-300">{order.orderedBy}</td>
                                     <td className="px-6 py-5 text-right">
                                         <button className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg group-hover:text-slate-600">
                                             <MoreHorizontal className="w-4 h-4" />
@@ -416,19 +417,19 @@ export function OrdersTab({ patient }: { patient: any }) {
             </div>
 
             {/* SECTION 2: LAB ORDERS */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
                             <FlaskConical className="w-5 h-5 text-emerald-600" />
                         </div>
-                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Recent Lab Results</h2>
+                        <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Recent Lab Results</h2>
                     </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
                                 <th className="px-6 py-4">Test Description</th>
                                 <th className="px-6 py-4">Result Date</th>
                                 <th className="px-6 py-4">Ordered By</th>
@@ -440,11 +441,11 @@ export function OrdersTab({ patient }: { patient: any }) {
                             {resultedOrders.filter((o: any) => o.type === 'lab').length > 0 ? resultedOrders.filter((o: any) => o.type === 'lab').map((order: any, i: number) => (
                                 <tr key={i} className="hover:bg-slate-50 transition-colors group">
                                     <td className="px-6 py-5">
-                                        <div className="font-bold text-slate-900 text-sm">{order.description}</div>
+                                        <div className="font-bold text-slate-900 dark:text-white text-sm">{order.description}</div>
                                         <div className="text-[10px] font-black text-slate-400 uppercase">Tests: {order.tests?.join(', ')}</div>
                                     </td>
                                     <td className="px-6 py-5 text-sm text-slate-500 font-medium">{order.date}</td>
-                                    <td className="px-6 py-5 text-sm font-medium text-slate-600">{order.orderedBy}</td>
+                                    <td className="px-6 py-5 text-sm font-medium text-slate-600 dark:text-slate-300">{order.orderedBy}</td>
                                     <td className="px-6 py-5">
                                         <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold uppercase tracking-widest">Resulted</span>
                                     </td>
@@ -480,6 +481,9 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
     const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
     const [urgency, setUrgency] = useState('Routine');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [ptInstructions, setPtInstructions] = useState('');
+    const [referralReason, setReferralReason] = useState('');
+    const [otherDesc, setOtherDesc] = useState('');
 
     const labPanels = [
         { name: 'GLP-1 Panel', tests: 'CMP, A1C, Lipid, TSH' },
@@ -500,9 +504,9 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50">
                     <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${type === 'lab' ? 'bg-emerald-100 text-emerald-600' :
                             type === 'referral' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'
@@ -511,7 +515,7 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                                 type === 'referral' ? <UserPlus className="w-5 h-5" /> : <ClipboardCheck className="w-5 h-5" />}
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                                 New {type === 'lab' ? 'Lab Order' : type === 'referral' ? 'Referral' : 'Order'}
                             </h2>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{patient.name} • {patient.mrn}</p>
@@ -549,7 +553,7 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                                     <input
                                         type="text"
                                         placeholder="Search by test name or LOINC code..."
-                                        className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium"
+                                        className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium"
                                     />
                                 </div>
                             </div>
@@ -557,7 +561,7 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Diagnosis</label>
-                                    <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none font-medium">
+                                    <select className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none font-medium">
                                         {patient.problemList && patient.problemList.length > 0 ? (
                                             patient.problemList.map((p: any, i: number) => (
                                                 <option key={i} value={p.code}>{p.code} - {p.description}</option>
@@ -586,13 +590,13 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lab Facility</label>
-                                <div className="p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                                <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600">
+                                        <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300">
                                             <Layout className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-bold text-slate-900">Quest Diagnostics #1234</div>
+                                            <div className="text-sm font-bold text-slate-900 dark:text-white">Quest Diagnostics #1234</div>
                                             <div className="text-[10px] text-slate-500">Health Gorilla Network</div>
                                         </div>
                                     </div>
@@ -602,10 +606,12 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Instructions</label>
-                                <textarea
+                                <AITextarea
+                                    value={ptInstructions}
+                                    onValueChange={setPtInstructions}
                                     placeholder="e.g. Fasting 12 hours required..."
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 focus:outline-none"
-                                ></textarea>
+                                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-24 focus:outline-none"
+                                />
                             </div>
                         </>
                     )}
@@ -614,7 +620,7 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                         <>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Referral Type</label>
-                                <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none">
+                                <select className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none">
                                     <option>Specialist</option>
                                     <option>Imaging</option>
                                     <option>PT / Occupational Therapy</option>
@@ -628,16 +634,18 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                                     <input
                                         type="text"
                                         placeholder="Search provider or facility..."
-                                        className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+                                        className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason / ICD-10</label>
-                                <textarea
+                                <AITextarea
+                                    value={referralReason}
+                                    onValueChange={setReferralReason}
                                     placeholder="Clinical reason for referral and diagnosis codes..."
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-32 focus:outline-none"
-                                ></textarea>
+                                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-32 focus:outline-none"
+                                />
                             </div>
                         </>
                     )}
@@ -649,22 +657,24 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
                                 <input
                                     type="text"
                                     placeholder="e.g. DME, Patient Education, Prior Auth..."
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+                                    className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</label>
-                                <textarea
+                                <AITextarea
+                                    value={otherDesc}
+                                    onValueChange={setOtherDesc}
                                     placeholder="Detailed description of the order..."
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-32 focus:outline-none"
-                                ></textarea>
+                                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-32 focus:outline-none"
+                                />
                             </div>
                         </>
                     )}
                 </div>
 
-                <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
-                    <button onClick={onClose} className="flex-1 py-4 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-100 transition-all">
+                <div className="p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex gap-4">
+                    <button onClick={onClose} className="flex-1 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl hover:bg-slate-100 transition-all">
                         Cancel
                     </button>
                     <button
@@ -700,7 +710,7 @@ export function ImagingTab({ patient }: { patient: any }) {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* TOP ACTIONS BAR */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-brand">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                 <div className="flex flex-wrap items-center gap-3">
                     <button
                         onClick={() => setIsNewOrderModalOpen(true)}
@@ -715,7 +725,7 @@ export function ImagingTab({ patient }: { patient: any }) {
                     >
                         <Monitor className="w-4 h-4" /> {viewMode === 'pacs' ? 'View as List' : 'View in PACS'}
                     </button>
-                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
+                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
                         <Upload className="w-4 h-4" /> Upload External Study
                     </button>
                 </div>
@@ -724,19 +734,19 @@ export function ImagingTab({ patient }: { patient: any }) {
             {viewMode === 'list' ? (
                 <>
                     {/* SECTION 1: IMAGING RESULTS */}
-                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/30">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                                     <Monitor className="w-5 h-5 text-indigo-600" />
                                 </div>
-                                <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Imaging Results</h2>
+                                <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Imaging Results</h2>
                             </div>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                    <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
                                         <th className="px-6 py-4">Study / Modality</th>
                                         <th className="px-6 py-4">Body Part</th>
                                         <th className="px-6 py-4">Date</th>
@@ -749,12 +759,12 @@ export function ImagingTab({ patient }: { patient: any }) {
                                     {imaging.length > 0 ? imaging.map((img: any, i: number) => (
                                         <tr key={i} className="hover:bg-slate-50 transition-colors group">
                                             <td className="px-6 py-5">
-                                                <div className="font-bold text-slate-900 text-sm">{img.modality} Scan</div>
+                                                <div className="font-bold text-slate-900 dark:text-white text-sm">{img.modality} Scan</div>
                                                 <div className="text-[10px] font-black text-slate-400 uppercase">ID: {img.id}</div>
                                             </td>
-                                            <td className="px-6 py-5 text-sm font-bold text-slate-700">{img.bodyPart}</td>
+                                            <td className="px-6 py-5 text-sm font-bold text-slate-700 dark:text-slate-200">{img.bodyPart}</td>
                                             <td className="px-6 py-5 text-sm text-slate-500 font-medium">{img.date}</td>
-                                            <td className="px-6 py-5 text-sm font-medium text-slate-600">{img.facility}</td>
+                                            <td className="px-6 py-5 text-sm font-medium text-slate-600 dark:text-slate-300">{img.facility}</td>
                                             <td className="px-6 py-5">
                                                 <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${img.status === 'Reported' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
                                                     }`}>
@@ -850,6 +860,7 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
     const [urgency, setUrgency] = useState('Routine');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedSet, setSelectedSet] = useState<string | null>(null);
+    const [clinicalIndication, setClinicalIndication] = useState('');
 
     const bodyParts: any = {
         'MRI': ['Brain', 'Spine', 'Knee', 'Shoulder', 'Abdomen'],
@@ -883,15 +894,15 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
                             <Monitor className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">New Imaging Order</h2>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">New Imaging Order</h2>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">{patient.name} • {patient.mrn}</p>
                         </div>
                     </div>
@@ -929,7 +940,7 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
                                     setSelectedBodyPart(bodyParts[newModality][0]);
                                     setSelectedSet(null);
                                 }}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none font-bold"
+                                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none font-bold"
                             >
                                 {Object.keys(bodyParts).map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
@@ -942,7 +953,7 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
                                     setSelectedBodyPart(e.target.value);
                                     setSelectedSet(null);
                                 }}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none font-bold"
+                                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none font-bold"
                             >
                                 {bodyParts[modality]?.map((p: string) => <option key={p} value={p}>{p}</option>)}
                             </select>
@@ -952,7 +963,7 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contrast</label>
-                            <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none">
+                            <select className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none">
                                 <option>Without Contrast</option>
                                 <option>With Contrast</option>
                                 <option>With & Without</option>
@@ -978,10 +989,12 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Clinical Indication / Reason</label>
-                        <textarea
+                        <AITextarea
+                            value={clinicalIndication}
+                            onValueChange={setClinicalIndication}
                             placeholder="Reason for study and clinical background..."
-                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-32 focus:outline-none"
-                        ></textarea>
+                            className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm h-32 focus:outline-none"
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -991,14 +1004,14 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
                             <input
                                 type="text"
                                 placeholder="Search diagnosis..."
-                                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+                                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none"
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
-                    <button onClick={onClose} className="flex-1 py-4 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-100 transition-all">
+                <div className="p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex gap-4">
+                    <button onClick={onClose} className="flex-1 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl hover:bg-slate-100 transition-all">
                         Cancel
                     </button>
                     <button
@@ -1026,15 +1039,15 @@ export function BillingTab({ patient }: { patient: any }) {
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* TOP STATS BAR */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm border-l-4 border-l-brand">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Balance</div>
-                    <div className="text-3xl font-black text-slate-900">${billing.balance.toFixed(2)}</div>
+                    <div className="text-3xl font-black text-slate-900 dark:text-white">${billing.balance.toFixed(2)}</div>
                     <div className="text-[10px] font-bold text-emerald-600 mt-1 uppercase tracking-tight">Account in good standing</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Subscription</div>
-                    <div className="text-xl font-black text-slate-900 truncate">{billing.subscription.plan}</div>
+                    <div className="text-xl font-black text-slate-900 dark:text-white truncate">{billing.subscription.plan}</div>
                     <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest mt-2 ${billing.subscription.status === 'Active' ? 'bg-emerald-50 text-emerald-600' :
                         billing.subscription.status === 'Past Due' ? 'bg-amber-50 text-amber-600' :
                             'bg-slate-100 text-slate-500'
@@ -1047,17 +1060,17 @@ export function BillingTab({ patient }: { patient: any }) {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Next Billing Date</div>
-                    <div className="text-xl font-black text-slate-900">{billing.subscription.nextBillingDate}</div>
+                    <div className="text-xl font-black text-slate-900 dark:text-white">{billing.subscription.nextBillingDate}</div>
                     <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Recurring: ${billing.subscription.amount.toFixed(2)}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col justify-center gap-2">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-center gap-2">
                     <button onClick={() => alert("Stripe Portal would open here.")} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-2 rounded-xl text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
                         <ExternalLink className="w-3 h-3" /> Stripe Dashboard
                     </button>
-                    <button onClick={() => alert("Apply Credit modal would open here.")} className="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-black py-2 rounded-xl text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <button onClick={() => alert("Apply Credit modal would open here.")} className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-600 dark:text-slate-300 font-black py-2 rounded-xl text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
                         <Plus className="w-3 h-3" /> Add Credit
                     </button>
                 </div>
@@ -1066,10 +1079,10 @@ export function BillingTab({ patient }: { patient: any }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* PAYMENT HISTORY */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
-                        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
+                        <div className="p-8 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
                             <div>
-                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Payment History</h3>
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Payment History</h3>
                                 <p className="text-xs text-slate-500 font-medium tracking-wide">All transactions processed via Stripe</p>
                             </div>
                             <button onClick={() => alert("Generate Invoice flow started.")} className="bg-brand hover:bg-brand-600 text-white font-black py-2.5 px-6 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-brand/20 transition-all active:scale-95 uppercase tracking-widest">
@@ -1079,7 +1092,7 @@ export function BillingTab({ patient }: { patient: any }) {
 
                         <div className="flex-1">
                             <table className="w-full">
-                                <thead className="bg-slate-50 border-b border-slate-100">
+                                <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
                                     <tr>
                                         <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Transaction</th>
                                         <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
@@ -1092,10 +1105,10 @@ export function BillingTab({ patient }: { patient: any }) {
                                     {billing.history.length > 0 ? billing.history.map((item: any) => (
                                         <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
                                             <td className="px-8 py-6">
-                                                <div className="text-sm font-black text-slate-900">{item.description}</div>
+                                                <div className="text-sm font-black text-slate-900 dark:text-white">{item.description}</div>
                                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">ID: {item.id}</div>
                                             </td>
-                                            <td className="px-8 py-6 text-sm font-bold text-slate-600">{item.date}</td>
+                                            <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-300">{item.date}</td>
                                             <td className="px-8 py-6">
                                                 <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${item.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' :
                                                     item.status === 'Pending' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
@@ -1103,9 +1116,9 @@ export function BillingTab({ patient }: { patient: any }) {
                                                     {item.status}
                                                 </span>
                                             </td>
-                                            <td className="px-8 py-6 text-right text-sm font-black text-slate-900">${item.amount.toFixed(2)}</td>
+                                            <td className="px-8 py-6 text-right text-sm font-black text-slate-900 dark:text-white">${item.amount.toFixed(2)}</td>
                                             <td className="px-8 py-6 text-right">
-                                                <button className="p-2 bg-slate-50 text-slate-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all opacity-0 group-hover:opacity-100">
+                                                <button className="p-2 bg-slate-50 dark:bg-slate-900/50 text-slate-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all opacity-0 group-hover:opacity-100">
                                                     <Download className="w-4 h-4" />
                                                 </button>
                                             </td>
@@ -1114,10 +1127,10 @@ export function BillingTab({ patient }: { patient: any }) {
                                         <tr>
                                             <td colSpan={5} className="py-24 text-center">
                                                 <div className="flex flex-col items-center">
-                                                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900/50 rounded-2xl flex items-center justify-center mb-4">
                                                         <CreditCard className="w-8 h-8 text-slate-200" />
                                                     </div>
-                                                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">No payment history</h4>
+                                                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">No payment history</h4>
                                                     <p className="text-xs text-slate-400 font-medium">Transactions will appear here once processed.</p>
                                                 </div>
                                             </td>
@@ -1131,12 +1144,12 @@ export function BillingTab({ patient }: { patient: any }) {
 
                 {/* SIDEBAR - SERVICE ASSIGNMENTS */}
                 <div className="space-y-6">
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                    <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center">
                                 <ClipboardCheck className="w-5 h-5 text-brand" />
                             </div>
-                            <h3 className="font-black text-slate-900 uppercase tracking-tight">Assigned Services</h3>
+                            <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">Assigned Services</h3>
                         </div>
 
                         <div className="space-y-4">
@@ -1145,9 +1158,9 @@ export function BillingTab({ patient }: { patient: any }) {
                                 { name: 'Clinical Consultation', price: '$150 / ea', status: 'Active' },
                                 { name: 'Lab Processing', price: '$45 / ea', status: 'As Needed' }
                             ].map((service, i) => (
-                                <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700">
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className="text-sm font-black text-slate-900">{service.name}</span>
+                                        <span className="text-sm font-black text-slate-900 dark:text-white">{service.name}</span>
                                         <span className="text-[10px] font-black text-brand uppercase tracking-widest">{service.price}</span>
                                     </div>
                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{service.status}</div>
@@ -1155,7 +1168,7 @@ export function BillingTab({ patient }: { patient: any }) {
                             ))}
                         </div>
 
-                        <button onClick={() => alert("Add Service modal would open here.")} className="w-full mt-6 py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-xs font-black uppercase tracking-widest hover:border-brand hover:text-brand hover:bg-brand/5 transition-all">
+                        <button onClick={() => alert("Add Service modal would open here.")} className="w-full mt-6 py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 text-xs font-black uppercase tracking-widest hover:border-brand hover:text-brand hover:bg-brand/5 transition-all">
                             Add Service
                         </button>
                     </div>
@@ -1181,7 +1194,7 @@ export function BillingTab({ patient }: { patient: any }) {
                                 </div>
                             </div>
 
-                            <button onClick={() => alert("Payment Method Update flow started.")} className="w-full py-3 bg-white text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95">
+                            <button onClick={() => alert("Payment Method Update flow started.")} className="w-full py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95">
                                 Change Method
                             </button>
                         </div>
@@ -1195,29 +1208,29 @@ export function BillingTab({ patient }: { patient: any }) {
 export function DocumentationTab({ notes }: { notes: any[] }) {
     return (
         <div className="max-w-7xl mx-auto space-y-6">
-            <div className="flex justify-between items-center bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2 font-bold text-slate-800">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
                     <FileText className="w-5 h-5 text-slate-400" />
                     <span>Clinical Documentation ({notes?.length || 0})</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="relative group">
                         <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                        <input type="text" placeholder="Search documentation..." className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium" />
+                        <input type="text" placeholder="Search documentation..." className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium" />
                     </div>
-                    <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50"><Filter className="w-4 h-4 text-slate-500" /></button>
+                    <button className="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50"><Filter className="w-4 h-4 text-slate-500" /></button>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {notes?.map((note, i) => (
-                    <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:border-brand/40 transition-all group">
+                    <div key={i} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:border-brand/40 transition-all group">
                         <div className="p-5 border-b border-slate-50 bg-slate-50/30">
                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-[10px] font-bold text-brand uppercase tracking-wider">{note.type || 'Clinical Note'}</span>
                                 <span className="text-[10px] font-bold text-slate-400">{note.date}</span>
                             </div>
-                            <h3 className="font-bold text-slate-900 group-hover:text-brand transition-colors truncate">SOAP Encounter Note</h3>
+                            <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-brand transition-colors truncate">SOAP Encounter Note</h3>
                         </div>
                         <div className="p-5">
                             <div className="text-xs text-slate-500 mb-4 line-clamp-3 leading-relaxed">
@@ -1226,7 +1239,7 @@ export function DocumentationTab({ notes }: { notes: any[] }) {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 rounded-full bg-cyan-100 flex items-center justify-center text-[10px] font-bold text-cyan-700">DO</div>
-                                    <span className="text-[10px] font-bold text-slate-600">Dayo Olufolaju</span>
+                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Dayo Olufolaju</span>
                                 </div>
                                 <div className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Signed</div>
                             </div>
@@ -1236,11 +1249,11 @@ export function DocumentationTab({ notes }: { notes: any[] }) {
             </div>
 
             {(!notes || notes.length === 0) && (
-                <div className="text-center py-24 bg-white rounded-xl border-2 border-dashed border-slate-200">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="text-center py-24 bg-white dark:bg-slate-800 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
                         <BookOpen className="w-8 h-8 text-slate-300" />
                     </div>
-                    <h3 className="text-slate-800 font-bold mb-1">No clinical notes yet</h3>
+                    <h3 className="text-slate-800 dark:text-slate-100 font-bold mb-1">No clinical notes yet</h3>
                     <p className="text-slate-400 text-sm mb-6">Create your first clinical encounter note for this patient.</p>
                     <button className="bg-brand text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md hover:bg-brand-600 transition-all">+ Start clinical note</button>
                 </div>
@@ -1361,16 +1374,16 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+            <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
                 {/* HEADER SECTION */}
-                <div className="px-10 py-6 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-6">
+                <div className="px-10 py-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 flex flex-wrap items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-brand rounded-2xl flex items-center justify-center shadow-xl shadow-brand/20">
                             <Stethoscope className="w-8 h-8 text-white" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-2xl font-black text-slate-900 leading-none">CLINICAL ENCOUNTER</h2>
+                                <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-none">CLINICAL ENCOUNTER</h2>
                                 {isSigned && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded uppercase tracking-widest">SIGNED</span>}
                             </div>
                             <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-[0.1em]">
@@ -1408,7 +1421,7 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                 </div>
 
                 {/* MAIN DOCUMENTATION AREA */}
-                <div className="flex-1 overflow-y-auto p-10 bg-white custom-scrollbar grid grid-cols-12 gap-10">
+                <div className="flex-1 overflow-y-auto p-10 bg-white dark:bg-slate-800 custom-scrollbar grid grid-cols-12 gap-10">
 
                     {/* LEFT PANEL: SUBJECTIVE & OBJECTIVE */}
                     <div className="col-span-12 lg:col-span-7 space-y-12">
@@ -1424,8 +1437,8 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Review of Systems (ROS)</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         {rosOptions.map(sys => (
-                                            <div key={sys.system} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                                <div className="font-bold text-xs text-slate-800 mb-2">{sys.system}</div>
+                                            <div key={sys.system} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 mb-2">{sys.system}</div>
                                                 <div className="flex flex-wrap gap-2">
                                                     {sys.symptoms.map(sym => (
                                                         <button
@@ -1468,9 +1481,9 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                                 <div className="grid grid-cols-2 gap-6 pt-4">
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Current Medications</label>
-                                        <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 space-y-2">
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 space-y-2">
                                             {patient.activeMedications?.map((m: any, i: number) => (
-                                                <div key={i} className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                                                <div key={i} className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
                                                     <Pill className="w-3 h-3 text-indigo-500" /> {m.name} {m.dosage}
                                                 </div>
                                             ))}
@@ -1478,7 +1491,7 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Recent Lab Results</label>
-                                        <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 space-y-2">
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 space-y-2">
                                             {patient.labsHistory?.[0]?.results.slice(0, 3).map((r: any, i: number) => (
                                                 <div key={i} className={`flex items-center justify-between text-xs font-bold ${r.status === 'Abnormal' ? 'text-red-500' : 'text-slate-700'}`}>
                                                     <span>{r.test}</span>
@@ -1549,7 +1562,7 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                                                         <button
                                                             key={lab}
                                                             onClick={() => setFormData({ ...formData, planLabs: [...formData.planLabs, lab] })}
-                                                            className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded-md border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                                                            className="px-2 py-0.5 bg-slate-50 dark:bg-slate-900/50 text-slate-400 text-[9px] font-bold rounded-md border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                                                         >
                                                             + {lab.split(' (')[0]}
                                                         </button>
@@ -1617,7 +1630,7 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                         {/* ADDENDA SECTION */}
                         {(isSigned || formData.addenda.length > 0) && (
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
                                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                         <HistoryIcon className="w-4 h-4" /> Addenda
                                     </h3>
@@ -1625,17 +1638,17 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                                 <div className="space-y-4">
                                     {formData.addenda.map((ad, i) => (
                                         <div key={i} className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl">
-                                            <p className="text-xs font-medium text-slate-700 leading-relaxed">{ad.text}</p>
+                                            <p className="text-xs font-medium text-slate-700 dark:text-slate-200 leading-relaxed">{ad.text}</p>
                                             <div className="mt-2 text-[9px] font-black text-amber-600 uppercase tracking-widest">— Added {ad.timestamp}</div>
                                         </div>
                                     ))}
                                     {isSigned && (
                                         <div className="space-y-2">
-                                            <textarea
+                                            <AITextarea
                                                 placeholder="Add post-signature note..."
                                                 value={newAddendum}
-                                                onChange={(e: any) => setNewAddendum(e.target.value)}
-                                                className="w-full h-20 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 resize-none"
+                                                onValueChange={(val: string) => setNewAddendum(val)}
+                                                className="w-full h-20 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 resize-none"
                                             />
                                             <button
                                                 onClick={() => {
@@ -1659,13 +1672,13 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                 </div>
 
                 {/* MODAL FOOTER */}
-                <div className="px-10 py-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <div className="px-10 py-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Saved: Just now</span>
                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                     </div>
                     <div className="flex gap-4">
-                        <button onClick={onClose} className="px-8 py-3 rounded-xl text-slate-600 font-bold text-sm bg-white border border-slate-200 hover:bg-slate-50 transition-all">Discard Changes</button>
+                        <button onClick={onClose} className="px-8 py-3 rounded-xl text-slate-600 dark:text-slate-300 font-bold text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all">Discard Changes</button>
                         <button onClick={handleSave} className="bg-brand text-white px-10 py-3 rounded-xl font-black text-sm shadow-xl shadow-brand/20 hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 transition-all uppercase tracking-widest">
                             {isSigned ? 'Close & Save Final' : 'Save as Draft'}
                         </button>
@@ -1681,7 +1694,7 @@ function EncounterSection({ title, icon: Icon, color, children }: any) {
         <div className="space-y-6">
             <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-3">
                 <Icon className={`w-6 h-6 ${color}`} />
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{title}</h3>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{title}</h3>
             </div>
             {children}
         </div>
@@ -1693,12 +1706,12 @@ function EncounterField({ label, placeholder, value, onChange, textarea, disable
         <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
             {textarea ? (
-                <textarea
+                <AITextarea
                     placeholder={placeholder}
-                    value={value}
-                    onChange={(e: any) => onChange(e.target.value)}
+                    value={value || ''}
+                    onValueChange={(val: string) => onChange(val)}
                     disabled={disabled}
-                    className="w-full h-32 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/10 focus:border-brand transition-all resize-none disabled:opacity-70 disabled:bg-slate-50"
+                    className="w-full h-32 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/10 focus:border-brand transition-all resize-none disabled:opacity-70 disabled:bg-slate-50"
                 />
             ) : (
                 <input
@@ -1707,7 +1720,7 @@ function EncounterField({ label, placeholder, value, onChange, textarea, disable
                     value={value}
                     onChange={(e: any) => onChange(e.target.value)}
                     disabled={disabled}
-                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/10 focus:border-brand transition-all disabled:opacity-70 disabled:bg-slate-50"
+                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/10 focus:border-brand transition-all disabled:opacity-70 disabled:bg-slate-50"
                 />
             )}
         </div>
@@ -1741,7 +1754,7 @@ function VitalsInput({ label, value, onChange, readOnly, disabled }: any) {
                 readOnly={readOnly}
                 disabled={disabled}
                 placeholder="--"
-                className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-center text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50"
+                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-center text-sm font-black text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50"
             />
         </div>
     );
@@ -1773,15 +1786,15 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* TOP ACTIONS BAR */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-brand">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                 <div className="flex flex-wrap items-center gap-3">
                     <button className="bg-brand hover:bg-brand-600 text-white font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-brand/20 transition-all active:scale-95">
                         <Scale className="w-4 h-4" /> Enter Vitals
                     </button>
-                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
+                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
                         <Plus className="w-4 h-4" /> Manual Lab Entry
                     </button>
-                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
+                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all">
                         <FlaskConical className="w-4 h-4" /> Order Labs
                     </button>
                 </div>
@@ -1789,7 +1802,7 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
                     <button className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all border border-indigo-100">
                         <Sparkles className="w-4 h-4" /> AI Interpret All
                     </button>
-                    <button className="bg-white hover:bg-slate-50 text-slate-600 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all border border-slate-200">
+                    <button className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 transition-all border border-slate-200 dark:border-slate-700">
                         <Download className="w-4 h-4" /> Export History
                     </button>
                 </div>
@@ -1797,10 +1810,10 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* SECTION 1: WEIGHT TREND */}
-                <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-8 flex flex-col">
+                <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 flex flex-col">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
                                 <Scale className="w-6 h-6 text-brand" /> Weight Journey
                             </h2>
                             <p className="text-xs text-slate-500 font-medium mt-1 uppercase tracking-widest">Primary GLP-1 Outcome Metric</p>
@@ -1822,7 +1835,7 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
                             const height = range === 0 ? 50 : ((w - min) / range) * 80 + 20;
                             return (
                                 <div key={i} className="flex-1 flex flex-col items-center group">
-                                    <div className="text-[10px] font-bold text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity mb-2 bg-brand/10 px-2 py-0.5 rounded-full">{w} lbs</div>
+                                    <div className="text-[10px] font-bold text-slate-900 dark:text-white opacity-0 group-hover:opacity-100 transition-opacity mb-2 bg-brand/10 px-2 py-0.5 rounded-full">{w} lbs</div>
                                     <div
                                         style={{ height: `${height}%` }}
                                         className={`w-full rounded-t-xl transition-all duration-500 shadow-sm ${i === weightTrend.length - 1 ? 'bg-brand shadow-lg shadow-brand/20' : 'bg-brand/20 group-hover:bg-brand/40'}`}
@@ -1846,14 +1859,14 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
             </div>
 
             {/* SECTION 3: LAB RESULTS */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-8 border-b border-slate-100 bg-slate-50/30 flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="p-8 border-b border-slate-100 dark:border-slate-700 bg-slate-50/30 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
                             <Droplets className="w-6 h-6 text-indigo-600" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Biomarkers & Lab Panels</h2>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Biomarkers & Lab Panels</h2>
                             <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">Health Gorilla Integration Active</p>
                         </div>
                     </div>
@@ -1875,7 +1888,7 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700">
                                 <th className="px-8 py-5">Biomarker</th>
                                 <th className="px-8 py-5">Value</th>
                                 <th className="px-8 py-5">Reference Range</th>
@@ -1896,7 +1909,7 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
                                 .map((res: any, i: number) => (
                                     <tr key={i} className="hover:bg-slate-50 transition-colors group">
                                         <td className="px-8 py-6">
-                                            <div className="font-bold text-slate-900 text-sm">{res.test}</div>
+                                            <div className="font-bold text-slate-900 dark:text-white text-sm">{res.test}</div>
                                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">LOINC: 23456-7</div>
                                         </td>
                                         <td className="px-8 py-6">
@@ -1983,13 +1996,13 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
             {/* SECTION 4: LAB HISTORY TIMELINE */}
             <div className="space-y-6">
                 <div className="flex items-center justify-between px-2">
-                    <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
                         <HistoryIcon className="w-6 h-6 text-slate-400" /> Lab Draw Timeline
                     </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {labs.map((draw: any, i: number) => (
-                        <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+                        <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                     {draw.date}
@@ -1998,13 +2011,13 @@ export function LabsVitalsTab({ patient }: { patient: any }) {
                                     <FlaskConical className="w-4 h-4" />
                                 </div>
                             </div>
-                            <h4 className="font-extrabold text-slate-900 mb-1">{draw.panel}</h4>
+                            <h4 className="font-extrabold text-slate-900 dark:text-white mb-1">{draw.panel}</h4>
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
                                 {draw.results.length} Biomarkers Recorded
                             </div>
                             <div className="flex -space-x-2">
                                 {draw.results.slice(0, 3).map((_: any, j: number) => (
-                                    <div key={j} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase">
+                                    <div key={j} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase">
                                         {j === 0 ? 'HB' : j === 1 ? 'GL' : 'AL'}
                                     </div>
                                 ))}
@@ -2064,12 +2077,12 @@ export function DocumentsTab({ patient }: { patient: any }) {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* TOP ACTIONS BAR */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-brand">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                 <div className="flex flex-wrap items-center gap-3">
                     <button className="bg-brand hover:bg-brand-600 text-white font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-brand/20 transition-all active:scale-95">
                         <Upload className="w-4 h-4" /> Upload Document
                     </button>
-                    <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-2 p-1 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
                         <button
                             onClick={() => alert("Consent Generation Wizard would open here.")}
                             className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-brand transition-colors"
@@ -2093,7 +2106,7 @@ export function DocumentsTab({ patient }: { patient: any }) {
                             placeholder="Search documents..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium"
+                            className="pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium"
                         />
                     </div>
                 </div>
@@ -2126,8 +2139,8 @@ export function DocumentsTab({ patient }: { patient: any }) {
                         {filteredDocs.length > 0 ? filteredDocs.map((doc: any) => {
                             const Icon = getIcon(doc.category);
                             return (
-                                <div key={doc.id} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-brand/5 transition-colors"></div>
+                                <div key={doc.id} className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 dark:bg-slate-900/50 rounded-full -mr-12 -mt-12 group-hover:bg-brand/5 transition-colors"></div>
                                     <div className="relative z-10">
                                         <div className="flex items-start justify-between mb-4">
                                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm ${doc.category === 'Consent Forms' ? 'bg-emerald-50 text-emerald-600' :
@@ -2161,7 +2174,7 @@ export function DocumentsTab({ patient }: { patient: any }) {
                                                 </button>
                                             </div>
                                         </div>
-                                        <h4 className="font-extrabold text-slate-900 mb-1 group-hover:text-brand transition-colors">{doc.name}</h4>
+                                        <h4 className="font-extrabold text-slate-900 dark:text-white mb-1 group-hover:text-brand transition-colors">{doc.name}</h4>
                                         <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mt-3">
                                             <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {doc.date}</span>
                                             <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
@@ -2173,11 +2186,11 @@ export function DocumentsTab({ patient }: { patient: any }) {
                                 </div>
                             );
                         }) : (
-                            <div className="col-span-full py-24 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
-                                <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mb-6">
+                            <div className="col-span-full py-24 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center">
+                                <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl shadow-sm flex items-center justify-center mb-6">
                                     <FileSearch className="w-10 h-10 text-slate-200" />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">No documents found</h3>
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">No documents found</h3>
                                 <p className="text-slate-500 text-sm max-w-xs font-medium">There are no files uploaded or generated in this category yet.</p>
                             </div>
                         )}
@@ -2200,14 +2213,14 @@ function IntakeModal({ intakeData, patientName, onClose }: { intakeData: any, pa
     if (!intakeData) return null;
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]">
-                <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]">
+                <div className="p-8 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex flex-col items-center justify-center">
                             <ClipboardCheck className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">Patient Intake Form</h2>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Patient Intake Form</h2>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{patientName} • {intakeData.symptom || 'General Consultation'}</p>
                         </div>
                     </div>
@@ -2219,10 +2232,10 @@ function IntakeModal({ intakeData, patientName, onClose }: { intakeData: any, pa
                 <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                     {intakeData.answers ? (
                         Object.entries(intakeData.answers).map(([key, value], i) => (
-                            <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div key={i} className="p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                                 <p className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-2">Question {i + 1}</p>
-                                <p className="text-sm font-bold text-slate-800 mb-4">{key}</p>
-                                <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-sm text-slate-700 font-medium whitespace-pre-wrap">
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4">{key}</p>
+                                <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-sm text-slate-700 dark:text-slate-200 font-medium whitespace-pre-wrap">
                                     {String(value)}
                                 </div>
                             </div>
@@ -2276,7 +2289,7 @@ export function EncountersTab({ patient, onNewEncounter }: { patient: any, onNew
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* TOP ACTIONS BAR */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-brand">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-l-4 border-l-brand">
                 <div className="flex flex-wrap items-center gap-3">
                     <button
                         onClick={onNewEncounter}
@@ -2293,7 +2306,7 @@ export function EncountersTab({ patient, onNewEncounter }: { patient: any, onNew
                             placeholder="Search encounters..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium"
+                            className="pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all font-medium"
                         />
                     </div>
                 </div>
@@ -2315,21 +2328,21 @@ export function EncountersTab({ patient, onNewEncounter }: { patient: any, onNew
             {/* ENCOUNTERS LIST */}
             <div className="space-y-4">
                 {filteredEncounters.length > 0 ? filteredEncounters.map((enc: any) => (
-                    <div key={enc.id} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden cursor-pointer" onClick={() => alert(`Opening encounter ${enc.id}...`)}>
+                    <div key={enc.id} className="bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group relative overflow-hidden cursor-pointer" onClick={() => alert(`Opening encounter ${enc.id}...`)}>
                         <div className="absolute top-0 left-0 w-1 h-full bg-brand group-hover:w-2 transition-all"></div>
                         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex flex-col items-center justify-center border border-slate-100 group-hover:border-brand/20 transition-colors shadow-sm">
+                                <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900/50 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-slate-700 group-hover:border-brand/20 transition-colors shadow-sm">
                                     <span className="text-xs font-black text-slate-400 uppercase tracking-wider">
                                         {enc.date.split('-')[1] || '01'}/{enc.date.split('-')[2] || '01'}
                                     </span>
-                                    <span className="text-xl font-black text-slate-900">
+                                    <span className="text-xl font-black text-slate-900 dark:text-white">
                                         {enc.date.split('-')[0] || '2026'}
                                     </span>
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="text-lg font-black text-slate-900 group-hover:text-brand transition-colors">{enc.title}</h3>
+                                        <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-brand transition-colors">{enc.title}</h3>
                                         <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${enc.status === 'Signed' || enc.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                                             {enc.status}
                                         </span>
@@ -2348,7 +2361,7 @@ export function EncountersTab({ patient, onNewEncounter }: { patient: any, onNew
                             </div>
 
                             <div className="flex-1 md:max-w-xl">
-                                <p className="text-xs text-slate-600 font-medium leading-relaxed line-clamp-2">
+                                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed line-clamp-2">
                                     {enc.summary || 'Clinical encounter recorded for the patient.'}
                                 </p>
                                 {enc.intake && Object.keys(enc.intake).length > 0 && (
@@ -2367,21 +2380,21 @@ export function EncountersTab({ patient, onNewEncounter }: { patient: any, onNew
                                         Review Intake
                                     </button>
                                 )}
-                                <button className="p-2 bg-slate-50 text-slate-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all">
+                                <button className="p-2 bg-slate-50 dark:bg-slate-900/50 text-slate-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all">
                                     <Edit3 className="w-4 h-4" />
                                 </button>
-                                <button className="p-2 bg-slate-50 text-slate-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all">
+                                <button className="p-2 bg-slate-50 dark:bg-slate-900/50 text-slate-400 hover:text-brand hover:bg-brand/5 rounded-xl transition-all">
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
                     </div>
                 )) : (
-                    <div className="py-24 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mb-6">
+                    <div className="py-24 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl shadow-sm flex items-center justify-center mb-6">
                             <HistoryIcon className="w-10 h-10 text-slate-200" />
                         </div>
-                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">No encounters found</h3>
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">No encounters found</h3>
                         <p className="text-slate-500 text-sm max-w-xs font-medium">Try adjusting your filters or search terms.</p>
                     </div>
                 )}
@@ -2404,15 +2417,15 @@ function ReviewIntakeModal({ encounter, onClose }: { encounter: any, onClose: ()
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]">
-                <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white relative overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]">
+                <div className="p-8 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-brand/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
                     <div className="flex items-center gap-4 relative z-10">
                         <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
                             <ClipboardCheck className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">Clinical Intake Review</h2>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Clinical Intake Review</h2>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                 Assigned Visit: {encounter.title} • {encounter.date}
                             </p>
@@ -2430,14 +2443,14 @@ function ReviewIntakeModal({ encounter, onClose }: { encounter: any, onClose: ()
                             // If no answer for this key, maybe it was a raw consult with different keys?
                             // But usually we map by k.
                             return (
-                                <div key={i} className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:border-brand/20 transition-all">
+                                <div key={i} className="p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:border-brand/20 transition-all">
                                     <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-100">
+                                        <div className="w-6 h-6 bg-slate-50 dark:bg-slate-900/50 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-100 dark:border-slate-700">
                                             {i + 1}
                                         </div>
                                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{q.l}</p>
                                     </div>
-                                    <div className="p-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-sm text-slate-800 font-bold whitespace-pre-wrap">
+                                    <div className="p-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 font-bold whitespace-pre-wrap">
                                         {answer !== undefined ? (
                                             typeof answer === 'boolean' ? (answer ? 'YES' : 'NO') : String(answer)
                                         ) : (
@@ -2450,9 +2463,9 @@ function ReviewIntakeModal({ encounter, onClose }: { encounter: any, onClose: ()
                     ) : (
                         // Fallback: If no structured questions found, show raw entries
                         Object.entries(answers).map(([key, val], i) => (
-                            <div key={i} className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                            <div key={i} className="p-6 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
                                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 capitalize">{key.replace(/_/g, ' ')}</p>
-                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-sm text-slate-800 font-bold">
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 font-bold">
                                     {typeof val === 'boolean' ? (val ? 'YES' : 'NO') : String(val)}
                                 </div>
                             </div>
@@ -2469,7 +2482,7 @@ function ReviewIntakeModal({ encounter, onClose }: { encounter: any, onClose: ()
                     )}
                 </div>
 
-                <div className="px-8 py-6 bg-white border-t border-slate-100 flex justify-end">
+                <div className="px-8 py-6 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-end">
                     <button
                         onClick={onClose}
                         className="px-10 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
@@ -2514,12 +2527,12 @@ export function InboxTab({ patient }: { patient: any }) {
     return (
         <div className="max-w-[1600px] mx-auto h-[calc(100vh-250px)] animate-in fade-in slide-in-from-bottom-4 duration-500 flex gap-6">
             {/* THREAD LIST (Left Sidebar) */}
-            <div className="w-80 bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col overflow-hidden hidden md:flex">
-                <div className="p-4 border-b border-slate-100">
+            <div className="w-80 bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden hidden md:flex">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-700">
                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Active Threads</h3>
                     <div className="relative">
                         <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                        <input type="text" placeholder="Search messages..." className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all" />
+                        <input type="text" placeholder="Search messages..." className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all" />
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
@@ -2529,7 +2542,7 @@ export function InboxTab({ patient }: { patient: any }) {
                         </div>
                         <div className="min-w-0 flex-1">
                             <div className="flex justify-between items-center mb-1">
-                                <span className="text-sm font-bold text-slate-900 truncate">{patient.name}</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{patient.name}</span>
                                 <span className="text-[10px] font-bold text-slate-400">10:45 AM</span>
                             </div>
                             <p className="text-xs text-slate-500 truncate font-medium">{messages[messages.length - 1]?.text || 'No messages yet'}</p>
@@ -2543,7 +2556,7 @@ export function InboxTab({ patient }: { patient: any }) {
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-sm font-bold text-slate-900 truncate">Jane Doe</span>
+                                    <span className="text-sm font-bold text-slate-900 dark:text-white truncate">Jane Doe</span>
                                     <span className="text-[10px] font-bold text-slate-400">Yesterday</span>
                                 </div>
                                 <p className="text-xs text-slate-500 truncate font-medium">appointment confirmation...</p>
@@ -2554,15 +2567,15 @@ export function InboxTab({ patient }: { patient: any }) {
             </div>
 
             {/* CHAT AREA (Main) */}
-            <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col overflow-hidden relative">
+            <div className="flex-1 bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden relative">
                 {/* Header */}
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center font-black shadow-inner">
                             {patient.name.split(' ').map((n: string) => n[0]).join('')}
                         </div>
                         <div>
-                            <h2 className="text-sm font-black text-slate-900">{patient.name}</h2>
+                            <h2 className="text-sm font-black text-slate-900 dark:text-white">{patient.name}</h2>
                             <div className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Online Now</span>
@@ -2605,7 +2618,7 @@ export function InboxTab({ patient }: { patient: any }) {
                 </div>
 
                 {/* AI Suggestions */}
-                <div className="px-6 pb-2 pt-2 bg-white border-t border-slate-100 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                <div className="px-6 pb-2 pt-2 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 overflow-x-auto whitespace-nowrap scrollbar-hide">
                     <div className="flex gap-2">
                         <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-brand mr-2">
                             <Sparkles className="w-3 h-3" /> AI Suggests:
@@ -2614,7 +2627,7 @@ export function InboxTab({ patient }: { patient: any }) {
                             <button
                                 key={i}
                                 onClick={() => setNewMessage(suggestion)}
-                                className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 text-xs font-bold hover:bg-brand hover:text-white hover:border-brand transition-all active:scale-95"
+                                className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-500 text-xs font-bold hover:bg-brand hover:text-white hover:border-brand transition-all active:scale-95"
                             >
                                 {suggestion}
                             </button>
@@ -2623,29 +2636,22 @@ export function InboxTab({ patient }: { patient: any }) {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white border-t border-slate-100">
-                    <div className="flex items-end gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-brand/20 focus-within:border-brand transition-all">
-                        <button className="p-2 text-slate-400 hover:text-brand bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:-translate-y-0.5" title="Attach File">
+                <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+                    <div className="flex items-end gap-3 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-brand/20 focus-within:border-brand transition-all">
+                        <button className="p-2 text-slate-400 hover:text-brand bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:-translate-y-0.5" title="Attach File">
                             <Paperclip className="w-5 h-5" />
                         </button>
-                        <textarea
+                        <AITextarea
                             value={newMessage}
-                            onChange={(e) => {
-                                setNewMessage(e.target.value);
-                                e.target.style.height = 'auto';
-                                e.target.style.height = `${e.target.scrollHeight}px`;
-                            }}
-                            onKeyDown={(e) => {
+                            onValueChange={setNewMessage}
+                            onKeyDown={(e: any) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
                                     handleSendMessage();
-                                    const target = e.target as HTMLTextAreaElement;
-                                    target.style.height = 'auto';
                                 }
                             }}
                             placeholder="Type a secure message..."
-                            className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-900 placeholder:text-slate-400 resize-none py-2 max-h-32 focus:outline-none"
-                            rows={1}
+                            className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 resize-none py-2 max-h-32 focus:outline-none min-h-[48px]"
                         />
                         <button className="p-2 text-slate-400 hover:text-brand hover:bg-white rounded-xl transition-all">
                             <Smile className="w-5 h-5" />
@@ -2679,7 +2685,7 @@ function VitalCard({ icon: Icon, label, value, subValue, trend, color }: { icon:
     };
 
     return (
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-brand/40 transition-all group">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-brand/40 transition-all group">
             <div className="flex items-center justify-between mb-4">
                 <div className={`w-10 h-10 ${colors[color].split(' ')[0]} ${colors[color].split(' ')[1]} rounded-xl flex items-center justify-center transition-transform group-hover:scale-110`}>
                     <Icon className="w-5 h-5" />
@@ -2691,7 +2697,7 @@ function VitalCard({ icon: Icon, label, value, subValue, trend, color }: { icon:
                 )}
             </div>
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</div>
-            <div className="text-2xl font-black text-slate-900">{value}</div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">{value}</div>
             {subValue && <div className="text-[10px] font-bold text-slate-500 mt-1 uppercase">{subValue}</div>}
         </div>
     );

@@ -1,0 +1,24 @@
+﻿
+> patriotic-emr-frontend@1.0.0 lint
+> next lint
+
+
+./src/app/(patient)/patient/profile/page.tsx
+96:8  Warning: React Hook useEffect has missing dependencies: 'userProfile.displayName' and 'userProfile.photoURL'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/admin/users/[uid]/page.tsx
+31:8  Warning: React Hook useEffect has a missing dependency: 'fetchUser'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/services/page.tsx
+89:15  Warning: Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./src/components/auth/MfaSetup.tsx
+39:8  Warning: React Hook useEffect has a missing dependency: 'recaptchaVerifier'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/layout/SecurityWrapper.tsx
+67:8  Warning: React Hook useEffect has a missing dependency: 'resetTimers'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/telehealth/DoseSpotFrame.tsx
+79:8  Warning: React Hook useEffect has missing dependencies: 'patientDoseSpotId', 'refillsErrors', and 'ssoUrl'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules

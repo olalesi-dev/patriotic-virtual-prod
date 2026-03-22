@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
+import { resolveProviderScopedPatientDetail } from '@/lib/provider-patient-detail-route';
 
 export async function GET(
     request: Request,
     { params }: { params: { id: string } }
 ) {
+    const { patient, errorResponse } = await resolveProviderScopedPatientDetail(request, params.id);
+    if (errorResponse || !patient) return errorResponse;
+
     return NextResponse.json({
         success: true,
         patientId: params.id,
-        encounters: [
-            { id: 'ENC-123', date: '2026-02-15', title: 'GLP-1 Follow-up', status: 'Signed' }
-        ]
+        encounters: patient.recentEncounters
     });
 }

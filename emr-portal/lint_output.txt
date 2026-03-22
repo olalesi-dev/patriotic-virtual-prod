@@ -1,0 +1,398 @@
+﻿
+> patriotic-emr-frontend@1.0.0 lint
+> next lint
+
+node.exe : 
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (:String  
+  ) [], RemoteException
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+./src/app/(patient)/patient/a
+ppointments/page.tsx
+881:110  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  
+react/no-unescaped-entities
+
+./src/app/(patient)/patient/m
+essages/page.tsx
+317:88  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+317:104  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+
+./src/app/(patient)/patient/p
+rofile/page.tsx
+96:8  Warning: React Hook 
+useEffect has missing 
+dependencies: 
+'userProfile.displayName' 
+and 'userProfile.photoURL'. 
+Either include them or 
+remove the dependency array. 
+ react-hooks/exhaustive-deps
+230:37  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+
+./src/app/(patient)/patient/s
+cheduled/page.tsx
+349:41  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+349:52  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+
+./src/app/(patient)/patient/s
+ettings/page.tsx
+154:111  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+154:127  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+
+./src/app/(provider)/admin/us
+ers/[uid]/page.tsx
+31:8  Warning: React Hook 
+useEffect has a missing 
+dependency: 'fetchUser'. 
+Either include it or remove 
+the dependency array.  
+react-hooks/exhaustive-deps
+
+./src/app/(provider)/services
+/page.tsx
+89:15  Warning: Image 
+elements must have an alt 
+prop, either with meaningful 
+text, or an empty string for 
+decorative images.  
+jsx-a11y/alt-text
+
+./src/app/(provider)/settings
+/page.tsx
+321:50  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  
+react/no-unescaped-entities
+
+./src/app/forgot-password/pag
+e.tsx
+56:82  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  
+react/no-unescaped-entities
+63:56  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  
+react/no-unescaped-entities
+
+./src/app/privacy/page.tsx
+85:90  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+85:102  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+86:150  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+86:161  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+86:166  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+86:183  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+
+./src/app/signup/page.tsx
+107:27  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  
+react/no-unescaped-entities
+
+./src/components/auth/LoginFo
+rm.tsx
+182:50  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  
+react/no-unescaped-entities
+
+./src/components/auth/MfaSetu
+p.tsx
+39:8  Warning: React Hook 
+useEffect has a missing 
+dependency: 
+'recaptchaVerifier'. Either 
+include it or remove the 
+dependency array.  
+react-hooks/exhaustive-deps
+
+./src/components/layout/Globa
+lSearch.tsx
+173:76  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+173:84  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+
+./src/components/layout/MainL
+ayout.tsx
+88:29  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+
+./src/components/layout/Patie
+ntLayout.tsx
+208:21  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+
+./src/components/layout/Secur
+ityWrapper.tsx
+67:8  Warning: React Hook 
+useEffect has a missing 
+dependency: 'resetTimers'. 
+Either include it or remove 
+the dependency array.  
+react-hooks/exhaustive-deps
+
+./src/components/patient/Pati
+entChart.tsx
+409:25  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+409:166  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+
+./src/components/patient/Pati
+entDetailComponents.tsx
+1582:41  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+1582:208  Error: `"` can be 
+escaped with `&quot;`, 
+`&ldquo;`, `&#34;`, 
+`&rdquo;`.  
+react/no-unescaped-entities
+1955:220  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  
+react/no-unescaped-entities
+
+./src/components/patient/Pati
+entsClient.tsx
+435:49  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+
+./src/components/telehealth/D
+oseSpotFrame.tsx
+79:8  Warning: React Hook 
+useEffect has missing 
+dependencies: 
+'patientDoseSpotId', 
+'refillsErrors', and 
+'ssoUrl'. Either include 
+them or remove the 
+dependency array.  
+react-hooks/exhaustive-deps
+
+./src/features/landing/compon
+ents/LandingEmbed.tsx
+583:13  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+588:13  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+1007:17  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+1273:19  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+1278:19  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+1419:17  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+1659:17  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: http
+s://nextjs.org/docs/messages/
+no-img-element  
+@next/next/no-img-element
+
+info  - Need to disable some 
+ESLint rules? Learn more 
+here: https://nextjs.org/docs
+/basic-features/eslint#disabl
+ing-rules

@@ -22,11 +22,18 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
+    Users,
+    ShoppingBag,
+    ShoppingCart,
+    Gift
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
+import { ConsentModal } from '@/components/patient/ConsentModal';
+import { useCart } from '@/hooks/useCart';
+import { CartDrawer } from '@/components/shop/CartDrawer';
 
 
 export function PatientLayout({ children }: { children: React.ReactNode }) {
@@ -38,7 +45,8 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     const [notifications, setNotifications] = useState<any[]>([]);
     const notifRef = useRef<HTMLDivElement>(null);
     // Direct Firebase Auth user — always has the real displayName (set during signup)
-    const [authUser, setAuthUser] = useState<any>(null);
+    const authUser = auth.currentUser;
+    const cart = useCart();
 
     const profile = useUserProfile();
 
@@ -60,8 +68,9 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || 'P';
 
     useEffect(() => {
-        // Listen to Firebase Auth directly — most reliable source for displayName
-        const unsub = auth.onAuthStateChanged((u) => setAuthUser(u));
+        const unsub = auth.onAuthStateChanged((u) => {
+            // keep forced render to match top level auth changes
+        });
         return () => unsub();
     }, []);
 
@@ -172,7 +181,10 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
         { name: 'My Appointments', href: '/patient/appointments', icon: FileText },
         { name: 'Calendar', href: '/patient/calendar', icon: Calendar },
         { name: 'Messages', href: '/patient/messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount.toString() : undefined },
+        { name: 'Community Feed', href: '/patient/community', icon: Users },
         { name: 'Medications', href: '/my-health/medications', icon: Pill },
+        { name: 'Shop', href: '/patient/shop', icon: ShoppingBag },
+        { name: 'Refer & Earn', href: '/patient/referrals', icon: Gift },
         { name: 'Lab Results', href: '/my-health/labs', icon: Activity },
         { name: 'Imaging', href: '/my-health/imaging', icon: FileText },
         { name: 'Billing', href: '/patient/billing', icon: CreditCard },
@@ -183,13 +195,15 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     if (profile.loading) {
         return (
             <div className="min-h-screen bg-[#F0F9FF] flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-slate-200 border-t-[#0EA5E9] rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-[#0EA5E9] rounded-full animate-spin"></div>
             </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-[#F0F9FF] flex">
+            {/* Privacy & Consent Gate — shown once on first login */}
+            <ConsentModal />
             {/* MOBILE SIDEBAR OVERLAY */}
             {isSidebarOpen && (
                 <div
@@ -200,7 +214,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
 
             {/* SIDEBAR */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0
+                fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-800 border-r border-slate-100 dark:border-slate-700 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 {/* Logo */}
@@ -245,7 +259,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
             {/* MAIN CONTENT */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Header */}
-                <header className="h-20 bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 px-8 flex items-center justify-between">
+                <header className="h-20 bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 dark:border-slate-700 px-8 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             className="p-2 -ml-2 lg:hidden text-slate-400"
@@ -253,13 +267,13 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                         >
                             <Menu className="w-6 h-6" />
                         </button>
-                        <h2 className="text-xl font-black text-slate-800 tracking-tight hidden sm:block">
+                        <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight hidden sm:block">
                             Welcome back, <span className="text-[#0EA5E9]">{firstName}</span>
                         </h2>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <div className="hidden md:flex items-center gap-2 mr-4 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
+                        <div className="hidden md:flex items-center gap-2 mr-4 bg-slate-50 dark:bg-slate-900/50 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-700">
                             <Search className="w-4 h-4 text-slate-300" />
                             <input
                                 type="text"
@@ -267,6 +281,19 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                                 className="bg-transparent border-none text-xs font-bold focus:ring-0 placeholder:text-slate-300 w-48"
                             />
                         </div>
+
+                        {/* Cart Button */}
+                        <button
+                            onClick={() => cart.toggleCart()}
+                            className="p-2.5 text-slate-400 hover:text-[#0EA5E9] hover:bg-sky-50 rounded-xl transition-all relative"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                            {cart.getCartCount() > 0 && (
+                                <span className="absolute top-1.5 right-1.5 min-w-[12px] h-[12px] bg-[#0EA5E9] rounded-full border border-white text-[8px] flex items-center justify-center font-bold text-white shadow-sm px-0.5" >
+                                    {cart.getCartCount()}
+                                </span>
+                            )}
+                        </button>
 
                         {/* Notification Bell */}
                         <div className="relative" ref={notifRef}>
@@ -281,9 +308,9 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                             </button>
 
                             {notifOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden">
+                                <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden">
                                     <div className="p-4 border-b border-slate-50 flex justify-between items-center">
-                                        <h3 className="font-black text-slate-800 text-sm">Notifications</h3>
+                                        <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm">Notifications</h3>
                                         <button onClick={() => setNotifOpen(false)} className="text-slate-300 hover:text-slate-500 p-1 rounded-lg hover:bg-slate-100 transition-colors">
                                             <X className="w-4 h-4" />
                                         </button>
@@ -305,14 +332,14 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                                                     {n.icon === 'shield' && <ShieldCheck className="w-4 h-4" />}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold text-slate-800 leading-tight mb-0.5">{n.title}</p>
+                                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight mb-0.5">{n.title}</p>
                                                     <p className="text-[11px] text-slate-400 leading-snug">{n.body}</p>
                                                     <p className="text-[10px] text-slate-300 mt-1 font-bold uppercase tracking-widest">{n.time}</p>
                                                 </div>
                                             </Link>
                                         ))}
                                     </div>
-                                    <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 text-center">
                                         <Link href="/patient/appointments" onClick={() => setNotifOpen(false)}
                                             className="text-[11px] font-black text-[#0EA5E9] uppercase tracking-widest hover:underline">
                                             View All Activity →
@@ -334,9 +361,11 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                 <main className="flex-1 p-6 md:p-8 overflow-y-auto">
                     <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
                         {children}
+                        <CartDrawer />
                     </div>
                 </main>
             </div>
         </div>
     );
 }
+
