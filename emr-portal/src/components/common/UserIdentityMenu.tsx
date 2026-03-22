@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -143,15 +143,19 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
         <div className={`relative w-full ${collapsed ? 'px-0' : 'px-4'} mb-6`} ref={dropdownRef}>
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className={`absolute bottom-full left-4 right-4 mb-2 lg:bottom-0 lg:left-[calc(100%+8px)] lg:right-auto lg:w-[280px] lg:mb-0 bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-in slide-in-from-bottom-2 lg:slide-in-from-left-2 duration-200`}>
+                <div className={`absolute bottom-full left-4 right-4 mb-2 lg:bottom-0 lg:left-[calc(100%+8px)] lg:right-auto lg:w-[280px] lg:mb-0 bg-white dark:bg-slate-800 dark:bg-slate-900 rounded-[24px] shadow-2xl border border-slate-100 dark:border-slate-700 dark:border-slate-800 overflow-hidden z-50 animate-in slide-in-from-bottom-2 lg:slide-in-from-left-2 duration-200`}>
                     {/* Header */}
                     <div className="p-5 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-indigo-500 flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
-                                {profile.initials}
+                            <div className="w-10 h-10 rounded-full bg-indigo-500 flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md overflow-hidden">
+                                {profile.photoURL ? (
+                                    <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    profile.initials
+                                )}
                             </div>
                             <div className="min-w-0">
-                                <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white dark:text-white truncate">
                                     {profile.displayName}
                                 </h4>
                                 <p className="text-[10px] font-medium text-slate-400 truncate">
@@ -179,7 +183,7 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
                                     key={item.href}
                                     href={item.href}
                                     onClick={() => setIsOpen(false)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all group"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all group"
                                 >
                                     <item.icon className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                                     {item.label}
@@ -189,13 +193,13 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
                             {/* Theme Toggle Inline */}
                             <button
                                 onClick={toggleTheme}
-                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
                             >
                                 <div className="flex items-center gap-3">
                                     <Palette className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                                     <span>Theme</span>
                                 </div>
-                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 dark:border-slate-700">
                                     <div className={`p-1 rounded-md ${theme === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-slate-400'}`}>
                                         <Sun className="w-3 h-3" />
                                     </div>
@@ -213,7 +217,7 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
                             <Link
                                 href={helpHref}
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
                             >
                                 <HelpCircle className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                                 Get Help
@@ -243,11 +247,15 @@ export function UserIdentityMenu({ collapsed = false }: { collapsed?: boolean })
             >
                 {!isOpen && !collapsed && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none"></div>}
 
-                <div className={`w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md ring-2 transition-all
+                <div className={`w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center text-white font-black text-sm shadow-md ring-2 transition-all overflow-hidden
                     ${isOpen ? 'bg-white text-indigo-600 ring-indigo-500' : 'bg-indigo-500 ring-slate-900'}
                     ${collapsed && !isOpen ? 'ring-offset-2 ring-indigo-500/20' : ''}
                 `}>
-                    {resolvedInitials}
+                    {profile.photoURL ? (
+                        <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        resolvedInitials
+                    )}
                 </div>
 
                 {!collapsed && (

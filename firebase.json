@@ -17,6 +17,34 @@
           }
         },
         {
+          "source": "/weight-loss",
+          "destination": "/weight-loss/index.html"
+        },
+        {
+          "source": "/weight-loss/**",
+          "destination": "/weight-loss/index.html"
+        },
+        {
+          "source": "/sitemap.xml",
+          "destination": "/sitemap.xml"
+        },
+        {
+          "source": "/privacy",
+          "destination": "/privacy/index.html"
+        },
+        {
+          "source": "/terms",
+          "destination": "/terms/index.html"
+        },
+        {
+          "source": "/refund",
+          "destination": "/refund/index.html"
+        },
+        {
+          "source": "/contact",
+          "destination": "/contact/index.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -72,7 +100,28 @@
       ],
       "rewrites": [
         {
-          "source": "/api/v1/**",
+          "source": "/api/v1/dosespot/**",
+          "run": {
+            "serviceId": "patriotic-virtual-backend",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/v1/emr/**",
+          "run": {
+            "serviceId": "patriotic-virtual-backend",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/v1/auth/**",
+          "run": {
+            "serviceId": "patriotic-virtual-backend",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/api/v1/webhooks/**",
           "run": {
             "serviceId": "patriotic-virtual-backend",
             "region": "us-central1"
@@ -87,5 +136,17 @@
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ]
 }

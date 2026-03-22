@@ -1,0 +1,27 @@
+[
+  {
+    "uid": "EbOw9UJ1WCNNkTeAhhBkdcguHiR2",
+    "email": "joep6@test.com",
+    "name": "Joe Patient6",
+    "firstName": "Joe",
+    "lastName": "Patient6",
+    "sex": "Male",
+    "role": "patient",
+    "status": "active",
+    "emailVerified": false,
+    "createdAt": {
+      "_seconds": 1773298378,
+      "_nanoseconds": 386000000
+    },
+    "dob": "",
+    "lastVisit": {
+      "_seconds": 1773307035,
+      "_nanoseconds": 565000000
+    },
+    "state": "",
+    "updatedAt": {
+      "_seconds": 1773307035,
+      "_nanoseconds": 565000000
+    }
+  }
+]

@@ -12,18 +12,18 @@ export default function PrivacyPage() {
                     <ChevronLeft className="w-4 h-4" /> Back to Login
                 </Link>
 
-                <div className="bg-white rounded-[40px] shadow-2xl shadow-sky-100 overflow-hidden border border-sky-50">
+                <div className="bg-white dark:bg-slate-800 rounded-[40px] shadow-2xl shadow-sky-100 overflow-hidden border border-sky-50">
                     <div className="p-12 bg-slate-900 text-white relative">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#0EA5E9] rounded-full -mr-32 -mt-32 blur-3xl opacity-20"></div>
                         <h1 className="text-4xl font-black tracking-tight mb-4 relative">Privacy Policy</h1>
                         <p className="text-[#0EA5E9] font-bold uppercase tracking-widest text-xs">HIPAA-Compliance & Data Protection</p>
                     </div>
 
-                    <div className="p-12 space-y-12 text-slate-600 leading-relaxed font-medium">
+                    <div className="p-12 space-y-12 text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
 
                         {/* 0. EMERGENCY WARNING */}
                         <section className="p-8 bg-rose-50 rounded-[32px] border border-rose-100 flex gap-6 items-start">
-                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 text-rose-500 shadow-sm">
+                            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shrink-0 text-rose-500 shadow-sm">
                                 <AlertCircle className="w-6 h-6" />
                             </div>
                             <div>
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
 
                         {/* 1. Telehealth Consent */}
                         <section>
-                            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
                                 <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                     <Stethoscope className="w-5 h-5" />
                                 </div>
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
 
                         {/* 2. Payment Policy */}
                         <section>
-                            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
                                 <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                     <CreditCard className="w-5 h-5" />
                                 </div>
@@ -56,15 +56,15 @@ export default function PrivacyPage() {
 
                         {/* 3. HIPAA & Privacy */}
                         <section className="p-10 bg-sky-50/50 rounded-[32px] border border-sky-100">
-                            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3 text-[#0EA5E9]">
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3 text-[#0EA5E9]">
                                 <Lock className="w-6 h-6" /> 3. HIPAA & Privacy
                             </h2>
-                            <p className="text-sm font-bold text-slate-700 leading-relaxed">We are committed to protecting your medical information. We utilize HIPAA-compliant secure platforms for all video consults, messaging, and data storage. Your information will only be shared for treatment, payment, or healthcare operations, or as required by law.</p>
+                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed">We are committed to protecting your medical information. We utilize HIPAA-compliant secure platforms for all video consults, messaging, and data storage. Your information will only be shared for treatment, payment, or healthcare operations, or as required by law.</p>
                         </section>
 
                         {/* 4. GLP-1 & Weight Loss */}
                         <section>
-                            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
                                 <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                     <Pill className="w-5 h-5" />
                                 </div>
@@ -75,7 +75,7 @@ export default function PrivacyPage() {
 
                         {/* 5. Radiology Services */}
                         <section>
-                            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
                                 <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                     <Microscope className="w-5 h-5" />
                                 </div>
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
 
                         {/* 6. Data Usage for AI */}
                         <section>
-                            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
                                 <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                     <Activity className="w-5 h-5" />
                                 </div>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
 
                         {/* 7. SMS Notifications */}
                         <section>
-                            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
                                 <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                     <MessageSquare className="w-5 h-5" />
                                 </div>
@@ -113,7 +113,7 @@ export default function PrivacyPage() {
                             </p>
                         </section>
 
-                        <div className="pt-12 border-t border-slate-100 italic text-sm text-slate-400 font-bold uppercase tracking-widest text-center">
+                        <div className="pt-12 border-t border-slate-100 dark:border-slate-700 italic text-sm text-slate-400 font-bold uppercase tracking-widest text-center">
                             © 2026 Patriotic Health · All rights reserved · HIPAA Compliant
                         </div>
                     </div>

@@ -12,10 +12,11 @@ const isPublicRoute = (pathname: string) =>
     pathname === '/' ||
     pathname === '/login' ||
     pathname === '/signup' ||
-    pathname === '/privacy' ||
+    pathname === '/privacy-policy' ||
     pathname === '/terms' ||
     pathname === '/forgot-password' ||
-    pathname.startsWith('/book');
+    pathname.startsWith('/book') ||
+    pathname.startsWith('/weight-loss');
 
 export function SecurityShell({ children }: { children: React.ReactNode }) {
     const [lastActivity, setLastActivity] = useState(Date.now());
@@ -80,11 +81,11 @@ export function SecurityShell({ children }: { children: React.ReactNode }) {
             {/* Session Timeout Warning Modal */}
             {showWarning && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 animate-in zoom-in duration-300">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-in zoom-in duration-300">
                         <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 mx-auto mb-6">
                             <Lock className="w-8 h-8" />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-900 text-center mb-2">Session Expiring</h2>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white text-center mb-2">Session Expiring</h2>
                         <p className="text-slate-500 text-center mb-8 font-medium">
                             For security, your session will end in <span className="text-amber-600 font-black">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span> due to inactivity.
                         </p>
@@ -98,7 +99,7 @@ export function SecurityShell({ children }: { children: React.ReactNode }) {
                             </button>
                             <button
                                 onClick={logout}
-                                className="w-full bg-slate-50 text-slate-400 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
+                                className="w-full bg-slate-50 dark:bg-slate-900/50 text-slate-400 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
                             >
                                 Sign Out Now
                             </button>

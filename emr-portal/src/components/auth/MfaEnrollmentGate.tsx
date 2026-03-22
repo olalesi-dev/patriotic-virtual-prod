@@ -9,7 +9,7 @@ const isPublicRoute = (pathname: string) =>
     pathname === '/' ||
     pathname === '/login' ||
     pathname === '/signup' ||
-    pathname === '/privacy' ||
+    pathname === '/privacy-policy' ||
     pathname === '/terms' ||
     pathname === '/forgot-password' ||
     pathname.startsWith('/book');
@@ -66,9 +66,9 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
 
     if (loading) {
         return (
-            <div className="flex h-screen items-center justify-center bg-slate-50">
+            <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900/50">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-slate-200 border-t-brand rounded-full animate-spin"></div>
+                    <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-brand rounded-full animate-spin"></div>
                     <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Security Check</p>
                 </div>
             </div>

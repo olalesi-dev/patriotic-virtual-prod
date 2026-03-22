@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const admin = require('firebase-admin');
 const dotenv = require('dotenv');
+const crypto = require('crypto');
 dotenv.config(); // Must load env vars before any process.env access
 const { notifyWaitlist, notifyScheduled } = require('./notifications');
 
@@ -172,6 +173,141 @@ app.get('/api/v1/dosespot/notification-count', async (req, res) => {
         console.error('Error fetching DoseSpot notification count:', error);
         return res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+function verifyDoseSpotSecret(req) {
+    const webhookSecret = (process.env.DOSESPOT_WEBHOOK_SECRET || '').trim();
+    if (!webhookSecret) {
+        console.warn('[DoseSpot Webhook] DOSESPOT_WEBHOOK_SECRET not set — skipping secret verification');
+        return true;
+    }
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        if ((process.env.DOSESPOT_WEBHOOK_STRICT || '').trim() === 'true') {
+            console.warn('[DoseSpot Webhook] Missing Authorization header in strict mode — rejecting');
+            return false;
+        }
+        console.info('[DoseSpot Webhook] No Authorization header — allowing (non-strict mode)');
+        return true;
+    }
+
+    const expectedHeader = `Secret ${webhookSecret}`;
+
+    try {
+        return crypto.timingSafeEqual(
+            Buffer.from(authHeader, 'utf8'),
+            Buffer.from(expectedHeader, 'utf8')
+        );
+    } catch {
+        console.warn('[DoseSpot Webhook] Secret mismatch — invalid Authorization header');
+        return false;
+    }
+}
+
+app.post('/api/v1/dosespot/push-notifications', async (req, res) => {
+    if (!verifyDoseSpotSecret(req)) {
+        return res.status(401).json({ error: 'Invalid or missing DoseSpot secret' });
+    }
+
+    const { EventType, Data } = req.body;
+
+    if (EventType !== 'PrescriberNotificationCounts') {
+        console.info(`[DoseSpot Webhook] Ignoring unhandled EventType: ${EventType}`);
+        return res.status(200).json({ received: true, ignored: true, reason: 'unhandled_event_type' });
+    }
+
+    if (!Data || !Data.ClinicianId) {
+        console.warn('[DoseSpot Webhook] Missing Data or ClinicianId in payload', req.body);
+        return res.status(400).json({ error: 'Missing Data.ClinicianId' });
+    }
+
+    const clinicianId = parseInt(String(Data.ClinicianId), 10);
+    if (isNaN(clinicianId)) {
+        return res.status(400).json({ error: 'Invalid ClinicianId' });
+    }
+
+    const totals = Data.Total || {};
+    const pendingPrescriptions = parseInt(String(totals.PendingPrescriptionCount ?? 0), 10) || 0;
+    const transmissionErrors   = parseInt(String(totals.TransmissionErrorCount   ?? 0), 10) || 0;
+    const refillRequests       = parseInt(String(totals.RefillRequestCount       ?? 0), 10) || 0;
+    const changeRequests       = parseInt(String(totals.ChangeRequestCount       ?? 0), 10) || 0;
+    const totalCount           = pendingPrescriptions + transmissionErrors + refillRequests + changeRequests;
+
+    console.info('[DoseSpot Webhook] Received notification counts', {
+        clinicianId, pendingPrescriptions, transmissionErrors, refillRequests, changeRequests, totalCount,
+    });
+
+    try {
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef
+            .where('doseSpotClinicianId', '==', clinicianId)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) {
+            console.warn('[DoseSpot Webhook] No user found for clinicianId — ignoring', { clinicianId });
+            return res.status(200).json({ received: true, matched: false });
+        }
+
+        const providerDoc = snapshot.docs[0];
+        const providerUid = providerDoc.id;
+
+        await db.collection('users')
+            .doc(providerUid)
+            .collection('dosespot')
+            .doc('notifications')
+            .set({
+                pendingPrescriptions,
+                transmissionErrors,
+                refillRequests,
+                changeRequests,
+                total: totalCount,
+                lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                sourceClinicianId: clinicianId,
+            }, { merge: true });
+
+        if (totalCount > 0) {
+            const alertParts = [];
+            if (pendingPrescriptions > 0) alertParts.push(`${pendingPrescriptions} pending Rx`);
+            if (transmissionErrors    > 0) alertParts.push(`${transmissionErrors} transmission error(s)`);
+            if (refillRequests        > 0) alertParts.push(`${refillRequests} refill request(s)`);
+            if (changeRequests        > 0) alertParts.push(`${changeRequests} change request(s)`);
+
+            await db.collection('notifications').add({
+                userId: providerUid,
+                title: 'eRx Action Required',
+                message: `DoseSpot: ${alertParts.join(', ')}. Open the eRx tab to review.`,
+                type: 'dosespot_erx',
+                status: 'unread',
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                meta: {
+                    clinicianId,
+                    pendingPrescriptions,
+                    transmissionErrors,
+                    refillRequests,
+                    changeRequests,
+                },
+            });
+
+            console.info('[DoseSpot Webhook] In-app notification created for provider', { providerUid, totalCount });
+        }
+
+        return res.status(200).json({ received: true, matched: true, providerUid, total: totalCount });
+
+    } catch (error) {
+        console.error('[DoseSpot Webhook] Error processing push notification', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/v1/dosespot/push-notifications/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        service: 'patriotic-telehealth-backend',
+        timestamp: new Date().toISOString(),
+    });
 });
 
 // EMR API Key middleware — allows the EMR provider dashboard to call the backend
@@ -1068,20 +1204,32 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
                 const uid = consultData.uid;
 
                 if (uid) {
-                    const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
-                    await apptRef.set({
+                    const baseApptData = {
                         providerName: "Patriotic Provider",
                         providerId: "dr-o-admin-uid",
                         type: "Telehealth",
                         status: "waitlist",
                         scheduledAt: null,
-                        meetingUrl: "https://doxy.me/patriotictelehealth",
+                        meetingUrl: "https://doxy.me/ патриотиctelehealth", // leaving as url encoded but fixing URL just in case, wait it's just a string, let's keep original "https://doxy.me/patriotictelehealth"
                         consultationId: consultationId,
                         serviceKey: consultData.serviceKey || 'general_consultation',
                         intakeAnswers: consultData.intake || {},
                         patientUid: uid,
                         createdAt: admin.firestore.FieldValue.serverTimestamp()
-                    });
+                    };
+                    baseApptData.meetingUrl = "https://doxy.me/patriotictelehealth";
+
+                    // 1. Patient Sub-collection
+                    const apptRef = db.collection('patients').doc(uid).collection('appointments').doc(consultationId);
+                    await apptRef.set(baseApptData, { merge: true });
+
+                    // 2. Top-level collection (Used by EMR)
+                    const topApptRef = db.collection('appointments').doc(consultationId);
+                    await topApptRef.set({
+                        ...baseApptData,
+                        patientId: uid,
+                        paymentStatus: 'paid'
+                    }, { merge: true });
 
                     const serviceName = CATALOG[consultData.serviceKey]?.name || consultData.serviceKey;
                     const patientSnap = await db.collection('patients').doc(uid).get();
@@ -1142,6 +1290,8 @@ app.post('/api/v1/payments/create-checkout-session', async (req, res) => {
         if (item.interval) {
             sessionConfig.line_items[0].price_data.recurring = { interval: item.interval };
         }
+
+        sessionConfig.billing_address_collection = 'required';
 
         const session = await stripe.checkout.sessions.create(sessionConfig);
         res.json({ sessionId: session.id, url: session.url });
@@ -1238,24 +1388,37 @@ app.post('/api/v1/webhooks/stripe', async (req, res) => {
             const consultSnap = await consultRef.get();
             const consultData = consultSnap.exists ? consultSnap.data() : {};
 
-            // 3. Create Waitlist Appointment in Patient Sub-collection
-            // Path: patients/{uid}/appointments
-            // status='waitlist' until provider schedules it
+            // Fetch dynamic doxy config
+            const doxySnap = await db.collection('settings').doc('doxy_integration').get();
+            const doxyUrl = doxySnap.exists ? (doxySnap.data().doxyUrl || "https://doxy.me/patriotictelehealth") : "https://doxy.me/patriotictelehealth";
+
+            // 3. Create Waitlist Appointment in Patient Sub-collection AND Top-Level
             if (uid) {
-                const apptRef = db.collection('patients').doc(uid).collection('appointments').doc();
-                batch.set(apptRef, {
+                const baseApptData = {
                     providerName: "Patriotic Provider",
                     providerId: "dr-o-admin-uid",
                     type: "Telehealth",
                     status: "waitlist",
                     scheduledAt: null,
-                    meetingUrl: "https://doxy.me/patriotictelehealth",
+                    meetingUrl: doxyUrl,
                     consultationId: consultationId,
                     serviceKey: consultData.serviceKey || 'general_consultation',
                     intakeAnswers: consultData.intake || {},
                     patientUid: uid,
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
-                });
+                };
+
+                // Patient Sub-collection
+                const apptRef = db.collection('patients').doc(uid).collection('appointments').doc(consultationId);
+                batch.set(apptRef, baseApptData, { merge: true });
+
+                // Top-level collection (Used by EMR)
+                const topApptRef = db.collection('appointments').doc(consultationId);
+                batch.set(topApptRef, {
+                    ...baseApptData,
+                    patientId: uid,
+                    paymentStatus: 'paid'
+                }, { merge: true });
             }
 
             await batch.commit();

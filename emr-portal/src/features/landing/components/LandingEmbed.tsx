@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { LandingModals } from "./LandingModals";
 
 type LandingLocale = "en" | "es";
 
@@ -78,12 +79,12 @@ const POPULAR_SERVICES: ServiceCard[] = [
     color: "blue",
     price: 129,
     title: {
-      en: "GLP-1 & Weight Loss",
-      es: "GLP-1 y Pérdida de Peso",
+      en: "Rx Weight Loss",
+      es: "Rx y Pérdida de Peso",
     },
     description: {
-      en: "Comprehensive medical weight loss evaluation. GLP-1 eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
-      es: "Evaluación médica integral de pérdida de peso. Detección para elegibilidad de GLP-1, titulación personalizada y orientación dietética. Costo del medicamento por separado.",
+      en: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
+      es: "Evaluación médica integral de pérdida de peso. Detección para elegibilidad de Rx, titulación personalizada y orientación dietética. Costo del medicamento por separado.",
     },
   },
 ];
@@ -309,7 +310,7 @@ const MARQUEE_ITEMS = [
   { icon: "📱", label: "Digital Health Platform" },
   { icon: "🌴", label: "Available in Florida" },
   { icon: "🩺", label: "General Telehealth" },
-  { icon: "💊", label: "GLP-1 Weight Loss" },
+  { icon: "💊", label: "Rx Weight Loss" },
   { icon: "⚡", label: "Erectile Dysfunction" },
 ] as const;
 const PROTOCOL_METRICS = [
@@ -323,7 +324,7 @@ const TESTIMONIALS = [
     initials: "MR",
     avatarClass: "ta1",
     quote:
-      '"Got my GLP-1 prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right."',
+      '"Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right."',
     name: "Marcus R.",
     details: "Weight Loss · Jacksonville, FL",
   },
@@ -360,6 +361,26 @@ function getAboutTabStyle(isActive: boolean) {
   } as const;
 }
 
+function PaymentStatusHandler({
+  onSuccess,
+  onCancel,
+}: {
+  onSuccess: () => void;
+  onCancel: () => void;
+}) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams?.get("payment") === "success") {
+      onSuccess();
+    } else if (searchParams?.get("payment") === "cancelled") {
+      onCancel();
+    }
+  }, [searchParams, onSuccess, onCancel]);
+
+  return null;
+}
+
 export function LandingEmbed() {
   const router = useRouter();
   const [locale, setLocale] = useState<LandingLocale>("en");
@@ -375,7 +396,25 @@ export function LandingEmbed() {
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<number | null>(null);
 
+  // Added Modals state
+  const [consultModalOpen, setConsultModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [initialService, setInitialService] = useState<string | null>(null);
+  const [initialConsultStep, setInitialConsultStep] = useState(1);
+  const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
+
   const copy = COPY[locale];
+
+  const handlePaymentSuccess = () => {
+    setInitialConsultStep(4);
+    setConsultModalOpen(true);
+  };
+
+  const handlePaymentCancel = () => {
+    showToast("Payment was cancelled.");
+    router.push("/");
+  };
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("theme");
@@ -501,12 +540,26 @@ export function LandingEmbed() {
 
   const handlePrimaryCta = () => {
     setMobileMenuOpen(false);
-    router.push("/book");
+    setInitialService(null);
+    if (!isAuthenticated) {
+      setAuthInitiator("header_get_started");
+      setAuthMode("register");
+      setAuthModalOpen(true);
+    } else {
+      setConsultModalOpen(true);
+    }
   };
 
   const handleServiceStart = (serviceKey: string) => {
     setMobileMenuOpen(false);
-    router.push(`/book?service=${encodeURIComponent(serviceKey)}`);
+    setInitialService(serviceKey);
+    if (!isAuthenticated) {
+      setAuthInitiator("service_card");
+      setAuthMode("register");
+      setAuthModalOpen(true);
+    } else {
+      setConsultModalOpen(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -567,20 +620,24 @@ export function LandingEmbed() {
           </div>
 
           <div className="nav-actions">
-            <Link
+            <button
               className={`btn btn-ghost ${isAuthenticated ? "hidden" : ""}`}
               id="loginBtn"
-              href="/login"
+              onClick={() => {
+                setAuthInitiator("header_login");
+                setAuthMode("login");
+                setAuthModalOpen(true);
+              }}
             >
               {copy.nav.login}
-            </Link>
-            <Link
+            </button>
+            <button
               className={`btn btn-primary ${isAuthenticated ? "hidden" : ""}`}
               id="signupBtn"
-              href="/signup"
+              onClick={handlePrimaryCta}
             >
               {copy.nav.getStarted}
-            </Link>
+            </button>
             <Link
               className={`btn btn-ghost ${isAuthenticated ? "" : "hidden"}`}
               id="dashBtn"
@@ -668,8 +725,14 @@ export function LandingEmbed() {
                   <div className="bdot" />
                   <span>{copy.hero.badge}</span>
                 </div>
+                <div className="hero-badge" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#00d9a3', marginLeft: '8px' }}>
+                  <span>📍 Services are currently available to patients located in Florida only.</span>
+                </div>
                 <h1 dangerouslySetInnerHTML={{ __html: copy.hero.titleHtml }} />
                 <p className="hero-sub">{copy.hero.subtitle}</p>
+                <p className="hero-sub" style={{ fontSize: "0.85em", color: "var(--g400)" }}>
+                  Powered by RadiantLogiq, an AI-driven clinical platform for decision support and workflow optimization. RadiantLogiq is a member of the NVIDIA Inception program.
+                </p>
                 <div className="hero-ctas">
                   <button
                     className="btn btn-primary btn-large"
@@ -678,6 +741,9 @@ export function LandingEmbed() {
                   >
                     {copy.hero.cta}
                   </button>
+                </div>
+                <div style={{ marginTop: "16px", fontSize: "0.9em", color: "var(--g400)", textAlign: "center", maxWidth: "560px" }}>
+                  Our platform integrates advanced clinical software and AI to support efficient, high-quality care delivery.
                 </div>
 
                 <div
@@ -917,6 +983,33 @@ export function LandingEmbed() {
           </div>
         </section>
 
+        <section className="tech-section" id="technology-platform" style={{ padding: "80px 0", background: "var(--g50)" }}>
+          <div className="container">
+            <div className="sec-eye eye-blue">
+              <div className="eye-line" style={{ background: "var(--blue)" }} />
+              <span style={{ color: "var(--blue)" }}>Technology & Platform</span>
+            </div>
+            <h2 className="sec-title" style={{ maxWidth: "800px", color: "var(--navy)" }}>
+              Powered by RadiantLogiq
+            </h2>
+            <p className="sec-sub" style={{ maxWidth: "800px", marginBottom: "32px" }}>
+              Patriotic Virtual Telehealth is powered by RadiantLogiq, a physician-founded clinical platform designed to enhance care delivery through workflow optimization and intelligent data processing. RadiantLogiq supports scalable telehealth operations today, with ongoing development of advanced clinical decision support tools for healthcare providers.
+            </p>
+            <div style={{ background: "white", padding: "24px", borderRadius: "16px", border: "1px solid var(--g200)", display: "flex", gap: "16px", alignItems: "flex-start", marginBottom: "24px", maxWidth: "800px" }}>
+              <div style={{ fontSize: "24px" }}>🔒</div>
+              <div>
+                <h3 style={{ fontSize: "16px", marginBottom: "8px", color: "var(--navy)" }}>Secure Medication Management</h3>
+                <p style={{ fontSize: "14px", color: "var(--g600)", margin: 0 }}>
+                  We utilize a secure, integrated e-prescribing platform (DoseSpot) to support safe, compliant, and efficient medication management.
+                </p>
+              </div>
+            </div>
+            <p style={{ fontSize: "13px", color: "var(--g500)", fontStyle: "italic", margin: 0, maxWidth: "800px" }}>
+              * For providers and health systems, RadiantLogiq is being developed to support workflow optimization and clinical decision support.
+            </p>
+          </div>
+        </section>
+
         <section className="radiology" id="radiology">
           <div className="container">
             <div className="sec-eye eye-em">
@@ -968,9 +1061,13 @@ export function LandingEmbed() {
                   <h3>AI-Powered Analysis</h3>
                   <p className="rd">
                     Physician-supervised AI interpretation of your radiology
-                    reports. We help explain complex findings in plain English.
+                    reports. We help explain 
+                    complex findings in plain English.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $99 <span>/ analysis</span>
                   </div>
                 </div>
@@ -989,7 +1086,10 @@ export function LandingEmbed() {
                     translate medical jargon into clear, understandable
                     language.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $149 <span>/ report</span>
                   </div>
                 </div>
@@ -1007,7 +1107,10 @@ export function LandingEmbed() {
                     A complete educational over-read of your actual images
                     (X-Ray, CT, MRI) by a board-certified radiologist.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $249 <span>/ study</span>
                   </div>
                 </div>
@@ -1049,9 +1152,12 @@ export function LandingEmbed() {
                   <p className="rd">
                     Full educational image review plus a 30 - 60 minute secure
                     video consultation to discuss findings directly with Dr.
-                    Osunsade.
+                    Olalesi Osunsade, MD.
                   </p>
-                  <div className="rpt">
+                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  </div>
+                  <div className="rpt" style={{ marginTop: "20px" }}>
                     $449 <span>/ consult</span>
                   </div>
                 </div>
@@ -1261,11 +1367,7 @@ export function LandingEmbed() {
               <div className="footer-col">
                 <h4>{copy.footer.support}</h4>
                 <a
-                  href="#"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    showToast("FAQ coming soon!");
-                  }}
+                  href="/faq"
                 >
                   {copy.footer.faq}
                 </a>
@@ -1281,14 +1383,18 @@ export function LandingEmbed() {
                   {copy.footer.contact}
                 </a>
                 <a
-                  href="#"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    openConsent();
-                  }}
+                  href="/terms"
+                >
+                  Terms of Service
+                </a>
+                <a
+                  href="/privacy-policy"
                 >
                   {copy.footer.privacy}
                 </a>
+                <a href="/npp" target="_blank">Notice of Privacy Practices</a>
+                <a href="/telehealth-consent" target="_blank">Telehealth Consent</a>
+                <span style={{ color: '#9ca3af', fontSize: '14px', marginTop: '12px', display: 'block' }}>📞 (202) 215-0636<br/>📍 176 NW 25th St, Miami, FL 33127</span>
               </div>
             </div>
 
@@ -1296,6 +1402,24 @@ export function LandingEmbed() {
               <span>{copy.footer.copy}</span>
               <span>{copy.footer.badges}</span>
             </div>
+            
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginTop: "24px", paddingTop: "24px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <img src="/assets/nvidia-inception.jpg" alt="NVIDIA Inception Program member badge" style={{ maxHeight: "30px", width: "auto" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <span style={{ fontSize: "12px", color: "#e5e7eb", fontWeight: 500 }}>Powered by RadiantLogiq</span>
+                  <span style={{ fontSize: "12px", color: "#9ca3af" }}>Member, NVIDIA Inception Program</span>
+                </div>
+              </div>
+              <p style={{ fontSize: "10px", color: "#6b7280", maxWidth: "600px", margin: 0, textAlign: "right" }}>
+                © 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries.
+              </p>
+            </div>
+
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', maxWidth: '48rem', margin: '2rem auto 0' }}>
+              All treatments are prescribed only after evaluation by a licensed medical provider.
+              Not all patients qualify. Results may vary.
+            </p>
           </div>
         </footer>
       </main>
@@ -1328,7 +1452,7 @@ export function LandingEmbed() {
                 style={getAboutTabStyle(aboutTab === 1)}
                 type="button"
               >
-                Dr. Olalesi Osunsade
+                Dr. Olalesi Osunsade, MD
               </button>
               <button
                 id="aboutTab2"
@@ -1338,6 +1462,20 @@ export function LandingEmbed() {
               >
                 Alvaro Berrios, MS, FNP-BC
               </button>
+            </div>
+
+            <div
+              style={{
+                textAlign: "center",
+                marginBottom: "32px",
+                padding: "16px",
+                background: "var(--blue-soft)",
+                borderRadius: "12px",
+              }}
+            >
+              <p style={{ fontSize: "14px", color: "var(--navy)", margin: 0, fontWeight: 500 }}>
+                Built by a physician-led team, RadiantLogiq is designed to improve efficiency and scalability in modern healthcare delivery.
+              </p>
             </div>
 
             <div
@@ -1366,7 +1504,7 @@ export function LandingEmbed() {
                 />
               </div>
               <div>
-                <h2 style={{ marginBottom: 8 }}>Dr. Olalesi Osunsade</h2>
+                <h2 style={{ marginBottom: 8 }}>Dr. Olalesi Osunsade, MD</h2>
                 <div
                   style={{
                     fontSize: 14,
@@ -1564,17 +1702,10 @@ export function LandingEmbed() {
                       lineHeight: 1.6,
                     }}
                   >
-                    We believe exceptional care is built on strong
-                    collaboration. That&apos;s why we proudly partner with
-                    Sterling Union, a trusted Management Services Organization
-                    (MSO) that supports our operations, compliance, and
-                    administrative excellence, allowing our clinical team to
-                    stay focused on what matters most: you. For advanced imaging
-                    and radiology expertise, we work closely with Orosun Health,
-                    ensuring seamless access to high-quality diagnostic support
-                    when specialized insight is needed. Together, these
-                    partnerships help us deliver safe, coordinated, and
-                    compassionate virtual care you can trust.
+                    We believe exceptional care is built on strong collaboration.
+                    That&apos;s why we proudly partner with Strive Pharmacy
+                    (LegitScript-certified and NABP-accredited) and Empower
+                    Pharmacy as our compounding pharmacy partners. Our licensed providers exclusively review and approve all prescriptions before securely transmitting them to these accredited pharmacies, ensuring you receive the highest quality, most reliable medications when appropriate for your personalized treatment plan. Together, these partnerships help us deliver safe, coordinated, and compassionate virtual care you can trust.
                   </p>
                 </div>
               </div>
@@ -1878,10 +2009,10 @@ export function LandingEmbed() {
               </p>
 
               <h4 style={{ color: "white", marginBottom: 6 }}>
-                4. GLP-1 & Weight Loss
+                4. Rx Weight Loss
               </h4>
               <p style={{ marginBottom: 12 }}>
-                For GLP-1 agonist prescriptions (e.g., Semaglutide/Tirzepatide),
+                For Rx agonist prescriptions (e.g., Semaglutide/Tirzepatide),
                 you acknowledge potential side effects including nausea,
                 vomiting, and risk of thyroid C-cell tumors. You confirm you do
                 not have a personal or family history of Medullary Thyroid
@@ -1956,6 +2087,32 @@ export function LandingEmbed() {
       <div className={`toast ${toastVisible ? "show" : ""}`} id="toast">
         {toastMessage}
       </div>
+
+      <LandingModals
+        consultModalOpen={consultModalOpen}
+        setConsultModalOpen={setConsultModalOpen}
+        authModalOpen={authModalOpen}
+        setAuthModalOpen={setAuthModalOpen}
+        authMode={authMode}
+        setAuthMode={setAuthMode}
+        initialService={initialService}
+        initialConsultStep={initialConsultStep}
+        onLoginSuccess={() => {
+          if (authInitiator === "header_login") {
+            setInitialService(null);
+            router.push("/");
+          } else {
+            setConsultModalOpen(true);
+          }
+        }}
+        showToast={showToast}
+      />
+      <Suspense fallback={null}>
+        <PaymentStatusHandler
+          onSuccess={handlePaymentSuccess}
+          onCancel={handlePaymentCancel}
+        />
+      </Suspense>
     </>
   );
 }

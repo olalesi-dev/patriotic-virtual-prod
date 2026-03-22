@@ -1,12 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(uid) {
       return request.auth.uid == uid;
     }
@@ -87,7 +87,52 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isStaff();
     }
+
+    // --- NOTIFICATIONS ---
+    match /notifications/{id} {
+      // Accept both field names: recipientId (useNotifications hook query) and userId (some write paths)
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         resource.data.recipientId == request.auth.uid ||
+         isStaff());
+      allow create: if isAuthenticated();
+      allow update, delete: if isStaff();
+    }
+
+    // --- PRACTICE SETTINGS (module toggles, feature flags) ---
+    // Used by usePracticeModules onSnapshot in MainLayout — staff can read/write, all auth users can read
+    match /practice-settings/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // --- CRM MODULE (vendors, campaigns, grants, facilities, patients/leads) ---
+    match /crm/{document=**} {
+      allow read, write: if isStaff();
+    }
+
+    // --- CRM COMPLIANCE DOCUMENTS ---
+    // Staff-level access only — no patient read access to compliance docs
+    match /crm-compliance/{document=**} {
+      allow read, write: if isStaff();
+    }
+
+    // --- PLATFORM CONFIG (banner, feature flags) ---
+    // All authenticated users can read (banner loads on every page for all roles)
+    // Only staff/admin can write (managed via Communications admin panel)
+    match /platform-config/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // --- INTEGRATION SETTINGS (Doxy.me, etc.) ---
+    // Staff-only: read and write integration configuration
+    match /settings/{document} {
+      allow read, write: if isStaff();
+    }
+
     // --- API & SYSTEM ---
+
     match /appointments/{id} {
       allow read, write: if isAuthenticated();
     }
@@ -99,6 +144,27 @@ service cloud.firestore {
     }
     match /claims/{id} {
       allow read, write: if isAuthenticated();
+    }
+    match /shop-products/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    match /community-profiles/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+    match /community-posts/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+    match /community-events/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    match /social-posts/{id} {
+      allow read, write: if isStaff();
+    }
+    match /crm_leads/{id} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
     }
   }
 }
