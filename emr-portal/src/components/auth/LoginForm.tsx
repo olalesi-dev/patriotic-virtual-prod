@@ -1,197 +1,167 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
-  signInWithEmailAndPassword,
-  getMultiFactorResolver,
-  PhoneAuthProvider,
-  PhoneMultiFactorGenerator,
-  RecaptchaVerifier,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-} from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  Mail,
-  Lock,
-  LogIn,
-  Shield,
-  ArrowRight,
-  AlertCircle,
-  Fingerprint,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+    signInWithEmailAndPassword,
+    getMultiFactorResolver,
+    PhoneAuthProvider,
+    PhoneMultiFactorGenerator,
+    RecaptchaVerifier,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult
+} from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Mail, Lock, LogIn, Shield, ArrowRight, AlertCircle, Fingerprint } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [mfaStep, setMfaStep] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [resolver, setResolver] = useState<any>(null);
-  const [verificationId, setVerificationId] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const recaptchaRef = React.useRef<RecaptchaVerifier | null>(null);
-  const hasCheckedRedirectRef = React.useRef(false);
-  const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [mfaStep, setMfaStep] = useState(false);
+    const [verificationCode, setVerificationCode] = useState('');
+    const [resolver, setResolver] = useState<any>(null);
+    const [verificationId, setVerificationId] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const recaptchaRef = React.useRef<RecaptchaVerifier | null>(null);
+    const hasCheckedRedirectRef = React.useRef(false);
+    const router = useRouter();
 
-  const isMfaRequiredError = (authError: any) => {
-    return (
-      authError?.code === "auth/multi-factor-auth-required" ||
-      authError?.message?.includes("multi-factor-auth-required") ||
-      authError?.code?.includes("multi-factor-auth-required")
-    );
-  };
-
-  const startPhoneMfaChallenge = async (authError: any, flowLabel: string) => {
-    try {
-      const mfaResolver = getMultiFactorResolver(auth, authError);
-      setResolver(mfaResolver);
-      const phoneHint = mfaResolver.hints.find(
-        (hint: any) => hint.factorId === PhoneMultiFactorGenerator.FACTOR_ID,
-      );
-      if (!phoneHint) {
-        setError(
-          "This account requires MFA, but no phone factor is available.",
-        );
-        return;
-      }
-      console.log(`Initiating MFA Phone verification (${flowLabel})`);
-      if (!recaptchaRef.current) {
-        recaptchaRef.current = new RecaptchaVerifier(
-          auth,
-          "recaptcha-container",
-          { size: "invisible" },
-        );
-      }
-      const phoneAuthProvider = new PhoneAuthProvider(auth);
-      const verificationToken = await phoneAuthProvider.verifyPhoneNumber(
-        {
-          multiFactorHint: phoneHint,
-          session: mfaResolver.session,
-        },
-        recaptchaRef.current,
-      );
-      setVerificationId(verificationToken);
-      setMfaStep(true);
-    } catch (mfaError: any) {
-      console.error(`MFA Initiation Error (${flowLabel}):`, mfaError);
-      setError("Failed to initiate MFA challenge.");
-    }
-  };
-
-  const upsertUserProfile = React.useCallback(async (user: any) => {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) {
-      await setDoc(doc(db, "users", user.uid), {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        role: "patient",
-        createdAt: serverTimestamp(),
-        isMfaEnrolled: false,
-      });
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (hasCheckedRedirectRef.current) return;
-    hasCheckedRedirectRef.current = true;
-    const checkRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          await upsertUserProfile(result.user);
-          router.replace("/");
-        }
-      } catch (err: any) {
-        console.error("Redirect Result Error:", err.code, err.message, err);
-        if (isMfaRequiredError(err)) {
-          await startPhoneMfaChallenge(err, "Redirect flow");
-        } else if (
-          err.code === "auth/popup-closed-by-user" ||
-          err.code === "auth/cancelled-popup-request"
-        ) {
-          console.log("Auth popup/redirect cancelled by user");
-        } else {
-          console.error("Critical Google Redirect Error:", err);
-          setError(`Sign-in failed: ${err.message}`);
-        }
-      }
+    const isMfaRequiredError = (authError: any) => {
+        return authError?.code === 'auth/multi-factor-auth-required' ||
+            authError?.message?.includes('multi-factor-auth-required') ||
+            authError?.code?.includes('multi-factor-auth-required');
     };
-    checkRedirectResult();
-  }, [router, upsertUserProfile]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/");
-    } catch (err: any) {
-      if (isMfaRequiredError(err)) {
-        await startPhoneMfaChallenge(err, "Email flow");
-      } else {
-        setError("Invalid email or password.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+    const startPhoneMfaChallenge = async (authError: any, flowLabel: string) => {
+        try {
+            const mfaResolver = getMultiFactorResolver(auth, authError);
+            setResolver(mfaResolver);
+            const phoneHint = mfaResolver.hints.find((hint: any) => hint.factorId === PhoneMultiFactorGenerator.FACTOR_ID);
+            if (!phoneHint) {
+                setError('This account requires MFA, but no phone factor is available.');
+                return;
+            }
+            console.log(`Initiating MFA Phone verification (${flowLabel})`);
+            if (!recaptchaRef.current) {
+                recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+            }
+            const phoneAuthProvider = new PhoneAuthProvider(auth);
+            const verificationToken = await phoneAuthProvider.verifyPhoneNumber({
+                multiFactorHint: phoneHint,
+                session: mfaResolver.session
+            }, recaptchaRef.current);
+            setVerificationId(verificationToken);
+            setMfaStep(true);
+        } catch (mfaError: any) {
+            console.error(`MFA Initiation Error (${flowLabel}):`, mfaError);
+            setError('Failed to initiate MFA challenge.');
+        }
+    };
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-    try {
-      const popupResult = await signInWithPopup(auth, provider);
-      await upsertUserProfile(popupResult.user);
-      router.replace("/");
-    } catch (err: any) {
-      if (isMfaRequiredError(err)) {
-        await startPhoneMfaChallenge(err, "Google flow");
-        setLoading(false);
-        return;
-      }
-      if (
-        err?.code === "auth/popup-blocked" ||
-        err?.code === "auth/cancelled-popup-request"
-      ) {
-        await signInWithRedirect(auth, provider);
-        return;
-      }
-      if (err?.code !== "auth/popup-closed-by-user") {
-        setError(`Failed to start Google sign-in: ${err.message}`);
-      }
-      setLoading(false);
-    }
-  };
+    const upsertUserProfile = React.useCallback(async (user: any) => {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            await setDoc(doc(db, 'users', user.uid), {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                role: 'patient',
+                createdAt: serverTimestamp(),
+                isMfaEnrolled: false
+            });
+        }
+    }, []);
 
-  const handleMfaVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const cred = PhoneAuthProvider.credential(
-        verificationId,
-        verificationCode,
-      );
-      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
-      await resolver.resolveSignIn(multiFactorAssertion);
-      router.replace("/");
-    } catch (err: any) {
-      setError("Invalid verification code.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    React.useEffect(() => {
+        if (hasCheckedRedirectRef.current) return;
+        hasCheckedRedirectRef.current = true;
+        const checkRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    await upsertUserProfile(result.user);
+                    router.replace('/');
+                }
+            } catch (err: any) {
+                console.error('Redirect Result Error:', err.code, err.message, err);
+                if (isMfaRequiredError(err)) {
+                    await startPhoneMfaChallenge(err, 'Redirect flow');
+                } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+                    console.log('Auth popup/redirect cancelled by user');
+                } else {
+                    console.error('Critical Google Redirect Error:', err);
+                    setError(`Sign-in failed: ${err.message}`);
+                }
+            }
+        };
+        checkRedirectResult();
+    }, [router, upsertUserProfile]);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            router.replace('/');
+        } catch (err: any) {
+            if (isMfaRequiredError(err)) {
+                await startPhoneMfaChallenge(err, 'Email flow');
+            } else {
+                setError('Invalid email or password.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError(null);
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        try {
+            const popupResult = await signInWithPopup(auth, provider);
+            await upsertUserProfile(popupResult.user);
+            router.replace('/');
+        } catch (err: any) {
+            if (isMfaRequiredError(err)) {
+                await startPhoneMfaChallenge(err, 'Google flow');
+                setLoading(false);
+                return;
+            }
+            if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request') {
+                await signInWithRedirect(auth, provider);
+                return;
+            }
+            if (err?.code !== 'auth/popup-closed-by-user') {
+                setError(`Failed to start Google sign-in: ${err.message}`);
+            }
+            setLoading(false);
+        }
+    };
+
+    const handleMfaVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
+            const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+            await resolver.resolveSignIn(multiFactorAssertion);
+            router.replace('/');
+        } catch (err: any) {
+            setError('Invalid verification code.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <AnimatePresence mode="wait">
@@ -213,16 +183,16 @@ export function LoginForm() {
                         </p>
                     </div>
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold"
-            >
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <p>{error}</p>
-            </motion.div>
-          )}
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold"
+                        >
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            <p>{error}</p>
+                        </motion.div>
+                    )}
 
                     <form onSubmit={handleMfaVerify} className="space-y-6">
                         <div className="space-y-2">
@@ -272,16 +242,16 @@ export function LoginForm() {
                         </p>
                     </div>
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold"
-            >
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <p>{error}</p>
-            </motion.div>
-          )}
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold"
+                        >
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            <p>{error}</p>
+                        </motion.div>
+                    )}
 
                     <form onSubmit={handleLogin} className="space-y-5">
                         <div className="space-y-1.5">
@@ -326,24 +296,20 @@ export function LoginForm() {
                             </label>
                         </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-slate-200 hover:bg-brand transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 group"
-            >
-              {loading ? "Authenticating..." : "Sign In"}
-              {!loading && (
-                <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              )}
-            </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-slate-200 hover:bg-brand transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 group"
+                        >
+                            {loading ? 'Authenticating...' : 'Sign In'}
+                            {!loading && <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                        </button>
 
-            <div className="relative flex items-center gap-4 my-8">
-              <div className="flex-1 h-px bg-slate-100"></div>
-              <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] whitespace-nowrap">
-                Secure Identity Provider
-              </span>
-              <div className="flex-1 h-px bg-slate-100"></div>
-            </div>
+                        <div className="relative flex items-center gap-4 my-8">
+                            <div className="flex-1 h-px bg-slate-100"></div>
+                            <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] whitespace-nowrap">Secure Identity Provider</span>
+                            <div className="flex-1 h-px bg-slate-100"></div>
+                        </div>
 
                         <button
                             type="button"
@@ -361,20 +327,14 @@ export function LoginForm() {
                         </button>
                     </form>
 
-          <div className="pt-6 border-t border-slate-50 text-center space-y-3">
-            <div id="recaptcha-container"></div>
-            <p className="text-xs text-slate-400 font-medium">
-              First time here?{" "}
-              <Link
-                href="/signup"
-                className="text-brand font-black hover:underline underline-offset-4"
-              >
-                Create your secure account
-              </Link>
-            </p>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+                    <div className="pt-6 border-t border-slate-50 text-center space-y-3">
+                        <div id="recaptcha-container"></div>
+                        <p className="text-xs text-slate-400 font-medium">
+                            First time here? <Link href="/signup" className="text-brand font-black hover:underline underline-offset-4">Create your secure account</Link>
+                        </p>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 }
