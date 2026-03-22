@@ -9,7 +9,7 @@ import {
 import {
     Search, Filter, Clock, Video, FileText, AlertCircle, CheckCircle,
     Stethoscope, CalendarPlus, X, CheckCircle2, Calendar, User,
-    ChevronLeft, ChevronRight, Save, Loader2
+    ChevronLeft, ChevronRight, Save, Loader2, ArrowUpDown
 } from 'lucide-react';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 import { toast } from 'sonner';
@@ -383,6 +383,7 @@ export default function WaitlistPage() {
     const [activeCall, setActiveCall] = useState<{ url: string; apptId: string; intake: any; name: string } | null>(null);
     const [schedulingEntry, setSchedulingEntry] = useState<WaitlistEntry | null>(null);
     const [providerName, setProviderName] = useState('Provider');
+    const [sortOption, setSortOption] = useState<'date_asc' | 'date_desc' | 'name_asc' | 'name_desc'>('date_asc');
     const [, setTick] = useState(0);
 
     const getTimeElapsed = (date: Date) => {
@@ -576,6 +577,12 @@ export default function WaitlistPage() {
             e.patientEmail.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesSvc = filterService === 'all' || e.serviceKey === filterService;
         return matchesSearch && matchesSvc;
+    }).sort((a, b) => {
+        if (sortOption === 'date_desc') return b.createdAt.getTime() - a.createdAt.getTime();
+        if (sortOption === 'date_asc') return a.createdAt.getTime() - b.createdAt.getTime();
+        if (sortOption === 'name_asc') return a.patientName.localeCompare(b.patientName);
+        if (sortOption === 'name_desc') return b.patientName.localeCompare(a.patientName);
+        return 0;
     });
 
     return (
@@ -644,6 +651,21 @@ export default function WaitlistPage() {
                                 {s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </option>
                         ))}
+                    </select>
+                </div>
+                <div className="relative shrink-0">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <ArrowUpDown className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <select
+                        value={sortOption}
+                        onChange={(e: any) => setSortOption(e.target.value)}
+                        className="appearance-none pl-11 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-[20px] text-sm font-bold text-slate-600 dark:text-slate-300 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-200/60 dark:focus:ring-indigo-500/30 transition-all cursor-pointer border border-transparent dark:border-slate-700"
+                    >
+                        <option value="date_asc">Oldest First (Date ↑)</option>
+                        <option value="date_desc">Newest First (Date ↓)</option>
+                        <option value="name_asc">Patient Name (A-Z)</option>
+                        <option value="name_desc">Patient Name (Z-A)</option>
                     </select>
                 </div>
             </div>
