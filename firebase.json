@@ -129,8 +129,7 @@
         }
       ],
       "frameworksBackend": {
-        "region": "us-central1",
-        "maxInstances": 100
+        "region": "us-central1"
       }
     }
   ],
