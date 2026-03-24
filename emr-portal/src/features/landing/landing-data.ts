@@ -495,7 +495,7 @@ export const ABOUT_PROFILES: ClinicianProfile[] = [
         ],
         extraCardTitle: 'Partnership',
         extraCardBody:
-            'We partner with Strive Pharmacy (LegitScript-certified and NABP-accredited) and Empower Pharmacy as our compounding pharmacy partners. Our licensed providers exclusively review and approve all prescriptions before securely transmitting them to these accredited pharmacies, ensuring you receive the highest quality, most reliable medications when appropriate for your personalized treatment plan. Together, these partnerships help us deliver safe, coordinated, and compassionate virtual care you can trust.',
+            'We partner with a curated network of accredited compounding pharmacies. Our partners, including Strive Pharmacy — LegitScript-certified and NABP-accredited — are held to the gold standard in compounding pharmacy compliance, so every prescription is dispensed with the highest level of safety and quality. Our licensed providers exclusively review and approve all prescriptions before securely transmitting them to these accredited pharmacies, ensuring you receive the highest quality, most reliable medications when appropriate for your personalized treatment plan. Together, these partnerships help us deliver safe, coordinated, and compassionate virtual care you can trust.',
     },
     {
         id: 'berrios',
