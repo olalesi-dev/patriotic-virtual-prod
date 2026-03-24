@@ -19,8 +19,8 @@ interface LandingModalsProps {
   setConsultModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   authModalOpen: boolean;
   setAuthModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  authMode: "login" | "register";
-  setAuthMode: React.Dispatch<React.SetStateAction<"login" | "register">>;
+  authMode: "login" | "register" | "verify";
+  setAuthMode: React.Dispatch<React.SetStateAction<"login" | "register" | "verify">>;
   initialService: string | null;
   initialConsultStep?: number;
   onLoginSuccess: () => void;
@@ -108,6 +108,51 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       };
     },
   });
+
+  React.useEffect(() => {
+    if (authMode === "verify" && authModalOpen) {
+      const initVouched = () => {
+        if (!(window as any).Vouched) {
+          const script = document.createElement("script");
+          script.src = "https://static.vouched.id/widget/vouched-2.0.0.js";
+          script.async = true;
+          script.onload = () => mountVouched();
+          document.body.appendChild(script);
+        } else {
+          mountVouched();
+        }
+      };
+
+      const mountVouched = () => {
+        if (!document.getElementById("vouched-root")) return;
+        document.getElementById("vouched-root")!.innerHTML = "";
+        
+        try {
+          const vouched = (window as any).Vouched({
+            appId: "EmbGg*-Iph.xlzsx8fX9_O!BouHbdS",
+            onDone: async (job: any) => {
+              console.log("Vouched done", job);
+              if (auth.currentUser) {
+                await setDoc(doc(db, "patients", auth.currentUser.uid), {
+                  vouchedJobId: job.id,
+                  isIdentityVerified: true
+                }, { merge: true });
+              }
+              showToast("Identity verification completed successfully.");
+              setAuthModalOpen(false);
+              setConsultModalOpen(true);
+              setConsultStep(1);
+            }
+          });
+          vouched.mount("#vouched-root");
+        } catch (e) {
+          console.error("Vouched mount error", e);
+        }
+      };
+      
+      initVouched();
+    }
+  }, [authMode, authModalOpen]);
 
   React.useEffect(() => {
     if (consultModalOpen && initialConsultStep > 1) {
@@ -220,7 +265,8 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       setAuthModalOpen(false);
       onLoginSuccess();
       if (authMode === "register") {
-        setConsultModalOpen(true);
+        setAuthModalOpen(true);
+        setAuthMode("verify");
       }
     } catch (e: any) {
       showToast(e.message || "Google auth failed");
@@ -273,11 +319,9 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      showToast("Account created! Welcome.");
-      setAuthModalOpen(false);
-      // Automatically open the consultation modal after successful registration
-      setConsultModalOpen(true);
-      setConsultStep(1);
+      showToast("Account created! Please verify your identity.");
+      setAuthMode("verify");
+      // Prevent closing modal so you can render verify step
     } catch (e: any) {
       showToast(e.message || "Registration failed");
     } finally {
@@ -343,7 +387,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 New here? <a onClick={() => setAuthMode("register")}>Create account</a>
               </p>
             </div>
-          ) : (
+          ) : authMode === "register" ? (
             <div id="registerForm">
               <h2 style={{ marginBottom: "4px" }}>Get started</h2>
               <p className="ms" style={{ marginBottom: "16px" }}>Currently available in Florida.</p>
@@ -473,6 +517,14 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               <p className="ff">
                 Have an account? <a onClick={() => setAuthMode("login")}>Log in</a>
               </p>
+            </div>
+          ) : (
+            <div id="verifyForm" style={{ textAlign: "center", padding: "16px 0" }}>
+              <h2 style={{ marginBottom: "8px" }}>Identity Verification</h2>
+              <p className="ms" style={{ marginBottom: "20px" }}>
+                For your safety and to comply with telehealth regulations, please verify your identity with a valid ID.
+              </p>
+              <div id="vouched-root" style={{ minHeight: "400px" }}></div>
             </div>
           )}
         </div>

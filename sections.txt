@@ -1,0 +1,11 @@
+[6419] <section class="hero hero-showcase">
+[6617] <section class="safety-bar">
+[6642] <section class="marquee-section">
+[6672] <section class="protocol-section">
+[6725] <section class="how-section prov-transp-section" id="providers-transparency">
+[6749] <section class="how-section" id="technology-platform">
+[6772] <section class="how-section" id="how-it-works">
+[6827] <section class="radiology" id="radiology">
+[6998] <section class="providers theme-panel" id="providers" style="padding: 80px 0;">
+[7039] <section class="testimonials" id="testimonials">
+[7099] <section class="cta-section">

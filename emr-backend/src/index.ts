@@ -10,6 +10,7 @@ import appointmentRoutes from './routes/appointments';
 import patientRoutes from './routes/patients';
 import notificationRoutes from './routes/notifications';
 import dosespotRoutes from './routes/dosespot';
+import vouchedRoutes from './routes/vouched';
 import { logger } from './utils/logger';
 import { generateSSOUrl } from './utils/dosespot';
 import * as admin from 'firebase-admin';
@@ -51,6 +52,9 @@ app.use('/health', healthRoutes);
 
 // DoseSpot Webhook (Public - server-to-server from DoseSpot infrastructure)
 app.use('/api/v1/dosespot', dosespotRoutes);
+
+// Vouched Webhook (Public)
+app.use('/api/v1/vouched', vouchedRoutes);
 
 // DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
 app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
