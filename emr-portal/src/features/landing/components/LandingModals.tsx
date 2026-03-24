@@ -110,61 +110,33 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   });
 
   React.useEffect(() => {
-    if (authMode === "verify" && authModalOpen) {
-      const initVouched = () => {
-        if (!(window as any).Vouched) {
-          const script = document.createElement("script");
-          script.src = "https://static.vouched.id/widget/vouched.js"; // Use latest
-          script.async = true;
-          script.onload = () => setTimeout(mountVouched, 100); // Slight delay for safety
-          script.onerror = () => console.error("Failed to load Vouched script");
-          document.body.appendChild(script);
-        } else {
-          mountVouched();
-        }
-      };
+    if (authMode !== "verify") return;
 
-      const mountVouched = () => {
-        const rootElement = document.getElementById("vouched-root");
-        if (!rootElement) {
-            console.error("Vouched root element not found.");
-            return;
-        }
-        rootElement.innerHTML = "";
+    const handleVouchedMessage = async (e: MessageEvent) => {
+      if (e.data?.type === 'VOUCHED_DONE') {
+        const { success, jobId } = e.data;
         
-        try {
-          const vouched = (window as any).Vouched({
-            appId: "EmbGg*-Iph.xlzsx8fX9_O!BouHbdS",
-            // Add theme and options properly
-            theme: {
-              name: 'avant' // usually a safe modern default
-            },
-            onInit: (opts: any) => {
-              console.log("Vouched initialized successfully:", opts);
-            },
-            onDone: async (job: any) => {
-              console.log("Vouched done", job);
-              if (auth.currentUser) {
-                await setDoc(doc(db, "patients", auth.currentUser.uid), {
-                  vouchedJobId: job.id,
-                  isIdentityVerified: true
-                }, { merge: true });
-              }
-              showToast("Identity verification completed successfully.");
-              setAuthModalOpen(false);
-              setConsultModalOpen(true);
-              setConsultStep(1);
-            }
-          });
-          vouched.mount("#vouched-root");
-        } catch (e) {
-          console.error("Vouched mount error", e);
+        if (auth.currentUser) {
+          await setDoc(doc(db, "patients", auth.currentUser.uid), {
+            vouchedJobId: jobId,
+            isIdentityVerified: success
+          }, { merge: true });
         }
-      };
-      
-      initVouched();
-    }
-  }, [authMode, authModalOpen]);
+        
+        if (success) {
+          showToast("Identity verification completed successfully.");
+          setAuthModalOpen(false);
+          setConsultModalOpen(true);
+          setConsultStep(1);
+        } else {
+          showToast("Identity verification failed. Please try again or contact support.");
+        }
+      }
+    };
+
+    window.addEventListener("message", handleVouchedMessage);
+    return () => window.removeEventListener("message", handleVouchedMessage);
+  }, [authMode]);
 
   React.useEffect(() => {
     if (consultModalOpen && initialConsultStep > 1) {
@@ -536,7 +508,11 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               <p className="ms" style={{ marginBottom: "20px" }}>
                 For your safety and to comply with telehealth regulations, please verify your identity with a valid ID.
               </p>
-              <div id="vouched-root" style={{ minHeight: "400px" }}></div>
+              <iframe 
+                src={`/vouched.html?firstName=${encodeURIComponent(regFirst)}&lastName=${encodeURIComponent(regLast)}&email=${encodeURIComponent(regEmail)}&phone=${encodeURIComponent(regPhone)}`}
+                style={{ width: "100%", minHeight: "550px", border: "none", borderRadius: "12px" }}
+                allow="camera; microphone"
+              />
             </div>
           )}
         </div>
