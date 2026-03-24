@@ -7584,6 +7584,20 @@
 
         <p class="ff">Have an account? <a onclick="switchAuth('login')">Log in</a></p>
       </div>
+
+      <div id="verifyForm" class="hidden" style="text-align: center; padding: 16px 0">
+        <h2 style="margin-bottom: 8px">Identity Verification</h2>
+        <p class="ms" style="margin-bottom: 20px">
+          For your safety and to comply with telehealth regulations, please verify your identity with a valid ID.
+        </p>
+        <iframe 
+          id="vouchedFrame"
+          src=""
+          style="width: 100%; min-height: 550px; border: none; border-radius: 12px"
+          allow="camera; microphone"
+        ></iframe>
+      </div>
+
     </div>
   </div>
 
@@ -7894,6 +7908,39 @@
       const f = document.getElementById("doxyFrame");
       f.src = "about:blank";
     }
+
+    window.addEventListener("message", async (e) => {
+      if (e.data && e.data.type === 'VOUCHED_DONE') {
+        const success = e.data.success;
+        const jobId = e.data.jobId;
+        
+        if (fbUser && db) {
+           try {
+              const refs = [
+                db.collection('patients').doc(fbUser.uid),
+                db.collection('users').doc(fbUser.uid)
+              ];
+              for (const ref of refs) {
+                 await ref.set({
+                    vouchedJobId: jobId,
+                    isIdentityVerified: success
+                 }, { merge: true });
+              }
+           } catch (err) {
+              console.log("Failed to save vouched status", err);
+           }
+        }
+        
+        if (success) {
+           toast("Identity verification completed successfully.");
+           document.getElementById("authModal").classList.remove("active");
+           window._pendingVisit = false;
+           openConsultation();
+        } else {
+           toast("Identity verification failed. Please try again or contact support.");
+        }
+      }
+    });
   </script>
 
   <div class="mo" id="aboutModal" onclick="closeAbout(event)">
@@ -9799,6 +9846,9 @@
       document
         .getElementById("registerForm")
         .classList.toggle("hidden", t !== "register");
+      if (document.getElementById("verifyForm")) {
+        document.getElementById("verifyForm").classList.add("hidden");
+      }
     }
     async function handleLogin() {
       const e = document.getElementById("loginEmail").value;
@@ -9932,8 +9982,7 @@
             uid: fbUser.uid,
           };
         }
-        document.getElementById("authModal").classList.remove("active");
-        // Write user profile to Firestore users collection so EMR portal can resolve name
+        // document.getElementById("authModal").classList.remove("active");
         if (db && fbUser) {
           try {
             await db.collection('users').doc(fbUser.uid).set({
@@ -9954,10 +10003,14 @@
           }
         }
         updateNav();
-        toast("Welcome! Let's start your visit.");
-        // After registration, immediately open the visit flow
-        window._pendingVisit = false;
-        openConsultation();
+        toast("Account created! Please verify your identity.");
+        
+        document.getElementById("loginForm").classList.add("hidden");
+        document.getElementById("registerForm").classList.add("hidden");
+        document.getElementById("verifyForm").classList.remove("hidden");
+        
+        const iframe = document.getElementById("vouchedFrame");
+        iframe.src = `/vouched.html?firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&email=${encodeURIComponent(e)}&phone=${encodeURIComponent(phone)}`;
       } catch (err) {
         const msg =
           err.code === "auth/email-already-in-use"
