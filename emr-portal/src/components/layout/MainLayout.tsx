@@ -311,6 +311,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         <CollapsibleGroup label="Analytics" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Analytics']} onToggle={() => toggleSection('Analytics')}>
                             <NavItem href="/analytics/clinical" icon={Activity} label="Clinical Dashboard" active={pathname === '/analytics/clinical'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/analytics/business" icon={BarChart} label="Business Dashboard" active={pathname === '/analytics/business'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/analytics/google" icon={Activity} label="Google Analytics" active={pathname === '/analytics/google'} collapsed={isSidebarCollapsed} />
                         </CollapsibleGroup>
 
                         {/* ADMIN */}
