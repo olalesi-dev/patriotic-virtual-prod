@@ -114,9 +114,10 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       const initVouched = () => {
         if (!(window as any).Vouched) {
           const script = document.createElement("script");
-          script.src = "https://static.vouched.id/widget/vouched-2.0.0.js";
+          script.src = "https://static.vouched.id/widget/vouched.js"; // Use latest
           script.async = true;
-          script.onload = () => mountVouched();
+          script.onload = () => setTimeout(mountVouched, 100); // Slight delay for safety
+          script.onerror = () => console.error("Failed to load Vouched script");
           document.body.appendChild(script);
         } else {
           mountVouched();
@@ -124,12 +125,23 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       };
 
       const mountVouched = () => {
-        if (!document.getElementById("vouched-root")) return;
-        document.getElementById("vouched-root")!.innerHTML = "";
+        const rootElement = document.getElementById("vouched-root");
+        if (!rootElement) {
+            console.error("Vouched root element not found.");
+            return;
+        }
+        rootElement.innerHTML = "";
         
         try {
           const vouched = (window as any).Vouched({
             appId: "EmbGg*-Iph.xlzsx8fX9_O!BouHbdS",
+            // Add theme and options properly
+            theme: {
+              name: 'avant' // usually a safe modern default
+            },
+            onInit: (opts: any) => {
+              console.log("Vouched initialized successfully:", opts);
+            },
             onDone: async (job: any) => {
               console.log("Vouched done", job);
               if (auth.currentUser) {
