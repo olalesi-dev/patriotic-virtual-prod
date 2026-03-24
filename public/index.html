@@ -5849,6 +5849,18 @@
     }
 
     @media (max-width: 1100px) {
+      /* MOBILE FIX: Prioritize Doctor-Supervised Hero text Over Services */
+      #landingPage .hero-showcase .hero-grid {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      #landingPage .hero-copy {
+        order: 1 !important;
+      }
+      #landingPage .hero-services-showcase {
+        order: 2 !important;
+      }
+
       #landingPage .hero-showcase {
         padding-top: 124px;
       }
@@ -6776,7 +6788,7 @@
         <p class="sec-sub prov-transp-subheading">All care is delivered by licensed U.S. providers.</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;text-align:left;">
           <div class="prov-transp-card">
-            <p class="prov-transp-name">Dr. Olalesi Osunsade, MD</p>
+            <p class="prov-transp-name">Dr. Olalesi Osunsade, MD, DABR</p>
             <p class="prov-transp-desc">Board Certified — Diagnostic Radiology &amp; Interventional Radiology (ABMS®)</p>
             <p class="prov-transp-desc">Licensed in: FL, MI, DC, CA, MD, OH, NY, WI</p>
           </div>
@@ -7052,9 +7064,9 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 40px;">
           <div class="provider-card theme-panel" style="padding: 32px; border: 1px solid var(--border-soft); border-radius: 12px;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-              <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--base-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">OO</div>
+              <img src="assets/dr_osunsade_new.jpg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="Dr. Osunsade" />
               <div>
-                <h3 style="margin: 0; font-size: 18px; color: var(--txt-main);">Dr. Olalesi Osunsade, MD</h3>
+                <h3 style="margin: 0; font-size: 18px; color: var(--txt-main);">Dr. Olalesi Osunsade, MD, DABR</h3>
                 <div style="font-size: 14px; color: var(--g500);">Medical Director</div>
               </div>
             </div>
@@ -7065,7 +7077,7 @@
           </div>
           <div class="provider-card theme-panel" style="padding: 32px; border: 1px solid var(--border-soft); border-radius: 12px;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-              <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--base-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">AB</div>
+              <img src="assets/alvaro_berrios.jpg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="Alvaro Berrios" />
               <div>
                 <h3 style="margin: 0; font-size: 18px; color: var(--txt-main);">Alvaro Berrios, MS, FNP-BC</h3>
                 <div style="font-size: 14px; color: var(--g500);">Nurse Practitioner</div>
@@ -7916,7 +7928,7 @@
         style="display:flex;gap:8px;justify-content:center;margin-bottom:28px;background:var(--bg-tertiary);border-radius:12px;padding:6px;">
         <button id="aboutTab1" onclick="switchAboutTab(1)"
           style="flex:1;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:var(--blue);color:#fff;">
-          Dr. Olalesi Osunsade, MD
+          Dr. Olalesi Osunsade, MD, DABR
         </button>
         <button id="aboutTab2" onclick="switchAboutTab(2)"
           style="flex:1;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:transparent;color:var(--txt-sub);">
@@ -7930,7 +7942,7 @@
           <img src="assets/dr_osunsade_new.jpg" style="width:100%;height:100%;object-fit:cover" alt="Dr. Osunsade" />
         </div>
         <div>
-          <h2 style="margin-bottom:8px">Dr. Olalesi Osunsade, MD</h2>
+          <h2 style="margin-bottom:8px">Dr. Olalesi Osunsade, MD, DABR</h2>
           <div
             style="font-size:14px;color:var(--txt-sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;">
             Dr. "O" · Diagnostic & Interventional Radiologist
@@ -8956,19 +8968,6 @@
         stripe: "prod_TupBXVZaCU7fWJ",
         priceId: "PRICE_ID_PE",
       },
-      {
-        id: "testosterone-hrt",
-        k: "testosterone_hrt",
-        name: "Testosterone / HRT",
-        desc: "Comprehensive hormone evaluation for men & women — testosterone, estrogen, progesterone, DHEA, thyroid support & peptides.",
-        icon: "🧬",
-        ic: "emerald",
-        c: "emerald",
-        price: 149,
-        cat: ["mens", "clinical"],
-        stripe: "prod_TsnbTXR2n8ni2R",
-        priceId: "PRICE_ID_HRT",
-      },
 
       /* IMAGING & RADIOLOGY (Educational Only) */
       {
@@ -9538,7 +9537,6 @@
               "💊 Rx Weight Loss",
               "⚡ Erectile Dysfunction",
               "⏱️ Premature Ejaculation",
-              "🧬 Testosterone / HRT",
               "🩺 General Visit",
             ],
           );
@@ -9566,7 +9564,7 @@
           v.includes("cost")
         ) {
           aiBot(
-            "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>Rx Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n🧬 <b>Testosterone / HRT</b> — $149\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
+            "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>Rx Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
             [
               "🔍 Check eligibility",
               "💰 Membership details",
