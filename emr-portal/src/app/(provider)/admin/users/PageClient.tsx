@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react'; 
 import {
     Users, Search, Shield, User,
-    UserPlus, Mail, Key, Trash2, Edit2, ShieldAlert,
+    ArrowUpDown, ArrowUp, ArrowDown,
+UserPlus, Mail, Key, Trash2, Edit2, ShieldAlert,
     CheckCircle2, XCircle, AlertCircle, Phone, Check, X, Save
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
@@ -66,7 +67,10 @@ export default function UserManagementPage() {
         role: 'patient'
     });
 
-    const [filterRole, setFilterRole] = useState<string | null>(null);
+        const [filterRole, setFilterRole] = useState<string | null>(null);
+
+    const [sortCol, setSortCol] = useState<'name' | 'role' | 'created'>('created');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const usersQueryKey = ['admin-users'] as const;
 
@@ -715,6 +719,7 @@ export default function UserManagementPage() {
                                     <option value="patient">Patient</option>
                                     <option value="provider">Provider (Doctor)</option>
                                     <option value="admin">Systems Administrator</option>
+                                    <option value="staff">Staff</option>
                                 </select>
                             </div>
 
@@ -819,6 +824,7 @@ export default function UserManagementPage() {
                                         <option value="patient">Patient</option>
                                         <option value="provider">Provider (Doctor)</option>
                                         <option value="admin">Systems Administrator</option>
+                                    <option value="staff">Staff</option>
                                     </select>
                                 </div>
                             </div>
