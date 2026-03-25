@@ -1,0 +1,1 @@
+﻿src/app/(provider)/crm/timesheets/TimesheetsClient.tsx(33,19): error TS2339: Property 'loading' does not exist on type '{ user: User | null; isReady: boolean; }'.

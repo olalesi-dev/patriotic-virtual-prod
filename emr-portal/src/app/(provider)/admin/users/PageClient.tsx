@@ -69,8 +69,17 @@ export default function UserManagementPage() {
 
         const [filterRole, setFilterRole] = useState<string | null>(null);
 
-    const [sortCol, setSortCol] = useState<'name' | 'role' | 'created'>('created');
+    const [sortCol, setSortCol] = useState<'name' | 'role' | 'created' | 'login'>('created');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+    
+    const toggleSort = (col: 'name' | 'role' | 'created' | 'login') => {
+        if (sortCol === col) {
+            setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortCol(col);
+            setSortDir('asc');
+        }
+    };
 
     const usersQueryKey = ['admin-users'] as const;
 
@@ -324,6 +333,29 @@ export default function UserManagementPage() {
         return matchesSearch && matchesRole;
     });
 
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+        let valA: string | number = '';
+        let valB: string | number = '';
+        
+        if (sortCol === 'name') {
+            valA = (a.displayName || a.email || '').toLowerCase();
+            valB = (b.displayName || b.email || '').toLowerCase();
+        } else if (sortCol === 'role') {
+            valA = (a.role || '').toLowerCase();
+            valB = (b.role || '').toLowerCase();
+        } else if (sortCol === 'created') {
+            valA = a.creationTime ? new Date(a.creationTime).getTime() : 0;
+            valB = b.creationTime ? new Date(b.creationTime).getTime() : 0;
+        } else if (sortCol === 'login') {
+            valA = a.lastSignInTime ? new Date(a.lastSignInTime).getTime() : 0;
+            valB = b.lastSignInTime ? new Date(b.lastSignInTime).getTime() : 0;
+        }
+        
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     const getRoleBadge = (role: string) => {
         switch (role?.toLowerCase()) {
             case 'admin':
@@ -391,11 +423,19 @@ export default function UserManagementPage() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 dark:border-slate-700">
-                                    <th className="px-6 py-4">User</th>
-                                    <th className="px-6 py-4">Role</th>
+                                    <th className="cursor-pointer px-6 py-4 hover:text-brand transition-colors select-none" onClick={() => toggleSort('name')}>
+                                        <div className="flex items-center gap-1">User {sortCol === 'name' ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                                    </th>
+                                    <th className="cursor-pointer px-6 py-4 hover:text-brand transition-colors select-none" onClick={() => toggleSort('role')}>
+                                        <div className="flex items-center gap-1">Role {sortCol === 'role' ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                                    </th>
                                     <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Created</th>
-                                    <th className="px-6 py-4">Last Login</th>
+                                    <th className="cursor-pointer px-6 py-4 hover:text-brand transition-colors select-none" onClick={() => toggleSort('created')}>
+                                        <div className="flex items-center gap-1">Created {sortCol === 'created' ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                                    </th>
+                                    <th className="cursor-pointer px-6 py-4 hover:text-brand transition-colors select-none" onClick={() => toggleSort('login')}>
+                                        <div className="flex items-center gap-1">Last Login {sortCol === 'login' ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                                    </th>
                                     <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -406,7 +446,7 @@ export default function UserManagementPage() {
                                             <td colSpan={6} className="px-6 py-4 h-16 bg-slate-100/10"></td>
                                         </tr>
                                     ))
-                                ) : filteredUsers.length === 0 ? (
+                                ) : sortedUsers.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                                             <div className="flex flex-col items-center gap-2">
@@ -416,7 +456,7 @@ export default function UserManagementPage() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredUsers.map((user) => (
+                                    sortedUsers.map((user) => (
                                         <tr
                                             key={user.uid}
                                             className={`hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group cursor-pointer ${selectedUser?.uid === user.uid ? 'bg-brand/5 border-l-2 border-brand' : ''}`}

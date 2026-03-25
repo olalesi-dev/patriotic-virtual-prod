@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
 import {
-    collection, query, where, onSnapshot, getDoc, doc,
+    collection, query, where, onSnapshot, getDoc, getDocs, doc,
     updateDoc, setDoc, Timestamp, serverTimestamp
 } from 'firebase/firestore';
 import {
@@ -61,6 +61,32 @@ function ScheduleModal({
     const [notes, setNotes] = useState('');
     const [saving, setSaving] = useState(false);
     const [step, setStep] = useState<'intake' | 'schedule'>('intake');
+    const [providers, setProviders] = useState<{ id: string, name: string }[]>([]);
+    const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchProviders = async () => {
+            try {
+                const q = query(collection(db, 'users'), where('role', 'in', ['provider', 'doctor', 'admin', 'systems admin']));
+                const snap = await getDocs(q);
+                const provs = snap.docs.map(d => ({
+                    id: d.id,
+                    name: d.data().displayName || d.data().name || `${d.data().firstName || ''} ${d.data().lastName || ''}`.trim() || 'Unknown Provider'
+                }));
+                // Filter out any without names just in case
+                const validProvs = provs.filter(p => !p.name.includes('Unknown')).sort((a,b) => a.name.localeCompare(b.name));
+                setProviders(validProvs);
+                if (auth.currentUser && validProvs.some(p => p.id === auth.currentUser!.uid)) {
+                    setSelectedProviderId(auth.currentUser!.uid);
+                } else if (validProvs.length > 0) {
+                    setSelectedProviderId(validProvs[0].id);
+                }
+            } catch (err) {
+                console.error('Failed to load providers', err);
+            }
+        };
+        fetchProviders();
+    }, []);
 
     // Build calendar grid
     const monthStart = startOfMonth(calendarMonth);
@@ -85,14 +111,18 @@ function ScheduleModal({
             const apptRef = doc(db, 'appointments', entry.id);
             const consultSnap = await getDoc(consultRef);
 
+            const provObj = providers.find(p => p.id === selectedProviderId);
+            const actualProviderName = provObj ? provObj.name : providerName;
+            const actualProviderId = selectedProviderId || user.uid;
+
             const updatePayload = {
                 status: 'scheduled',
                 scheduledAt: ts,
                 startTime: ts,
                 date: format(scheduledAt, 'yyyy-MM-dd'),
                 time: selectedTime,
-                providerName,
-                providerId: user.uid,
+                providerName: actualProviderName,
+                providerId: actualProviderId,
                 meetingUrl: entry.meetingUrl,
                 notes: notes || undefined,
                 updatedAt: serverTimestamp(),
@@ -221,6 +251,22 @@ function ScheduleModal({
                     {/* ── Schedule Tab ── */}
                     {step === 'schedule' && (
                         <div className="space-y-6 animate-in fade-in duration-200">
+                            {/* Provider Selection */}
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                                    Assign to Provider
+                                </label>
+                                <select
+                                    value={selectedProviderId}
+                                    onChange={(e) => setSelectedProviderId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all cursor-pointer"
+                                >
+                                    {providers.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {/* Mini calendar */}
                             <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-700 p-5">
                                 {/* Month nav */}

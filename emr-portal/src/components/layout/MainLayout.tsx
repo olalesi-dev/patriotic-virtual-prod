@@ -263,6 +263,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                             <NavItem href="/crm/campaigns" icon={BarChart} label="Campaigns" active={pathname.startsWith('/crm/campaigns')} collapsed={isSidebarCollapsed} />
                             <NavItem href="/crm/social" icon={Share2} label="Social Media Hub" active={pathname.startsWith('/crm/social')} collapsed={isSidebarCollapsed} />
                             <NavItem href="/crm/grants" icon={ClipboardList} label="Grant Proposals" active={pathname.startsWith('/crm/grants')} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/crm/timesheets" icon={Clock} label="Time Sheets" active={pathname.startsWith('/crm/timesheets')} collapsed={isSidebarCollapsed} />
                         </CollapsibleGroup>
 
                         {/* COMMUNITY */}
