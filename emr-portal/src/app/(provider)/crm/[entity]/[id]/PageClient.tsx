@@ -649,7 +649,7 @@ export default function CrmEntityDetailClient({ entityType, id }: { entityType: 
                                     </div>
                                     {entityType === 'patients' && (
                                         <div className="flex gap-2 flex-wrap mt-2">
-                                            {['GLP-1', 'Testosterone', 'Hair Growth', 'Pediatrics', 'Mental Health'].map(t => (
+                                            {['GLP-1', 'General Health', 'Hair Growth', 'Pediatrics', 'Mental Health'].map(t => (
                                                 <button 
                                                     key={t}
                                                     type="button"

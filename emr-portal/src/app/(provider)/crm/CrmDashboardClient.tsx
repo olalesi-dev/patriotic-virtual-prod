@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
 import {
     Users, Briefcase, Database, BarChart, ClipboardList, ArrowRight, User, AlertTriangle, Calendar,
-    Search, Sparkles, Activity, Tag, Plus, Target, ShieldCheck
+    Search, Sparkles, Activity, Tag, Plus, Target, ShieldCheck, Clock
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -203,7 +203,8 @@ export default function CrmDashboardClient() {
         { title: 'Vendors', icon: Users, href: '/crm/vendors', color: 'emerald', count: metrics.activeVendorsCount, label: 'Active Vendors' },
         { title: 'Campaigns', icon: BarChart, href: '/crm/campaigns', color: 'amber', count: metrics.activeCampaignsCount, label: 'Active Campaigns' },
         { title: 'Grants', icon: ClipboardList, href: '/crm/grants', color: 'rose', count: metrics.openGrantsCount, label: 'Open Proposals' },
-        { title: 'Compliance', icon: ShieldCheck, href: '/crm/compliance', color: 'teal', count: metrics.complianceDocsCount || 0, label: 'Documents' }
+        { title: 'Compliance', icon: ShieldCheck, href: '/crm/compliance', color: 'teal', count: metrics.complianceDocsCount || 0, label: 'Documents' },
+        { title: 'Time Sheets', icon: Clock, href: '/crm/timesheets', color: 'purple', count: 0, label: 'Work Logs' }
     ];
 
     const formatActivityTimestamp = (ts: any) => {

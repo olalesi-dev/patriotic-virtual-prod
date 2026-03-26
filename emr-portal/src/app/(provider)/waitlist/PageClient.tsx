@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
 import {
-    collection, query, where, onSnapshot, getDoc, doc,
+    collection, query, where, onSnapshot, getDoc, getDocs, doc,
     updateDoc, setDoc, Timestamp, serverTimestamp
 } from 'firebase/firestore';
 import {
     Search, Filter, Clock, Video, FileText, AlertCircle, CheckCircle,
     Stethoscope, CalendarPlus, X, CheckCircle2, Calendar, User,
-    ChevronLeft, ChevronRight, Save, Loader2
+    ChevronLeft, ChevronRight, Save, Loader2, ArrowUpDown
 } from 'lucide-react';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 import { toast } from 'sonner';
@@ -61,6 +61,32 @@ function ScheduleModal({
     const [notes, setNotes] = useState('');
     const [saving, setSaving] = useState(false);
     const [step, setStep] = useState<'intake' | 'schedule'>('intake');
+    const [providers, setProviders] = useState<{ id: string, name: string }[]>([]);
+    const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchProviders = async () => {
+            try {
+                const q = query(collection(db, 'users'), where('role', 'in', ['provider', 'doctor', 'admin', 'systems admin']));
+                const snap = await getDocs(q);
+                const provs = snap.docs.map(d => ({
+                    id: d.id,
+                    name: d.data().displayName || d.data().name || `${d.data().firstName || ''} ${d.data().lastName || ''}`.trim() || 'Unknown Provider'
+                }));
+                // Filter out any without names just in case
+                const validProvs = provs.filter(p => !p.name.includes('Unknown')).sort((a,b) => a.name.localeCompare(b.name));
+                setProviders(validProvs);
+                if (auth.currentUser && validProvs.some(p => p.id === auth.currentUser!.uid)) {
+                    setSelectedProviderId(auth.currentUser!.uid);
+                } else if (validProvs.length > 0) {
+                    setSelectedProviderId(validProvs[0].id);
+                }
+            } catch (err) {
+                console.error('Failed to load providers', err);
+            }
+        };
+        fetchProviders();
+    }, []);
 
     // Build calendar grid
     const monthStart = startOfMonth(calendarMonth);
@@ -85,14 +111,18 @@ function ScheduleModal({
             const apptRef = doc(db, 'appointments', entry.id);
             const consultSnap = await getDoc(consultRef);
 
+            const provObj = providers.find(p => p.id === selectedProviderId);
+            const actualProviderName = provObj ? provObj.name : providerName;
+            const actualProviderId = selectedProviderId || user.uid;
+
             const updatePayload = {
                 status: 'scheduled',
                 scheduledAt: ts,
                 startTime: ts,
                 date: format(scheduledAt, 'yyyy-MM-dd'),
                 time: selectedTime,
-                providerName,
-                providerId: user.uid,
+                providerName: actualProviderName,
+                providerId: actualProviderId,
                 meetingUrl: entry.meetingUrl,
                 notes: notes || undefined,
                 updatedAt: serverTimestamp(),
@@ -221,6 +251,22 @@ function ScheduleModal({
                     {/* ── Schedule Tab ── */}
                     {step === 'schedule' && (
                         <div className="space-y-6 animate-in fade-in duration-200">
+                            {/* Provider Selection */}
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                                    Assign to Provider
+                                </label>
+                                <select
+                                    value={selectedProviderId}
+                                    onChange={(e) => setSelectedProviderId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all cursor-pointer"
+                                >
+                                    {providers.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {/* Mini calendar */}
                             <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-700 p-5">
                                 {/* Month nav */}
@@ -383,6 +429,7 @@ export default function WaitlistPage() {
     const [activeCall, setActiveCall] = useState<{ url: string; apptId: string; intake: any; name: string } | null>(null);
     const [schedulingEntry, setSchedulingEntry] = useState<WaitlistEntry | null>(null);
     const [providerName, setProviderName] = useState('Provider');
+    const [sortOption, setSortOption] = useState<'date_asc' | 'date_desc' | 'name_asc' | 'name_desc'>('date_asc');
     const [, setTick] = useState(0);
 
     const getTimeElapsed = (date: Date) => {
@@ -576,6 +623,12 @@ export default function WaitlistPage() {
             e.patientEmail.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesSvc = filterService === 'all' || e.serviceKey === filterService;
         return matchesSearch && matchesSvc;
+    }).sort((a, b) => {
+        if (sortOption === 'date_desc') return b.createdAt.getTime() - a.createdAt.getTime();
+        if (sortOption === 'date_asc') return a.createdAt.getTime() - b.createdAt.getTime();
+        if (sortOption === 'name_asc') return a.patientName.localeCompare(b.patientName);
+        if (sortOption === 'name_desc') return b.patientName.localeCompare(a.patientName);
+        return 0;
     });
 
     return (
@@ -644,6 +697,21 @@ export default function WaitlistPage() {
                                 {s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </option>
                         ))}
+                    </select>
+                </div>
+                <div className="relative shrink-0">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <ArrowUpDown className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <select
+                        value={sortOption}
+                        onChange={(e: any) => setSortOption(e.target.value)}
+                        className="appearance-none pl-11 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-[20px] text-sm font-bold text-slate-600 dark:text-slate-300 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-200/60 dark:focus:ring-indigo-500/30 transition-all cursor-pointer border border-transparent dark:border-slate-700"
+                    >
+                        <option value="date_asc">Oldest First (Date ↑)</option>
+                        <option value="date_desc">Newest First (Date ↓)</option>
+                        <option value="name_asc">Patient Name (A-Z)</option>
+                        <option value="name_desc">Patient Name (Z-A)</option>
                     </select>
                 </div>
             </div>

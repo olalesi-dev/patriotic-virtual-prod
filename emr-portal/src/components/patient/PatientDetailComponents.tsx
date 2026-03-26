@@ -487,7 +487,7 @@ function NewOrderModal({ type, patient, onClose }: { type: 'lab' | 'referral' | 
 
     const labPanels = [
         { name: 'GLP-1 Panel', tests: 'CMP, A1C, Lipid, TSH' },
-        { name: 'TRT Panel', tests: 'Total T, Free T, E2, CBC, CMP, PSA, Lipid' },
+        { name: 'General Panel', tests: 'CBC, CMP, Lipid, TSH' },
         { name: 'Hair Loss Panel', tests: 'TSH, Ferritin, DHEA-S, ANA' },
         { name: 'Basic Metabolic', tests: 'BMP' },
         { name: 'Comprehensive Metabolic', tests: 'CMP' }
@@ -873,7 +873,7 @@ function ImagingOrderModal({ patient, onClose }: { patient: any, onClose: () => 
 
     const orderSets = [
         { name: 'Weight Loss Screening', desc: 'DEXA Body Composition', modality: 'DEXA', bodyPart: 'Full Body' },
-        { name: 'TRT Monitoring', desc: 'Protocol Reference (No Imaging)', modality: 'MRI', bodyPart: 'Brain' },
+        { name: 'General Monitoring', desc: 'Routine Review (No Imaging)', modality: 'MRI', bodyPart: 'Brain' },
         { name: 'Hair Loss Workup', desc: 'Scalp Dermoscopy referral', modality: 'Ultrasound', bodyPart: 'Vascular' }
     ];
 
@@ -1395,7 +1395,7 @@ export function SoapNoteModal({ onClose, onSave, patient }: { onClose: () => voi
                     <div className="flex items-center gap-4">
                         <div className="grid grid-cols-2 gap-3">
                             <EncounterSelect label="Service Line" value={formData.serviceLine}
-                                options={['GLP-1', 'TRT', 'Hair Loss', 'Men\'s Health', 'General']}
+                                options={['GLP-1', 'Hair Loss', 'Men\'s Health', 'General']}
                                 onChange={(v: any) => setFormData({ ...formData, serviceLine: v })} />
                             <EncounterSelect label="Encounter Type" value={formData.encounterType}
                                 options={['Initial', 'Follow-up', 'Titration Review', 'Lab Review', 'Refill']}
