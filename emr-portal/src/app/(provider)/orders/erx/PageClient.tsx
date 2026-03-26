@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { Pill, Bell } from 'lucide-react';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
 import { auth } from '@/lib/firebase';
+import { apiFetchJson } from '@/lib/api-client';
+import { getDoseSpotApiUrl } from '@/lib/dosespot-client';
 
 export default function ErxPage() {
     const searchParams = useSearchParams();
@@ -21,19 +23,11 @@ export default function ErxPage() {
                 const user = auth.currentUser;
                 if (!user) return;
 
-                const token = await user.getIdToken();
-                const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
-
-                const res = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/dosespot/notification-count`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                const data = await apiFetchJson<{ total?: number }>(getDoseSpotApiUrl('/api/v1/dosespot/notification-count'), {
+                    user
                 });
 
-                if (res.ok) {
-                    const data = await res.json();
-                    setNotificationCount(data.total || 0);
-                }
+                setNotificationCount(data.total || 0);
             } catch (error) {
                 console.error('Failed to fetch dosespot notification count:', error);
             }

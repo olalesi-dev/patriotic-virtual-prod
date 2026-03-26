@@ -42,13 +42,35 @@ export const usePracticeModules = create<ModulesState>((set, get) => ({
 
 // Initialize the listener somewhere near the root or inside the layout
 export function initializeModulesListener() {
-    const unsub = onSnapshot(doc(db, 'practice-settings', 'modules'), (snap) => {
-        if (snap.exists()) {
-            const data = snap.data();
-            usePracticeModules.getState().setEnabledModules(data.enabledModules || []);
-        } else {
+    let unsubDoc = () => {};
+
+    const unsubAuth = auth.onAuthStateChanged((user) => {
+        unsubDoc();
+
+        if (!user) {
             usePracticeModules.getState().setEnabledModules([]);
+            return;
         }
+
+        unsubDoc = onSnapshot(
+            doc(db, 'practice-settings', 'modules'),
+            (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    usePracticeModules.getState().setEnabledModules(data.enabledModules || []);
+                } else {
+                    usePracticeModules.getState().setEnabledModules([]);
+                }
+            },
+            (error) => {
+                console.error('Practice modules listener failed:', error);
+                usePracticeModules.getState().setEnabledModules([]);
+            }
+        );
     });
-    return unsub;
+
+    return () => {
+        unsubDoc();
+        unsubAuth();
+    };
 }
