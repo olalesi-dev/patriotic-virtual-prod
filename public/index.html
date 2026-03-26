@@ -9424,7 +9424,7 @@
           v.includes("cost")
         ) {
           aiBot(
-            "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>Rx Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
+            "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>Rx Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n📹 <b>Imaging + Video Consult</b> — $449\n\nMembership plans: <b>All Access — Elite — $199</b>.\n\nWant to check eligibility for a specific treatment?",
             [
               "🔍 Check eligibility",
               "💰 Membership details",
@@ -10351,7 +10351,7 @@
         document.getElementById(id).classList.add("hidden"),
       );
       document.getElementById("cS1").classList.remove("hidden");
-      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => s.k === window._initialSvcClick) : svcs;
+      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => (s.k === window._initialSvcClick || s.k === "general_visit")) : svcs;
       document.getElementById("svcSel").innerHTML = clinicalSvcs
         .map(
           (s) =>
