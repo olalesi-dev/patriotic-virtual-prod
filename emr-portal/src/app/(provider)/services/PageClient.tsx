@@ -40,15 +40,7 @@ const SERVICES = [
         unit: "/ visit",
         category: "medical"
     },
-    {
-        icon: <Dna className="w-6 h-6" />,
-        color: "bg-purple-100 text-purple-600",
-        title: "Testosterone / HRT",
-        description: "Comprehensive hormone evaluation for men & women — testosterone, estrogen, progesterone, DHEA, thyroid support & peptides.",
-        price: "$149",
-        unit: "/ visit",
-        category: "medical"
-    },
+
     {
         icon: <Microscope className="w-6 h-6" />,
         color: "bg-cyan-100 text-cyan-600",

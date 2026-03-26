@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import imageCompression from 'browser-image-compression';
 
 const HEALTH_JOURNEY_TAGS = [
-    'Weight Loss', 'GLP-1', 'Testosterone', 'Hair Growth', 'Mental Wellness', 'General Health'
+    'Weight Loss', 'GLP-1', 'Hair Growth', 'Mental Wellness', 'General Health'
 ];
 
 interface CommunityProfile {
@@ -750,7 +750,7 @@ function ChallengesTab({ profile }: { profile: CommunityProfile | null }) {
                         {/* Mock Leaderboard since it's activity-based only, strictly non-clinical */}
                         {[
                             { name: 'Sarah J.', points: 450, tag: 'Weight Loss' },
-                            { name: 'Marcus T.', points: 380, tag: 'TRT' },
+                            { name: 'Marcus T.', points: 380, tag: 'Mens Health' },
                             { name: (profile?.displayName || 'You'), points: (profile?.score || 10), me: true },
                             { name: 'Elena R.', points: 310, tag: 'Mental Wellness' }
                         ].sort((a,b) => b.points - a.points).map((user, i) => (

@@ -92,19 +92,6 @@ export const svcs = [
         stripe: "prod_TupBXVZaCU7fWJ",
         priceId: "PRICE_ID_PE",
       },
-      {
-        id: "testosterone-hrt",
-        k: "testosterone_hrt",
-        name: "Testosterone / HRT",
-        desc: "Comprehensive hormone evaluation for men & women — testosterone, estrogen, progesterone, DHEA, thyroid support & peptides.",
-        icon: "🧬",
-        ic: "emerald",
-        c: "emerald",
-        price: 149,
-        cat: ["mens", "clinical"],
-        stripe: "prod_TsnbTXR2n8ni2R",
-        priceId: "PRICE_ID_HRT",
-      },
 
       /* IMAGING & RADIOLOGY (Educational Only) */
       {
@@ -375,39 +362,6 @@ export const iQs = {
         { k: "hasSeizureDisorder", l: "Seizure disorder?", t: "yn" },
         { k: "onMAOIs", l: "Take MAOI medications?", t: "yn" },
         { k: "hasBipolar", l: "Bipolar disorder?", t: "yn" },
-        {
-          k: "currentMedications",
-          l: "Current medications?",
-          t: "i",
-          p: "List all medications",
-        },
-      ],
-      testosterone_hrt: [
-        {
-          k: "symptoms",
-          l: "What symptoms are you experiencing?",
-          t: "i",
-          p: "Fatigue, low libido, weight gain, hot flashes, brain fog...",
-        },
-        { k: "gender", l: "Biological sex?", t: "i", p: "Male or Female" },
-        {
-          k: "hasRecentLabs",
-          l: "Had hormone labs in the last 6 months?",
-          t: "yn",
-        },
-        {
-          k: "hasProstateCancer",
-          l: "History of prostate cancer? (Men)",
-          t: "yn",
-        },
-        { k: "hasBreastCancer", l: "History of breast cancer?", t: "yn" },
-        {
-          k: "hasBloodClottingDisorder",
-          l: "Blood clotting disorder or history of DVT/PE?",
-          t: "yn",
-        },
-        { k: "hasLiverDisease", l: "Liver disease?", t: "yn" },
-        { k: "isPregnant", l: "Pregnant or nursing? (Women)", t: "yn" },
         {
           k: "currentMedications",
           l: "Current medications?",

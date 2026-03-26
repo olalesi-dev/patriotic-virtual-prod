@@ -81,10 +81,9 @@ export const SPECIALTY_MODULES: SpecialtyModule[] = [
     {
         id: 'urology',
         name: "Urology & Men's Health",
-        description: 'Essential functions for TRT monitoring, PSA panels, and urological diaries.',
+        description: 'Essential functions for PSA panels and urological diaries.',
         icon: Users,
         pages: [
-            { id: 'testosterone-monitoring', title: 'Testosterone Monitoring' },
             { id: 'psa-tracking', title: 'PSA Tracking' },
             { id: 'voiding-diaries', title: 'Voiding Diaries' }
         ]
