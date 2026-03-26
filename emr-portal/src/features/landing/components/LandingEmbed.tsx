@@ -776,7 +776,7 @@ export function LandingEmbed() {
               preload="auto"
             >
               <source
-                src="https://cdn.prod.website-files.com/65a5297de1b7fe80c0727d5e/65cf3b5948e49d354b5918f6_hero_video-transcode.mp4"
+                src="/assets/pick2.mp4"
                 type="video/mp4"
               />
             </video>
