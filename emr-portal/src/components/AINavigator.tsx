@@ -237,7 +237,7 @@ export default function AINavigator() {
       );
     } else if (v.includes("Pricing") || v.includes("plans") || v.includes("cost") || v.includes("See pricing")) {
       addBotMessage(
-        "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>GLP-1 Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
+        "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>GLP-1 Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n📹 <b>Imaging + Video Consult</b> — $449\n\nMembership plans: <b>All Access — Elite — $199</b>.\n\nWant to check eligibility for a specific treatment?",
         ["🔍 Check eligibility", "💰 Membership details", "✅ Start a visit"]
       );
     } else if (v.includes("Membership details")) {
