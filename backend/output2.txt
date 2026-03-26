@@ -1,0 +1,363 @@
+
+
+Patriotic Virtual Telehealth
+
+Website Copy Update Brief for Developer
+
+Radiant Logiq Corporation  ·  March 2026
+
+
+
+
+
+Purpose & Scope
+
+Keep the general look and most existing patient-facing language the same for LegitScript compliance, while adding subtle RadiantLogiq / NVIDIA / DoseSpot credibility in safe, approved locations.
+
+
+
+❌  Do NOT change
+
+Medication claims, prescribing language, pricing, medical disclaimers, and core patient workflow copy.
+
+✅  Safe to add
+
+Short trust-language about RadiantLogiq, NVIDIA Inception program membership, DoseSpot integration, physician-founded platform, and provider-facing workflow optimization.
+
+
+
+Section 1: NVIDIA Inception Program — Brand Compliance Rules
+
+All references to NVIDIA and the NVIDIA Inception program on the website must follow official NVIDIA brand guidelines (brand.nvidia.com). The rules below are taken directly from those guidelines and are non-negotiable.
+
+
+
+Rule
+
+Requirement
+
+✅  DO
+
+Say: member of the NVIDIA Inception program (lowercase p in sentences)
+
+✅  DO
+
+Say: NVIDIA Inception Program (capital P) in titles and headlines
+
+✅  DO
+
+Use the official NVIDIA Inception Program badge in marketing materials
+
+✅  DO
+
+Use #NVIDIAInception on all social media posts referencing the program
+
+✅  DO
+
+Include NVIDIA trademark line in any asset using the badge or NVIDIA name
+
+❌  DON'T
+
+Say: partnered with NVIDIA, powered by NVIDIA, or approved by NVIDIA
+
+❌  DON'T
+
+Abbreviate: NV Inception, Inception Program, or Inception alone
+
+❌  DON'T
+
+Misspell: Nvidia Inception Program or NVIDIA INCEPTION PROGRAM
+
+❌  DON'T
+
+Reorder: Inception Program by NVIDIA is not permitted
+
+❌  DON'T
+
+Change badge colors, proportions, or alter badge text
+
+❌  DON'T
+
+Make the NVIDIA badge larger than your own company logo
+
+
+
+Required Legal Attribution
+
+Any time the NVIDIA Inception Program badge is displayed or NVIDIA is referenced as a trademark on a webpage, email blast, or print asset, include the following legal line verbatim (fill in trademarks used):
+
+NVIDIA Trademark Attribution Line (required whenever badge is shown)
+
+"© 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries."
+
+Developer note: Place this in the page footer or immediately below any section that displays the NVIDIA Inception Program badge. This is a hard requirement from NVIDIA brand.nvidia.com.
+
+
+
+Badge Usage
+
+The official NVIDIA Inception Program badge is available for download at brand.nvidia.com. Key rules:
+
+✅  Colors: Do not change badge colors (NVIDIA Green #76B900, Black, White)
+
+✅  Proportions: Do not resize or distort the badge
+
+✅  Size: Do not make the NVIDIA badge larger than the Patriotic Virtual Telehealth logo
+
+✅  Clear space: Maintain minimum clear space around the badge — do not crowd it
+
+✅  Alt text: Add alt="NVIDIA Inception Program member badge" for accessibility
+
+
+
+Section 2: Exact Copy Changes — Priority Order
+
+Make only the additions listed below. Do not rewrite or remove any existing copy. Each change is listed in priority order.
+
+
+
+Change 1 (Highest Priority) — Homepage Hero: Under-Headline Addition
+
+Location: Directly below the existing hero headline and subheadline, before the CTA button.
+
+Action: Add 1–2 sentences. Keep font smaller than the main headline. Use neutral styling — no oversized badge treatment here.
+
+
+
+Add this text beneath the hero copy
+
+"Powered by RadiantLogiq, an AI-driven clinical platform for decision support and workflow optimization. RadiantLogiq is a member of the NVIDIA Inception program."
+
+Developer note: Keep smaller than the main headline. Neutral styling only. Do not use this as a primary hero statement.
+
+
+
+Change 2 (High Priority) — Homepage Trust / Platform Line
+
+Location: Near the CTA or just below key intro copy — reads as a trust/support line, not a medical claim.
+
+Add this short sentence
+
+"Our platform integrates advanced clinical software and AI to support efficient, high-quality care delivery."
+
+Developer note: This should read like a trust/support line. Do not frame it as a medical claim or diagnostic promise.
+
+
+
+Change 3 (High Priority) — Technology & Platform Section
+
+Location: Add as a new short section mid-page or near existing explanatory content. Match the visual style of existing section modules.
+
+Section title: "Technology & Platform"
+
+
+
+Body copy for this section
+
+"Patriotic Virtual Telehealth is powered by RadiantLogiq, a physician-founded clinical platform designed to enhance care delivery through workflow optimization and intelligent data processing.
+
+RadiantLogiq supports scalable telehealth operations today, with ongoing development of advanced clinical decision support tools for healthcare providers."
+
+Developer note: Keep visual style consistent with existing section modules. This introduces RadiantLogiq without disrupting patient-facing copy.
+
+
+
+Change 4 (High Priority) — DoseSpot Trust Line
+
+Location (choose one): How It Works section   OR   Technology & Platform section   OR   Why Choose Us / trust section. Mention DoseSpot only once across the entire page.
+
+Add this sentence once
+
+"We utilize a secure, integrated e-prescribing platform (DoseSpot) to support safe, compliant, and efficient medication management."
+
+Developer note: Mention DoseSpot only once on the page. Do not use it in the hero or any area that could be read as a medical claim.
+
+
+
+Change 5 (Medium Priority) — Footer / Lower-Page Credibility Strip
+
+Location: Footer or lower-page credibility/trust strip.
+
+Add these two lines (small, clean text)
+
+"Powered by RadiantLogiq
+Member, NVIDIA Inception Program"
+
+Also display the official NVIDIA Inception Program badge here (download from brand.nvidia.com), followed by the required NVIDIA trademark attribution line:
+
+Required NVIDIA trademark line (display immediately below or near the badge)
+
+"© 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries."
+
+Developer note: Very small, clean text for the footer lines. Do not imply NVIDIA endorsement, approval, or partnership beyond program membership. Use Member, NVIDIA Inception Program — not Partner or Powered by NVIDIA.
+
+
+
+Change 6 (High Priority) — About / Physician-Founded Trust Language
+
+Location: About, trust, or platform section — not as the main hero headline.
+
+Add this sentence where appropriate
+
+"Built by a physician-led team, RadiantLogiq is designed to improve efficiency and scalability in modern healthcare delivery."
+
+Developer note: Use in About, trust, or platform section only — not as a primary hero statement.
+
+
+
+Change 7 (Optional) — Provider-Facing Micro-Copy
+
+Location: Secondary placement only. The page must still read primarily as a patient-facing telehealth site.
+
+Optional — add one brief line if space allows
+
+"For providers and health systems, RadiantLogiq is being developed to support workflow optimization and clinical decision support."
+
+Developer note: Keep this secondary. Do not feature it prominently alongside patient-facing copy.
+
+
+
+Section 3: Suggested Placement Order
+
+
+
+#
+
+Priority
+
+Change
+
+Why First
+
+1
+
+Highest
+
+Hero under-text (RadiantLogiq + NVIDIA mention)
+
+Fastest credibility lift; preserves existing layout
+
+2
+
+High
+
+DoseSpot trust line
+
+Supports compliance/trust with minimal visual impact
+
+3
+
+High
+
+Technology & Platform section
+
+Introduces RadiantLogiq without disrupting patient copy
+
+4
+
+Medium
+
+Footer credibility strip
+
+Low-risk persistent branding
+
+5
+
+Optional
+
+Provider-facing micro-copy
+
+Useful later if you want to attract hospital interest
+
+
+
+Section 4: Wording & Compliance Rules Summary
+
+Brand Naming Rules
+
+✅  Correct in sentences: "RadiantLogiq is a member of the NVIDIA Inception program."
+
+✅  Correct in titles/headlines: "NVIDIA Inception Program" (capital P)
+
+✅  Social media tag: #NVIDIAInception in any social post about the program
+
+✅  Correct company reference: "Radiant Logiq Corporation" (legal name) or "RadiantLogiq" (brand)
+
+❌  "Powered by NVIDIA" — not permitted
+
+❌  "Partnered with NVIDIA" — not permitted
+
+❌  "Approved by NVIDIA" — not permitted
+
+❌  "NV Inception," "Inception Program," or "Inception" alone — not permitted
+
+❌  "Nvidia Inception Program" (title case) or "NVIDIA INCEPTION PROGRAM" (all caps) — not permitted
+
+
+
+AI & Clinical Language Rules
+
+✅  Safe: Workflow optimization, intelligent data processing, scalable telehealth operations
+
+✅  Safe: Clinical decision support tools (for provider-facing copy only)
+
+❌  Do not promise diagnostic accuracy or clinical outcomes on the public telehealth page
+
+❌  Do not rewrite or remove existing prescribing, medication, or provider-disclaimer language
+
+
+
+Brand Identity Rules
+
+✅  Patient-facing brand: "Patriotic Virtual Telehealth" — the live patient-facing service brand
+
+✅  Technology platform: "RadiantLogiq" — the product/platform brand
+
+✅  Legal entity: "Radiant Logiq Corporation" — for legal/formal references
+
+Developer note: Keep these brand identities distinct. Patriotic Virtual Telehealth is the consumer-facing name. RadiantLogiq is the technology platform powering it.
+
+
+
+Section 5: Social Media Post Template
+
+When posting about NVIDIA Inception program membership on social media, use the format below. Include #NVIDIAInception so NVIDIA can identify and amplify the post.
+
+
+
+Suggested social post (customize as needed)
+
+"Excited to share that RadiantLogiq is a member of the NVIDIA Inception program! We're building AI-powered clinical decision support and telehealth tools to transform healthcare delivery. #NVIDIAInception #HealthAI #Telehealth #Radiology"
+
+Developer note: The NVIDIA Inception Program badge may also be used in the social image. In the post copy, use the program name in full: 'NVIDIA Inception program' (lowercase p in a sentence).
+
+
+
+Section 6: Ready-to-Send Developer Summary
+
+Please keep the existing site design and most existing wording intact. Add only the small copy updates in this document so the site remains patient-friendly and LegitScript-safe, while introducing RadiantLogiq, DoseSpot, and NVIDIA Inception program credibility in subtle, trust-oriented locations.
+
+
+
+Specifically:
+
+✅  Change 1: Add RadiantLogiq + NVIDIA Inception program under-text to homepage hero
+
+✅  Change 2: Add platform trust line near CTA
+
+✅  Change 3: Add "Technology & Platform" section with RadiantLogiq description
+
+✅  Change 4: Add DoseSpot trust sentence once in How It Works or platform section
+
+✅  Change 5: Add footer credibility strip with NVIDIA badge + required trademark attribution
+
+✅  Change 6: Add physician-founded trust language in About/platform section
+
+✅  Change 7: (Optional) Add provider-facing micro-copy if space allows
+
+
+
+Document prepared by Radiant Logiq Corporation  ·  March 2026  ·  For internal/developer use only
+
+NVIDIA Inception Program references must comply with brand.nvidia.com guidelines at all times.
+

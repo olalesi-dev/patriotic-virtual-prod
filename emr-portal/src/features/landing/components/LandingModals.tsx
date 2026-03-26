@@ -19,8 +19,8 @@ interface LandingModalsProps {
   setConsultModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   authModalOpen: boolean;
   setAuthModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  authMode: "login" | "register";
-  setAuthMode: React.Dispatch<React.SetStateAction<"login" | "register">>;
+  authMode: "login" | "register" | "verify";
+  setAuthMode: React.Dispatch<React.SetStateAction<"login" | "register" | "verify">>;
   initialService: string | null;
   initialConsultStep?: number;
   onLoginSuccess: () => void;
@@ -108,6 +108,35 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       };
     },
   });
+
+  React.useEffect(() => {
+    if (authMode !== "verify") return;
+
+    const handleVouchedMessage = async (e: MessageEvent) => {
+      if (e.data?.type === 'VOUCHED_DONE') {
+        const { success, jobId } = e.data;
+        
+        if (auth.currentUser) {
+          await setDoc(doc(db, "patients", auth.currentUser.uid), {
+            vouchedJobId: jobId,
+            isIdentityVerified: success
+          }, { merge: true });
+        }
+        
+        if (success) {
+          showToast("Identity verification completed successfully.");
+          setAuthModalOpen(false);
+          setConsultModalOpen(true);
+          setConsultStep(1);
+        } else {
+          showToast("Identity verification failed. Please try again or contact support.");
+        }
+      }
+    };
+
+    window.addEventListener("message", handleVouchedMessage);
+    return () => window.removeEventListener("message", handleVouchedMessage);
+  }, [authMode]);
 
   React.useEffect(() => {
     if (consultModalOpen && initialConsultStep > 1) {
@@ -220,7 +249,8 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       setAuthModalOpen(false);
       onLoginSuccess();
       if (authMode === "register") {
-        setConsultModalOpen(true);
+        setAuthModalOpen(true);
+        setAuthMode("verify");
       }
     } catch (e: any) {
       showToast(e.message || "Google auth failed");
@@ -273,11 +303,9 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      showToast("Account created! Welcome.");
-      setAuthModalOpen(false);
-      // Automatically open the consultation modal after successful registration
-      setConsultModalOpen(true);
-      setConsultStep(1);
+      showToast("Account created! Please verify your identity.");
+      setAuthMode("verify");
+      // Prevent closing modal so you can render verify step
     } catch (e: any) {
       showToast(e.message || "Registration failed");
     } finally {
@@ -343,7 +371,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 New here? <a onClick={() => setAuthMode("register")}>Create account</a>
               </p>
             </div>
-          ) : (
+          ) : authMode === "register" ? (
             <div id="registerForm">
               <h2 style={{ marginBottom: "4px" }}>Get started</h2>
               <p className="ms" style={{ marginBottom: "16px" }}>Currently available in Florida.</p>
@@ -474,6 +502,18 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 Have an account? <a onClick={() => setAuthMode("login")}>Log in</a>
               </p>
             </div>
+          ) : (
+            <div id="verifyForm" style={{ textAlign: "center", padding: "16px 0" }}>
+              <h2 style={{ marginBottom: "8px" }}>Identity Verification</h2>
+              <p className="ms" style={{ marginBottom: "20px" }}>
+                For your safety and to comply with telehealth regulations, please verify your identity with a valid ID.
+              </p>
+              <iframe 
+                src={`/vouched.html?firstName=${encodeURIComponent(regFirst)}&lastName=${encodeURIComponent(regLast)}&email=${encodeURIComponent(regEmail)}&phone=${encodeURIComponent(regPhone)}`}
+                style={{ width: "100%", minHeight: "550px", border: "none", borderRadius: "12px" }}
+                allow="camera; microphone"
+              />
+            </div>
           )}
         </div>
       </div>
@@ -498,7 +538,9 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               <h3>What brings you in?</h3>
               <p>Select the service that fits your needs.</p>
               <div className="rg" id="svcSel">
-                {svcs.map((s) => (
+                {svcs
+                  .filter((s) => (initialService ? (s.k === initialService || s.k === "general_visit") : true))
+                  .map((s) => (
                   <div
                     key={s.k}
                     className={`ro ${selSvc === s.k ? "sel" : ""}`}

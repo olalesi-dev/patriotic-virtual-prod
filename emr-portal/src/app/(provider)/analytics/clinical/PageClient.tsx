@@ -44,7 +44,7 @@ export default function ClinicalDashboardPage() {
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="flex bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl p-1 shadow-sm">
                         <button className="px-4 py-2 text-xs font-black uppercase tracking-widest bg-slate-900 dark:bg-slate-700 text-white rounded-lg shadow-lg shadow-slate-200 dark:shadow-none">GLP-1 Weight Loss</button>
-                        <button className="px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">TRT</button>
+                        <button className="px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">General</button>
                     </div>
                     <button className="flex items-center gap-2 bg-white dark:bg-slate-800 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
                         <Filter className="w-4 h-4" /> Filters

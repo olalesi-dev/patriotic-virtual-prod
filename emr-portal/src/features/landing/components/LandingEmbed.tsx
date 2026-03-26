@@ -399,7 +399,7 @@ export function LandingEmbed() {
   // Added Modals state
   const [consultModalOpen, setConsultModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register" | "verify">("login");
   const [initialService, setInitialService] = useState<string | null>(null);
   const [initialConsultStep, setInitialConsultStep] = useState(1);
   const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
@@ -575,6 +575,72 @@ export function LandingEmbed() {
     }
   };
 
+  const isLightTheme = theme === "light";
+  const techSectionStyles = {
+    section: {
+      padding: "80px 0",
+      background: isLightTheme ? "var(--g50)" : "#020617",
+    },
+    eyebrow: {
+      color: isLightTheme ? "var(--blue)" : "#93c5fd",
+    },
+    title: {
+      maxWidth: "800px",
+      color: isLightTheme ? "var(--navy)" : "#ffffff",
+    },
+    subtitle: {
+      maxWidth: "800px",
+      marginBottom: "32px",
+      color: isLightTheme ? "#475569" : "#cbd5e1",
+    },
+    card: {
+      background: isLightTheme ? "#ffffff" : "#0f172a",
+      padding: "24px",
+      borderRadius: "16px",
+      border: isLightTheme
+        ? "1px solid #d1d5db"
+        : "1px solid rgba(148, 163, 184, 0.24)",
+      display: "flex",
+      gap: "16px",
+      alignItems: "flex-start",
+      marginBottom: "24px",
+      maxWidth: "800px",
+      boxShadow: isLightTheme
+        ? "0 10px 28px rgba(15, 23, 42, 0.08)"
+        : "0 16px 36px rgba(2, 6, 23, 0.42)",
+    },
+    iconBadge: {
+      width: "48px",
+      height: "48px",
+      borderRadius: "14px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "24px",
+      flexShrink: 0,
+      background: isLightTheme
+        ? "rgba(59, 130, 246, 0.12)"
+        : "rgba(96, 165, 250, 0.16)",
+    },
+    cardTitle: {
+      fontSize: "16px",
+      marginBottom: "8px",
+      color: isLightTheme ? "var(--navy)" : "#f8fafc",
+    },
+    cardText: {
+      fontSize: "14px",
+      color: isLightTheme ? "#475569" : "#cbd5e1",
+      margin: 0,
+    },
+    footnote: {
+      fontSize: "13px",
+      color: isLightTheme ? "#64748b" : "#94a3b8",
+      fontStyle: "italic",
+      margin: 0,
+      maxWidth: "800px",
+    },
+  } as const;
+
   return (
     <>
       <nav id="mainNav" className={scrolled ? "scrolled" : ""}>
@@ -710,7 +776,7 @@ export function LandingEmbed() {
               preload="auto"
             >
               <source
-                src="https://cdn.prod.website-files.com/65a5297de1b7fe80c0727d5e/65cf3b5948e49d354b5918f6_hero_video-transcode.mp4"
+                src="/assets/pick2.mp4"
                 type="video/mp4"
               />
             </video>
@@ -983,28 +1049,38 @@ export function LandingEmbed() {
           </div>
         </section>
 
-        <section className="tech-section" id="technology-platform" style={{ padding: "80px 0", background: "var(--g50)" }}>
+        <section
+          className="tech-section"
+          id="technology-platform"
+          style={techSectionStyles.section}
+        >
           <div className="container">
             <div className="sec-eye eye-blue">
               <div className="eye-line" style={{ background: "var(--blue)" }} />
-              <span style={{ color: "var(--blue)" }}>Technology & Platform</span>
+              <span style={techSectionStyles.eyebrow}>
+                Technology & Platform
+              </span>
             </div>
-            <h2 className="sec-title" style={{ maxWidth: "800px", color: "var(--navy)" }}>
+            <h2 className="sec-title" style={techSectionStyles.title}>
               Powered by RadiantLogiq
             </h2>
-            <p className="sec-sub" style={{ maxWidth: "800px", marginBottom: "32px" }}>
+            <p className="sec-sub" style={techSectionStyles.subtitle}>
               Patriotic Virtual Telehealth is powered by RadiantLogiq, a physician-founded clinical platform designed to enhance care delivery through workflow optimization and intelligent data processing. RadiantLogiq supports scalable telehealth operations today, with ongoing development of advanced clinical decision support tools for healthcare providers.
             </p>
-            <div style={{ background: "white", padding: "24px", borderRadius: "16px", border: "1px solid var(--g200)", display: "flex", gap: "16px", alignItems: "flex-start", marginBottom: "24px", maxWidth: "800px" }}>
-              <div style={{ fontSize: "24px" }}>🔒</div>
+            <div style={techSectionStyles.card}>
+              <div aria-hidden="true" style={techSectionStyles.iconBadge}>
+                🔒
+              </div>
               <div>
-                <h3 style={{ fontSize: "16px", marginBottom: "8px", color: "var(--navy)" }}>Secure Medication Management</h3>
-                <p style={{ fontSize: "14px", color: "var(--g600)", margin: 0 }}>
+                <h3 style={techSectionStyles.cardTitle}>
+                  Secure Medication Management
+                </h3>
+                <p style={techSectionStyles.cardText}>
                   We utilize a secure, integrated e-prescribing platform (DoseSpot) to support safe, compliant, and efficient medication management.
                 </p>
               </div>
             </div>
-            <p style={{ fontSize: "13px", color: "var(--g500)", fontStyle: "italic", margin: 0, maxWidth: "800px" }}>
+            <p style={techSectionStyles.footnote}>
               * For providers and health systems, RadiantLogiq is being developed to support workflow optimization and clinical decision support.
             </p>
           </div>

@@ -14,7 +14,7 @@ const CATALOG: Record<string, { name: string; amount: number; interval?: string 
   weight_loss: { name: 'GLP-1 & Weight Loss', amount: 12900 },
   erectile_dysfunction: { name: 'Erectile Dysfunction', amount: 7900 },
   premature_ejaculation: { name: 'Premature Ejaculation', amount: 7900 },
-  testosterone_hrt: { name: 'Testosterone / HRT', amount: 14900 },
+
   ai_imaging: { name: 'AI-Powered Imaging Analysis', amount: 9900 },
   report_interpretation: { name: 'Report Interpretation', amount: 14900 },
   standard_imaging: { name: 'Standard Imaging Review', amount: 24900 },

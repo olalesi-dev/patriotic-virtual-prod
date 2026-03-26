@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://static.vouched.id/plugin/releases/latest/index.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; width: 100%; box-sizing: border-box; background: transparent; }
+    #vouched-element { height: 100%; width: 100%; }
+  </style>
+  <script type='text/javascript'>
+    window.onload = function() {
+      // Parse URL parameters for pre-filling verification data
+      const urlParams = new URLSearchParams(window.location.search);
+      const firstName = urlParams.get('firstName') || '';
+      const lastName = urlParams.get('lastName') || '';
+      const email = urlParams.get('email') || '';
+      const phone = urlParams.get('phone') || '';
+
+      var vouched = Vouched({
+        appId: 'EmbGg*-Iph.xlzsx8fX9_O!BouHbdS',
+        verification: {
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          phone: phone
+        },
+        liveness: 'enhanced',
+        id: 'camera',
+        includeBarcode: true,
+        manualCaptureTimeout: 20000,
+        showTermsAndPrivacy: true,
+        crossDevice: true,
+        crossDeviceQRCode: true,
+        crossDeviceSMS: true,
+        theme: {
+          name: 'avant',
+        },
+        onDone: (job) => {
+          console.log("Scanning complete", { token: job.token, result: job.result });
+          
+          // Send message to parent window (React)
+          window.parent.postMessage({
+            type: 'VOUCHED_DONE',
+            success: job.result ? job.result.success : false,
+            jobId: job.id || job.token
+          }, "*");
+        }
+      });
+      vouched.mount("#vouched-element");
+    };
+  </script>
+</head>
+<body>
+  <div id='vouched-element'></div>
+</body>
+</html>

@@ -148,7 +148,7 @@ export default function AINavigator() {
     if (t.includes("weight") || t.includes("glp")) return "weight_loss";
     if (t.includes("erectile") || t.includes("ed")) return "erectile_dysfunction";
     if (t.includes("premature") || t.includes("ejaculation")) return "premature_ejaculation";
-    if (t.includes("testosterone") || t.includes("hrt") || t.includes("hormone")) return "testosterone_hrt";
+
     if (t.includes("general")) return "general_visit";
     return "general_visit";
   };
@@ -184,11 +184,7 @@ export default function AINavigator() {
     } else if (k === "premature_ejaculation") {
       if (a.onMAOIs) block.push("MAOI medication use");
       if (a.hasSeizureDisorder) block.push("seizure disorder");
-    } else if (k === "testosterone_hrt") {
-      if (a.hasProstateCancer) block.push("prostate cancer history");
-      if (a.hasBreastCancer) block.push("breast cancer history");
-      if (a.hasBloodClottingDisorder) block.push("blood clotting disorder / DVT/PE history");
-      if (a.isPregnant) block.push("pregnancy or nursing");
+
     }
 
     if (block.length > 0) {
@@ -221,7 +217,7 @@ export default function AINavigator() {
           "💊 GLP-1 Weight Loss",
           "⚡ Erectile Dysfunction",
           "⏱️ Premature Ejaculation",
-          "🧬 Testosterone / HRT",
+
           "🩺 General Visit",
         ]
       );
@@ -241,7 +237,7 @@ export default function AINavigator() {
       );
     } else if (v.includes("Pricing") || v.includes("plans") || v.includes("cost") || v.includes("See pricing")) {
       addBotMessage(
-        "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>GLP-1 Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n🧬 <b>Testosterone / HRT</b> — $149\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
+        "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>GLP-1 Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n📹 <b>Imaging + Video Consult</b> — $449\n\nMembership plans: <b>All Access — Elite — $199</b>.\n\nWant to check eligibility for a specific treatment?",
         ["🔍 Check eligibility", "💰 Membership details", "✅ Start a visit"]
       );
     } else if (v.includes("Membership details")) {
@@ -290,8 +286,7 @@ export default function AINavigator() {
       }
     } else if (v.includes("Lose weight") || v.toLowerCase().includes("weight")) {
       addBotMessage("For weight loss, we offer <b>GLP-1 medication consultations</b> at $129/visit. Your provider screens eligibility, creates a titration schedule, and prescribes if appropriate. Medication cost is separate.\n\nWant to check if you qualify?", ["🔍 Check my eligibility", "✅ Start a visit", "💰 Pricing"]);
-    } else if (v.includes("Hormone") || v.includes("testosterone") || v.includes("HRT") || v.includes("fatigue")) {
-      addBotMessage("We offer <b>Testosterone / HRT consultations</b> at $149/visit for men & women. Your provider evaluates symptoms, reviews labs, and builds a personalized hormone protocol.\n\nOptions include testosterone, estrogen, progesterone, DHEA, thyroid support & peptides.", ["🔍 Check eligibility", "✅ Start a visit"]);
+
     } else if (v.includes("Sexual") || v.includes("Erectile") || v.includes("ED") || v.includes("erect")) {
       addBotMessage("We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n⏱️ <b>Premature Ejaculation</b> — $79 (SSRI therapy, topical agents)\n\nAll medications shipped discreetly after safety screening.", ["🔍 Check eligibility", "✅ Start a visit"]);
     } else if (v.includes("General") || v.includes("sick") || v.includes("cold") || v.includes("flu") || v.includes("health question")) {

@@ -27,7 +27,7 @@ export const svcs: Service[] = [
     { id: 'weight-loss', k: 'weight_loss', name: 'GLP-1 & Weight Loss', desc: 'Comprehensive medical weight loss evaluation. GLP-1 eligibility screening, personalized titration, dietary guidance. Medication cost separate.', icon: '💊', ic: 'blue', c: 'blue', price: 129, cat: ['popular', 'clinical'], stripe: 'prod_TsnZ1goCbeavNz', priceId: 'PRICE_ID_WEIGHT_LOSS' },
     { id: 'erectile-dysfunction', k: 'erectile_dysfunction', name: 'Erectile Dysfunction', desc: 'Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.', icon: '⚡', ic: 'blue', c: 'blue', price: 79, cat: ['mens', 'clinical'], stripe: 'prod_TupASTZvm9MPDJ', priceId: 'PRICE_ID_ED' },
     { id: 'premature-ejaculation', k: 'premature_ejaculation', name: 'Premature Ejaculation', desc: 'Sertraline (SSRI therapy), topical numbing agents & behavioral techniques. Evidence-based, shipped discreetly.', icon: '⏱️', ic: 'violet', c: 'violet', price: 79, cat: ['mens', 'clinical'], stripe: 'prod_TupBXVZaCU7fWJ', priceId: 'PRICE_ID_PE' },
-    { id: 'testosterone-hrt', k: 'testosterone_hrt', name: 'Testosterone / HRT', desc: 'Comprehensive hormone evaluation for men & women — testosterone, estrogen, progesterone, DHEA, thyroid support & peptides.', icon: '🧬', ic: 'emerald', c: 'emerald', price: 149, cat: ['mens', 'clinical'], stripe: 'prod_TsnbTXR2n8ni2R', priceId: 'PRICE_ID_HRT' },
+
     { id: 'ai-imaging', k: 'ai_imaging', name: 'AI-Powered Imaging Analysis', desc: 'Physician-supervised AI interpretation of reports. Educational tools to help you understand findings.', icon: '🔬', ic: 'blue', c: 'blue', price: 99, cat: ['ai', 'radiology'], stripe: 'prod_TsnPLrOTNMh7xM', priceId: 'PRICE_ID_AI_IMAGING' },
     { id: 'report-interpretation', k: 'report_interpretation', name: 'Report Interpretation', desc: 'Expert analysis of your existing radiology report. We translate complex medical jargon into plain English.', icon: '📄', ic: 'indigo', c: 'indigo', price: 149, cat: ['radiology'], stripe: 'prod_Tmu7Z6g8kmwvMd', priceId: 'PRICE_ID_REPORT_INT' },
     { id: 'standard-imaging', k: 'standard_imaging', name: 'Standard Imaging Review', desc: 'Complete second-opinion over-read of your X-Ray, Ultrasound, CT, or MRI images by a board-certified radiologist.', icon: '🖥️', ic: 'violet', c: 'violet', price: 249, cat: ['radiology'], stripe: 'prod_Tmu9kplu78Fs2m', priceId: 'PRICE_ID_STD_REVIEW' },
@@ -74,17 +74,7 @@ export const iQs: Record<string, IntakeQuestion[]> = {
         { k: 'hasBipolar', l: 'Bipolar disorder?', t: 'yn' },
         { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }
     ],
-    testosterone_hrt: [
-        { k: 'symptoms', l: 'What symptoms are you experiencing?', t: 'i', p: 'Fatigue, low libido, weight gain, hot flashes, brain fog...' },
-        { k: 'gender', l: 'Biological sex?', t: 'i', p: 'Male or Female' },
-        { k: 'hasRecentLabs', l: 'Had hormone labs in the last 6 months?', t: 'yn' },
-        { k: 'hasProstateCancer', l: 'History of prostate cancer? (Men)', t: 'yn' },
-        { k: 'hasBreastCancer', l: 'History of breast cancer?', t: 'yn' },
-        { k: 'hasBloodClottingDisorder', l: 'Blood clotting disorder or history of DVT/PE?', t: 'yn' },
-        { k: 'hasLiverDisease', l: 'Liver disease?', t: 'yn' },
-        { k: 'isPregnant', l: 'Pregnant or nursing? (Women)', t: 'yn' },
-        { k: 'currentMedications', l: 'Current medications?', t: 'i', p: 'List all medications' }
-    ],
+
     membership_elite: [
         { k: 'primaryGoal', l: 'What is your primary health goal?', t: 'i', p: 'e.g. Weight loss, hormone balance, general wellness' },
         { k: 'symptomDuration', l: 'Any specific symptoms currently?', t: 'i', p: 'Describe any issues' },

@@ -1,0 +1,126 @@
+Line 159: body:not(.light-theme) .brand-logo-light {
+Line 163: body:not(.light-theme) .brand-logo-dark {
+Line 167: body.light-theme .brand-logo-light {
+Line 171: body.light-theme .brand-logo-dark {
+Line 2229: body.light-theme {
+Line 3666: body.light-theme #aboutModal {
+Line 3745: body.light-theme #authModal {
+Line 3965: body.light-theme #consultModal {
+Line 4119: body.light-theme {
+Line 4124: .light-theme nav {
+Line 4129: .light-theme .nav-brand-top {
+Line 4133: .light-theme .nav-brand-bottom {
+Line 4137: .light-theme .nav-links a {
+Line 4141: .light-theme .nav-links a:hover {
+Line 4146: .light-theme .mobile-toggle {
+Line 4150: .light-theme .btn-ghost {
+Line 4154: .light-theme .btn-ghost:hover {
+Line 4159: .light-theme .btn-white {
+Line 4164: .light-theme .btn-white:hover {
+Line 4168: .light-theme .btn-outline {
+Line 4174: .light-theme .btn-outline:hover {
+Line 4180: .light-theme .radiology,
+Line 4181: .light-theme .protocol-section,
+Line 4182: .light-theme .services {
+Line 4187: .light-theme .rad-card,
+Line 4188: .light-theme .proto-box,
+Line 4189: .light-theme .svc,
+Line 4190: .light-theme #svcGrid .svc {
+Line 4197: .light-theme .svc h3 {
+Line 4201: .light-theme .svc p {
+Line 4205: .light-theme .rad-card h3,
+Line 4206: .light-theme .sec-title,
+Line 4207: .light-theme .services .sec-title {
+Line 4211: .light-theme .rad-card .rd,
+Line 4212: .light-theme .services .sec-sub,
+Line 4213: .light-theme .sec-sub {
+Line 4217: .light-theme .tab {
+Line 4222: .light-theme .tab:hover {
+Line 4227: .light-theme .tab.active {
+Line 5214: body.light-theme #mainNav,
+Line 5215: body.light-theme #mainNav.scrolled {
+Line 5220: body.light-theme #mainNav .nav-brand-top {
+Line 5224: body.light-theme #mainNav .nav-brand-bottom {
+Line 5228: body.light-theme #mainNav .nav-links a {
+Line 5232: body.light-theme #mainNav .nav-links a:hover {
+Line 5237: body.light-theme #mainNav .btn-ghost {
+Line 5241: body.light-theme #mainNav .btn-ghost:hover {
+Line 6032: .light-theme nav:not(.scrolled) {
+Line 6038: .light-theme nav:not(.scrolled) .nav-brand-top,
+Line 6039: .light-theme nav:not(.scrolled) .nav-links a,
+Line 6040: .light-theme nav:not(.scrolled) .btn-ghost,
+Line 6041: .light-theme nav:not(.scrolled) .mobile-toggle {
+Line 6048: body:not(.light-theme) #mainNav.scrolled {
+Line 6053: body:not(.light-theme) #mainNav.scrolled .nav-brand-top {
+Line 6057: body:not(.light-theme) #mainNav.scrolled .nav-links a {
+Line 6061: body:not(.light-theme) #mainNav.scrolled .nav-links a:hover {
+Line 6066: body:not(.light-theme) #mainNav.scrolled .btn-ghost,
+Line 6067: body:not(.light-theme) #mainNav.scrolled .mobile-toggle {
+Line 6071: body:not(.light-theme) #mainNav.scrolled .btn-ghost:hover {
+Line 6075: body:not(.light-theme) #landingPage .safety-bar {
+Line 6081: body:not(.light-theme) #landingPage .safety-bg {
+Line 6089: body:not(.light-theme) #landingPage .sb-item {
+Line 6093: body:not(.light-theme) #landingPage .marquee-section {
+Line 6098: body:not(.light-theme) #landingPage .marquee-item {
+Line 6104: body:not(.light-theme) #landingPage .radiology,
+Line 6105: body:not(.light-theme) #landingPage .how-section,
+Line 6106: body:not(.light-theme) #landingPage .services,
+Line 6107: body:not(.light-theme) #landingPage .protocol-section,
+Line 6108: body:not(.light-theme) #landingPage .pricing,
+Line 6109: body:not(.light-theme) #clinicians {
+Line 6113: body:not(.light-theme) #landingPage .sec-title,
+Line 6114: body:not(.light-theme) #landingPage .services .sec-title,
+Line 6115: body:not(.light-theme) #landingPage .protocol-section .sec-title,
+Line 6116: body:not(.light-theme) #landingPage .pricing .sec-title {
+Line 6120: body:not(.light-theme) #landingPage .sec-sub,
+Line 6121: body:not(.light-theme) #landingPage .services .sec-sub,
+Line 6122: body:not(.light-theme) #landingPage .pricing .sec-sub {
+Line 6126: body:not(.light-theme) #landingPage .sec-eye {
+Line 6130: body:not(.light-theme) #landingPage .rad-card,
+Line 6131: body:not(.light-theme) #landingPage .svc,
+Line 6132: body:not(.light-theme) #landingPage .pc,
+Line 6133: body:not(.light-theme) #landingPage .pr-card {
+Line 6138: body:not(.light-theme) #landingPage .rad-card:hover,
+Line 6139: body:not(.light-theme) #landingPage .svc:hover,
+Line 6140: body:not(.light-theme) #landingPage .pc:hover {
+Line 6145: body:not(.light-theme) #landingPage .rad-card h3,
+Line 6146: body:not(.light-theme) #landingPage .pc h3,
+Line 6147: body:not(.light-theme) #landingPage .svc h3 {
+Line 6151: body:not(.light-theme) #landingPage .rad-card .rd,
+Line 6152: body:not(.light-theme) #landingPage .pc .pcd,
+Line 6153: body:not(.light-theme) #landingPage .pc .pca,
+Line 6154: body:not(.light-theme) #landingPage .pc .pcf li,
+Line 6155: body:not(.light-theme) #landingPage .svc p {
+Line 6159: body:not(.light-theme) #landingPage .tab {
+Line 6165: body:not(.light-theme) #landingPage .tab:hover {
+Line 6170: body:not(.light-theme) #landingPage .tab.active {
+Line 6176: body:not(.light-theme) #landingPage .testimonials {
+Line 6180: body:not(.light-theme) #landingPage .testimonials .sec-title {
+Line 6184: body:not(.light-theme) #landingPage .testimonials .sec-sub {
+Line 6188: body:not(.light-theme) #landingPage .tc {
+Line 6194: body:not(.light-theme) #landingPage .tc:hover {
+Line 6200: body:not(.light-theme) #landingPage .tc blockquote {
+Line 6204: body:not(.light-theme) #landingPage .tc-name {
+Line 6208: body:not(.light-theme) #landingPage .tc-det {
+Line 6212: body:not(.light-theme) #landingPage .tc-stars {
+Line 6216: body:not(.light-theme) #landingPage .tc-av {
+Line 6221: body:not(.light-theme) #landingPage .cta-section {
+Line 6225: body:not(.light-theme) #landingPage footer {
+Line 6230: body:not(.light-theme) #landingPage footer .footer-brand-text {
+Line 6234: body:not(.light-theme) #landingPage footer h4 {
+Line 6238: body:not(.light-theme) #landingPage footer a {
+Line 6242: body:not(.light-theme) #landingPage footer a:hover {
+Line 6263: body:not(.light-theme) .prov-transp-section {
+Line 6266: body:not(.light-theme) .prov-transp-heading { color: #f8fafc; }
+Line 6267: body:not(.light-theme) .prov-transp-subheading { color: #94a3b8; }
+Line 6268: body:not(.light-theme) .prov-transp-card {
+Line 6273: body:not(.light-theme) .prov-transp-name { color: #f8fafc; }
+Line 6274: body:not(.light-theme) .prov-transp-desc { color: #94a3b8; }
+Line 6278: body:not(.light-theme) #providers {
+Line 6281: body:not(.light-theme) #providers .sec-sub {
+Line 6284: body:not(.light-theme) #providers h2,
+Line 6285: body:not(.light-theme) #providers h3 {
+Line 6288: body:not(.light-theme) #providers .provider-card {
+Line 6292: body:not(.light-theme) #providers .provider-card p {
+Line 6304: body:not(.light-theme) .med-disclaimer {
+Line 6309: body:not(.light-theme) .med-disclaimer strong {
