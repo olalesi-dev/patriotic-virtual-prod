@@ -71,8 +71,7 @@ export const PATIENTS: Patient[] = [
             { code: 'R73.03', description: 'Prediabetes' }
         ],
         activeMedications: [
-            { name: 'Semaglutide', dosage: '1.0mg', frequency: 'SQ weekly' },
-            { name: 'Testosterone Cyp', dosage: '120mg', frequency: 'IM weekly' }
+            { name: 'Semaglutide', dosage: '1.0mg', frequency: 'SQ weekly' }
         ],
         recentEncounters: [
             { date: '2026-02-03', title: 'GLP-1 Follow-up', provider: 'Dr. Olufolaju' },
