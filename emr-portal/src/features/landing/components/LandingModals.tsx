@@ -538,7 +538,9 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               <h3>What brings you in?</h3>
               <p>Select the service that fits your needs.</p>
               <div className="rg" id="svcSel">
-                {svcs.map((s) => (
+                {svcs
+                  .filter((s) => (initialService ? s.k === initialService : true))
+                  .map((s) => (
                   <div
                     key={s.k}
                     className={`ro ${selSvc === s.k ? "sel" : ""}`}
