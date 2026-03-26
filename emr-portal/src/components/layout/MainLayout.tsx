@@ -5,6 +5,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut, ShoppingBag,
@@ -24,6 +25,7 @@ import { apiFetchJson } from '@/lib/api-client';
 import { PatientDetailResponse } from '@/lib/patient-registry-types';
 import { usePracticeModules, initializeModulesListener } from '@/hooks/usePracticeModules';
 import { SPECIALTY_MODULES } from '@/lib/module-registry';
+import { db } from '@/lib/firebase';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -99,31 +101,49 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     });
 
     React.useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((nextUser) => {
-            setActiveUser(nextUser);
-        });
-
-        const unsubModules = initializeModulesListener();
-
         let unsubInbox = () => {};
         let unsubWaitlist = () => {};
 
-        const setupListeners = async (user: FirebaseUser) => {
-            const { db } = await import('@/lib/firebase');
-            const { collection, query, where, onSnapshot } = await import('firebase/firestore');
-            
-            // Inbox Listener
-            const inboxQuery = query(collection(db, 'threads'), where('providerId', '==', user.uid), where('providerUnreadCount', '>', 0));
-            unsubInbox = onSnapshot(inboxQuery, (snap) => setUnreadInbox(snap.docs.length));
-            
-            // Waitlist Listener
-            const waitlistQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
-            unsubWaitlist = onSnapshot(waitlistQuery, (snap) => setUnreadWaitlist(snap.docs.length));
-        };
+        const unsubscribe = auth.onAuthStateChanged((nextUser) => {
+            setActiveUser(nextUser);
 
-        if (auth.currentUser) {
-            setupListeners(auth.currentUser);
-        }
+            unsubInbox();
+            unsubWaitlist();
+
+            if (!nextUser) {
+                setUnreadInbox(0);
+                setUnreadWaitlist(0);
+                return;
+            }
+
+            const inboxQuery = query(collection(db, 'threads'), where('providerId', '==', nextUser.uid));
+            unsubInbox = onSnapshot(
+                inboxQuery,
+                (snap) => {
+                    const unreadCount = snap.docs.reduce((count, threadDoc) => {
+                        const providerUnreadCount = threadDoc.data().providerUnreadCount;
+                        return count + (typeof providerUnreadCount === 'number' && providerUnreadCount > 0 ? 1 : 0);
+                    }, 0);
+                    setUnreadInbox(unreadCount);
+                },
+                (error) => {
+                    console.error('Inbox listener failed:', error);
+                    setUnreadInbox(0);
+                }
+            );
+
+            const waitlistQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
+            unsubWaitlist = onSnapshot(
+                waitlistQuery,
+                (snap) => setUnreadWaitlist(snap.docs.length),
+                (error) => {
+                    console.error('Waitlist listener failed:', error);
+                    setUnreadWaitlist(0);
+                }
+            );
+        });
+
+        const unsubModules = initializeModulesListener();
 
         return () => {
             unsubscribe();

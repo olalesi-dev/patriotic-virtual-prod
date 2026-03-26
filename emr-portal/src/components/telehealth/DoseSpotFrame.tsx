@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { auth } from '@/lib/firebase';
+import { apiFetchJson } from '@/lib/api-client';
+import { getDoseSpotApiUrl } from '@/lib/dosespot-client';
 
 interface DoseSpotFrameProps {
     /** Open directly to a patient's chart (patient's DoseSpot ID, not our internal ID) */
@@ -17,8 +19,6 @@ interface DoseSpotFrameProps {
     /** Height of the iframe container */
     height?: string;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
 
 export function DoseSpotFrame({
     patientDoseSpotId,
@@ -46,19 +46,10 @@ export function DoseSpotFrame({
             const user = auth.currentUser;
             if (!user) throw new Error('User not authenticated');
 
-            const token = await user.getIdToken();
             const queryStr = buildQueryString();
-
-            const response = await fetch(`${API_URL}/api/v1/dosespot/sso-url${queryStr}`, {
-                headers: { 'Authorization': `Bearer ${token}` },
+            const data = await apiFetchJson<{ ssoUrl: string }>(getDoseSpotApiUrl(`/api/v1/dosespot/sso-url${queryStr}`), {
+                user
             });
-
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.error || `DoseSpot error: ${response.status}`);
-            }
-
-            const data = await response.json();
 
             if (!isRefresh) {
                 // First load — set via state (causes iframe mount)
