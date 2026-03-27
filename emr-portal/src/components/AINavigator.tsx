@@ -225,7 +225,6 @@ export default function AINavigator() {
       nextState = "find";
       addBotMessage("I can help with that! What's your main concern?", [
         "Lose weight",
-        "Hormone issues",
         "Sexual health",
         "General health question",
         "AI health tools",
@@ -288,11 +287,11 @@ export default function AINavigator() {
       addBotMessage("For weight loss, we offer <b>GLP-1 medication consultations</b> at $129/visit. Your provider screens eligibility, creates a titration schedule, and prescribes if appropriate. Medication cost is separate.\n\nWant to check if you qualify?", ["🔍 Check my eligibility", "✅ Start a visit", "💰 Pricing"]);
 
     } else if (v.includes("Sexual") || v.includes("Erectile") || v.includes("ED") || v.includes("erect")) {
-      addBotMessage("We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n⏱️ <b>Premature Ejaculation</b> — $79 (SSRI therapy, topical agents)\n\nAll medications shipped discreetly after safety screening.", ["🔍 Check eligibility", "✅ Start a visit"]);
+      addBotMessage("We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n\nAll medications shipped discreetly after safety screening.", ["🔍 Check eligibility", "✅ Start a visit"]);
     } else if (v.includes("General") || v.includes("sick") || v.includes("cold") || v.includes("flu") || v.includes("health question")) {
       addBotMessage("Our <b>General Visit</b> ($79) covers non-emergent health concerns — medication management, wellness checks, health advice. A board-certified provider reviews your case.\n\nWant to start a visit?", ["✅ Start a visit", "🔍 Check eligibility"]);
     } else if (v.includes("AI") || v.includes("imaging") || v.includes("digital") || v.includes("tools")) {
-      addBotMessage("Our AI & digital tools:\n\n🤖 <b>AI Health Assistant</b> — $29 (health education & care navigation)\n🔬 <b>AI Imaging Analysis</b> — $99 (physician-supervised report interpretation)\n📱 <b>Digital Health Platform</b> — $19/mo (tools, content & AI features)\n\nThese are available to everyone, no state restriction!", ["✅ Start a visit", "💰 Membership plans", "🔍 Check treatment eligibility"]);
+      addBotMessage("Our AI & digital tools:\n\n🔬 <b>AI Imaging Analysis</b> — $99 (physician-supervised report interpretation)\n\nThese are available to everyone, no state restriction!", ["✅ Start a visit", "💰 Membership plans", "🔍 Check treatment eligibility"]);
     } else if (v.includes("notify")) {
       addBotMessage("We'll let you know as soon as we launch in your state! Our AI tools and digital platform are available nationwide in the meantime.\n\nAnything else I can help with?", ["💊 Find a service", "📋 How does it work?"]);
     } else {
