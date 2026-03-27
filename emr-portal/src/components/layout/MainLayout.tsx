@@ -337,6 +337,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                         {/* ADMIN */}
                         <CollapsibleGroup label="Admin" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Admin']} onToggle={() => toggleSection('Admin')}>
+                            <NavItem href="/admin/global-settings" icon={ShieldAlert} label="Global Sys Settings" active={pathname === '/admin/global-settings'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
