@@ -242,7 +242,7 @@ export default function AINavigator() {
       );
     } else if (v.includes("Membership details")) {
       addBotMessage(
-        "Our membership tiers:\n\n💡 <b>Telehealth Basic</b> — $29/mo (AI + limited visits)\n📋 <b>Telehealth Standard</b> — $59/mo (1 visit/month)\n⚕️ <b>Telehealth Premium</b> — $99/mo (unlimited/priority)\n🎯 <b>All Access Core</b> — $99/mo (telehealth + AI tools)\n⭐ <b>All Access Plus</b> — $149/mo (+ AI imaging)\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
+        "Our membership tiers:\n\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
         ["✅ Start a visit", "🔍 Check eligibility", "📋 More details"]
       );
     } else if (aiState === "elig_svc" || v.includes("Check another treatment")) {
