@@ -6703,7 +6703,7 @@
         <div class="marquee-item"><span>🌴</span>Available in Florida</div>
         <div class="marquee-item"><span>🩺</span>General Telehealth</div>
         <div class="marquee-item"><span>💊</span>Rx Weight Loss</div>
-        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        
 
         <!-- Duplicates for uninterrupted scrolling -->
         <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
@@ -6712,7 +6712,7 @@
         <div class="marquee-item"><span>🌴</span>Available in Florida</div>
         <div class="marquee-item"><span>🩺</span>General Telehealth</div>
         <div class="marquee-item"><span>💊</span>Rx Weight Loss</div>
-        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        
 
         <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
         <div class="marquee-item"><span>🔬</span>AI-Powered Imaging</div>
@@ -6720,7 +6720,7 @@
         <div class="marquee-item"><span>🌴</span>Available in Florida</div>
         <div class="marquee-item"><span>🩺</span>General Telehealth</div>
         <div class="marquee-item"><span>💊</span>Rx Weight Loss</div>
-        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        
       </div>
     </section>
 
@@ -8896,30 +8896,29 @@
 
     const svcs = [
   {
-    id: "imaging-video",
-    k: "imaging_video",
-    name: "Imaging + Video Consult",
-    desc: "Full imaging review plus a 30 - 60 minute secure video consultation to discuss findings directly with a specialist.",
-    icon: "📹",
-    ic: "rose",
-    c: "rose",
-    price: 449,
-    cat: ["popular", "radiology"],
-    stripe: "prod_TmuBq5Pwvt1rBc",
-    priceId: "PRICE_ID_VIDEO_CONSULT",
-  },
-  {
-    id: "erectile-dysfunction",
-    k: "erectile_dysfunction",
-    name: "Erectile Dysfunction",
-    desc: "Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.",
-    icon: "⚡",
+    id: "weight-loss",
+    k: "weight_loss",
+    name: "Rx Weight Loss",
+    desc: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
+    icon: "💊",
     ic: "blue",
     c: "blue",
+    price: 129,
+    cat: ["popular", "clinical"],
+    stripe: "prod_TsnZ1goCbeavNz",
+    priceId: "PRICE_ID_WEIGHT_LOSS",
+  },
+  {
+    id: "general-visit",
+    k: "general_visit",
+    name: "General Health Visit",
+    desc: "Virtual visits for non-emergent health concerns — medication management, wellness checks, health advice. Convenient care from home.",
+    icon: "🩺",
+    ic: "teal",
+    c: "teal",
     price: 79,
-    cat: ["popular", "mens", "clinical"],
-    stripe: "prod_TupASTZvm9MPDJ",
-    priceId: "PRICE_ID_ED",
+    cat: ["popular", "clinical"], stripe: "prod_Tsna4xzySPbKT0",
+    priceId: "PRICE_ID_GENERAL_VISIT",
   },
   {
     id: "membership-elite",
@@ -8936,18 +8935,33 @@
     priceId: "PRICE_ID_ELITE",
   },
   {
-    id: "weight-loss",
-    k: "weight_loss",
-    name: "Rx Weight Loss",
-    desc: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
-    icon: "💊",
+    id: "imaging-video",
+    k: "imaging_video",
+    name: "Imaging + Video Consult",
+    desc: "Full imaging review plus a 30 - 60 minute secure video consultation to discuss findings directly with a specialist.",
+    icon: "📹",
+    ic: "rose",
+    c: "rose",
+    price: 449,
+    cat: ["popular", "radiology"],
+    stripe: "prod_TmuBq5Pwvt1rBc",
+    priceId: "PRICE_ID_VIDEO_CONSULT",
+  },
+  
+  {
+    id: "erectile-dysfunction",
+    k: "erectile_dysfunction",
+    name: "Erectile Dysfunction",
+    desc: "Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.",
+    icon: "⚡",
     ic: "blue",
     c: "blue",
-    price: 129,
-    cat: ["popular", "clinical"],
-    stripe: "prod_TsnZ1goCbeavNz",
-    priceId: "PRICE_ID_WEIGHT_LOSS",
+    price: 79,
+    cat: [], stripe: "prod_TupASTZvm9MPDJ",
+    priceId: "PRICE_ID_ED",
   },
+  
+  
   {
     id: "ai-imaging",
     k: "ai_imaging",
@@ -9029,19 +9043,7 @@
     stripe: "",
     priceId: "",
   },
-  {
-    id: "general-visit",
-    k: "general_visit",
-    name: "General Visit",
-    desc: "Virtual visits for non-emergent health concerns — medication management, wellness checks, health advice. Convenient care from home.",
-    icon: "🩺",
-    ic: "teal",
-    c: "teal",
-    price: 79,
-    cat: ["clinical"],
-    stripe: "prod_Tsna4xzySPbKT0",
-    priceId: "PRICE_ID_GENERAL_VISIT",
-  }
+  
 ];
 
     const iQs = {
