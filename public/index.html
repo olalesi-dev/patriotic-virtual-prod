@@ -7534,7 +7534,6 @@
             <select id="regState" style="padding: 10px 12px">
               <option value="">Select state</option>
               <option value="FL">Florida ✓</option>
-              <option value="IN" disabled style="color: #9ca3af">Indiana (Soon)</option>
             </select>
           </div>
           <div class="fg" style="flex: 1; margin-bottom: 0">
@@ -9442,7 +9441,7 @@
           v.includes("Sign up")
         ) {
           aiBot(
-            "Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana coming soon.",
+            "Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>.",
           );
           setTimeout(() => openModal("register"), 1200);
         } else if (aiState === "elig_svc") {

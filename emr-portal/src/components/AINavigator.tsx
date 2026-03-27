@@ -205,7 +205,7 @@ export default function AINavigator() {
     let nextCtx = { ...aiCtx };
 
     if (v === "✅ Start a visit" || v.includes("Start a visit") || v.includes("sign up") || v.includes("register") || v.includes("Sign up")) {
-      addBotMessage("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana coming soon.", undefined, true);
+      addBotMessage("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>.", undefined, true);
       setTimeout(() => {
         window.location.href = "/?#services"; // Or trigger landing modals 
       }, 1200);
