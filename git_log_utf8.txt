@@ -1,0 +1,23 @@
+﻿f8f3bc7 chore: remove hormone and premature ejaculation options from AI navigator
+0748607 chore: remove non-elite membership tiers from AI Health Navigator
+770e4d6 feat(landing): add general visit as fallback, update bot text pricing
+4df75b1 Merge branch 'main' of https://github.com/olalesi-dev/patriotic-virtual-prod
+1041adf feat: updated hero video and fixed color issues
+f130ec3 feat: updated videos on landing page
+ce96297 fix(landing): apply TRT compliancy and service optimization to main site
+08ac996 chore: remove all references to TRT and Testosterone services sitewide
+22e09fd fix: integrate vouched validation into main landing public index.html
+2b180e4 feat(ui): update provider biography descriptions, remove redundant practitioner components, and polish headers
+bac898b docs: legally re-structure Partnership disclosure for LegitScript compound pharmacy compliance
+89d7831 feat(ui): update provider profiles, add clinical headshots, resolve testosterone popup logic, and enforce hero mobile ordering
+10d3d8b fix(ui): overpower legacy html ID specificity rules to force pure black text in landing page light mode sections
+3278254 fix(ui): patch specific CSS specificity overwrites causing light text on light mode and fix popup close button dark contrast
+c7c8210 fix(ui): wrap med-disclaimer in full-width theme section to eliminate white gap in dark mode
+8401972 fix(ui): correct dark/light mode deltas on specific highlighted sections as requested
+d3756cb fix(theme): map inline backgrounds and text colors to CSS variables for dark/light mode consistency
+cd56871 feat(landing): implement NVIDIA Inception and RadiantLogiq additions
+c0613dc feat(marketing): update pop-up copy and styling
+1cdca00 fix(inbox, aibot): fix missing index query breaking incoming patient threads, fix native button drag interception on AI fab
+ddca5a8 fix(github-deploy): prevent stdout pollution during json parsing, feat: make AI Health Navigator draggable/collapsible
+d00696f Auth Fix: Repointed main site showDashboard to dynamically SSO route to EMR
+62b17c7 UI Polish: Add Alvaro Berrios to practitioners and strictly fix light/dark contrast parity

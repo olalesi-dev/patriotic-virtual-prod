@@ -183,7 +183,6 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
         { name: 'Messages', href: '/patient/messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount.toString() : undefined },
         { name: 'Community Feed', href: '/patient/community', icon: Users },
         { name: 'Medications', href: '/my-health/medications', icon: Pill },
-        { name: 'Shop', href: '/patient/shop', icon: ShoppingBag },
         { name: 'Refer & Earn', href: '/patient/referrals', icon: Gift },
         { name: 'Lab Results', href: '/my-health/labs', icon: Activity },
         { name: 'Imaging', href: '/my-health/imaging', icon: FileText },
