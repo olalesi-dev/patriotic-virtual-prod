@@ -5,8 +5,11 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { apiFetchJson } from '@/lib/api-client';
 import { getDoseSpotApiUrl } from '@/lib/dosespot-client';
+import type { DoseSpotSsoUrlResponse } from '@/lib/dosespot-patient-sync';
 
 interface DoseSpotFrameProps {
+    /** Resolve patient context from our internal patient UID */
+    patientUid?: string;
     /** Open directly to a patient's chart (patient's DoseSpot ID, not our internal ID) */
     patientDoseSpotId?: number;
     /** Prescribe on behalf of a specific clinician (their DoseSpot ID).
@@ -21,6 +24,7 @@ interface DoseSpotFrameProps {
 }
 
 export function DoseSpotFrame({
+    patientUid,
     patientDoseSpotId,
     onBehalfOfUserId,
     encounterId,
@@ -28,12 +32,14 @@ export function DoseSpotFrame({
     height = '100%',
 }: DoseSpotFrameProps) {
     const [ssoUrl, setSsoUrl] = useState<string | null>(null);
+    const [syncState, setSyncState] = useState<DoseSpotSsoUrlResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const buildQueryString = () => {
         const params = new URLSearchParams();
+        if (patientUid)         params.append('patientUid',         patientUid);
         if (patientDoseSpotId)  params.append('patientDoseSpotId',  patientDoseSpotId.toString());
         if (onBehalfOfUserId)   params.append('onBehalfOfUserId',   onBehalfOfUserId.toString());
         if (encounterId)        params.append('encounterId',         encounterId);
@@ -46,26 +52,40 @@ export function DoseSpotFrame({
             const user = auth.currentUser;
             if (!user) throw new Error('User not authenticated');
 
+            if (!isRefresh) {
+                setLoading(true);
+                setError(null);
+            }
+
             const queryStr = buildQueryString();
-            const data = await apiFetchJson<{ ssoUrl: string }>(getDoseSpotApiUrl(`/api/v1/dosespot/sso-url${queryStr}`), {
+            const data = await apiFetchJson<DoseSpotSsoUrlResponse>(getDoseSpotApiUrl(`/api/v1/dosespot/sso-url${queryStr}`), {
                 user
             });
 
+            setSyncState(data);
+
+            if (data.syncStatus !== 'ready' || !data.ssoUrl) {
+                setSsoUrl(null);
+                setLoading(false);
+                return;
+            }
+
             if (!isRefresh) {
-                // First load — set via state (causes iframe mount)
                 setSsoUrl(data.ssoUrl);
                 setLoading(false);
+                return;
+            }
+
+            if (iframeRef.current) {
+                iframeRef.current.src = data.ssoUrl;
             } else {
-                // Silent refresh — update iframe src directly to avoid page flash
-                if (iframeRef.current) {
-                    iframeRef.current.src = data.ssoUrl;
-                } else {
-                    setSsoUrl(data.ssoUrl);
-                }
+                setSsoUrl(data.ssoUrl);
             }
         } catch (err: any) {
             console.error('DoseSpot load error:', err);
             setError(err.message || 'Unable to load prescription tool. Please refresh the page.');
+            setSyncState(null);
+            setSsoUrl(null);
             setLoading(false);
         }
     };
@@ -79,7 +99,47 @@ export function DoseSpotFrame({
 
         // Re-fetch if the patient/encounter context changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [patientDoseSpotId, onBehalfOfUserId, encounterId, refillsErrors]);
+    }, [patientUid, patientDoseSpotId, onBehalfOfUserId, encounterId, refillsErrors]);
+
+    if (syncState && syncState.syncStatus !== 'ready') {
+        const candidateText = syncState.candidatePatientIds.length > 0
+            ? `Possible DoseSpot matches: ${syncState.candidatePatientIds.join(', ')}.`
+            : null;
+        const missingFieldsText = syncState.missingFields.length > 0
+            ? `Missing fields: ${syncState.missingFields.join(', ')}.`
+            : null;
+
+        return (
+            <div
+                className="w-full flex items-center justify-center p-6 border-amber-100 bg-amber-50/70 rounded-2xl border shadow-sm"
+                style={{ minHeight: '320px' }}
+            >
+                <div className="flex flex-col items-center gap-4 py-10 text-center max-w-xl">
+                    <AlertCircle className="w-10 h-10 text-amber-500" />
+                    <div className="space-y-2">
+                        <p className="text-base font-black uppercase tracking-widest text-amber-800">
+                            DoseSpot Patient Sync Required
+                        </p>
+                        <p className="text-sm font-semibold text-slate-700">
+                            {syncState.message}
+                        </p>
+                        {missingFieldsText && (
+                            <p className="text-sm text-slate-600">{missingFieldsText}</p>
+                        )}
+                        {candidateText && (
+                            <p className="text-sm text-slate-600">{candidateText}</p>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => { setError(null); setLoading(true); void fetchUrl(false); }}
+                        className="flex items-center gap-2 text-xs font-black text-amber-700 uppercase tracking-widest hover:underline"
+                    >
+                        <RefreshCw className="w-3.5 h-3.5" /> Retry DoseSpot Sync
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (error) {
         return (
@@ -120,7 +180,7 @@ export function DoseSpotFrame({
             )}
 
             {/* DoseSpot iframe */}
-            {(ssoUrl || !loading) && (
+            {ssoUrl && (
                 <iframe
                     ref={iframeRef}
                     src={ssoUrl || ''}

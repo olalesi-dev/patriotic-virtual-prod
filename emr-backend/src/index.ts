@@ -13,11 +13,26 @@ import dosespotRoutes from './routes/dosespot';
 import vouchedRoutes from './routes/vouched';
 import { logger } from './utils/logger';
 import { generateSSOUrl } from './utils/dosespot';
+import { ensureDoseSpotPatientForUid } from './services/dosespot-patients';
 import * as admin from 'firebase-admin';
 
 // Initialize firebase admin if not already
 if (!admin.apps.length) {
-    admin.initializeApp();
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    if (projectId && clientEmail && privateKey) {
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId,
+                clientEmail,
+                privateKey
+            })
+        });
+    } else {
+        admin.initializeApp();
+    }
 }
 
 const app = express();
@@ -77,8 +92,11 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
         }
 
         // Parse all supported query parameters
-        const patientDoseSpotId = req.query.patientDoseSpotId
+        let patientDoseSpotId = req.query.patientDoseSpotId
             ? parseInt(req.query.patientDoseSpotId as string, 10)
+            : undefined;
+        const patientUid = typeof req.query.patientUid === 'string' && req.query.patientUid.trim().length > 0
+            ? req.query.patientUid.trim()
             : undefined;
 
         const onBehalfOfUserId = req.query.onBehalfOfUserId
@@ -91,6 +109,21 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
 
         const refillsErrors = req.query.refillsErrors === 'true';
 
+        let ensuredPatientContext: Awaited<ReturnType<typeof ensureDoseSpotPatientForUid>> | null = null;
+
+        if (patientUid) {
+            ensuredPatientContext = await ensureDoseSpotPatientForUid(patientUid, {
+                updateExisting: false,
+                onBehalfOfClinicianId: Number.isFinite(doseSpotClinicianId) ? doseSpotClinicianId : undefined
+            });
+
+            if (!ensuredPatientContext.doseSpotPatientId || ensuredPatientContext.syncStatus !== 'ready') {
+                return res.status(200).json(ensuredPatientContext);
+            }
+
+            patientDoseSpotId = ensuredPatientContext.doseSpotPatientId;
+        }
+
         const ssoUrl = generateSSOUrl({
             clinicianDoseSpotId: doseSpotClinicianId,
             patientDoseSpotId,
@@ -99,7 +132,21 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
             refillsErrors,
         });
 
-        return res.json({ ssoUrl });
+        return res.json({
+            status: 'ready',
+            syncStatus: 'ready',
+            patientUid: patientUid ?? null,
+            doseSpotPatientId: patientDoseSpotId ?? null,
+            missingFields: ensuredPatientContext?.missingFields ?? [],
+            candidatePatientIds: ensuredPatientContext?.candidatePatientIds ?? [],
+            matchSource: ensuredPatientContext?.matchSource ?? null,
+            message: ensuredPatientContext?.message ?? (
+                patientDoseSpotId
+                    ? 'DoseSpot SSO URL generated for the requested patient.'
+                    : 'DoseSpot SSO URL generated.'
+            ),
+            ssoUrl
+        });
     } catch (error: any) {
         logger.error('Error generating DoseSpot SSO URL:', error);
         return res.status(500).json({ error: 'Failed to build SSO link' });

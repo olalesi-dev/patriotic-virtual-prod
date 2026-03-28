@@ -15,6 +15,7 @@ import { db } from '@/lib/firebase';
 import type {
     AppNotification,
     AppNotificationType,
+    NotificationPriority,
     NotificationActionStatus
 } from '@/lib/notification-types';
 
@@ -74,6 +75,13 @@ function normalizeNotificationType(value: unknown): AppNotificationType {
     if (normalized === 'team_invite_response') return 'team_invite_response';
     if (normalized === 'appointment_rescheduled') return 'appointment_rescheduled';
     if (normalized === 'appointment_cancelled') return 'appointment_cancelled';
+    if (normalized === 'dosespot_rx_counts') return 'dosespot_rx_counts';
+    if (normalized === 'dosespot_rx_error') return 'dosespot_rx_error';
+    if (normalized === 'dosespot_medication_status') return 'dosespot_medication_status';
+    if (normalized === 'dosespot_prior_auth') return 'dosespot_prior_auth';
+    if (normalized === 'dosespot_pharmacy_transfer') return 'dosespot_pharmacy_transfer';
+    if (normalized === 'dosespot_clinician_security') return 'dosespot_clinician_security';
+    if (normalized === 'dosespot_sync_update') return 'dosespot_sync_update';
     return 'appointment_booked';
 }
 
@@ -82,6 +90,21 @@ function normalizeActionStatus(value: unknown): NotificationActionStatus {
     if (normalized === 'pending') return 'pending';
     if (normalized === 'accepted') return 'accepted';
     if (normalized === 'rejected') return 'rejected';
+    return null;
+}
+
+function normalizePriority(value: unknown): NotificationPriority {
+    const normalized = asString(value);
+    if (normalized === 'low') return 'low';
+    if (normalized === 'medium') return 'medium';
+    if (normalized === 'high') return 'high';
+    return null;
+}
+
+function normalizeSource(value: unknown): AppNotification['source'] {
+    const normalized = asString(value);
+    if (normalized === 'dosespot') return 'dosespot';
+    if (normalized === 'app') return 'app';
     return null;
 }
 
@@ -105,6 +128,8 @@ function mapNotification(
         createdAt: createdAt.toISOString(),
         updatedAt: updatedAt.toISOString(),
         actionStatus: normalizeActionStatus(data.actionStatus),
+        priority: normalizePriority(data.priority),
+        source: normalizeSource(data.source),
         metadata: toMetadata(data.metadata)
     };
 }

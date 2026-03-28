@@ -21,6 +21,16 @@ function toReadableTime(isoString: string): string {
     }).format(date);
 }
 
+function priorityClasses(priority: AppNotification['priority']): string {
+    if (priority === 'high') {
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-200';
+    }
+    if (priority === 'medium') {
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200';
+    }
+    return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
+}
+
 function NotificationCard({
     notification,
     onMarkRead,
@@ -58,6 +68,18 @@ function NotificationCard({
         <article className={`rounded-xl border p-4 shadow-sm ${notification.read ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800' : 'border-indigo-200 dark:border-indigo-700 bg-indigo-50/40 dark:bg-indigo-900/20'}`}>
             <div className="flex items-start justify-between gap-4">
                 <div>
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                        {notification.source === 'dosespot' && (
+                            <span className="rounded-full bg-teal-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-teal-700 dark:bg-teal-900/30 dark:text-teal-200">
+                                DoseSpot
+                            </span>
+                        )}
+                        {notification.priority && (
+                            <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${priorityClasses(notification.priority)}`}>
+                                {notification.priority}
+                            </span>
+                        )}
+                    </div>
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{notification.title}</h3>
                     <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{notification.body}</p>
                     {metadataTeamName && (
@@ -186,7 +208,7 @@ export default function ProviderNotificationsPage() {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Notifications</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Review system updates, appointment events, and team invitations.
+                            Review system updates, DoseSpot alerts, appointment events, and team invitations.
                         </p>
                     </div>
                     <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-1">

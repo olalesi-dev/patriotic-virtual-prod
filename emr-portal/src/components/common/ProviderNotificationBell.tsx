@@ -23,6 +23,16 @@ function toRelativeTime(isoString: string): string {
     return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(value);
 }
 
+function priorityClasses(priority: AppNotification['priority']): string {
+    if (priority === 'high') {
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-200';
+    }
+    if (priority === 'medium') {
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200';
+    }
+    return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
+}
+
 function NotificationRow({
     notification,
     onMarkRead,
@@ -57,6 +67,18 @@ function NotificationRow({
         <div className={`rounded-lg border px-3 py-3 ${notification.read ? 'border-slate-200 dark:border-slate-700' : 'border-indigo-200 dark:border-indigo-700 bg-indigo-50/40 dark:bg-indigo-900/20'}`}>
             <div className="flex items-start justify-between gap-2">
                 <div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        {notification.source === 'dosespot' && (
+                            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700 dark:bg-teal-900/30 dark:text-teal-200">
+                                DoseSpot
+                            </span>
+                        )}
+                        {notification.priority && (
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${priorityClasses(notification.priority)}`}>
+                                {notification.priority}
+                            </span>
+                        )}
+                    </div>
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">{notification.title}</p>
                     <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">{notification.body}</p>
                 </div>

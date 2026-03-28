@@ -13,7 +13,7 @@ import {
     ChevronDown, ChevronRight, Puzzle, Key, Network, Share2, Sparkles
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { GlobalNotificationDrawer } from '@/components/common/GlobalNotificationDrawer';
+import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
 import { GlobalBanner } from '@/components/common/GlobalBanner';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { GlobalSearch } from './GlobalSearch';
@@ -415,7 +415,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                         <ThemeToggle />
 
-                        <GlobalNotificationDrawer />
+                        <ProviderNotificationBell />
 
                         <button
                             onClick={() => setIsBookingModalOpen(true)}
