@@ -4,6 +4,8 @@ import { db, messaging } from '@/lib/firebase-admin';
 import type {
     AppNotification,
     AppNotificationType,
+    NotificationPriority,
+    NotificationSource,
     NotificationActionStatus
 } from '@/lib/notification-types';
 
@@ -19,6 +21,8 @@ interface CreateNotificationInput {
     href?: string | null;
     metadata?: Record<string, unknown>;
     actionStatus?: NotificationActionStatus;
+    priority?: NotificationPriority;
+    source?: NotificationSource;
 }
 
 function asNonEmptyString(value: unknown): string | null {
@@ -65,6 +69,21 @@ function toMetadata(value: unknown): Record<string, unknown> {
     return {};
 }
 
+function normalizePriority(value: unknown): NotificationPriority {
+    const normalized = asNonEmptyString(value);
+    if (normalized === 'low') return 'low';
+    if (normalized === 'medium') return 'medium';
+    if (normalized === 'high') return 'high';
+    return null;
+}
+
+function normalizeSource(value: unknown): NotificationSource {
+    const normalized = asNonEmptyString(value);
+    if (normalized === 'dosespot') return 'dosespot';
+    if (normalized === 'app') return 'app';
+    return null;
+}
+
 function toNotificationRecord(id: string, raw: Record<string, unknown>): NotificationRecord {
     const createdAt = asDate(raw.createdAt) ?? new Date();
     const updatedAt = asDate(raw.updatedAt) ?? createdAt;
@@ -86,6 +105,8 @@ function toNotificationRecord(id: string, raw: Record<string, unknown>): Notific
         actionStatus: actionStatusRaw === 'pending' || actionStatusRaw === 'accepted' || actionStatusRaw === 'rejected'
             ? actionStatusRaw
             : null,
+        priority: normalizePriority(raw.priority),
+        source: normalizeSource(raw.source),
         metadata: toMetadata(raw.metadata)
     };
 }
@@ -170,6 +191,8 @@ export async function createNotification(input: CreateNotificationInput): Promis
         read: false,
         metadata: input.metadata ?? {},
         actionStatus: input.actionStatus ?? null,
+        priority: input.priority ?? null,
+        source: input.source ?? 'app',
         createdAt: now,
         updatedAt: now
     };

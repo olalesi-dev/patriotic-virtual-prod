@@ -1,43 +1,236 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Pill, Bell } from 'lucide-react';
+import React, { useDeferredValue, useEffect, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Bell, ExternalLink, FlaskConical, Loader2, Pill, Search, UserRound, Users } from 'lucide-react';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
+import { useAuthUser } from '@/hooks/useAuthUser';
 import { auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { apiFetchJson } from '@/lib/api-client';
 import { getDoseSpotApiUrl } from '@/lib/dosespot-client';
+import type { PatientRegistryResponse, PatientRegistryRow } from '@/lib/patient-registry-types';
+
+interface DoseSpotDevTestResponse {
+    success: boolean;
+    clinicianId: number;
+    autoLinked: boolean;
+    eventIds: string[];
+    notificationIds: string[];
+}
+
+interface PatientSearchResponse {
+    success?: boolean;
+    results?: PatientRegistryRow[];
+    error?: string;
+}
 
 export default function ErxPage() {
+    const router = useRouter();
     const searchParams = useSearchParams();
+    const { user: activeUser, isReady } = useAuthUser();
+    const patientUidParam = searchParams.get('patientUid');
     const patientIdParam = searchParams.get('patientId');
-    const patientDoseSpotId = patientIdParam ? parseInt(patientIdParam, 10) : undefined;
+    const fallbackLegacyDoseSpotIdParam = searchParams.get('patientDoseSpotId');
+    const resolvedPatientUid = patientUidParam
+        ?? (patientIdParam && !/^\d+$/.test(patientIdParam) ? patientIdParam : undefined)
+        ?? undefined;
+    const resolvedLegacyDoseSpotIdParam = !resolvedPatientUid
+        ? (fallbackLegacyDoseSpotIdParam ?? patientIdParam)
+        : null;
+    const patientDoseSpotId = resolvedLegacyDoseSpotIdParam && /^\d+$/.test(resolvedLegacyDoseSpotIdParam)
+        ? parseInt(resolvedLegacyDoseSpotIdParam, 10)
+        : undefined;
+    const devHelperEnabled = process.env.NODE_ENV !== 'production';
+    const hasPatientContext = Boolean(resolvedPatientUid || patientDoseSpotId);
 
     const [notificationCount, setNotificationCount] = useState<number>(0);
+    const [devHelperPending, setDevHelperPending] = useState(false);
+    const [devHelperMessage, setDevHelperMessage] = useState<string | null>(null);
+    const [patientQuery, setPatientQuery] = useState('');
+    const deferredPatientQuery = useDeferredValue(patientQuery.trim());
+    const [availablePatients, setAvailablePatients] = useState<PatientRegistryRow[]>([]);
+    const [patientPickerLoading, setPatientPickerLoading] = useState(false);
+    const [patientPickerError, setPatientPickerError] = useState<string | null>(null);
+    const [selectingPatientId, setSelectingPatientId] = useState<string | null>(null);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
+        let unsubscribeSnapshot: (() => void) | null = null;
+        let cancelled = false;
 
-        const fetchNotifications = async () => {
+        const fetchNotificationsFallback = async (uid: string) => {
             try {
                 const user = auth.currentUser;
-                if (!user) return;
+                if (!user || user.uid !== uid) return;
 
                 const data = await apiFetchJson<{ total?: number }>(getDoseSpotApiUrl('/api/v1/dosespot/notification-count'), {
                     user
                 });
 
-                setNotificationCount(data.total || 0);
+                if (!cancelled) {
+                    setNotificationCount(data.total || 0);
+                }
             } catch (error) {
                 console.error('Failed to fetch dosespot notification count:', error);
             }
         };
 
-        fetchNotifications();
-        interval = setInterval(fetchNotifications, 60_000);
+        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
 
-        return () => clearInterval(interval);
+            if (!user) {
+                setNotificationCount(0);
+                return;
+            }
+
+            const countsRef = doc(db, 'users', user.uid, 'dosespot', 'notifications');
+            unsubscribeSnapshot = onSnapshot(countsRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    setNotificationCount(0);
+                    return;
+                }
+
+                const data = snapshot.data() as { total?: unknown };
+                const total = typeof data.total === 'number' ? data.total : 0;
+                setNotificationCount(total);
+            }, (error) => {
+                console.warn('DoseSpot notification listener unavailable, falling back to API fetch.', error);
+                void fetchNotificationsFallback(user.uid);
+            });
+
+            void fetchNotificationsFallback(user.uid);
+        });
+
+        return () => {
+            cancelled = true;
+            unsubscribeAuth();
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+            }
+        };
     }, []);
+
+    useEffect(() => {
+        if (hasPatientContext || !isReady) {
+            return;
+        }
+
+        if (!activeUser) {
+            setAvailablePatients([]);
+            setPatientPickerLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+
+        const loadPatients = async () => {
+            setPatientPickerLoading(true);
+            setPatientPickerError(null);
+
+            try {
+                if (deferredPatientQuery) {
+                    const payload = await apiFetchJson<PatientSearchResponse>(
+                        `/api/patients/search?q=${encodeURIComponent(deferredPatientQuery)}&limit=12`,
+                        {
+                            method: 'GET',
+                            user: activeUser,
+                            cache: 'no-store'
+                        }
+                    );
+
+                    if (!payload.success || !payload.results) {
+                        throw new Error(payload.error || 'Failed to search patients.');
+                    }
+
+                    if (!cancelled) {
+                        setAvailablePatients(payload.results);
+                    }
+                    return;
+                }
+
+                const payload = await apiFetchJson<PatientRegistryResponse>(
+                    '/api/patients/list?pageSize=12&sortField=lastActivityAt&sortDir=desc',
+                    {
+                        method: 'GET',
+                        user: activeUser,
+                        cache: 'no-store'
+                    }
+                );
+
+                if (!payload.success) {
+                    throw new Error(payload.error || 'Failed to load patients.');
+                }
+
+                if (!cancelled) {
+                    setAvailablePatients(payload.patients);
+                }
+            } catch (error) {
+                console.error('Failed to load provider patients for DoseSpot:', error);
+                if (!cancelled) {
+                    setAvailablePatients([]);
+                    setPatientPickerError(error instanceof Error ? error.message : 'Failed to load patients.');
+                }
+            } finally {
+                if (!cancelled) {
+                    setPatientPickerLoading(false);
+                }
+            }
+        };
+
+        void loadPatients();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeUser, deferredPatientQuery, hasPatientContext, isReady]);
+
+    const triggerDevTestActivity = async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            setDevHelperMessage('Sign in again before running the DoseSpot test helper.');
+            return;
+        }
+
+        setDevHelperPending(true);
+        setDevHelperMessage(null);
+
+        try {
+            const result = await apiFetchJson<DoseSpotDevTestResponse>(
+                getDoseSpotApiUrl('/api/v1/dosespot/push-notifications/dev/test-activity'),
+                {
+                    method: 'POST',
+                    user
+                }
+            );
+
+            const autoLinkedText = result.autoLinked
+                ? `Linked your account to test clinician #${result.clinicianId}.`
+                : `Using linked clinician #${result.clinicianId}.`;
+
+            setDevHelperMessage(
+                `${autoLinkedText} Created ${result.notificationIds.length} notification${result.notificationIds.length === 1 ? '' : 's'} and refreshed your eRx counts.`
+            );
+        } catch (error) {
+            console.error('Failed to create DoseSpot test activity:', error);
+            setDevHelperMessage(error instanceof Error ? error.message : 'Failed to create DoseSpot test activity.');
+        } finally {
+            setDevHelperPending(false);
+        }
+    };
+
+    const handleSelectPatient = (patient: PatientRegistryRow) => {
+        setSelectingPatientId(patient.id);
+        router.push(`/orders/erx?patientUid=${encodeURIComponent(patient.id)}`);
+    };
+
+    const handleChooseDifferentPatient = () => {
+        setSelectingPatientId(null);
+        router.replace('/orders/erx');
+    };
 
     return (
         <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto pb-10">
@@ -54,24 +247,239 @@ export default function ErxPage() {
                 </div>
 
                 {/* Notification Badge */}
-                <div className="relative flex items-center justify-center p-3 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <button
+                    type="button"
+                    onClick={() => router.push('/notifications')}
+                    className="relative flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    aria-label="Open notifications"
+                    title="Open notifications"
+                >
                     <Bell className="w-6 h-6 text-slate-600 dark:text-slate-300 dark:text-slate-400" />
+                    <span className="hidden sm:inline text-xs font-bold uppercase tracking-widest text-slate-500">
+                        Alerts
+                    </span>
+                    <ExternalLink className="hidden sm:block w-3.5 h-3.5 text-slate-400" />
                     {notificationCount > 0 && (
                         <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in">
                             {notificationCount > 99 ? '99+' : notificationCount}
                         </div>
                     )}
-                </div>
+                </button>
             </div>
 
-            {/* DoseSpot Frame Container */}
-            <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[24px] shadow-sm border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-hidden w-full">
-                <DoseSpotFrame 
-                    patientDoseSpotId={patientDoseSpotId} 
-                    refillsErrors={false} 
-                    height="85vh" 
-                />
-            </div>
+            {devHelperEnabled && (
+                <div className="rounded-2xl border border-dashed border-teal-200 bg-teal-50/70 p-5 shadow-sm">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="space-y-2">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-teal-700">
+                                <FlaskConical className="h-3.5 w-3.5" />
+                                Local DoseSpot Test Helper
+                            </div>
+                            <p className="max-w-3xl text-sm font-medium text-slate-700">
+                                This links your current provider to a stable test clinician ID if needed, creates fresh DoseSpot queue counts, and sends a high-priority prescription error alert so you can verify the badge, in-app notification, and browser push flow locally.
+                            </p>
+                            {devHelperMessage && (
+                                <p className="text-sm font-semibold text-teal-800">{devHelperMessage}</p>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={triggerDevTestActivity}
+                            disabled={devHelperPending}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                            {devHelperPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Sending test activity...
+                                </>
+                            ) : (
+                                <>
+                                    <FlaskConical className="h-4 w-4" />
+                                    Send test DoseSpot activity
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {hasPatientContext ? (
+                <>
+                    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-1">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-slate-600">
+                                <UserRound className="h-3.5 w-3.5" />
+                                Patient Context Ready
+                            </div>
+                            <p className="text-sm font-medium text-slate-600">
+                                DoseSpot SSO is generated only after a patient is selected. Use a different patient if you want to switch charts.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleChooseDifferentPatient}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                        >
+                            <Users className="h-4 w-4" />
+                            Choose Different Patient
+                        </button>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-[24px] shadow-sm border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-hidden w-full">
+                        <DoseSpotFrame
+                            patientUid={resolvedPatientUid}
+                            patientDoseSpotId={patientDoseSpotId}
+                            refillsErrors={false}
+                            height="85vh"
+                        />
+                    </div>
+                </>
+            ) : (
+                <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden w-full">
+                    <div className="border-b border-slate-100 bg-gradient-to-br from-teal-50 via-white to-sky-50 p-6">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div className="space-y-2">
+                                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-widest text-teal-700 shadow-sm">
+                                    <Users className="h-3.5 w-3.5" />
+                                    Select Patient First
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                                        Choose a patient before launching DoseSpot
+                                    </h2>
+                                    <p className="max-w-3xl text-sm font-medium text-slate-600">
+                                        This page now waits for an explicit patient selection before generating the DoseSpot SSO URL and mounting the prescribing iframe.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="relative w-full max-w-xl">
+                                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    value={patientQuery}
+                                    onChange={(event) => setPatientQuery(event.target.value)}
+                                    placeholder="Search by patient name, MRN, DOB, phone, or email..."
+                                    className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm font-medium text-slate-900 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-6">
+                        {!isReady ? (
+                            <div className="flex min-h-[320px] items-center justify-center">
+                                <div className="flex flex-col items-center gap-3 text-center">
+                                    <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                                    <p className="text-sm font-semibold text-slate-600">Loading your patient access…</p>
+                                </div>
+                            </div>
+                        ) : !activeUser ? (
+                            <div className="flex min-h-[320px] items-center justify-center">
+                                <div className="max-w-md text-center">
+                                    <p className="text-sm font-semibold text-slate-700">
+                                        Sign in with a provider account to load provider-scoped patients for eRx.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : patientPickerLoading ? (
+                            <div className="flex min-h-[320px] items-center justify-center">
+                                <div className="flex flex-col items-center gap-3 text-center">
+                                    <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                                    <p className="text-sm font-semibold text-slate-600">
+                                        {deferredPatientQuery ? 'Searching patients…' : 'Loading recent patients…'}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : patientPickerError ? (
+                            <div className="flex min-h-[320px] items-center justify-center rounded-2xl border border-red-100 bg-red-50/70 p-6 text-center">
+                                <div className="max-w-lg space-y-3">
+                                    <p className="text-sm font-black uppercase tracking-widest text-red-700">Patient Picker Unavailable</p>
+                                    <p className="text-sm font-semibold text-red-700">{patientPickerError}</p>
+                                </div>
+                            </div>
+                        ) : availablePatients.length === 0 ? (
+                            <div className="flex min-h-[320px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/70 p-6 text-center">
+                                <div className="max-w-lg space-y-3">
+                                    <p className="text-sm font-black uppercase tracking-widest text-slate-500">
+                                        {deferredPatientQuery ? 'No Matching Patients' : 'No Patients Available'}
+                                    </p>
+                                    <p className="text-sm font-semibold text-slate-600">
+                                        {deferredPatientQuery
+                                            ? `No provider-scoped patients matched "${deferredPatientQuery}".`
+                                            : 'There are no provider-scoped patients available to launch into DoseSpot yet.'}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+                                        {deferredPatientQuery ? `Search results (${availablePatients.length})` : 'Recently active patients'}
+                                    </p>
+                                    <p className="text-xs font-semibold text-slate-500">
+                                        Select a patient to generate the DoseSpot SSO URL.
+                                    </p>
+                                </div>
+
+                                <div className="grid gap-4 xl:grid-cols-2">
+                                    {availablePatients.map((patient) => (
+                                        <button
+                                            key={patient.id}
+                                            type="button"
+                                            onClick={() => handleSelectPatient(patient)}
+                                            disabled={selectingPatientId === patient.id}
+                                            className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
+                                        >
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="text-lg font-black tracking-tight text-slate-900 group-hover:text-teal-700">
+                                                                {patient.name}
+                                                            </h3>
+                                                            <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${patient.statusColor}`}>
+                                                                {patient.statusLabel}
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                                            MRN {patient.mrn}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="grid gap-2 text-sm font-medium text-slate-600 sm:grid-cols-2">
+                                                        <span>DOB: {patient.dob ?? '—'}</span>
+                                                        <span>Sex: {patient.sex ?? '—'}</span>
+                                                        <span>Email: {patient.email ?? '—'}</span>
+                                                        <span>Phone: {patient.phone ?? '—'}</span>
+                                                        <span>State: {patient.state ?? '—'}</span>
+                                                        <span>Service: {patient.serviceLine || 'General'}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-sm">
+                                                    {selectingPatientId === patient.id ? (
+                                                        <>
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                            Opening…
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Pill className="h-4 w-4" />
+                                                            Open eRx
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

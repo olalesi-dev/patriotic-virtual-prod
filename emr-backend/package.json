@@ -8,9 +8,11 @@
         "start": "node dist/index.js",
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
         "lint": "eslint src/**/*.ts",
-        "migrate": "node scripts/migrate.js"
+        "migrate": "node scripts/migrate.js",
+        "test:dosespot": "npm run build && node --test dist/services/dosespot-push.test.js dist/services/dosespot-patients.test.js dist/utils/dosespot.test.js"
     },
     "dependencies": {
+        "@google-cloud/tasks": "^5.5.2",
         "@sendgrid/mail": "^8.1.6",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
