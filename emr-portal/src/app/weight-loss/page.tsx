@@ -1137,7 +1137,7 @@ export default function WeightLossPage() {
                                     <a href="mailto:hello@patriotictelehealth.com" className="text-sm hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>hello@patriotictelehealth.com</a>
                                 </div>
                                 <div className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
-                                    📞 (202) 215-0636
+                                    📞 (321) 204-0902
                                 </div>
                                 <div className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
                                     📍 176 NW 25th St, Miami, FL 33127

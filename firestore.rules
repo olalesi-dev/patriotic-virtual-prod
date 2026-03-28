@@ -131,6 +131,11 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // --- GLOBAL SETTINGS ---
+    match /global_settings/{document} {
+      allow read, write: if isStaff();
+    }
+
     // --- API & SYSTEM ---
 
     match /appointments/{id} {
