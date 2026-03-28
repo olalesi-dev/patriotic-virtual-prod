@@ -105,6 +105,15 @@ export default function LoginPage() {
                                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">OAuth 2.0</span>
                             </div>
                         </div>
+                        
+                        <div className="mt-10 mb-4 flex flex-col items-center justify-center space-y-2 text-[10px] sm:text-[11px] text-slate-400 leading-relaxed max-w-xs mx-auto text-center">
+                             <p>
+                                Powered by <strong className="text-slate-700 dark:text-slate-200 font-black">RadiantLogiq</strong>, an AI-driven clinical platform for decision support and workflow optimization. 
+                             </p>
+                             <p className="font-semibold text-slate-500 flex items-center gap-1.5 justify-center mt-1">
+                                RadiantLogiq is a member of the NVIDIA Inception program.
+                             </p>
+                        </div>
                     </div>
                 </div>
             </div>

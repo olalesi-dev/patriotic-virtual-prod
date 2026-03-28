@@ -1,5 +1,6 @@
 const sgMail = require('@sendgrid/mail');
 const twilio = require('twilio');
+const admin = require('firebase-admin');
 
 // Initialize services with environment variables
 const {
@@ -21,6 +22,24 @@ let twilioClient = null;
 if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
     twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
     console.log('📱 Twilio properly initialized.');
+}
+
+async function getAdminEmails() {
+    let emails = ADMIN_EMAIL ? ADMIN_EMAIL.split(',').map(e => e.trim()).filter(e => e) : [];
+    try {
+        if (admin.apps.length > 0) {
+            const doc = await admin.firestore().collection('global_settings').doc('notifications').get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.adminEmails && Array.isArray(data.adminEmails)) {
+                    emails = [...new Set([...emails, ...data.adminEmails])];
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching admin emails from Firestore:', e);
+    }
+    return emails;
 }
 
 /**
@@ -49,10 +68,34 @@ const sendEmail = async (to, subject, html, attachments = []) => {
     }
 };
 
+async function isSmsEnabled() {
+    let enabled = true;
+    try {
+        if (admin.apps.length > 0) {
+            const doc = await admin.firestore().collection('global_settings').doc('notifications').get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (typeof data.smsEnabled === 'boolean') {
+                    enabled = data.smsEnabled;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching SMS settings from Firestore:', e);
+    }
+    return enabled;
+}
+
 /**
  * Send an SMS using Twilio
  */
 const sendSMS = async (to, body) => {
+    const enabled = await isSmsEnabled();
+    if (!enabled) {
+        console.warn(`[SMS Disabled Globally] Suppressed message to: ${to} | Body: ${body}`);
+        return;
+    }
+
     if (!twilioClient || !TWILIO_FROM_PHONE) {
         console.warn(`[Mock SMS] To: ${to} | Body: ${body}`);
         return;
@@ -108,9 +151,9 @@ const notifyWaitlist = async (patientData, serviceName) => {
     }
 
     // 3. Notify Admin via Email
-    if (ADMIN_EMAIL) {
-        const emails = ADMIN_EMAIL.split(',').map(e => e.trim()).filter(e => e);
-        const emailPromises = emails.map(email => sendEmail(
+    const emailList = await getAdminEmails();
+    if (emailList.length > 0) {
+        const emailPromises = emailList.map(email => sendEmail(
             email,
             `New Patient Visit Submitted: ${serviceName}`,
             `<div style="text-align: center; margin-bottom: 20px;">
@@ -229,9 +272,9 @@ END:VCALENDAR`;
     }
 
     // 3. Notify Admin via Email
-    if (ADMIN_EMAIL) {
-        const emails = ADMIN_EMAIL.split(',').map(e => e.trim()).filter(e => e);
-        const emailPromises = emails.map(email => sendEmail(
+    const emailListScheduled = await getAdminEmails();
+    if (emailListScheduled.length > 0) {
+        const emailPromises = emailListScheduled.map(email => sendEmail(
             email,
             `Scheduled Appointment: ${pName} - ${serviceName}`,
             `<div style="text-align: center; margin-bottom: 20px;">
