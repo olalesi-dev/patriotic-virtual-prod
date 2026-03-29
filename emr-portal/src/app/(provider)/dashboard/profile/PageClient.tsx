@@ -6,6 +6,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
+import Link from 'next/link';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
@@ -557,6 +558,23 @@ export default function ProviderProfilePage() {
                                                     You are currently signed in as Clinician #{data.doseSpotClinicianId}. Any prescriptions written here will be linked to your professional record.
                                                 </p>
                                             </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-3">
+                                            <Link
+                                                href="/orders/erx/readiness"
+                                                className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100"
+                                            >
+                                                DoseSpot Readiness
+                                                <ExternalLink className="h-3.5 w-3.5" />
+                                            </Link>
+                                            <Link
+                                                href="/orders/erx?refillsErrors=true"
+                                                className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-amber-700 transition hover:bg-amber-100"
+                                            >
+                                                Refills & Errors
+                                                <ExternalLink className="h-3.5 w-3.5" />
+                                            </Link>
                                         </div>
                                         
                                         <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-inner">

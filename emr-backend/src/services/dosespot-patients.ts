@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
-import { getDoseSpotAccessToken } from '../utils/dosespot';
 import { logger } from '../utils/logger';
+import { doseSpotApiFetch, ensureDoseSpotResultOk, type DoseSpotResult } from './dosespot-rest';
 
 export type DoseSpotEnsureStatus =
     | 'already_linked'
@@ -26,11 +26,6 @@ export interface EnsureDoseSpotPatientResult {
     candidatePatientIds: number[];
     matchSource: string | null;
     message: string;
-}
-
-interface DoseSpotResult {
-    ResultCode?: string;
-    ResultDescription?: string;
 }
 
 interface DoseSpotIdentifierResponse {
@@ -143,16 +138,6 @@ interface DoseSpotPatientGateway {
 
 function toErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
-}
-
-function ensureDoseSpotResultOk(result: DoseSpotResult | undefined, operation: string): void {
-    if (!result) return;
-    if ((result.ResultCode ?? '').toUpperCase() !== 'ERROR') return;
-    throw new Error(
-        result.ResultDescription
-            ? `DoseSpot ${operation} failed: ${result.ResultDescription}`
-            : `DoseSpot ${operation} failed.`
-    );
 }
 
 function isDoseSpotOperationGroupError(error: unknown): boolean {
@@ -390,48 +375,6 @@ function chooseSearchMatch(records: DoseSpotPatientRecord[], source: LocalPatien
         matchSource: null,
         ambiguous: false
     };
-}
-
-async function doseSpotApiFetch<T>(
-    path: string,
-    options: {
-        method?: 'GET' | 'POST' | 'PUT';
-        body?: unknown;
-        onBehalfOfClinicianId?: number;
-    } = {}
-): Promise<T> {
-    const baseUrl = process.env.DOSESPOT_BASE_URL?.trim();
-    const subscriptionKey = process.env.DOSESPOT_SUBSCRIPTION_KEY?.trim();
-
-    if (!baseUrl) {
-        throw new Error('Missing DOSESPOT_BASE_URL for DoseSpot REST API calls.');
-    }
-
-    if (!subscriptionKey) {
-        throw new Error('Missing DOSESPOT_SUBSCRIPTION_KEY for DoseSpot REST API calls.');
-    }
-
-    const accessToken = await getDoseSpotAccessToken(options.onBehalfOfClinicianId);
-    const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
-    const normalizedPath = path.replace(/^\/+/, '');
-    const response = await fetch(`${normalizedBaseUrl}/webapi/v2/${normalizedPath}`, {
-        method: options.method ?? 'GET',
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Subscription-Key': subscriptionKey,
-            Accept: 'application/json',
-            ...(options.body ? { 'Content-Type': 'application/json' } : {})
-        },
-        body: options.body ? JSON.stringify(options.body) : undefined
-    });
-
-    if (!response.ok) {
-        const responseText = await response.text();
-        const extra = responseText.trim() ? ` - ${responseText.trim().slice(0, 240)}` : '';
-        throw new Error(`DoseSpot API ${options.method ?? 'GET'} ${normalizedPath} failed: ${response.status} ${response.statusText}${extra}`);
-    }
-
-    return response.json() as Promise<T>;
 }
 
 const defaultGateway: DoseSpotPatientGateway = {

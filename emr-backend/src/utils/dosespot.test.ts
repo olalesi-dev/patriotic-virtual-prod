@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { doseSpotPatientTestables } from '../services/dosespot-patients';
-import { generateSSOUrl } from './dosespot';
+import { generateSSOUrl, getDoseSpotAccessToken } from './dosespot';
 
 test('generateSSOUrl includes resolved PatientId after local patient sync resolution', async () => {
     process.env.DOSESPOT_CLINIC_ID = '1007159';
@@ -47,4 +47,42 @@ test('generateSSOUrl includes resolved PatientId after local patient sync resolu
 
     assert.match(ssoUrl, /PatientId=8181/);
     assert.match(ssoUrl, /^https:\/\/my\.staging\.dosespot\.com\/LoginSingleSignOn\.aspx\?/);
+});
+
+test('getDoseSpotAccessToken fetches a fresh DoseSpot token for every REST request', async () => {
+    process.env.DOSESPOT_CLINIC_ID = '1007159';
+    process.env.DOSESPOT_CLINIC_KEY = 'HPHH63FJA79VHFQQ5S4UR2K9JMVTF2N9';
+    process.env.DOSESPOT_USER_ID = '3088396';
+    process.env.DOSESPOT_BASE_URL = 'https://my.staging.dosespot.com';
+    process.env.DOSESPOT_SUBSCRIPTION_KEY = 'subscription-key';
+
+    const originalFetch = global.fetch;
+    let callCount = 0;
+
+    global.fetch = (async (input: RequestInfo | URL) => {
+        callCount += 1;
+        assert.match(String(input), /\/webapi\/v2\/connect\/token$/);
+
+        return new Response(
+            JSON.stringify({
+                access_token: `token-${callCount}`,
+                expires_in: 300
+            }),
+            {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            }
+        );
+    }) as typeof fetch;
+
+    try {
+        const first = await getDoseSpotAccessToken();
+        const second = await getDoseSpotAccessToken();
+
+        assert.equal(first, 'token-1');
+        assert.equal(second, 'token-2');
+        assert.equal(callCount, 2);
+    } finally {
+        global.fetch = originalFetch;
+    }
 });
