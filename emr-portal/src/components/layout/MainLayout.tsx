@@ -294,6 +294,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         {/* ORDERS & Rx */}
                         <CollapsibleGroup label="Orders & Rx" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Orders & Rx']} onToggle={() => toggleSection('Orders & Rx')}>
                             <NavItem href="/orders/erx" icon={Pill} label="eRx / Prescriptions" active={pathname === '/orders/erx'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/orders/erx/readiness" icon={ShieldCheck} label="eRx Readiness" active={pathname === '/orders/erx/readiness'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/orders/labs" icon={Microscope} label="Lab Orders" active={pathname === '/orders/labs'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/orders/imaging" icon={Scan} label="Imaging Orders" active={pathname === '/orders/imaging'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/orders/pacs" icon={Scan} label="PACS" active={pathname === '/orders/pacs'} collapsed={isSidebarCollapsed} />

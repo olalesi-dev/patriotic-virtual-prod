@@ -149,19 +149,7 @@ export function generateSSOUrl(params: {
 }
 
 // ─── OAuth2 access-token helper (for REST API calls, not SSO) ────────────────
-const tokenCache = new Map<string, { accessToken: string; expiresAt: number }>();
-
 export async function getDoseSpotAccessToken(onBehalfOfClinicianId?: number): Promise<string> {
-    const cacheKey = onBehalfOfClinicianId
-        ? `on-behalf-of:${onBehalfOfClinicianId}`
-        : 'default';
-
-    // Return cached token if still valid (with 60 s safety buffer)
-    const cachedToken = tokenCache.get(cacheKey);
-    if (cachedToken && Date.now() < cachedToken.expiresAt - 60_000) {
-        return cachedToken.accessToken;
-    }
-
     const params = new URLSearchParams({
         grant_type:    'password',
         client_id:     process.env.DOSESPOT_CLINIC_ID!,
@@ -193,11 +181,5 @@ export async function getDoseSpotAccessToken(onBehalfOfClinicianId?: number): Pr
     }
 
     const data = await response.json();
-
-    tokenCache.set(cacheKey, {
-        accessToken: data.access_token,
-        expiresAt:   Date.now() + data.expires_in * 1000,
-    });
-
     return data.access_token;
 }

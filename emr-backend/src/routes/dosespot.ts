@@ -5,6 +5,7 @@ import {
     enqueueWebhookProcessing,
     ensureDoseSpotTestClinicianForUser,
     extractEventType,
+    getDoseSpotWebhookRuntimeHealth,
     markWebhookEventFailed,
     markWebhookEventQueued,
     persistWebhookEvent,
@@ -15,6 +16,17 @@ import {
     verifyDoseSpotTaskRequest
 } from '../services/dosespot-push';
 import { ensureDoseSpotPatientForUid } from '../services/dosespot-patients';
+import {
+    acceptDoseSpotIdpDisclaimerForUid,
+    acceptDoseSpotLegalAgreementForUid,
+    fetchDoseSpotIdpDisclaimerForUid,
+    fetchDoseSpotLegalAgreementsForUid,
+    getDoseSpotClinicianReadinessForUid,
+    initDoseSpotIdpForUid,
+    startDoseSpotIdpForUid,
+    submitDoseSpotIdpAnswersForUid,
+    submitDoseSpotIdpOtpForUid
+} from '../services/dosespot-clinicians';
 import { verifyFirebaseToken } from '../middleware/auth';
 
 const router = Router();
@@ -46,6 +58,12 @@ function canManageOtherPatients(role: string | null): boolean {
         'superadmin',
         'biller'
     ].includes(role));
+}
+
+function getObjectBody(req: Request): Record<string, unknown> {
+    return (typeof req.body === 'object' && req.body !== null && !Array.isArray(req.body))
+        ? req.body as Record<string, unknown>
+        : {};
 }
 
 async function resolveDoseSpotRequester(uid: string, tokenRole: unknown) {
@@ -151,8 +169,171 @@ router.get('/push-notifications/health', (_req: Request, res: Response) => {
     res.status(200).json({
         status: 'ok',
         service: 'patriotic-telehealth-dosespot-webhook',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        runtime: getDoseSpotWebhookRuntimeHealth()
     });
+});
+
+router.get('/clinicians/readiness', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const readiness = await getDoseSpotClinicianReadinessForUid(uid);
+        return res.status(200).json({ readiness });
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to load readiness', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to load DoseSpot clinician readiness.' });
+    }
+});
+
+router.get('/clinicians/legal-agreements', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await fetchDoseSpotLegalAgreementsForUid(uid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to load legal agreements', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load DoseSpot legal agreements.' });
+    }
+});
+
+router.post('/clinicians/legal-agreements/accept', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await acceptDoseSpotLegalAgreementForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to accept legal agreement', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot legal agreement acceptance.' });
+    }
+});
+
+router.get('/clinicians/idp/disclaimer', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await fetchDoseSpotIdpDisclaimerForUid(uid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to load IDP disclaimer', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load DoseSpot IDP disclaimer.' });
+    }
+});
+
+router.post('/clinicians/idp/disclaimer', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await acceptDoseSpotIdpDisclaimerForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to accept IDP disclaimer', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP disclaimer acceptance.' });
+    }
+});
+
+router.post('/clinicians/idp/init', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await initDoseSpotIdpForUid(uid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to initialize IDP', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to initialize DoseSpot IDP.' });
+    }
+});
+
+router.post('/clinicians/idp/start', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await startDoseSpotIdpForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to start IDP', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP request.' });
+    }
+});
+
+router.post('/clinicians/idp/answers', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await submitDoseSpotIdpAnswersForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to submit IDP answers', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP answers.' });
+    }
+});
+
+router.post('/clinicians/idp/otp', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await submitDoseSpotIdpOtpForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to submit IDP OTP', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP OTP.' });
+    }
 });
 
 router.post('/push-notifications/dev/test-activity', verifyFirebaseToken, async (req: Request, res: Response) => {
@@ -190,9 +371,7 @@ router.post('/push-notifications/dev/link-test-clinician', verifyFirebaseToken, 
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const body = (typeof req.body === 'object' && req.body !== null && !Array.isArray(req.body))
-        ? req.body as Record<string, unknown>
-        : {};
+    const body = getObjectBody(req);
     const requestedClinicianId = typeof body.clinicianId === 'number'
         ? body.clinicianId
         : (typeof body.clinicianId === 'string' ? Number.parseInt(body.clinicianId, 10) : null);

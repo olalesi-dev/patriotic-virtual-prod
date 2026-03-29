@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import type { Request } from 'express';
 import * as admin from 'firebase-admin';
 import { logger } from '../utils/logger';
+import { applyDoseSpotClinicianWebhookEvent } from './dosespot-clinicians';
+import { syncDoseSpotPatientSummary } from './dosespot-summary-sync';
 
 const tasksClient = new CloudTasksClient();
 const oidcClient = new OAuth2Client();
@@ -11,6 +13,8 @@ const oidcClient = new OAuth2Client();
 const WEBHOOK_EVENTS_COLLECTION = 'dosespotWebhookEvents';
 const INTERNAL_EVENTS_COLLECTION = 'dosespotInternalEvents';
 const NOTIFICATIONS_COLLECTION = 'notifications';
+const REFILLS_ERRORS_HREF = '/orders/erx?refillsErrors=true';
+const READINESS_HREF = '/orders/erx/readiness';
 
 const PROCESSING_LEASE_MS = 5 * 60 * 1000;
 
@@ -394,7 +398,7 @@ function buildDeepLink(eventType: string, patientUid: string | null): string {
     if (
         ['ClinicianLockedOut', 'ClinicianIDPCompleteSuccess', 'ClinicianTfaActivateSuccess', 'ClinicianTfaDeactivateSuccess', 'ClinicianPINReset', 'ClinicianConfirmed'].includes(eventType)
     ) {
-        return '/notifications';
+        return READINESS_HREF;
     }
 
     return '/orders/erx';
@@ -429,7 +433,7 @@ function buildCountsNotification(nextCounts: DoseSpotCounts, previousCounts: Dos
         type: 'dosespot_rx_counts',
         title: criticalRaised ? 'eRx action required' : 'New eRx activity',
         body: sanitizeText(body, 280),
-        href: '/orders/erx',
+        href: REFILLS_ERRORS_HREF,
         priority: criticalRaised ? 'high' : 'medium',
         sendPush: criticalRaised,
         metadata: {
@@ -481,7 +485,7 @@ function buildNormalizedEvent(
                     type: 'dosespot_rx_error',
                     title: 'Prescription delivery issue',
                     body: 'DoseSpot reported a prescription error that needs review.',
-                    href: '/orders/erx',
+                    href: REFILLS_ERRORS_HREF,
                     priority: 'high',
                     sendPush: true,
                     metadata: {
@@ -581,7 +585,7 @@ function buildNormalizedEvent(
                     type: 'dosespot_clinician_security',
                     title: 'DoseSpot account locked',
                     body: 'DoseSpot reported that your prescribing account is locked and needs attention.',
-                    href: '/notifications',
+                    href: READINESS_HREF,
                     priority: 'high',
                     sendPush: true
                 }
@@ -597,7 +601,7 @@ function buildNormalizedEvent(
                     type: 'dosespot_clinician_security',
                     title: 'DoseSpot PIN reset',
                     body: 'DoseSpot reported a clinician PIN reset.',
-                    href: '/notifications',
+                    href: READINESS_HREF,
                     priority: 'high',
                     sendPush: true
                 }
@@ -613,7 +617,7 @@ function buildNormalizedEvent(
                     type: 'dosespot_clinician_security',
                     title: 'DoseSpot two-factor disabled',
                     body: 'DoseSpot reported that two-factor authentication was disabled.',
-                    href: '/notifications',
+                    href: READINESS_HREF,
                     priority: 'high',
                     sendPush: true
                 }
@@ -629,7 +633,7 @@ function buildNormalizedEvent(
                     type: 'dosespot_clinician_security',
                     title: 'DoseSpot two-factor enabled',
                     body: 'DoseSpot reported that two-factor authentication was enabled.',
-                    href: '/notifications',
+                    href: READINESS_HREF,
                     priority: 'medium',
                     sendPush: false
                 }
@@ -645,7 +649,7 @@ function buildNormalizedEvent(
                     type: 'dosespot_sync_update',
                     title: 'DoseSpot verification complete',
                     body: 'DoseSpot reported that clinician identity proofing completed successfully.',
-                    href: '/notifications',
+                    href: READINESS_HREF,
                     priority: 'low',
                     sendPush: false
                 }
@@ -661,7 +665,7 @@ function buildNormalizedEvent(
                     type: 'dosespot_sync_update',
                     title: 'DoseSpot clinician confirmed',
                     body: 'DoseSpot reported that your clinician record was confirmed.',
-                    href: '/notifications',
+                    href: READINESS_HREF,
                     priority: 'medium',
                     sendPush: false
                 }
@@ -793,6 +797,24 @@ function getQueueConfig(): QueueConfig | null {
 
 function allowInlineFallback(): boolean {
     return process.env.NODE_ENV !== 'production';
+}
+
+export function getDoseSpotWebhookRuntimeHealth() {
+    const queueConfig = getQueueConfig();
+    return {
+        queueConfigured: queueConfig !== null,
+        queueMode: queueConfig ? 'cloud_tasks' : (allowInlineFallback() ? 'inline_fallback' : 'unconfigured'),
+        inlineFallbackEnabled: allowInlineFallback(),
+        webhookSecretConfigured: Boolean(readWebhookSecret()),
+        queue: queueConfig ? {
+            projectId: queueConfig.projectId,
+            location: queueConfig.location,
+            queue: queueConfig.queue,
+            targetUrl: queueConfig.targetUrl,
+            audience: queueConfig.audience,
+            serviceAccountEmailConfigured: Boolean(queueConfig.serviceAccountEmail)
+        } : null
+    };
 }
 
 export async function verifyDoseSpotTaskRequest(req: Request): Promise<boolean> {
@@ -1298,6 +1320,7 @@ export async function processWebhookEvent(eventId: string): Promise<ProcessResul
             priority: normalizedEvent.priority,
             status: 'SUCCESS',
             recipientId,
+            patientUid,
             referenceIds: normalizedEvent.referenceIds,
             payload: normalizedEvent.payload,
             deepLink: normalizedEvent.notification?.href ?? buildDeepLink(eventType, patientUid),
@@ -1308,6 +1331,27 @@ export async function processWebhookEvent(eventId: string): Promise<ProcessResul
 
         if (recipientId && normalizedEvent.counts) {
             await upsertCountsDocument(recipientId, normalizedEvent.counts, clinicianId, eventId);
+        }
+
+        let summarySyncResult: Awaited<ReturnType<typeof syncDoseSpotPatientSummary>> | null = null;
+        if (patientUid) {
+            summarySyncResult = await syncDoseSpotPatientSummary({
+                eventId,
+                eventType,
+                patientUid,
+                referenceIds: {
+                    patientId: normalizedEvent.referenceIds.patientId,
+                    prescriptionId: normalizedEvent.referenceIds.prescriptionId,
+                    priorAuthorizationCaseId: normalizedEvent.referenceIds.priorAuthorizationCaseId,
+                    selfReportedMedicationId: normalizedEvent.referenceIds.selfReportedMedicationId,
+                    pharmacyId: normalizedEvent.referenceIds.pharmacyId
+                },
+                payload
+            });
+        }
+
+        if (recipientId && ['ClinicianConfirmed', 'ClinicianLockedOut', 'ClinicianIDPCompleteSuccess', 'ClinicianTfaActivateSuccess', 'ClinicianTfaDeactivateSuccess', 'ClinicianPINReset'].includes(eventType)) {
+            await applyDoseSpotClinicianWebhookEvent(recipientId, eventType, payload);
         }
 
         let notificationId: string | null = null;
@@ -1325,9 +1369,11 @@ export async function processWebhookEvent(eventId: string): Promise<ProcessResul
             updatedAt: new Date(),
             errorMessage: null,
             recipientId,
+            patientUid,
             internalType: normalizedEvent.internalType,
             notificationId,
-            pushSentAt: pushSent ? new Date() : null
+            pushSentAt: pushSent ? new Date() : null,
+            summarySync: summarySyncResult
         }, { merge: true });
 
         logger.info('[DoseSpot Webhook] Processed event successfully', {
