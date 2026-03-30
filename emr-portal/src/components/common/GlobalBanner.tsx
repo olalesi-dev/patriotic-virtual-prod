@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Info, AlertTriangle, AlertCircle, Sparkles, X, HeartHandshake } from 'lucide-react';
+import { Info, AlertTriangle, AlertCircle, Sparkles, X, HeartHandshake, Construction } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -117,53 +117,64 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
         }
     };
 
-    if (!isVisible || !banner) return null;
-
-    const referralLink = profile.referralCode ? `https://patriotictelehealth.com?ref=${profile.referralCode}` : null;
+    const envFlag = process.env.NEXT_PUBLIC_APP_ENV || process.env.REACT_APP_ENV;
+    const isDev = envFlag === 'dev';
+    const isTest = envFlag === 'test';
 
     return (
-        <div className={`w-full ${getColorClasses(banner.type)} px-4 py-3 relative z-50 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6 shadow-md shadow-black/10`}>
-            
-            <div className="flex items-center gap-2 text-sm font-bold text-center md:text-left leading-tight mx-8">
-                {getIcon(banner.type)}
-                <span>{banner.message}</span>
-            </div>
-
-            <div className="flex items-center gap-4">
-                {banner.ctaLabel && banner.ctaUrl && (
-                    <button 
-                        onClick={handleCtaClick}
-                        className="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-colors whitespace-nowrap"
-                    >
-                        {banner.ctaLabel}
-                    </button>
-                )}
-
-                {/* Referral Link Injection */}
-                {banner.type === 'Promotional' && referralLink && (
-                    <div className="hidden lg:flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-full text-xs font-bold shrink-0">
-                        <HeartHandshake className="w-3.5 h-3.5" />
-                        <span>Refer a friend & get $50!</span>
-                        <button 
-                            onClick={async () => {
-                                await navigator.clipboard.writeText(referralLink);
-                                toast.success("Referral link copied to clipboard!");
-                            }}
-                            className="bg-white text-indigo-600 rounded px-2 py-0.5 hover:bg-indigo-50 ml-1 transition-colors"
-                        >
-                            Copy Link
-                        </button>
+        <>
+            {isDev && (
+                <div className="w-full bg-red-600 text-white px-4 py-1.5 relative z-[60] flex items-center justify-center gap-2 text-xs font-black tracking-widest uppercase shadow-md shadow-red-900/50">
+                    <Construction className="w-4 h-4" />
+                    THIS IS A DEVELOPMENT ENVIRONMENT. DATA ENTERED HERE IS NOT REAL AND WILL BE OVERWRITTEN.
+                </div>
+            )}
+            {isTest && (
+                <div className="w-full bg-amber-500 text-white px-4 py-1.5 relative z-[60] flex items-center justify-center gap-2 text-xs font-black tracking-widest uppercase shadow-md shadow-amber-900/50">
+                    <AlertTriangle className="w-4 h-4" />
+                    THIS IS A TEST/STAGING ENVIRONMENT. NOT FOR PRODUCTION USE.
+                </div>
+            )}
+            {isVisible && banner && (
+                <div className={`w-full ${getColorClasses(banner.type)} px-4 py-3 relative z-50 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6 shadow-md shadow-black/10`}>
+                    <div className="flex items-center gap-2 text-sm font-bold text-center md:text-left leading-tight mx-8">
+                        {getIcon(banner.type)}
+                        <span>{banner.message}</span>
                     </div>
-                )}
-            </div>
-
-            <button 
-                onClick={handleDismiss} 
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-white/20 transition-colors opacity-70 hover:opacity-100"
-                aria-label="Dismiss banner"
-            >
-                <X className="w-4 h-4" />
-            </button>
-        </div>
+                    <div className="flex items-center gap-4">
+                        {banner.ctaLabel && banner.ctaUrl && (
+                            <button 
+                                onClick={handleCtaClick}
+                                className="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-colors whitespace-nowrap"
+                            >
+                                {banner.ctaLabel}
+                            </button>
+                        )}
+                        {banner.type === 'Promotional' && profile?.referralCode && (
+                            <div className="hidden lg:flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-full text-xs font-bold shrink-0">
+                                <HeartHandshake className="w-3.5 h-3.5" />
+                                <span>Refer a friend & get $50!</span>
+                                <button 
+                                    onClick={async () => {
+                                        await navigator.clipboard.writeText(`https://patriotictelehealth.com?ref=${profile.referralCode}`);
+                                        toast.success("Referral link copied to clipboard!");
+                                    }}
+                                    className="bg-white text-indigo-600 rounded px-2 py-0.5 hover:bg-indigo-50 ml-1 transition-colors"
+                                >
+                                    Copy Link
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <button 
+                        onClick={handleDismiss} 
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-white/20 transition-colors opacity-70 hover:opacity-100"
+                        aria-label="Dismiss banner"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+        </>
     );
 }
