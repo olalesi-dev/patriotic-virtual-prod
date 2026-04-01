@@ -47,7 +47,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
         const [notificationDoc, currentUserDoc] = await Promise.all([
             db.collection('notifications').doc(notificationId).get(),
-            db.collection('users').doc(user.uid).get()
+            db.collection('patients').doc(user.uid).get()
         ]);
 
         if (!notificationDoc.exists) {

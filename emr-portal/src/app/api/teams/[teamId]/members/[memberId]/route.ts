@@ -36,7 +36,7 @@ export async function DELETE(
 
         const [teamDoc, actorDoc] = await Promise.all([
             db.collection('teams').doc(teamId).get(),
-            db.collection('users').doc(user.uid).get()
+            db.collection('patients').doc(user.uid).get()
         ]);
 
         const team = mapTeamSnapshot(teamDoc);

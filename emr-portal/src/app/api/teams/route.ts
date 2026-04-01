@@ -18,13 +18,23 @@ function asNonEmptyString(value: unknown): string | null {
     return normalized.length > 0 ? normalized : null;
 }
 
+function normalizeRole(value: unknown): string | null {
+    const normalized = asNonEmptyString(value)?.toLowerCase() ?? null;
+    return normalized && normalized.length > 0 ? normalized : null;
+}
+
 function normalizePatientSummaries(
     patientDocs: Array<{ id: string; data: Record<string, unknown> }>,
-    userPatientDocs: Array<{ id: string; data: Record<string, unknown> }>
+    excludedIds: Set<string>
 ): PatientSummary[] {
     const map = new Map<string, PatientSummary>();
 
     const push = (id: string, data: Record<string, unknown>) => {
+        if (excludedIds.has(id)) return;
+
+        const role = normalizeRole(data.role);
+        if (role && role !== 'patient') return;
+
         const current = map.get(id);
         const name = asNonEmptyString(data.name)
             ?? asNonEmptyString(data.displayName)
@@ -41,7 +51,6 @@ function normalizePatientSummaries(
     };
 
     patientDocs.forEach((doc) => push(doc.id, doc.data));
-    userPatientDocs.forEach((doc) => push(doc.id, doc.data));
 
     return Array.from(map.values()).sort((first, second) => first.name.localeCompare(second.name));
 }
@@ -65,15 +74,13 @@ export async function GET(request: Request) {
     const firestore = db;
 
     try {
-        const [userDoc, teamSnapshot, providersSnapshot, patientsSnapshot, patientUsersSnapshot] = await Promise.all([
-            firestore.collection('users').doc(user.uid).get(),
+        const [profileDoc, teamSnapshot, profilesSnapshot] = await Promise.all([
+            firestore.collection('patients').doc(user.uid).get(),
             firestore.collection('teams').where('memberIds', 'array-contains', user.uid).get(),
-            firestore.collection('users').where('role', 'in', ['provider', 'doctor', 'clinician', 'admin']).limit(200).get(),
-            firestore.collection('patients').limit(200).get(),
-            firestore.collection('users').where('role', '==', 'patient').limit(200).get()
+            firestore.collection('patients').limit(400).get()
         ]);
 
-        const role = toProviderRole(user.token.role ?? userDoc.data()?.role ?? user.role);
+        const role = toProviderRole(user.token.role ?? profileDoc.data()?.role ?? user.role);
         if (!role) {
             return NextResponse.json({ success: false, error: 'Provider access required.' }, { status: 403 });
         }
@@ -83,18 +90,21 @@ export async function GET(request: Request) {
             .filter((team): team is NonNullable<typeof team> => Boolean(team))
             .sort((first, second) => first.name.localeCompare(second.name));
 
-        const providers: ProviderSummary[] = providersSnapshot.docs.reduce<ProviderSummary[]>((accumulator, providerDoc) => {
-            const data = providerDoc.data() as Record<string, unknown>;
+        const excludedPatientIds = new Set<string>();
+        const providers: ProviderSummary[] = profilesSnapshot.docs.reduce<ProviderSummary[]>((accumulator, profileDocItem) => {
+            const data = profileDocItem.data() as Record<string, unknown>;
             const providerRole = toProviderRole(data.role);
             if (!providerRole) return accumulator;
+            excludedPatientIds.add(profileDocItem.id);
+            if (providerRole === 'admin') return accumulator;
 
             accumulator.push({
-                id: providerDoc.id,
+                id: profileDocItem.id,
                 name: asNonEmptyString(data.name)
                     ?? asNonEmptyString(data.displayName)
                     ?? [asNonEmptyString(data.firstName), asNonEmptyString(data.lastName)].filter(Boolean).join(' ')
                     ?? asNonEmptyString(data.email)?.split('@')[0]
-                    ?? `Provider ${providerDoc.id.slice(0, 6)}`,
+                    ?? `Provider ${profileDocItem.id.slice(0, 6)}`,
                 email: asNonEmptyString(data.email),
                 role: providerRole
             });
@@ -103,8 +113,8 @@ export async function GET(request: Request) {
         }, []).sort((first, second) => first.name.localeCompare(second.name));
 
         const patients = normalizePatientSummaries(
-            patientsSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> })),
-            patientUsersSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> }))
+            profilesSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> })),
+            excludedPatientIds
         );
 
         return NextResponse.json({
@@ -147,8 +157,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: 'Invalid team payload.' }, { status: 400 });
         }
 
-        const userDoc = await firestore.collection('users').doc(user.uid).get();
-        const member = mapUserDocToMember(userDoc) ?? {
+        const profileDoc = await firestore.collection('patients').doc(user.uid).get();
+        const member = mapUserDocToMember(profileDoc) ?? {
             id: user.uid,
             name: user.email?.split('@')[0] ?? 'Provider',
             email: user.email,

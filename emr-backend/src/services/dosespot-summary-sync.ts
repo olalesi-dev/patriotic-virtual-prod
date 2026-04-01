@@ -237,11 +237,22 @@ async function patchPreferredPharmacy(
     }
 
     const preferredPharmacy = pharmacyName ?? `DoseSpot pharmacy #${referenceIds.pharmacyId}`;
-    await admin.firestore().collection('patients').doc(patientUid).set({
+    const now = new Date();
+    const patch: Record<string, unknown> = {
         preferredPharmacy,
         preferredPharmacyDoseSpotId: referenceIds.pharmacyId,
-        updatedAt: new Date()
-    }, { merge: true });
+        'doseSpot.preferredPharmacyDoseSpotId': referenceIds.pharmacyId,
+        'doseSpot.preferredPharmacySync.status': 'synced_from_webhook',
+        'doseSpot.preferredPharmacySync.pharmacyId': referenceIds.pharmacyId,
+        'doseSpot.preferredPharmacySync.lastSyncedAt': now,
+        'doseSpot.preferredPharmacySync.lastError': null,
+        updatedAt: now
+    };
+
+    await Promise.all([
+        admin.firestore().collection('patients').doc(patientUid).set(patch, { merge: true }),
+        admin.firestore().collection('users').doc(patientUid).set(patch, { merge: true })
+    ]);
 
     return true;
 }

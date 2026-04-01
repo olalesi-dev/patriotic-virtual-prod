@@ -114,6 +114,7 @@ export async function PATCH(
             const lastName = asNonEmptyString(values.lastName);
             const displayName = [firstName, lastName].filter(Boolean).join(' ');
             const sex = asNonEmptyString(values.sex);
+            const preferredPharmacyDoseSpotId = asNumber(values.preferredPharmacyDoseSpotId);
             const nextPatientData = {
                 ...(displayName ? { name: displayName, displayName, firstName, lastName } : {}),
                 ...(asNonEmptyString(values.email) ? { email: asNonEmptyString(values.email) } : {}),
@@ -123,6 +124,7 @@ export async function PATCH(
                 ...(asNonEmptyString(values.state) ? { state: asNonEmptyString(values.state) } : {}),
                 ...(asNonEmptyString(values.primaryConcern) ? { primaryConcern: asNonEmptyString(values.primaryConcern) } : {}),
                 ...(asNonEmptyString(values.preferredPharmacy) ? { preferredPharmacy: asNonEmptyString(values.preferredPharmacy) } : {}),
+                ...(preferredPharmacyDoseSpotId && preferredPharmacyDoseSpotId > 0 ? { preferredPharmacyDoseSpotId } : {}),
                 ...(Array.isArray(values.allergies) ? { allergies: asStringArray(values.allergies) } : {}),
                 updatedAt: now
             };
@@ -133,6 +135,7 @@ export async function PATCH(
                 ...(asNonEmptyString(values.email) ? { email: asNonEmptyString(values.email) } : {}),
                 ...(asNonEmptyString(values.phone) ? { phone: asNonEmptyString(values.phone) } : {}),
                 ...(sex ? { sex, sexAtBirth: sex, gender: sex } : {}),
+                ...(preferredPharmacyDoseSpotId && preferredPharmacyDoseSpotId > 0 ? { preferredPharmacyDoseSpotId } : {}),
                 updatedAt: now
             }, { merge: true });
         } else if (action === 'add_problem') {

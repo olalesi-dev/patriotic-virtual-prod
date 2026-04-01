@@ -19,6 +19,11 @@ function buildSource(overrides: Record<string, unknown> = {}) {
         mrn: 'MRN-001',
         existingDoseSpotPatientId: null,
         retryCount: 0,
+        preferredPharmacy: null,
+        preferredPharmacyDoseSpotId: null,
+        preferredPharmacySyncStatus: null,
+        preferredPharmacySyncedDoseSpotId: null,
+        preferredPharmacySyncedPatientId: null,
         ...overrides
     };
 }
@@ -262,4 +267,29 @@ test('deleteDoseSpotPatientWithSource returns ambiguous_match when multiple exac
     assert.equal(result.status, 'ambiguous_match');
     assert.deepEqual(result.candidatePatientIds, [82368444, 82368454]);
     assert.deepEqual(result.deletedPatientIds, []);
+});
+
+test('ensureDoseSpotPatientWithSource syncs preferred pharmacy when DoseSpot pharmacy id is present', async () => {
+    const pharmacyCalls: Array<{ patientId: number; pharmacyId: number; setAsPrimary: boolean }> = [];
+
+    const result = await doseSpotPatientTestables.ensureDoseSpotPatientWithSource(
+        buildSource({
+            existingDoseSpotPatientId: 903,
+            preferredPharmacyDoseSpotId: 445566,
+            preferredPharmacy: 'Demo Pharmacy'
+        }),
+        {},
+        buildGateway({
+            addPatientPharmacy: async (patientId: number, payload: { pharmacyId: number; setAsPrimary: boolean }) => {
+                pharmacyCalls.push({ patientId, pharmacyId: payload.pharmacyId, setAsPrimary: payload.setAsPrimary });
+            }
+        }),
+        async () => undefined
+    );
+
+    assert.equal(result.status, 'already_linked');
+    assert.equal(result.syncStatus, 'ready');
+    assert.equal(pharmacyCalls.length, 1);
+    assert.deepEqual(pharmacyCalls[0], { patientId: 903, pharmacyId: 445566, setAsPrimary: true });
+    assert.match(result.message, /Preferred pharmacy synced to DoseSpot/i);
 });

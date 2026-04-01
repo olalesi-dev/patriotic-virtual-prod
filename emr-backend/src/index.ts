@@ -14,6 +14,7 @@ import vouchedRoutes from './routes/vouched';
 import { logger } from './utils/logger';
 import { generateSSOUrl } from './utils/dosespot';
 import { ensureDoseSpotPatientForUid } from './services/dosespot-patients';
+import { assertDoseSpotWebhookRuntimeConfig } from './services/dosespot-push';
 import * as admin from 'firebase-admin';
 
 // Initialize firebase admin if not already
@@ -99,10 +100,6 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
             ? req.query.patientUid.trim()
             : undefined;
 
-        const onBehalfOfUserId = req.query.onBehalfOfUserId
-            ? parseInt(req.query.onBehalfOfUserId as string, 10)
-            : undefined;
-
         const encounterId = req.query.encounterId
             ? (req.query.encounterId as string)
             : undefined;
@@ -113,8 +110,7 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
 
         if (patientUid) {
             ensuredPatientContext = await ensureDoseSpotPatientForUid(patientUid, {
-                updateExisting: false,
-                onBehalfOfClinicianId: Number.isFinite(doseSpotClinicianId) ? doseSpotClinicianId : undefined
+                updateExisting: false
             });
 
             if (!ensuredPatientContext.doseSpotPatientId || ensuredPatientContext.syncStatus !== 'ready') {
@@ -127,7 +123,6 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
         const ssoUrl = generateSSOUrl({
             clinicianDoseSpotId: doseSpotClinicianId,
             patientDoseSpotId,
-            onBehalfOfUserId,
             encounterId,
             refillsErrors,
         });
@@ -238,6 +233,15 @@ app.use('/api/notifications', notificationRoutes);
 
 // Error Handling
 app.use(errorHandler);
+
+try {
+    assertDoseSpotWebhookRuntimeConfig();
+} catch (error) {
+    logger.error('DoseSpot webhook runtime configuration check failed', {
+        error: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
+}
 
 app.listen(PORT, () => {
     logger.info(`EMR Backend listening on port ${PORT}`);

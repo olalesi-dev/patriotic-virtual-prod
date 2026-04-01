@@ -150,36 +150,56 @@ export function generateSSOUrl(params: {
 
 // ─── OAuth2 access-token helper (for REST API calls, not SSO) ────────────────
 export async function getDoseSpotAccessToken(onBehalfOfClinicianId?: number): Promise<string> {
-    const params = new URLSearchParams({
-        grant_type:    'password',
-        client_id:     process.env.DOSESPOT_CLINIC_ID!,
-        client_secret: process.env.DOSESPOT_CLINIC_KEY!,
-        username:      process.env.DOSESPOT_USER_ID!,
-        password:      process.env.DOSESPOT_CLINIC_KEY!,
-        scope:         'api',
-    });
+    const fetchToken = async (acrValues?: string): Promise<string> => {
+        const params = new URLSearchParams({
+            grant_type: 'password',
+            client_id: process.env.DOSESPOT_CLINIC_ID!,
+            client_secret: process.env.DOSESPOT_CLINIC_KEY!,
+            username: process.env.DOSESPOT_USER_ID!,
+            password: process.env.DOSESPOT_CLINIC_KEY!,
+            scope: 'api',
+        });
+        if (acrValues) {
+            params.set('acr_values', acrValues);
+        }
 
-    if (onBehalfOfClinicianId) {
-        params.set('acr_values', `OnBehalfOfUserId=${onBehalfOfClinicianId}`);
+        const response = await fetch(`${process.env.DOSESPOT_BASE_URL}/webapi/v2/connect/token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                ...(process.env.DOSESPOT_SUBSCRIPTION_KEY
+                    ? { 'Subscription-Key': process.env.DOSESPOT_SUBSCRIPTION_KEY }
+                    : {}),
+            },
+            body: params.toString(),
+        });
+
+        if (!response.ok) {
+            const responseText = (await response.text()).trim();
+            const extra = responseText ? ` - ${responseText.slice(0, 240)}` : '';
+            throw new Error(`DoseSpot token fetch failed: ${response.status} ${response.statusText}${extra}`);
+        }
+
+        const data = await response.json() as { access_token?: string };
+        if (!data.access_token) {
+            throw new Error('DoseSpot token fetch failed: Missing access_token in response.');
+        }
+
+        return data.access_token;
+    };
+
+    if (!onBehalfOfClinicianId) {
+        return fetchToken();
     }
 
-    const response = await fetch(`${process.env.DOSESPOT_BASE_URL}/webapi/v2/connect/token`, {
-        method:  'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            ...(process.env.DOSESPOT_SUBSCRIPTION_KEY
-                ? { 'Subscription-Key': process.env.DOSESPOT_SUBSCRIPTION_KEY }
-                : {}),
-        },
-        body: params.toString(),
-    });
-
-    if (!response.ok) {
-        const responseText = (await response.text()).trim();
-        const extra = responseText ? ` - ${responseText.slice(0, 240)}` : '';
-        throw new Error(`DoseSpot token fetch failed: ${response.status} ${response.statusText}${extra}`);
+    try {
+        return await fetchToken(`OnBehalfOfUserId=${onBehalfOfClinicianId}`);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const shouldFallback = message.includes('OnBehalfOfUser validation failed');
+        if (!shouldFallback) {
+            throw error;
+        }
+        return fetchToken();
     }
-
-    const data = await response.json();
-    return data.access_token;
 }

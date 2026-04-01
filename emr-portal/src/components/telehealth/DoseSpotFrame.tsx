@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { apiFetchJson } from '@/lib/api-client';
@@ -12,9 +12,6 @@ interface DoseSpotFrameProps {
     patientUid?: string;
     /** Open directly to a patient's chart (patient's DoseSpot ID, not our internal ID) */
     patientDoseSpotId?: number;
-    /** Prescribe on behalf of a specific clinician (their DoseSpot ID).
-     *  Typically the same as the signed-in clinician unless using a shared admin account. */
-    onBehalfOfUserId?: number;
     /** Link the session to a specific consultation/encounter ID */
     encounterId?: string;
     /** Open the Refills & Transmission Errors view instead of a patient chart */
@@ -26,7 +23,6 @@ interface DoseSpotFrameProps {
 export function DoseSpotFrame({
     patientUid,
     patientDoseSpotId,
-    onBehalfOfUserId,
     encounterId,
     refillsErrors,
     height = '920px',
@@ -35,27 +31,23 @@ export function DoseSpotFrame({
     const [syncState, setSyncState] = useState<DoseSpotSsoUrlResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const buildQueryString = () => {
         const params = new URLSearchParams();
         if (patientUid)         params.append('patientUid',         patientUid);
         if (patientDoseSpotId)  params.append('patientDoseSpotId',  patientDoseSpotId.toString());
-        if (onBehalfOfUserId)   params.append('onBehalfOfUserId',   onBehalfOfUserId.toString());
         if (encounterId)        params.append('encounterId',         encounterId);
         if (refillsErrors)      params.append('refillsErrors',       'true');
         return params.toString() ? `?${params.toString()}` : '';
     };
 
-    const fetchUrl = async (isRefresh = false) => {
+    const fetchUrl = async () => {
         try {
             const user = auth.currentUser;
             if (!user) throw new Error('User not authenticated');
 
-            if (!isRefresh) {
-                setLoading(true);
-                setError(null);
-            }
+            setLoading(true);
+            setError(null);
 
             const queryStr = buildQueryString();
             const data = await apiFetchJson<DoseSpotSsoUrlResponse>(getDoseSpotApiUrl(`/api/v1/dosespot/sso-url${queryStr}`), {
@@ -70,17 +62,8 @@ export function DoseSpotFrame({
                 return;
             }
 
-            if (!isRefresh) {
-                setSsoUrl(data.ssoUrl);
-                setLoading(false);
-                return;
-            }
-
-            if (iframeRef.current) {
-                iframeRef.current.src = data.ssoUrl;
-            } else {
-                setSsoUrl(data.ssoUrl);
-            }
+            setSsoUrl(data.ssoUrl);
+            setLoading(false);
         } catch (err: any) {
             console.error('DoseSpot load error:', err);
             setError(err.message || 'Unable to load prescription tool. Please refresh the page.');
@@ -91,15 +74,12 @@ export function DoseSpotFrame({
     };
 
     useEffect(() => {
-        fetchUrl(false);
-
-        // Silent token refresh every 8 minutes (DoseSpot SSO tokens expire after ~15 min)
-        const interval = setInterval(() => fetchUrl(true), 8 * 60 * 1000);
-        return () => clearInterval(interval);
+        void fetchUrl();
+        return undefined;
 
         // Re-fetch if the patient/encounter context changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [patientUid, patientDoseSpotId, onBehalfOfUserId, encounterId, refillsErrors]);
+    }, [patientUid, patientDoseSpotId, encounterId, refillsErrors]);
 
     if (syncState && syncState.syncStatus !== 'ready') {
         const candidateText = syncState.candidatePatientIds.length > 0
@@ -131,7 +111,7 @@ export function DoseSpotFrame({
                         )}
                     </div>
                     <button
-                        onClick={() => { setError(null); setLoading(true); void fetchUrl(false); }}
+                        onClick={() => { setError(null); setLoading(true); void fetchUrl(); }}
                         className="flex items-center gap-2 text-xs font-black text-amber-700 uppercase tracking-widest hover:underline"
                     >
                         <RefreshCw className="w-3.5 h-3.5" /> Retry DoseSpot Sync
@@ -151,7 +131,7 @@ export function DoseSpotFrame({
                     <AlertCircle className="w-10 h-10 text-red-500" />
                     <p className="text-sm font-semibold text-red-700 dark:text-red-400">{error}</p>
                     <button
-                        onClick={() => { setError(null); setLoading(true); fetchUrl(false); }}
+                        onClick={() => { setError(null); setLoading(true); void fetchUrl(); }}
                         className="flex items-center gap-2 text-xs font-black text-red-600 dark:text-red-400 uppercase tracking-widest hover:underline"
                     >
                         <RefreshCw className="w-3.5 h-3.5" /> Try Again
@@ -182,7 +162,6 @@ export function DoseSpotFrame({
             {/* DoseSpot iframe */}
             {ssoUrl && (
                 <iframe
-                    ref={iframeRef}
                     src={ssoUrl || ''}
                     style={{ width: '100%', height: '100%', border: 'none', minHeight: '1080px' }}
                     title="DoseSpot eRx"
