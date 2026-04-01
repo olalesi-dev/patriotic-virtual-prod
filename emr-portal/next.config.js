@@ -21,6 +21,8 @@ const connectSrc = [
     'https://www.google.com/recaptcha/',
     'https://www.recaptcha.net/recaptcha/',
     'https://api.stripe.com',
+    'https://static.vouched.id',
+    'https://verify.vouched.id',
     apiOrigin,
 ].filter(Boolean).join(' ');
 
@@ -34,14 +36,15 @@ const frameSrc = [
     'https://doxy.me',
     'https://my.dosespot.com',
     'https://my.staging.dosespot.com',
+    'https://static.vouched.id',
 ].join(' ');
 
 const contentSecurityPolicy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com https://*.gstatic.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://www.recaptcha.net/recaptcha/ https://www.gstatic.cn/recaptcha/ https://doxy.me",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com https://*.gstatic.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://www.recaptcha.net/recaptcha/ https://www.gstatic.cn/recaptcha/ https://doxy.me https://static.vouched.id",
     `connect-src ${connectSrc}`,
-    "img-src 'self' data: https://storage.googleapis.com https://*.googleusercontent.com https://*.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://*.stripe.com",
-    "media-src 'self' https://cdn.prod.website-files.com",
+    "img-src 'self' data: blob: https://storage.googleapis.com https://*.googleusercontent.com https://*.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://*.stripe.com https://static.vouched.id",
+    "media-src 'self' blob: https://cdn.prod.website-files.com https://static.vouched.id",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     `frame-src ${frameSrc}`,
@@ -72,7 +75,22 @@ const nextConfig = {
     async headers() {
         return [
             {
-                source: '/(.*)',
+                source: '/vouched.html',
+                headers: [
+                    { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
+                    { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+                    { key: 'X-Content-Type-Options', value: 'nosniff' },
+                    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+                    { key: 'Permissions-Policy', value: 'camera=(self "https://static.vouched.id"), geolocation=(self "https://static.vouched.id"), microphone=(self)' },
+                    { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+                    {
+                        key: 'Content-Security-Policy',
+                        value: contentSecurityPolicy
+                    }
+                ],
+            },
+            {
+                source: '/((?!vouched\\.html$).*)',
                 headers: [
                     { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
                     { key: 'X-Frame-Options', value: 'DENY' },

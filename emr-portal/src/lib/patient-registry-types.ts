@@ -15,6 +15,13 @@ export interface PatientRegistryTag {
     color: string;
 }
 
+export interface PatientRegistryDoseSpotSummary {
+    linkedPatientId: number | null;
+    isLaunchBlocked: boolean;
+    missingCoreFields: string[];
+    missingWriteFields: string[];
+}
+
 export interface PatientRegistryRow {
     id: string;
     name: string;
@@ -32,6 +39,7 @@ export interface PatientRegistryRow {
     teams: PatientRegistryTeam[];
     tags: PatientRegistryTag[];
     lastActivityAt: string | null;
+    doseSpot?: PatientRegistryDoseSpotSummary;
 }
 
 export interface PatientDetailProblem {

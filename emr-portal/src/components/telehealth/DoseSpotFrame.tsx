@@ -29,7 +29,7 @@ export function DoseSpotFrame({
     onBehalfOfUserId,
     encounterId,
     refillsErrors,
-    height = '100%',
+    height = '920px',
 }: DoseSpotFrameProps) {
     const [ssoUrl, setSsoUrl] = useState<string | null>(null);
     const [syncState, setSyncState] = useState<DoseSpotSsoUrlResponse | null>(null);
@@ -164,13 +164,13 @@ export function DoseSpotFrame({
     return (
         <div
             className="relative w-full rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 dark:border-slate-700"
-            style={{ minHeight: '700px', height }}
+            style={{ minHeight: '1080px', height }}
         >
             {/* Loading shimmer */}
             {loading && (
                 <div
                     className="absolute inset-0 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 flex flex-col items-center justify-center gap-4"
-                    style={{ minHeight: '700px' }}
+                    style={{ minHeight: '1080px' }}
                 >
                     <div className="w-10 h-10 border-4 border-sky-200 dark:border-sky-800 border-t-sky-500 rounded-full animate-spin" />
                     <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
@@ -184,7 +184,7 @@ export function DoseSpotFrame({
                 <iframe
                     ref={iframeRef}
                     src={ssoUrl || ''}
-                    style={{ width: '100%', height: '100%', border: 'none', minHeight: '700px' }}
+                    style={{ width: '100%', height: '100%', border: 'none', minHeight: '1080px' }}
                     title="DoseSpot eRx"
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
                     onLoad={() => setLoading(false)}

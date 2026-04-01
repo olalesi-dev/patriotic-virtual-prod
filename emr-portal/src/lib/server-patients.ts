@@ -9,6 +9,7 @@ import type {
     PatientDetailObservation,
     PatientDetailOrder,
     PatientDetailProblem,
+    PatientRegistryDoseSpotSummary,
     PatientDetailRecord,
     PatientRegistryFacetOption,
     PatientRegistryResponse,
@@ -26,6 +27,7 @@ interface LoadScopedPatientsOptions {
     statuses?: string[];
     teamIds?: string[];
     tags?: string[];
+    excludeDoseSpotBlocked?: boolean;
     cursor?: string | null;
     pageSize?: number;
     sortField?: SortField;
@@ -317,6 +319,79 @@ function toIsoDateTime(value: unknown): string | null {
     const parsed = asDate(value);
     if (parsed) return parsed.toISOString();
     return asNonEmptyString(value);
+}
+
+function splitDisplayName(value: Record<string, unknown>): { firstName: string | null; lastName: string | null } {
+    const directFirst = asNonEmptyString(value.firstName);
+    const directLast = asNonEmptyString(value.lastName);
+    if (directFirst || directLast) {
+        return {
+            firstName: directFirst,
+            lastName: directLast
+        };
+    }
+
+    const displayName = readDisplayName(value);
+    if (!displayName) {
+        return { firstName: null, lastName: null };
+    }
+
+    const parts = displayName.split(/\s+/).filter(Boolean);
+    return {
+        firstName: parts[0] ?? null,
+        lastName: parts.slice(1).join(' ') || null
+    };
+}
+
+function normalizePhone(value: string | null): string | null {
+    if (!value) return null;
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 11 && digits.startsWith('1')) {
+        return digits.slice(1);
+    }
+    return digits.length >= 10 ? digits.slice(0, 10) : null;
+}
+
+function normalizeZip(value: string | null): string | null {
+    if (!value) return null;
+    const digits = value.replace(/\D/g, '');
+    return digits.length >= 5 ? digits.slice(0, 5) : null;
+}
+
+function extractDoseSpotPatientId(value: Record<string, unknown>): number | null {
+    return (
+        asNumber(value.doseSpotPatientId) ??
+        asNumber((value.doseSpot as Record<string, unknown> | undefined)?.patientId) ??
+        null
+    );
+}
+
+function buildDoseSpotSummary(value: Record<string, unknown>): PatientRegistryDoseSpotSummary {
+    const linkedPatientId = extractDoseSpotPatientId(value);
+    const name = splitDisplayName(value);
+    const missingCoreFields = linkedPatientId
+        ? []
+        : [
+            name.firstName ? null : 'firstName',
+            name.lastName ? null : 'lastName',
+            (asNonEmptyString(value.dateOfBirth) ?? asNonEmptyString(value.dob)) ? null : 'dateOfBirth'
+        ].filter((entry): entry is string => Boolean(entry));
+    const missingWriteFields = linkedPatientId
+        ? []
+        : [
+            (asNonEmptyString(value.address1) ?? asNonEmptyString(value.address)) ? null : 'address1',
+            asNonEmptyString(value.city) ? null : 'city',
+            asNonEmptyString(value.state) ? null : 'state',
+            normalizeZip(asNonEmptyString(value.zipCode) ?? asNonEmptyString(value.zip)) ? null : 'zipCode',
+            normalizePhone(asNonEmptyString(value.phone) ?? asNonEmptyString(value.phoneNumber)) ? null : 'primaryPhone'
+        ].filter((entry): entry is string => Boolean(entry));
+
+    return {
+        linkedPatientId,
+        isLaunchBlocked: missingCoreFields.length > 0,
+        missingCoreFields,
+        missingWriteFields
+    };
 }
 
 function normalizeProblemList(
@@ -865,6 +940,7 @@ function buildSummaryRow({
         ...userDoc,
         ...patientDoc
     } as Record<string, unknown>;
+    const doseSpot = buildDoseSpotSummary(merged);
 
     const rawStatuses = [
         ...asStringArray(draft._rawStatuses),
@@ -895,8 +971,8 @@ function buildSummaryRow({
         id: patientId,
         name: displayName,
         email: asNonEmptyString(merged.email) ?? asNonEmptyString(draft.email),
-        phone: asNonEmptyString(merged.phone),
-        dob: asNonEmptyString(merged.dob),
+        phone: asNonEmptyString(merged.phone) ?? asNonEmptyString(merged.phoneNumber),
+        dob: toIsoDate(merged.dateOfBirth) ?? toIsoDate(merged.dob),
         sex: asNonEmptyString(merged.sexAtBirth) ?? asNonEmptyString(merged.sex) ?? asNonEmptyString(merged.gender),
         state: asNonEmptyString(merged.state),
         mrn: asNonEmptyString(merged.mrn) ?? buildMrn(patientId),
@@ -907,7 +983,8 @@ function buildSummaryRow({
         teamIds: teamRows.map((team) => team.id),
         teams: teamRows,
         tags: tagLabels.map((label) => normalizeTag(label)),
-        lastActivityAt: asNonEmptyString(draft.lastActivityAt)
+        lastActivityAt: asNonEmptyString(draft.lastActivityAt),
+        doseSpot
     };
 }
 
@@ -969,6 +1046,10 @@ export async function loadProviderScopedPatients(
     if ((options.tags ?? []).length > 0) {
         const allowedTags = new Set((options.tags ?? []).map((tag) => tag.toLowerCase()));
         filteredPatients = filteredPatients.filter((patient) => patient.tags.some((tag) => allowedTags.has(tag.label.toLowerCase())));
+    }
+
+    if (options.excludeDoseSpotBlocked) {
+        filteredPatients = filteredPatients.filter((patient) => !patient.doseSpot?.isLaunchBlocked);
     }
 
     const sortField = options.sortField ?? 'name';

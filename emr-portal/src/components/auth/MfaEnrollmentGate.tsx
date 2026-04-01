@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { multiFactor } from 'firebase/auth';
@@ -18,10 +18,16 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
     const [isEnrolled, setIsEnrolled] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
+    const redirectTimeoutRef = useRef<number | null>(null);
     const pathname = usePathname();
     const router = useRouter();
 
     useEffect(() => {
+        if (redirectTimeoutRef.current !== null) {
+            window.clearTimeout(redirectTimeoutRef.current);
+            redirectTimeoutRef.current = null;
+        }
+
         if (isPublicRoute(pathname)) {
             setLoading(false);
             return;
@@ -29,7 +35,14 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
 
         console.log('MfaEnrollmentGate: Checking auth state...');
         // Local dev bypass check
-        const isMockAuth = localStorage.getItem('emr_mock_auth') === 'true';
+        const isLocalDevHost = typeof window !== 'undefined' && (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1'
+        );
+        const isMockAuth = isLocalDevHost && localStorage.getItem('emr_mock_auth') === 'true';
+        if (!isLocalDevHost && localStorage.getItem('emr_mock_auth') === 'true') {
+            localStorage.removeItem('emr_mock_auth');
+        }
         if (isMockAuth) {
             console.log('MfaEnrollmentGate: Mock auth detected');
             setUser({ email: 'demo@patriotic.com', displayName: 'Demo Clinician' });
@@ -40,24 +53,50 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
 
         const unsubscribe = auth.onAuthStateChanged((currentUser) => {
             console.log('MfaEnrollmentGate: Auth state changed. User:', currentUser ? currentUser.email : 'None');
+
+            if (redirectTimeoutRef.current !== null) {
+                window.clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
+            }
+
             setUser(currentUser);
             if (currentUser) {
                 const enrolledFactors = multiFactor(currentUser).enrolledFactors;
                 console.log('MfaEnrollmentGate: Enrolled factors count:', enrolledFactors.length);
                 setIsEnrolled(enrolledFactors.length > 0);
+                setLoading(false);
             } else {
                 console.log('MfaEnrollmentGate: No user session found');
-                setIsEnrolled(false);
-                if (pathname !== '/login') {
-                    console.log('MfaEnrollmentGate: Not on login page, redirecting...');
-                    router.push('/login');
-                }
+                redirectTimeoutRef.current = window.setTimeout(() => {
+                    const stabilizedUser = auth.currentUser;
+                    if (stabilizedUser) {
+                        console.log('MfaEnrollmentGate: User session stabilized after transient null state');
+                        setUser(stabilizedUser);
+                        const enrolledFactors = multiFactor(stabilizedUser).enrolledFactors;
+                        setIsEnrolled(enrolledFactors.length > 0);
+                        setLoading(false);
+                        return;
+                    }
+
+                    setIsEnrolled(false);
+                    if (pathname !== '/login') {
+                        console.log('MfaEnrollmentGate: Not on login page after auth recheck, redirecting...');
+                        router.replace('/login');
+                    }
+                    setLoading(false);
+                }, 600);
+                return;
             }
             console.log('MfaEnrollmentGate: Loading finished');
-            setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            if (redirectTimeoutRef.current !== null) {
+                window.clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
+            }
+        };
     }, [pathname, router]);
 
     if (isPublicRoute(pathname)) {
@@ -79,4 +118,3 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
     // NOTE: MFA Enforcement disabled for now as requested.
     return <>{children}</>;
 };
-
