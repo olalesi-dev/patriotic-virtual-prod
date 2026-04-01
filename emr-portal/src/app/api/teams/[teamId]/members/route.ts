@@ -44,8 +44,8 @@ export async function POST(
 
         const [teamDoc, targetDoctorDoc, actorDoc] = await Promise.all([
             db.collection('teams').doc(teamId).get(),
-            db.collection('users').doc(parsedBody.data.doctorId).get(),
-            db.collection('users').doc(user.uid).get()
+            db.collection('patients').doc(parsedBody.data.doctorId).get(),
+            db.collection('patients').doc(user.uid).get()
         ]);
 
         const team = mapTeamSnapshot(teamDoc);

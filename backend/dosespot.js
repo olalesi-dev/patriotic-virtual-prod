@@ -54,7 +54,7 @@ function generateSSOUrl(params) {
 
     if (params.refillsErrors) {
         urlParams.set('RefillsErrors', '1');
-        urlParams.delete('PatientId'); // mutually exclusive per DoseSpot spec
+        urlParams.delete('PatientId'); 
     }
 
     return `${baseUrl}/LoginSingleSignOn.aspx?${urlParams.toString()}`;

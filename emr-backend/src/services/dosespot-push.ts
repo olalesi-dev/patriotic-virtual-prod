@@ -139,6 +139,26 @@ interface QueueConfig {
     serviceAccountEmail: string | null;
 }
 
+interface QueueConfigState {
+    config: QueueConfig | null;
+    missing: string[];
+}
+
+type DeliverySource = 'dosespot_webhook' | 'dev_helper';
+
+export interface DoseSpotWebhookValidationReport {
+    validated: boolean;
+    windowHours: number;
+    scannedEvents: number;
+    realEvents: number;
+    successfulRealEvents: number;
+    failedRealEvents: number;
+    latestRealEventAt: string | null;
+    latestRealEventType: string | null;
+    observedEventTypes: string[];
+    message: string;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -265,9 +285,21 @@ function buildTestClinicianId(uid: string): number {
     return 1_000_000 + (numeric % 8_000_000);
 }
 
+function normalizeBaseUrl(value: string): string {
+    return value.replace(/\/+$/, '');
+}
+
 function readWebhookSecret(): string | null {
     return asNonEmptyString(process.env.DOSESPOT_WEBHOOK_SECRET)
         ?? asNonEmptyString(process.env.DOSESPOT_SECRET_KEY);
+}
+
+function isCloudTasksRequired(): boolean {
+    const explicit = asBoolean(process.env.DOSESPOT_REQUIRE_CLOUD_TASKS);
+    if (explicit !== null) {
+        return explicit;
+    }
+    return process.env.NODE_ENV === 'production';
 }
 
 export function verifyDoseSpotSecret(req: Request): boolean {
@@ -773,39 +805,71 @@ async function resolvePatientUid(patientId: number | null): Promise<string | nul
 }
 
 function getQueueConfig(): QueueConfig | null {
+    return readQueueConfigState().config;
+}
+
+function readQueueConfigState(): QueueConfigState {
     const projectId = asNonEmptyString(process.env.CLOUD_TASKS_PROJECT_ID)
         ?? asNonEmptyString(process.env.GOOGLE_CLOUD_PROJECT)
         ?? asNonEmptyString(process.env.GCLOUD_PROJECT)
         ?? asNonEmptyString(process.env.FIREBASE_PROJECT_ID);
     const location = asNonEmptyString(process.env.CLOUD_TASKS_LOCATION);
     const queue = asNonEmptyString(process.env.CLOUD_TASKS_QUEUE);
-    const targetUrl = asNonEmptyString(process.env.CLOUD_TASKS_TARGET_URL);
+    const configuredTargetUrl = asNonEmptyString(process.env.CLOUD_TASKS_TARGET_URL);
+    const backendPublicUrl = asNonEmptyString(process.env.BACKEND_PUBLIC_URL);
+    const targetUrl = configuredTargetUrl
+        ?? (backendPublicUrl ? `${normalizeBaseUrl(backendPublicUrl)}/api/v1/dosespot/push-notifications/process` : null);
+    const missing: string[] = [];
+
+    if (!projectId) missing.push('CLOUD_TASKS_PROJECT_ID');
+    if (!location) missing.push('CLOUD_TASKS_LOCATION');
+    if (!queue) missing.push('CLOUD_TASKS_QUEUE');
+    if (!targetUrl) missing.push('CLOUD_TASKS_TARGET_URL or BACKEND_PUBLIC_URL');
 
     if (!projectId || !location || !queue || !targetUrl) {
-        return null;
+        return {
+            config: null,
+            missing
+        };
     }
 
     return {
-        projectId,
-        location,
-        queue,
-        targetUrl,
-        audience: asNonEmptyString(process.env.CLOUD_TASKS_AUDIENCE) ?? targetUrl,
-        serviceAccountEmail: asNonEmptyString(process.env.CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL)
+        config: {
+            projectId,
+            location,
+            queue,
+            targetUrl,
+            audience: asNonEmptyString(process.env.CLOUD_TASKS_AUDIENCE) ?? targetUrl,
+            serviceAccountEmail: asNonEmptyString(process.env.CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL)
+        },
+        missing
     };
 }
 
 function allowInlineFallback(): boolean {
-    return process.env.NODE_ENV !== 'production';
+    return !isCloudTasksRequired();
+}
+
+function detectDeliverySource(headers: Request['headers']): DeliverySource {
+    const marker = headers['x-dosespot-dev-helper'];
+    const normalizedMarker = Array.isArray(marker)
+        ? marker.join(',').toLowerCase()
+        : String(marker ?? '').toLowerCase();
+
+    return normalizedMarker.includes('true') ? 'dev_helper' : 'dosespot_webhook';
 }
 
 export function getDoseSpotWebhookRuntimeHealth() {
-    const queueConfig = getQueueConfig();
+    const queueState = readQueueConfigState();
+    const queueConfig = queueState.config;
+    const cloudTasksRequired = isCloudTasksRequired();
     return {
         queueConfigured: queueConfig !== null,
+        cloudTasksRequired,
         queueMode: queueConfig ? 'cloud_tasks' : (allowInlineFallback() ? 'inline_fallback' : 'unconfigured'),
         inlineFallbackEnabled: allowInlineFallback(),
         webhookSecretConfigured: Boolean(readWebhookSecret()),
+        missingQueueConfig: queueState.missing,
         queue: queueConfig ? {
             projectId: queueConfig.projectId,
             location: queueConfig.location,
@@ -815,6 +879,30 @@ export function getDoseSpotWebhookRuntimeHealth() {
             serviceAccountEmailConfigured: Boolean(queueConfig.serviceAccountEmail)
         } : null
     };
+}
+
+export function assertDoseSpotWebhookRuntimeConfig(): void {
+    const queueState = readQueueConfigState();
+    const queueConfig = queueState.config;
+    const cloudTasksRequired = isCloudTasksRequired();
+
+    if (process.env.NODE_ENV === 'production' && !readWebhookSecret()) {
+        throw new Error('DOSESPOT_WEBHOOK_SECRET is required in production.');
+    }
+
+    if (!cloudTasksRequired) {
+        return;
+    }
+
+    if (!queueConfig) {
+        throw new Error(
+            `DoseSpot webhook Cloud Tasks configuration is incomplete. Missing: ${queueState.missing.join(', ')}`
+        );
+    }
+
+    if (!queueConfig.serviceAccountEmail) {
+        throw new Error('CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL must be configured when Cloud Tasks is required.');
+    }
 }
 
 export async function verifyDoseSpotTaskRequest(req: Request): Promise<boolean> {
@@ -864,6 +952,7 @@ export async function persistWebhookEvent(input: PersistWebhookEventInput): Prom
     const dedupeKey = computeDedupeKey(input.payload);
     const referenceIds = getReferenceIds(input.payload);
     const docRef = admin.firestore().collection(WEBHOOK_EVENTS_COLLECTION).doc(dedupeKey);
+    const deliverySource = detectDeliverySource(input.headers);
 
     let duplicate = false;
     let shouldEnqueue = false;
@@ -892,6 +981,7 @@ export async function persistWebhookEvent(input: PersistWebhookEventInput): Prom
                 patientId: referenceIds.patientId,
                 payloadHash: dedupeKey,
                 supportedEventType: isSupportedEventType(eventType),
+                deliverySource,
                 createdAt: input.receivedAt,
                 updatedAt: input.receivedAt
             });
@@ -908,6 +998,7 @@ export async function persistWebhookEvent(input: PersistWebhookEventInput): Prom
             authorizationValid: input.authorizationValid,
             deliveryCount: admin.firestore.FieldValue.increment(1),
             lastReceivedAt: input.receivedAt,
+            deliverySource,
             updatedAt: input.receivedAt,
             processingStatus: shouldEnqueue ? 'PENDING' : status,
             errorMessage: shouldEnqueue ? null : existing.errorMessage ?? null
@@ -1405,3 +1496,78 @@ export const doseSpotTestables = {
     computeDedupeKey,
     getCounts
 };
+
+export async function getDoseSpotWebhookValidationReport(
+    options: { windowHours?: number; maxEvents?: number } = {}
+): Promise<DoseSpotWebhookValidationReport> {
+    const windowHours = typeof options.windowHours === 'number' && Number.isFinite(options.windowHours) && options.windowHours > 0
+        ? Math.floor(options.windowHours)
+        : 168;
+    const maxEvents = typeof options.maxEvents === 'number' && Number.isFinite(options.maxEvents) && options.maxEvents > 0
+        ? Math.floor(options.maxEvents)
+        : 300;
+    const windowStart = Date.now() - (windowHours * 60 * 60 * 1000);
+
+    const snapshot = await admin.firestore()
+        .collection(WEBHOOK_EVENTS_COLLECTION)
+        .orderBy('lastReceivedAt', 'desc')
+        .limit(maxEvents)
+        .get();
+
+    let realEvents = 0;
+    let successfulRealEvents = 0;
+    let failedRealEvents = 0;
+    let latestRealEventAt: Date | null = null;
+    let latestRealEventType: string | null = null;
+    const observedEventTypes = new Set<string>();
+
+    for (const doc of snapshot.docs) {
+        const data = doc.data() as Record<string, unknown>;
+        const receivedAt = asDate(data.lastReceivedAt) ?? asDate(data.receivedAt);
+        if (!receivedAt || receivedAt.getTime() < windowStart) {
+            continue;
+        }
+
+        const source = asNonEmptyString(data.deliverySource);
+        const headersJson = isRecord(data.headersJson) ? data.headersJson : null;
+        const legacyDevHeader = headersJson
+            ? asNonEmptyString(headersJson['x-dosespot-dev-helper'] ?? headersJson['X-DoseSpot-Dev-Helper'])
+            : null;
+        const isDevHelper = source === 'dev_helper' || legacyDevHeader?.toLowerCase() === 'true';
+        if (isDevHelper) {
+            continue;
+        }
+
+        realEvents += 1;
+        const status = asNonEmptyString(data.processingStatus) ?? 'UNKNOWN';
+        if (status === 'SUCCESS') {
+            successfulRealEvents += 1;
+        } else if (status === 'FAILED') {
+            failedRealEvents += 1;
+        }
+
+        const eventType = asNonEmptyString(data.eventType) ?? 'Unknown';
+        observedEventTypes.add(eventType);
+
+        if (!latestRealEventAt || receivedAt.getTime() > latestRealEventAt.getTime()) {
+            latestRealEventAt = receivedAt;
+            latestRealEventType = eventType;
+        }
+    }
+
+    const validated = successfulRealEvents > 0;
+    return {
+        validated,
+        windowHours,
+        scannedEvents: snapshot.size,
+        realEvents,
+        successfulRealEvents,
+        failedRealEvents,
+        latestRealEventAt: latestRealEventAt ? latestRealEventAt.toISOString() : null,
+        latestRealEventType,
+        observedEventTypes: Array.from(observedEventTypes).sort(),
+        message: validated
+            ? 'Real DoseSpot outbound webhook delivery has been observed and processed.'
+            : `No successfully processed real DoseSpot outbound webhooks observed in the last ${windowHours} hours.`
+    };
+}

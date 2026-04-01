@@ -116,6 +116,11 @@ interface LocalPatientSource {
     mrn: string | null;
     existingDoseSpotPatientId: number | null;
     retryCount: number;
+    preferredPharmacy: string | null;
+    preferredPharmacyDoseSpotId: number | null;
+    preferredPharmacySyncStatus: string | null;
+    preferredPharmacySyncedDoseSpotId: number | null;
+    preferredPharmacySyncedPatientId: number | null;
 }
 
 interface PersistSyncStateInput {
@@ -186,6 +191,10 @@ function isDoseSpotAuthorizationConfigError(error: unknown): boolean {
         message.includes('onbehalfofuser validation failed') ||
         message.includes('authorization has been denied')
     );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function asNonEmptyString(value: unknown): string | null {
@@ -570,6 +579,138 @@ const defaultGateway: DoseSpotPatientGateway = {
     }
 };
 
+type PreferredPharmacySyncStatus = 'synced' | 'skipped' | 'pending_retry' | 'blocked';
+
+interface PreferredPharmacySyncOutcome {
+    status: PreferredPharmacySyncStatus;
+    attempted: boolean;
+    pharmacyId: number | null;
+    message: string;
+    errorMessage: string | null;
+}
+
+function shouldSyncPreferredPharmacy(source: LocalPatientSource, doseSpotPatientId: number): boolean {
+    if (!source.preferredPharmacyDoseSpotId) {
+        return false;
+    }
+
+    if (source.preferredPharmacySyncStatus !== 'synced') {
+        return true;
+    }
+
+    return (
+        source.preferredPharmacySyncedDoseSpotId !== source.preferredPharmacyDoseSpotId ||
+        source.preferredPharmacySyncedPatientId !== doseSpotPatientId
+    );
+}
+
+async function persistPreferredPharmacySyncState(
+    source: LocalPatientSource,
+    doseSpotPatientId: number,
+    outcome: PreferredPharmacySyncOutcome
+): Promise<void> {
+    const now = new Date();
+    const patientPatch: Record<string, unknown> = {
+        'doseSpot.preferredPharmacySync.status': outcome.status,
+        'doseSpot.preferredPharmacySync.pharmacyId': outcome.pharmacyId,
+        'doseSpot.preferredPharmacySync.doseSpotPatientId': doseSpotPatientId,
+        'doseSpot.preferredPharmacySync.lastAttemptAt': now,
+        'doseSpot.preferredPharmacySync.lastSyncedAt': outcome.status === 'synced' ? now : null,
+        'doseSpot.preferredPharmacySync.lastError': outcome.status === 'synced' ? null : (outcome.errorMessage ?? outcome.message),
+        ...(outcome.pharmacyId ? {
+            preferredPharmacyDoseSpotId: outcome.pharmacyId,
+            'doseSpot.preferredPharmacyDoseSpotId': outcome.pharmacyId
+        } : {}),
+        ...(source.preferredPharmacy ? { preferredPharmacy: source.preferredPharmacy } : {}),
+        updatedAt: now
+    };
+
+    const userPatch: Record<string, unknown> = {
+        'doseSpot.preferredPharmacySync.status': outcome.status,
+        'doseSpot.preferredPharmacySync.pharmacyId': outcome.pharmacyId,
+        'doseSpot.preferredPharmacySync.doseSpotPatientId': doseSpotPatientId,
+        'doseSpot.preferredPharmacySync.lastAttemptAt': now,
+        'doseSpot.preferredPharmacySync.lastSyncedAt': outcome.status === 'synced' ? now : null,
+        'doseSpot.preferredPharmacySync.lastError': outcome.status === 'synced' ? null : (outcome.errorMessage ?? outcome.message),
+        ...(outcome.pharmacyId ? {
+            preferredPharmacyDoseSpotId: outcome.pharmacyId,
+            'doseSpot.preferredPharmacyDoseSpotId': outcome.pharmacyId
+        } : {}),
+        updatedAt: now
+    };
+
+    await Promise.all([
+        admin.firestore().collection('patients').doc(source.patientUid).set(patientPatch, { merge: true }),
+        admin.firestore().collection('users').doc(source.patientUid).set(userPatch, { merge: true })
+    ]);
+}
+
+async function syncPreferredPharmacyForDoseSpotPatient(
+    source: LocalPatientSource,
+    doseSpotPatientId: number,
+    options: EnsureDoseSpotPatientOptions,
+    gateway: DoseSpotPatientGateway
+): Promise<PreferredPharmacySyncOutcome> {
+    const pharmacyId = source.preferredPharmacyDoseSpotId;
+    if (!pharmacyId) {
+        return {
+            status: 'skipped',
+            attempted: false,
+            pharmacyId: null,
+            message: 'No preferredPharmacyDoseSpotId is set for this patient.',
+            errorMessage: null
+        };
+    }
+
+    if (!shouldSyncPreferredPharmacy(source, doseSpotPatientId)) {
+        return {
+            status: 'skipped',
+            attempted: false,
+            pharmacyId,
+            message: 'Preferred pharmacy is already synced to DoseSpot.',
+            errorMessage: null
+        };
+    }
+
+    try {
+        await gateway.addPatientPharmacy(
+            doseSpotPatientId,
+            {
+                pharmacyId,
+                setAsPrimary: true
+            },
+            options.onBehalfOfClinicianId
+        );
+
+        return {
+            status: 'synced',
+            attempted: true,
+            pharmacyId,
+            message: 'Preferred pharmacy synced to DoseSpot.',
+            errorMessage: null
+        };
+    } catch (error) {
+        const errorMessage = toErrorMessage(error);
+        if (isDoseSpotAuthorizationConfigError(error)) {
+            return {
+                status: 'blocked',
+                attempted: true,
+                pharmacyId,
+                message: 'DoseSpot pharmacy operations are not enabled for the current staging credentials.',
+                errorMessage
+            };
+        }
+
+        return {
+            status: 'pending_retry',
+            attempted: true,
+            pharmacyId,
+            message: 'Preferred pharmacy sync failed. Retry on the next patient sync attempt.',
+            errorMessage
+        };
+    }
+}
+
 async function loadLocalPatientSource(patientUid: string): Promise<LocalPatientSource | null> {
     const firestore = admin.firestore();
     const [patientDoc, userDoc] = await Promise.all([
@@ -585,6 +726,10 @@ async function loadLocalPatientSource(patientUid: string): Promise<LocalPatientS
         ...(userDoc.exists ? userDoc.data() : {}),
         ...(patientDoc.exists ? patientDoc.data() : {})
     } as Record<string, unknown>;
+    const doseSpotData = isRecord(merged.doseSpot) ? merged.doseSpot : {};
+    const preferredPharmacySync = isRecord(doseSpotData.preferredPharmacySync)
+        ? doseSpotData.preferredPharmacySync
+        : {};
     const patientName = pickPatientName(merged);
     const formattedDob = formatDateOnly(
         asNonEmptyString(merged.dateOfBirth) ??
@@ -606,7 +751,12 @@ async function loadLocalPatientSource(patientUid: string): Promise<LocalPatientS
         primaryPhone: normalizePhone(asNonEmptyString(merged.phone) ?? asNonEmptyString(merged.phoneNumber)),
         mrn: asNonEmptyString(merged.mrn),
         existingDoseSpotPatientId: extractExistingDoseSpotPatientId(merged),
-        retryCount: readRetryCount(merged)
+        retryCount: readRetryCount(merged),
+        preferredPharmacy: asNonEmptyString(merged.preferredPharmacy),
+        preferredPharmacyDoseSpotId: asNumber(merged.preferredPharmacyDoseSpotId) ?? asNumber(doseSpotData.preferredPharmacyDoseSpotId),
+        preferredPharmacySyncStatus: asNonEmptyString(preferredPharmacySync.status),
+        preferredPharmacySyncedDoseSpotId: asNumber(preferredPharmacySync.pharmacyId),
+        preferredPharmacySyncedPatientId: asNumber(preferredPharmacySync.doseSpotPatientId)
     };
 }
 
@@ -649,12 +799,16 @@ async function clearPersistedSyncState(patientUid: string): Promise<void> {
             'doseSpot.retryCount': deleteField,
             'doseSpot.candidatePatientIds': deleteField,
             'doseSpot.lastSyncedAt': deleteField,
+            'doseSpot.preferredPharmacySync': deleteField,
+            'doseSpot.preferredPharmacyDoseSpotId': deleteField,
             updatedAt: now
         }, { merge: true }),
         admin.firestore().collection('users').doc(patientUid).set({
             doseSpotPatientId: deleteField,
             'doseSpot.syncStatus': deleteField,
             'doseSpot.lastSyncedAt': deleteField,
+            'doseSpot.preferredPharmacySync': deleteField,
+            'doseSpot.preferredPharmacyDoseSpotId': deleteField,
             updatedAt: now
         }, { merge: true })
     ]);
@@ -707,6 +861,40 @@ async function finalizeResult(
     return result;
 }
 
+async function finalizeReadyResultWithPreferredPharmacy(
+    source: LocalPatientSource,
+    result: EnsureDoseSpotPatientResult,
+    options: EnsureDoseSpotPatientOptions,
+    gateway: DoseSpotPatientGateway,
+    persistHandler: PersistSyncStateHandler
+): Promise<EnsureDoseSpotPatientResult> {
+    const finalized = await finalizeResult(source, result, null, persistHandler);
+    const doseSpotPatientId = finalized.doseSpotPatientId;
+
+    if (!doseSpotPatientId || finalized.syncStatus !== 'ready') {
+        return finalized;
+    }
+
+    const outcome = await syncPreferredPharmacyForDoseSpotPatient(source, doseSpotPatientId, options, gateway);
+    await persistPreferredPharmacySyncState(source, doseSpotPatientId, outcome);
+
+    if (outcome.status === 'synced') {
+        return {
+            ...finalized,
+            message: `${finalized.message} Preferred pharmacy synced to DoseSpot.`
+        };
+    }
+
+    if (outcome.status === 'pending_retry' || outcome.status === 'blocked') {
+        return {
+            ...finalized,
+            message: `${finalized.message} ${outcome.message}`
+        };
+    }
+
+    return finalized;
+}
+
 async function ensureDoseSpotPatientWithSource(
     source: LocalPatientSource,
     options: EnsureDoseSpotPatientOptions = {},
@@ -717,16 +905,22 @@ async function ensureDoseSpotPatientWithSource(
         if (options.updateExisting) {
             const blockingFields = writeBlockingMissingFields(source);
             if (blockingFields.length > 0) {
-                return finalizeResult(source, {
-                    status: 'already_linked',
-                    syncStatus: 'ready',
-                    patientUid: source.patientUid,
-                    doseSpotPatientId: source.existingDoseSpotPatientId,
-                    missingFields: blockingFields,
-                    candidatePatientIds: [],
-                    matchSource: 'existing_link',
-                    message: 'Using the linked DoseSpot patient record. Add missing demographics before attempting a sync update.'
-                }, null, persistHandler);
+                return finalizeReadyResultWithPreferredPharmacy(
+                    source,
+                    {
+                        status: 'already_linked',
+                        syncStatus: 'ready',
+                        patientUid: source.patientUid,
+                        doseSpotPatientId: source.existingDoseSpotPatientId,
+                        missingFields: blockingFields,
+                        candidatePatientIds: [],
+                        matchSource: 'existing_link',
+                        message: 'Using the linked DoseSpot patient record. Add missing demographics before attempting a sync update.'
+                    },
+                    options,
+                    gateway,
+                    persistHandler
+                );
             }
 
             const payload = buildDoseSpotPayload(source);
@@ -737,10 +931,11 @@ async function ensureDoseSpotPatientWithSource(
                     options.onBehalfOfClinicianId
                 );
 
-                return finalizeResult(
+                return finalizeReadyResultWithPreferredPharmacy(
                     source,
                     buildReadyResult(source, 'updated_existing', updatedId, 'updated_existing'),
-                    null,
+                    options,
+                    gateway,
                     persistHandler
                 );
             } catch (error) {
@@ -787,7 +982,7 @@ async function ensureDoseSpotPatientWithSource(
             }
         }
 
-        return finalizeResult(
+        return finalizeReadyResultWithPreferredPharmacy(
             source,
             buildReadyResult(
                 source,
@@ -795,7 +990,8 @@ async function ensureDoseSpotPatientWithSource(
                 source.existingDoseSpotPatientId,
                 'existing_link'
             ),
-            null,
+            options,
+            gateway,
             persistHandler
         );
     }
@@ -823,13 +1019,14 @@ async function ensureDoseSpotPatientWithSource(
 
         const match = chooseSearchMatch(searchResults, source);
         if (match.chosenPatientId) {
-            return finalizeResult(
+            return finalizeReadyResultWithPreferredPharmacy(
                 source,
                 {
                     ...buildReadyResult(source, 'linked_existing', match.chosenPatientId, match.matchSource ?? 'search_exact'),
                     candidatePatientIds: match.candidatePatientIds
                 },
-                null,
+                options,
+                gateway,
                 persistHandler
             );
         }
@@ -906,10 +1103,11 @@ async function ensureDoseSpotPatientWithSource(
 
     try {
         const createdPatientId = await gateway.addPatient(payload, options.onBehalfOfClinicianId);
-        return finalizeResult(
+        return finalizeReadyResultWithPreferredPharmacy(
             source,
             buildReadyResult(source, 'created_new', createdPatientId, 'created'),
-            null,
+            options,
+            gateway,
             persistHandler
         );
     } catch (error) {

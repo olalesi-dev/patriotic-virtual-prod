@@ -276,8 +276,11 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         ...current,
         email: user.email ?? current.email ?? "",
       }));
-      showToast("Account created! Please verify your identity.");
-      setAuthMode("verify");
+      showToast(userInfo?.isNewUser ? "Account created successfully." : "Signed in successfully.");
+      // TODO(homepage-identity-verify): Re-enable verify modal after demo.
+      // setAuthMode("verify");
+      setAuthModalOpen(false);
+      onLoginSuccess();
     } catch (e: any) {
       showToast(e.message || "Google auth failed");
     } finally {
@@ -305,8 +308,11 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         auditAction: "ACCOUNT_CREATED",
       });
 
-      showToast("Account created. Please verify your identity and email.");
-      setAuthMode("verify");
+      showToast("Account created. Please check your email to verify your email address.");
+      // TODO(homepage-identity-verify): Re-enable verify modal after demo.
+      // setAuthMode("verify");
+      setAuthModalOpen(false);
+      onLoginSuccess();
     } catch (e: any) {
       showToast(e.message || "Registration failed");
     } finally {
