@@ -24,7 +24,12 @@ test('generateSSOUrl includes resolved PatientId after local patient sync resolu
             primaryPhone: '6175551212',
             mrn: 'MRN-001',
             existingDoseSpotPatientId: null,
-            retryCount: 0
+            retryCount: 0,
+            preferredPharmacy: null,
+            preferredPharmacyDoseSpotId: null,
+            preferredPharmacySyncStatus: null,
+            preferredPharmacySyncedDoseSpotId: null,
+            preferredPharmacySyncedPatientId: null
         },
         {},
         {

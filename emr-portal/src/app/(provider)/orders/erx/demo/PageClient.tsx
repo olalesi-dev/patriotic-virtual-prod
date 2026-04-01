@@ -110,7 +110,7 @@ export default function DoseSpotDemoRunnerPage() {
             );
 
             const apiChecks = Array.isArray(response.checks) ? response.checks : [];
-            const nextChecks = createInitialChecks().map((baseCheck) => {
+            const nextChecks: DemoCheckState[] = createInitialChecks().map((baseCheck): DemoCheckState => {
                 const matched = apiChecks.find((item) => item.key === baseCheck.key);
                 if (!matched) {
                     return {
