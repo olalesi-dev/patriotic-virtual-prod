@@ -17,6 +17,12 @@ export type DoseSpotSyncState =
     | 'ambiguous_match'
     | 'blocked';
 
+export type DoseSpotDeleteStatus =
+    | 'deleted'
+    | 'ambiguous_match'
+    | 'not_found'
+    | 'blocked';
+
 export interface EnsureDoseSpotPatientResult {
     status: DoseSpotEnsureStatus;
     syncStatus: DoseSpotSyncState;
@@ -25,6 +31,14 @@ export interface EnsureDoseSpotPatientResult {
     missingFields: string[];
     candidatePatientIds: number[];
     matchSource: string | null;
+    message: string;
+}
+
+export interface DeleteDoseSpotPatientResult {
+    status: DoseSpotDeleteStatus;
+    patientUid: string;
+    deletedPatientIds: number[];
+    candidatePatientIds: number[];
     message: string;
 }
 
@@ -46,6 +60,7 @@ interface DoseSpotPatientRecord {
     State?: string;
     ZipCode?: string;
     PrimaryPhone?: string;
+    PrimaryPhoneType?: string;
     NonDoseSpotMedicalRecordNumber?: string;
     Active?: boolean;
 }
@@ -56,8 +71,11 @@ interface DoseSpotSearchPatientsResponse {
 }
 
 export interface DoseSpotAddEditPatientRequest {
+    Prefix?: string;
     FirstName: string;
+    MiddleName?: string;
     LastName: string;
+    Suffix?: string;
     DateOfBirth: string;
     Gender: 'Male' | 'Female' | 'Unknown';
     Email?: string;
@@ -66,10 +84,20 @@ export interface DoseSpotAddEditPatientRequest {
     City: string;
     State: string;
     ZipCode: string;
+    PhoneAdditional1?: string;
+    PhoneAdditional2?: string;
+    PhoneAdditionalType1?: string;
+    PhoneAdditionalType2?: string;
     PrimaryPhone: string;
-    PrimaryPhoneType: 'Cell';
+    PrimaryPhoneType: string;
+    Weight?: number;
+    WeightMetric?: string | number;
+    Height?: number;
+    HeightMetric?: string | number;
     NonDoseSpotMedicalRecordNumber: string;
     Active: boolean;
+    Encounter?: string;
+    IsHospice?: boolean;
 }
 
 interface LocalPatientSource {
@@ -105,6 +133,12 @@ type PersistSyncStateHandler = (input: PersistSyncStateInput) => Promise<void>;
 export interface EnsureDoseSpotPatientOptions {
     onBehalfOfClinicianId?: number;
     updateExisting?: boolean;
+}
+
+export interface DeleteDoseSpotPatientOptions {
+    onBehalfOfClinicianId?: number;
+    candidatePatientIds?: number[];
+    deactivateAllExactMatches?: boolean;
 }
 
 interface DoseSpotPatientGateway {
@@ -190,6 +224,12 @@ function normalizeGender(value: unknown): 'Male' | 'Female' | 'Unknown' {
     if (normalized === 'male' || normalized === 'm') return 'Male';
     if (normalized === 'female' || normalized === 'f') return 'Female';
     return 'Unknown';
+}
+
+function normalizePhoneType(value: unknown): string {
+    if (typeof value !== 'string') return 'Cell';
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : 'Cell';
 }
 
 function formatDateOnly(value: string | null): string | null {
@@ -298,6 +338,57 @@ function buildDoseSpotPayload(source: LocalPatientSource): DoseSpotAddEditPatien
     return payload;
 }
 
+function buildDoseSpotEditPayloadFromRecord(
+    record: DoseSpotPatientRecord,
+    active: boolean
+): DoseSpotAddEditPatientRequest {
+    const firstName = asNonEmptyString(record.FirstName);
+    const lastName = asNonEmptyString(record.LastName);
+    const dateOfBirth = formatDateOnly(record.DateOfBirth ?? null);
+    const address1 = asNonEmptyString(record.Address1);
+    const city = asNonEmptyString(record.City);
+    const state = asNonEmptyString(record.State);
+    const zipCode = normalizeZip(asNonEmptyString(record.ZipCode));
+    const primaryPhone = normalizePhone(asNonEmptyString(record.PrimaryPhone));
+
+    const missingFields = [
+        firstName ? null : 'firstName',
+        lastName ? null : 'lastName',
+        dateOfBirth ? null : 'dateOfBirth',
+        address1 ? null : 'address1',
+        city ? null : 'city',
+        state ? null : 'state',
+        zipCode ? null : 'zipCode',
+        primaryPhone ? null : 'primaryPhone'
+    ].filter((value): value is string => Boolean(value));
+
+    if (missingFields.length > 0) {
+        throw new Error(`DoseSpot patient edit payload requires ${missingFields.join(', ')}.`);
+    }
+
+    const payload: DoseSpotAddEditPatientRequest = {
+        FirstName: firstName!,
+        LastName: lastName!,
+        DateOfBirth: toDoseSpotDateTime(dateOfBirth!),
+        Gender: normalizeGender(record.Gender),
+        Address1: address1!,
+        City: city!,
+        State: state!,
+        ZipCode: zipCode!,
+        PrimaryPhone: primaryPhone!,
+        PrimaryPhoneType: normalizePhoneType(record.PrimaryPhoneType),
+        NonDoseSpotMedicalRecordNumber: asNonEmptyString(record.NonDoseSpotMedicalRecordNumber) ?? `${pickPatientRecordId(record) ?? 'unknown'}`,
+        Active: active
+    };
+
+    const email = asNonEmptyString(record.Email);
+    const address2 = asNonEmptyString(record.Address2);
+    if (email) payload.Email = email;
+    if (address2) payload.Address2 = address2;
+
+    return payload;
+}
+
 function pickPatientRecordId(record: DoseSpotPatientRecord): number | null {
     return asNumber(record.PatientId);
 }
@@ -377,68 +468,104 @@ function chooseSearchMatch(records: DoseSpotPatientRecord[], source: LocalPatien
     };
 }
 
-const defaultGateway: DoseSpotPatientGateway = {
-    async searchPatients(params, onBehalfOfClinicianId) {
-        const query = new URLSearchParams({
-            firstname: params.firstName,
-            lastname: params.lastName,
-            dob: params.dateOfBirth,
-            pageNumber: '1',
-            patientStatus: '2'
+function chooseExactMatchRecords(records: DoseSpotPatientRecord[], source: LocalPatientSource): DoseSpotPatientRecord[] {
+    return records.filter((record) => recordsMatchExactly(record, source));
+}
+
+async function withPatientManagementAuthFallback<T>(
+    onBehalfOfClinicianId: number | undefined,
+    operation: string,
+    action: (effectiveOnBehalfOfClinicianId?: number) => Promise<T>
+): Promise<T> {
+    try {
+        return await action(onBehalfOfClinicianId);
+    } catch (error) {
+        if (!onBehalfOfClinicianId || !isDoseSpotAuthorizationConfigError(error)) {
+            throw error;
+        }
+
+        logger.warn('[DoseSpot Patient Sync] Retrying patient-management request without OnBehalfOf clinician context', {
+            operation,
+            onBehalfOfClinicianId,
+            error: toErrorMessage(error)
         });
 
-        const response = await doseSpotApiFetch<DoseSpotSearchPatientsResponse>(
-            `api/patients/search?${query.toString()}`,
-            { method: 'GET', onBehalfOfClinicianId }
-        );
+        return action(undefined);
+    }
+}
 
-        return Array.isArray(response.Items) ? response.Items : [];
+const defaultGateway: DoseSpotPatientGateway = {
+    async searchPatients(params, onBehalfOfClinicianId) {
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'searchPatients', async (effectiveOnBehalfOfClinicianId) => {
+            const query = new URLSearchParams({
+                firstname: params.firstName,
+                lastname: params.lastName,
+                dob: params.dateOfBirth,
+                pageNumber: '1',
+                patientStatus: '2'
+            });
+
+            const response = await doseSpotApiFetch<DoseSpotSearchPatientsResponse>(
+                `api/patients/search?${query.toString()}`,
+                { method: 'GET', onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId }
+            );
+
+            return Array.isArray(response.Items) ? response.Items : [];
+        });
     },
 
     async addPatient(payload, onBehalfOfClinicianId) {
-        const response = await doseSpotApiFetch<DoseSpotIdentifierResponse>('api/patients', {
-            method: 'POST',
-            body: payload,
-            onBehalfOfClinicianId
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'addPatient', async (effectiveOnBehalfOfClinicianId) => {
+            const response = await doseSpotApiFetch<DoseSpotIdentifierResponse>('api/patients', {
+                method: 'POST',
+                body: payload,
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
+            ensureDoseSpotResultOk(response.Result, 'add patient');
+
+            const id = asNumber(response.Id);
+            if (!id) {
+                throw new Error('DoseSpot add patient response did not include an Id.');
+            }
+
+            return id;
         });
-        ensureDoseSpotResultOk(response.Result, 'add patient');
-
-        const id = asNumber(response.Id);
-        if (!id) {
-            throw new Error('DoseSpot add patient response did not include an Id.');
-        }
-
-        return id;
     },
 
     async editPatient(patientId, payload, onBehalfOfClinicianId) {
-        const response = await doseSpotApiFetch<DoseSpotIdentifierResponse>(`api/patients/${patientId}`, {
-            method: 'PUT',
-            body: payload,
-            onBehalfOfClinicianId
-        });
-        ensureDoseSpotResultOk(response.Result, 'edit patient');
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'editPatient', async (effectiveOnBehalfOfClinicianId) => {
+            const response = await doseSpotApiFetch<DoseSpotIdentifierResponse>(`api/patients/${patientId}`, {
+                method: 'PUT',
+                body: payload,
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
+            ensureDoseSpotResultOk(response.Result, 'edit patient');
 
-        return asNumber(response.Id) ?? patientId;
+            return asNumber(response.Id) ?? patientId;
+        });
     },
 
     async getPatient(patientId, onBehalfOfClinicianId) {
-        const response = await doseSpotApiFetch<{ Item?: DoseSpotPatientRecord }>(`api/patients/${patientId}`, {
-            method: 'GET',
-            onBehalfOfClinicianId
-        });
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'getPatient', async (effectiveOnBehalfOfClinicianId) => {
+            const response = await doseSpotApiFetch<{ Item?: DoseSpotPatientRecord }>(`api/patients/${patientId}`, {
+                method: 'GET',
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
 
-        return response.Item ?? null;
+            return response.Item ?? null;
+        });
     },
 
     async addPatientPharmacy(patientId, payload, onBehalfOfClinicianId) {
-        await doseSpotApiFetch<{ Result?: DoseSpotResult }>(`api/patients/${patientId}/pharmacies`, {
-            method: 'POST',
-            body: {
-                PharmacyId: payload.pharmacyId,
-                SetAsPrimary: payload.setAsPrimary
-            },
-            onBehalfOfClinicianId
+        await withPatientManagementAuthFallback(onBehalfOfClinicianId, 'addPatientPharmacy', async (effectiveOnBehalfOfClinicianId) => {
+            await doseSpotApiFetch<{ Result?: DoseSpotResult }>(`api/patients/${patientId}/pharmacies`, {
+                method: 'POST',
+                body: {
+                    PharmacyId: payload.pharmacyId,
+                    SetAsPrimary: payload.setAsPrimary
+                },
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
         });
     }
 };
@@ -506,6 +633,30 @@ async function persistSyncState(input: PersistSyncStateInput): Promise<void> {
     await Promise.all([
         admin.firestore().collection('patients').doc(input.patientUid).set(patientPayload, { merge: true }),
         admin.firestore().collection('users').doc(input.patientUid).set(userPayload, { merge: true })
+    ]);
+}
+
+async function clearPersistedSyncState(patientUid: string): Promise<void> {
+    const now = new Date();
+    const deleteField = admin.firestore.FieldValue.delete();
+
+    await Promise.all([
+        admin.firestore().collection('patients').doc(patientUid).set({
+            doseSpotPatientId: deleteField,
+            'doseSpot.syncStatus': deleteField,
+            'doseSpot.matchSource': deleteField,
+            'doseSpot.lastError': deleteField,
+            'doseSpot.retryCount': deleteField,
+            'doseSpot.candidatePatientIds': deleteField,
+            'doseSpot.lastSyncedAt': deleteField,
+            updatedAt: now
+        }, { merge: true }),
+        admin.firestore().collection('users').doc(patientUid).set({
+            doseSpotPatientId: deleteField,
+            'doseSpot.syncStatus': deleteField,
+            'doseSpot.lastSyncedAt': deleteField,
+            updatedAt: now
+        }, { merge: true })
     ]);
 }
 
@@ -826,14 +977,157 @@ export async function ensureDoseSpotPatientForUid(
     return ensureDoseSpotPatientWithSource(source, options, gateway);
 }
 
+async function deleteDoseSpotPatientWithSource(
+    source: LocalPatientSource,
+    options: DeleteDoseSpotPatientOptions = {},
+    gateway: DoseSpotPatientGateway = defaultGateway,
+    clearPersistedStateHandler: (patientUid: string) => Promise<void> = clearPersistedSyncState
+): Promise<DeleteDoseSpotPatientResult> {
+    const explicitCandidateIds = Array.from(new Set(
+        (options.candidatePatientIds ?? [])
+            .map((value) => asNumber(value))
+            .filter((value): value is number => value !== null && value > 0)
+    ));
+
+    let targetRecords: DoseSpotPatientRecord[] = [];
+    let candidatePatientIds: number[] = [];
+
+    if (explicitCandidateIds.length > 0) {
+        candidatePatientIds = explicitCandidateIds;
+        const records = await Promise.all(
+            explicitCandidateIds.map((patientId) => gateway.getPatient(patientId, options.onBehalfOfClinicianId))
+        );
+        targetRecords = records.filter((record): record is DoseSpotPatientRecord => record !== null);
+    } else if (source.existingDoseSpotPatientId) {
+        candidatePatientIds = [source.existingDoseSpotPatientId];
+        const record = await gateway.getPatient(source.existingDoseSpotPatientId, options.onBehalfOfClinicianId);
+        targetRecords = record ? [record] : [];
+    } else {
+        const blockingFields = blockingMissingFields(source);
+        if (blockingFields.length > 0) {
+            return {
+                status: 'blocked',
+                patientUid: source.patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds: [],
+                message: 'DoseSpot delete lookup requires first name, last name, and date of birth.'
+            };
+        }
+
+        const searchResults = await gateway.searchPatients({
+            firstName: source.firstName!,
+            lastName: source.lastName!,
+            dateOfBirth: source.dateOfBirth!
+        }, options.onBehalfOfClinicianId);
+
+        const exactMatches = chooseExactMatchRecords(searchResults, source);
+        candidatePatientIds = exactMatches
+            .map((record) => pickPatientRecordId(record))
+            .filter((value): value is number => value !== null);
+
+        if (candidatePatientIds.length === 0) {
+            await clearPersistedStateHandler(source.patientUid);
+            return {
+                status: 'not_found',
+                patientUid: source.patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds: [],
+                message: 'No exact DoseSpot patient match was found to delete.'
+            };
+        }
+
+        if (candidatePatientIds.length > 1 && options.deactivateAllExactMatches !== true) {
+            return {
+                status: 'ambiguous_match',
+                patientUid: source.patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds,
+                message: 'Multiple exact DoseSpot patient matches were found. Pass candidate ids or request deletion of all exact matches.'
+            };
+        }
+
+        targetRecords = exactMatches;
+    }
+
+    if (targetRecords.length === 0) {
+        await clearPersistedStateHandler(source.patientUid);
+        return {
+            status: 'not_found',
+            patientUid: source.patientUid,
+            deletedPatientIds: [],
+            candidatePatientIds,
+            message: 'No DoseSpot patient record was found for the requested deletion.'
+        };
+    }
+
+    const deletedPatientIds: number[] = [];
+    for (const record of targetRecords) {
+        const patientId = pickPatientRecordId(record);
+        if (!patientId) {
+            continue;
+        }
+
+        const payload = buildDoseSpotEditPayloadFromRecord(record, false);
+        await gateway.editPatient(patientId, payload, options.onBehalfOfClinicianId);
+        deletedPatientIds.push(patientId);
+    }
+
+    await clearPersistedStateHandler(source.patientUid);
+
+    return {
+        status: 'deleted',
+        patientUid: source.patientUid,
+        deletedPatientIds,
+        candidatePatientIds: deletedPatientIds,
+        message: deletedPatientIds.length > 1
+            ? 'Deactivated multiple exact-match DoseSpot patient records and cleared the local link.'
+            : 'Deactivated the DoseSpot patient record and cleared the local link.'
+    };
+}
+
+export async function deleteDoseSpotPatientForUid(
+    patientUid: string,
+    options: DeleteDoseSpotPatientOptions = {},
+    gateway: DoseSpotPatientGateway = defaultGateway
+): Promise<DeleteDoseSpotPatientResult> {
+    const source = await loadLocalPatientSource(patientUid);
+    if (!source) {
+        return {
+            status: 'blocked',
+            patientUid,
+            deletedPatientIds: [],
+            candidatePatientIds: [],
+            message: 'Local patient record was not found.'
+        };
+    }
+
+    try {
+        return await deleteDoseSpotPatientWithSource(source, options, gateway);
+    } catch (error) {
+        if (isDoseSpotAuthorizationConfigError(error)) {
+            return {
+                status: 'blocked',
+                patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds: [],
+                message: 'DoseSpot patient-management operations are not enabled for the current staging credentials.'
+            };
+        }
+
+        throw error;
+    }
+}
+
 function normalizeMatchCandidates(records: DoseSpotPatientRecord[], source: LocalPatientSource): number[] {
     return chooseSearchMatch(records, source).candidatePatientIds;
 }
 
 export const doseSpotPatientTestables = {
     blockingMissingFields,
+    buildDoseSpotEditPayloadFromRecord,
     buildDoseSpotPayload,
     chooseSearchMatch,
+    deleteDoseSpotPatientWithSource,
     ensureDoseSpotPatientWithSource,
     formatDateOnly,
     normalizeGender,

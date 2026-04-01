@@ -23,6 +23,26 @@ export function MfaSetup({ onComplete }: MfaSetupProps) {
     const [loading, setLoading] = useState(false);
     const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
+    const getMfaErrorMessage = (authError: any) => {
+        const code = authError?.code;
+
+        switch (code) {
+            case 'auth/app-not-authorized':
+            case 'auth/unauthorized-domain':
+                return 'This domain is not authorized for Firebase phone verification. Add the current site domain in Firebase Authentication > Settings > Authorized domains.';
+            case 'auth/invalid-app-credential':
+            case 'auth/captcha-check-failed':
+                return 'Firebase rejected the reCAPTCHA/app verification handshake. Refresh the page and retry. If this persists, verify reCAPTCHA and phone auth are configured correctly in Firebase.';
+            case 'auth/operation-not-allowed':
+                return 'Phone-based MFA is not enabled for this Firebase project. Enable Phone as a sign-in provider and multi-factor authentication in Firebase Console.';
+            case 'auth/quota-exceeded':
+            case 'auth/too-many-requests':
+                return 'Firebase temporarily blocked additional verification attempts. Wait a few minutes and try again.';
+            default:
+                return authError?.message || 'Failed to send verification code. Please try again.';
+        }
+    };
+
     useEffect(() => {
         if (typeof window !== 'undefined' && !recaptchaVerifier) {
             const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
@@ -36,7 +56,7 @@ export function MfaSetup({ onComplete }: MfaSetupProps) {
                 recaptchaVerifier.clear();
             }
         };
-    }, []);
+    }, [recaptchaVerifier]);
 
     const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,7 +77,9 @@ export function MfaSetup({ onComplete }: MfaSetupProps) {
             setStep('code');
         } catch (err: any) {
             console.error('MFA Send Code Error:', err);
-            setError(err.message || 'Failed to send verification code. Please try again.');
+            recaptchaVerifier?.clear();
+            setRecaptchaVerifier(null);
+            setError(getMfaErrorMessage(err));
         } finally {
             setLoading(false);
         }

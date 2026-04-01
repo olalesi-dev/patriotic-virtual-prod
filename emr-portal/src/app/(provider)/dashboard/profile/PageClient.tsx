@@ -578,7 +578,7 @@ export default function ProviderProfilePage() {
                                         </div>
                                         
                                         <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-inner">
-                                            <DoseSpotFrame height="800px" />
+                                            <DoseSpotFrame height="920px" />
                                         </div>
                                     </div>
                                 )}

@@ -15,7 +15,7 @@ import {
     verifyDoseSpotSecret,
     verifyDoseSpotTaskRequest
 } from '../services/dosespot-push';
-import { ensureDoseSpotPatientForUid } from '../services/dosespot-patients';
+import { deleteDoseSpotPatientForUid, ensureDoseSpotPatientForUid } from '../services/dosespot-patients';
 import {
     acceptDoseSpotIdpDisclaimerForUid,
     acceptDoseSpotLegalAgreementForUid,
@@ -428,6 +428,49 @@ router.post('/patients/ensure', verifyFirebaseToken, async (req: Request, res: R
             error: error instanceof Error ? error.message : String(error)
         });
         return res.status(500).json({ error: 'Failed to ensure DoseSpot patient link' });
+    }
+});
+
+router.post('/patients/delete', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = (typeof req.body === 'object' && req.body !== null && !Array.isArray(req.body))
+        ? req.body as Record<string, unknown>
+        : {};
+    const requestedPatientUid = typeof body.patientUid === 'string' && body.patientUid.trim().length > 0
+        ? body.patientUid.trim()
+        : requesterUid;
+    const deactivateAllExactMatches = body.deactivateAllExactMatches === true;
+    const candidatePatientIds = Array.isArray(body.candidatePatientIds)
+        ? body.candidatePatientIds
+            .map((value) => asNumber(value))
+            .filter((value): value is number => value !== null && value > 0)
+        : [];
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+
+        if (requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to delete DoseSpot data for another patient.' });
+        }
+
+        const result = await deleteDoseSpotPatientForUid(requestedPatientUid, {
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined,
+            candidatePatientIds,
+            deactivateAllExactMatches
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Patient Delete] Delete route failed', {
+            requesterUid,
+            requestedPatientUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to delete DoseSpot patient link' });
     }
 });
 

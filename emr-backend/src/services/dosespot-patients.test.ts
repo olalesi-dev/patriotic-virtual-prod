@@ -198,3 +198,68 @@ test('ensureDoseSpotPatientWithSource treats DoseSpot operation-group authorizat
     assert.match(result.message, /patient operations are not enabled/i);
     assert.equal(persisted[0]?.retryCount, 0);
 });
+
+test('deleteDoseSpotPatientWithSource deactivates a linked DoseSpot patient and clears local sync state', async () => {
+    const clearedPatientUids: string[] = [];
+    let editedPayload: Record<string, unknown> | null = null;
+
+    const result = await doseSpotPatientTestables.deleteDoseSpotPatientWithSource(
+        buildSource({ existingDoseSpotPatientId: 82368444 }),
+        {},
+        buildGateway({
+            getPatient: async () => ({
+                PatientId: 82368444,
+                FirstName: 'Rowena',
+                LastName: 'Acacianna',
+                DateOfBirth: '1968-03-29T00:00:00.000Z',
+                Gender: 'Female',
+                Address1: '2798 Parsifal St NE',
+                City: 'Albuquerque',
+                State: 'NM',
+                ZipCode: '87112',
+                PrimaryPhone: '5052936547',
+                PrimaryPhoneType: 'Cell',
+                NonDoseSpotMedicalRecordNumber: 'cert-rowena-19680329',
+                Active: true
+            }),
+            editPatient: async (_patientId: number, payload: Record<string, unknown>) => {
+                editedPayload = payload;
+                return 82368444;
+            }
+        }),
+        async (patientUid) => { clearedPatientUids.push(patientUid); }
+    );
+
+    assert.equal(result.status, 'deleted');
+    assert.deepEqual(result.deletedPatientIds, [82368444]);
+    assert.equal((editedPayload as Record<string, unknown> | null)?.Active, false);
+    assert.deepEqual(clearedPatientUids, ['patient-1']);
+});
+
+test('deleteDoseSpotPatientWithSource returns ambiguous_match when multiple exact matches exist and explicit confirmation was not provided', async () => {
+    const result = await doseSpotPatientTestables.deleteDoseSpotPatientWithSource(
+        buildSource(),
+        {},
+        buildGateway({
+            searchPatients: async () => [
+                {
+                    PatientId: 82368444,
+                    FirstName: 'Rowena',
+                    LastName: 'Acacianna',
+                    DateOfBirth: '1991-04-09T00:00:00.000Z'
+                },
+                {
+                    PatientId: 82368454,
+                    FirstName: 'Rowena',
+                    LastName: 'Acacianna',
+                    DateOfBirth: '1991-04-09T00:00:00.000Z'
+                }
+            ]
+        }),
+        async () => undefined
+    );
+
+    assert.equal(result.status, 'ambiguous_match');
+    assert.deepEqual(result.candidatePatientIds, [82368444, 82368454]);
+    assert.deepEqual(result.deletedPatientIds, []);
+});

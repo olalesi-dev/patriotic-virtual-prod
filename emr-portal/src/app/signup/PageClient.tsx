@@ -1,47 +1,19 @@
 "use client";
 
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserPlus, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, MapPin, Phone } from 'lucide-react';
-import { logAuditEvent } from '@/lib/audit';
-import { syncDoseSpotPatientBestEffort } from '@/lib/dosespot-patient-sync';
+import { finalizePatientRegistration, type PatientRegistrationFormValues, validatePatientRegistration } from '@/lib/patient-registration';
 import { US_STATE_OPTIONS } from '@/lib/us-states';
 
 const INPUT_CLASS_NAME = 'w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all';
 const SELECT_CLASS_NAME = 'w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 px-4 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-brand/20 transition-all';
 
-function normalizeUsPhone(value: string): string | null {
-    const digits = value.replace(/\D/g, '');
-    if (digits.length === 10) return digits;
-    if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
-    return null;
-}
-
-function normalizeUsZip(value: string): string | null {
-    const digits = value.replace(/\D/g, '');
-    return digits.length >= 5 ? digits.slice(0, 5) : null;
-}
-
-function isAdult(dateOfBirth: string): boolean {
-    const birthDate = new Date(dateOfBirth);
-    if (Number.isNaN(birthDate.getTime())) return false;
-
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDelta = today.getMonth() - birthDate.getMonth();
-    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
-        age -= 1;
-    }
-
-    return age >= 18;
-}
-
 export default function SignupPage() {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<PatientRegistrationFormValues>({
         firstName: '',
         lastName: '',
         dob: '',
@@ -64,119 +36,23 @@ export default function SignupPage() {
         e.preventDefault();
         setError(null);
 
-        const normalizedPhone = normalizeUsPhone(formData.phone);
-        const normalizedZipCode = normalizeUsZip(formData.zipCode);
-        const firstName = formData.firstName.trim();
-        const lastName = formData.lastName.trim();
-        const address1 = formData.address1.trim();
-        const city = formData.city.trim();
-        const email = formData.email.trim();
-        const displayName = `${firstName} ${lastName}`.trim();
-
-        if (!firstName || !lastName) {
-            setError('First name and last name are required');
-            return;
-        }
-
-        if (!formData.dob || !isAdult(formData.dob)) {
-            setError('You must be at least 18 years old to create an account');
-            return;
-        }
-
-        if (!formData.sex) {
-            setError('Sex is required');
-            return;
-        }
-
-        if (!address1 || !city || !formData.state) {
-            setError('Address, city, and state are required');
-            return;
-        }
-
-        if (!normalizedZipCode) {
-            setError('ZIP code must be a valid 5-digit US ZIP');
-            return;
-        }
-
-        if (!normalizedPhone) {
-            setError('Phone number must be a valid 10-digit US phone number');
-            return;
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
-        if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters');
+        const validation = validatePatientRegistration(formData);
+        if (validation.error || !validation.data) {
+            setError(validation.error ?? 'Failed to validate account details.');
             return;
         }
 
         setLoading(true);
 
         try {
-            // 1. Create User in Auth
             const userCredential = await createUserWithEmailAndPassword(
                 auth,
-                email,
-                formData.password
+                validation.data.email,
+                formData.password ?? ''
             );
-            const user = userCredential.user;
-
-            // 2. Update Auth Profile
-            await updateProfile(user, {
-                displayName
-            });
-
-            // 3. Create Patient Record in Firestore
-            // We use the 'patients' collection which is shared with the provider side
-            const patientRecord = {
-                uid: user.uid,
-                email,
-                name: displayName,
-                displayName,
-                firstName,
-                lastName,
-                dob: formData.dob || null,
-                dateOfBirth: formData.dob || null,
-                sex: formData.sex || null,
-                sexAtBirth: formData.sex || null,
-                gender: formData.sex || null,
-                address: address1 || null,
-                address1: address1 || null,
-                city: city || null,
-                state: formData.state || null,
-                zip: normalizedZipCode,
-                zipCode: normalizedZipCode,
-                phone: normalizedPhone,
-                phoneNumber: normalizedPhone,
-                role: 'patient',
-                status: 'active',
-                emailVerified: false,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            };
-
-            await Promise.all([
-                setDoc(doc(db, 'patients', user.uid), patientRecord),
-                setDoc(doc(db, 'users', user.uid), patientRecord, { merge: true })
-            ]);
-
-            // 4. Send Verification Email
-            await sendEmailVerification(user);
-
-            // 5. Log Audit Event
-            await logAuditEvent({
-                userId: user.uid,
-                userEmail: user.email!,
-                action: 'ACCOUNT_CREATED',
-                details: { role: 'patient' }
-            });
-
-            void syncDoseSpotPatientBestEffort(user, {
-                patientUid: user.uid,
-                updateExisting: false
+            await finalizePatientRegistration(userCredential.user, validation.data, {
+                sendVerificationEmail: true,
+                auditAction: 'ACCOUNT_CREATED'
             });
 
             setSuccess(true);

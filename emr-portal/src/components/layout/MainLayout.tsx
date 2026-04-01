@@ -74,6 +74,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [type, setType] = useState('video');
 
     const router = useRouter();
+    const sidebarWidth = isSidebarCollapsed ? 80 : 256;
     usePushNotifications(activeUser);
 
     const profile = useUserProfile();
@@ -221,7 +222,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
             {/* SIDEBAR */}
             <aside
-                className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-sidebar flex flex-col fixed inset-y-0 z-30 text-white shadow-xl transition-all duration-300 ease-in-out`}
+                className="bg-sidebar fixed inset-y-0 left-0 z-30 flex shrink-0 flex-col text-white shadow-xl transition-[width] duration-300 ease-in-out"
+                style={{ width: `${sidebarWidth}px` }}
             >
                 {/* Logo Area */}
                 <div className={`h-16 flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'px-6'} border-b border-sidebar-active/50 relative`}>
@@ -387,7 +389,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </aside>
 
             {/* MAIN CONTENT WRAPPER */}
-            <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-64'} flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out`}>
+            <main
+                className="flex-1 flex min-w-0 flex-col transition-[margin-left] duration-300 ease-in-out"
+                style={{ marginLeft: `${sidebarWidth}px` }}
+            >
 
                 {/* Header */}
                 <header className="h-16 bg-white dark:bg-slate-800 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90 dark:bg-slate-800/90">

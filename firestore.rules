@@ -146,6 +146,10 @@ service cloud.firestore {
     }
     match /users/{id} {
       allow read, write: if isAuthenticated();
+
+      match /{document=**} {
+        allow read, write: if isAuthenticated();
+      }
     }
     match /claims/{id} {
       allow read, write: if isAuthenticated();

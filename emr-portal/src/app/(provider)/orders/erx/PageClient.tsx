@@ -3,7 +3,7 @@
 import React, { useDeferredValue, useEffect, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bell, ExternalLink, Loader2, Pill, Search, ShieldCheck, UserRound, Users } from 'lucide-react';
+import { AlertCircle, Bell, ChevronLeft, ChevronRight, ExternalLink, Loader2, Pill, Search, ShieldCheck, UserRound, Users } from 'lucide-react';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { auth } from '@/lib/firebase';
@@ -12,10 +12,20 @@ import { apiFetchJson } from '@/lib/api-client';
 import { getDoseSpotApiUrl } from '@/lib/dosespot-client';
 import type { PatientRegistryResponse, PatientRegistryRow } from '@/lib/patient-registry-types';
 
-interface PatientSearchResponse {
-    success?: boolean;
-    results?: PatientRegistryRow[];
-    error?: string;
+const PATIENT_PAGE_SIZE = 12;
+const DOSESPOT_FIELD_LABELS: Record<string, string> = {
+    firstName: 'first name',
+    lastName: 'last name',
+    dateOfBirth: 'date of birth',
+    address1: 'address',
+    city: 'city',
+    state: 'state',
+    zipCode: 'ZIP code',
+    primaryPhone: 'phone'
+};
+
+function formatDoseSpotFields(fields: string[]) {
+    return fields.map((field) => DOSESPOT_FIELD_LABELS[field] ?? field).join(', ');
 }
 
 export default function ErxPage() {
@@ -45,9 +55,19 @@ export default function ErxPage() {
     const [patientPickerLoading, setPatientPickerLoading] = useState(false);
     const [patientPickerError, setPatientPickerError] = useState<string | null>(null);
     const [selectingPatientId, setSelectingPatientId] = useState<string | null>(null);
+    const [patientCursorStack, setPatientCursorStack] = useState<Array<string | null>>([null]);
+    const [patientPageIndex, setPatientPageIndex] = useState(0);
+    const [nextPatientCursor, setNextPatientCursor] = useState<string | null>(null);
+    const [patientTotalCount, setPatientTotalCount] = useState(0);
+    const currentPatientCursor = patientCursorStack[patientPageIndex] ?? null;
+    const showingPatientsFrom = availablePatients.length === 0 ? 0 : (patientPageIndex * PATIENT_PAGE_SIZE) + 1;
+    const showingPatientsTo = availablePatients.length === 0
+        ? 0
+        : Math.min((patientPageIndex * PATIENT_PAGE_SIZE) + availablePatients.length, patientTotalCount);
 
     useEffect(() => {
         let unsubscribeSnapshot: (() => void) | null = null;
+        let fallbackIntervalId: number | null = null;
         let cancelled = false;
 
         const fetchNotificationsFallback = async (uid: string) => {
@@ -67,11 +87,27 @@ export default function ErxPage() {
             }
         };
 
+        const stopFallbackPolling = () => {
+            if (fallbackIntervalId !== null) {
+                window.clearInterval(fallbackIntervalId);
+                fallbackIntervalId = null;
+            }
+        };
+
+        const startFallbackPolling = (uid: string) => {
+            stopFallbackPolling();
+            void fetchNotificationsFallback(uid);
+            fallbackIntervalId = window.setInterval(() => {
+                void fetchNotificationsFallback(uid);
+            }, 30_000);
+        };
+
         const unsubscribeAuth = auth.onAuthStateChanged((user) => {
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot();
                 unsubscribeSnapshot = null;
             }
+            stopFallbackPolling();
 
             if (!user) {
                 setNotificationCount(0);
@@ -89,11 +125,11 @@ export default function ErxPage() {
                 const total = typeof data.total === 'number' ? data.total : 0;
                 setNotificationCount(total);
             }, (error) => {
-                console.warn('DoseSpot notification listener unavailable, falling back to API fetch.', error);
-                void fetchNotificationsFallback(user.uid);
+                console.warn('DoseSpot notification listener unavailable, using API polling fallback.', error);
+                startFallbackPolling(user.uid);
             });
 
-            void fetchNotificationsFallback(user.uid);
+            startFallbackPolling(user.uid);
         });
 
         return () => {
@@ -102,8 +138,15 @@ export default function ErxPage() {
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot();
             }
+            stopFallbackPolling();
         };
     }, []);
+
+    useEffect(() => {
+        setPatientCursorStack([null]);
+        setPatientPageIndex(0);
+        setNextPatientCursor(null);
+    }, [deferredPatientQuery, activeUser?.uid]);
 
     useEffect(() => {
         if (hasLaunchContext || !isReady) {
@@ -113,6 +156,8 @@ export default function ErxPage() {
         if (!activeUser) {
             setAvailablePatients([]);
             setPatientPickerLoading(false);
+            setPatientTotalCount(0);
+            setNextPatientCursor(null);
             return;
         }
 
@@ -123,28 +168,20 @@ export default function ErxPage() {
             setPatientPickerError(null);
 
             try {
+                const params = new URLSearchParams({
+                    pageSize: String(PATIENT_PAGE_SIZE),
+                    sortField: deferredPatientQuery ? 'name' : 'lastActivityAt',
+                    sortDir: deferredPatientQuery ? 'asc' : 'desc'
+                });
                 if (deferredPatientQuery) {
-                    const payload = await apiFetchJson<PatientSearchResponse>(
-                        `/api/patients/search?q=${encodeURIComponent(deferredPatientQuery)}&limit=12`,
-                        {
-                            method: 'GET',
-                            user: activeUser,
-                            cache: 'no-store'
-                        }
-                    );
-
-                    if (!payload.success || !payload.results) {
-                        throw new Error(payload.error || 'Failed to search patients.');
-                    }
-
-                    if (!cancelled) {
-                        setAvailablePatients(payload.results);
-                    }
-                    return;
+                    params.set('q', deferredPatientQuery);
                 }
-
+                params.set('excludeDoseSpotBlocked', 'true');
+                if (currentPatientCursor) {
+                    params.set('cursor', currentPatientCursor);
+                }
                 const payload = await apiFetchJson<PatientRegistryResponse>(
-                    '/api/patients/list?pageSize=12&sortField=lastActivityAt&sortDir=desc',
+                    `/api/patients/list?${params.toString()}`,
                     {
                         method: 'GET',
                         user: activeUser,
@@ -158,12 +195,16 @@ export default function ErxPage() {
 
                 if (!cancelled) {
                     setAvailablePatients(payload.patients);
+                    setPatientTotalCount(payload.totalCount);
+                    setNextPatientCursor(payload.nextCursor);
                 }
             } catch (error) {
                 console.error('Failed to load provider patients for DoseSpot:', error);
                 if (!cancelled) {
                     setAvailablePatients([]);
                     setPatientPickerError(error instanceof Error ? error.message : 'Failed to load patients.');
+                    setPatientTotalCount(0);
+                    setNextPatientCursor(null);
                 }
             } finally {
                 if (!cancelled) {
@@ -177,9 +218,12 @@ export default function ErxPage() {
         return () => {
             cancelled = true;
         };
-    }, [activeUser, deferredPatientQuery, hasLaunchContext, isReady]);
+    }, [activeUser, currentPatientCursor, deferredPatientQuery, hasLaunchContext, isReady]);
 
     const handleSelectPatient = (patient: PatientRegistryRow) => {
+        if (patient.doseSpot?.isLaunchBlocked) {
+            return;
+        }
         setSelectingPatientId(patient.id);
         router.push(`/orders/erx?patientUid=${encodeURIComponent(patient.id)}`);
     };
@@ -270,7 +314,7 @@ export default function ErxPage() {
                             patientUid={resolvedPatientUid}
                             patientDoseSpotId={patientDoseSpotId}
                             refillsErrors={refillsErrorsMode}
-                            height="85vh"
+                            height="88vh"
                         />
                     </div>
                 </>
@@ -288,7 +332,7 @@ export default function ErxPage() {
                                         Choose a patient before launching DoseSpot
                                     </h2>
                                     <p className="max-w-3xl text-sm font-medium text-slate-600">
-                                        This page now waits for an explicit patient selection before generating the DoseSpot SSO URL and mounting the prescribing iframe.
+                                        This page waits for an explicit patient selection before generating the DoseSpot SSO URL and mounting the prescribing iframe. Patients missing the core identity fields DoseSpot requires are hidden from this launch list.
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap gap-3">
@@ -363,8 +407,8 @@ export default function ErxPage() {
                                     </p>
                                     <p className="text-sm font-semibold text-slate-600">
                                         {deferredPatientQuery
-                                            ? `No provider-scoped patients matched "${deferredPatientQuery}".`
-                                            : 'There are no provider-scoped patients available to launch into DoseSpot yet.'}
+                                            ? `No DoseSpot-launchable patients matched "${deferredPatientQuery}".`
+                                            : 'There are no provider-scoped patients with enough core identity data to launch into DoseSpot yet.'}
                                     </p>
                                 </div>
                             </div>
@@ -372,7 +416,9 @@ export default function ErxPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <p className="text-xs font-black uppercase tracking-widest text-slate-400">
-                                        {deferredPatientQuery ? `Search results (${availablePatients.length})` : 'Recently active patients'}
+                                        {deferredPatientQuery
+                                            ? `DoseSpot launch list ${showingPatientsFrom}-${showingPatientsTo} of ${patientTotalCount}`
+                                            : `DoseSpot-ready patients ${showingPatientsFrom}-${showingPatientsTo} of ${patientTotalCount}`}
                                     </p>
                                     <p className="text-xs font-semibold text-slate-500">
                                         Select a patient to generate the DoseSpot SSO URL.
@@ -380,56 +426,125 @@ export default function ErxPage() {
                                 </div>
 
                                 <div className="grid gap-4 xl:grid-cols-2">
-                                    {availablePatients.map((patient) => (
-                                        <button
-                                            key={patient.id}
-                                            type="button"
-                                            onClick={() => handleSelectPatient(patient)}
-                                            disabled={selectingPatientId === patient.id}
-                                            className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md disabled:cursor-wait disabled:opacity-70"
-                                        >
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="space-y-3">
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h3 className="text-lg font-black tracking-tight text-slate-900 group-hover:text-teal-700">
-                                                                {patient.name}
-                                                            </h3>
-                                                            <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${patient.statusColor}`}>
-                                                                {patient.statusLabel}
-                                                            </span>
+                                    {availablePatients.map((patient) => {
+                                        const isSelecting = selectingPatientId === patient.id;
+                                        const isDoseSpotBlocked = patient.doseSpot?.isLaunchBlocked ?? false;
+                                        const hasLinkedDoseSpotPatient = Boolean(patient.doseSpot?.linkedPatientId);
+                                        const missingWriteFields = patient.doseSpot?.missingWriteFields ?? [];
+
+                                        return (
+                                            <button
+                                                key={patient.id}
+                                                type="button"
+                                                onClick={() => handleSelectPatient(patient)}
+                                                disabled={isSelecting || isDoseSpotBlocked}
+                                                className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
+                                            >
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h3 className="text-lg font-black tracking-tight text-slate-900 group-hover:text-teal-700">
+                                                                    {patient.name}
+                                                                </h3>
+                                                                <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${patient.statusColor}`}>
+                                                                    {patient.statusLabel}
+                                                                </span>
+                                                                {hasLinkedDoseSpotPatient && (
+                                                                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                                                        Linked in DoseSpot
+                                                                    </span>
+                                                                )}
+                                                                {!hasLinkedDoseSpotPatient && missingWriteFields.length > 0 && (
+                                                                    <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700 ring-1 ring-inset ring-amber-200">
+                                                                        May Need More Demographics
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                                                MRN {patient.mrn}
+                                                            </p>
                                                         </div>
-                                                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                                            MRN {patient.mrn}
-                                                        </p>
+
+                                                        <div className="grid gap-2 text-sm font-medium text-slate-600 sm:grid-cols-2">
+                                                            <span>DOB: {patient.dob ?? '—'}</span>
+                                                            <span>Sex: {patient.sex ?? '—'}</span>
+                                                            <span>Email: {patient.email ?? '—'}</span>
+                                                            <span>Phone: {patient.phone ?? '—'}</span>
+                                                            <span>State: {patient.state ?? '—'}</span>
+                                                            <span>Service: {patient.serviceLine || 'General'}</span>
+                                                        </div>
+
+                                                        {!hasLinkedDoseSpotPatient && missingWriteFields.length > 0 && (
+                                                            <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                                                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                                                                <span>
+                                                                    DoseSpot can still search by identity, but creating a new chart may require {formatDoseSpotFields(missingWriteFields)}.
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                     </div>
 
-                                                    <div className="grid gap-2 text-sm font-medium text-slate-600 sm:grid-cols-2">
-                                                        <span>DOB: {patient.dob ?? '—'}</span>
-                                                        <span>Sex: {patient.sex ?? '—'}</span>
-                                                        <span>Email: {patient.email ?? '—'}</span>
-                                                        <span>Phone: {patient.phone ?? '—'}</span>
-                                                        <span>State: {patient.state ?? '—'}</span>
-                                                        <span>Service: {patient.serviceLine || 'General'}</span>
+                                                    <div className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-[0.16em] shadow-sm ${
+                                                        isDoseSpotBlocked
+                                                            ? 'bg-slate-200 text-slate-500'
+                                                            : 'bg-teal-600 text-white'
+                                                    }`}>
+                                                        {isSelecting ? (
+                                                            <>
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                                Opening…
+                                                            </>
+                                                        ) : isDoseSpotBlocked ? (
+                                                            <>
+                                                                <AlertCircle className="h-4 w-4" />
+                                                                Incomplete
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Pill className="h-4 w-4" />
+                                                                Open eRx
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
 
-                                                <div className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-sm">
-                                                    {selectingPatientId === patient.id ? (
-                                                        <>
-                                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                                            Opening…
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Pill className="h-4 w-4" />
-                                                            Open eRx
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
+                                <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="text-xs font-semibold text-slate-500">
+                                        Page {patientPageIndex + 1}
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPatientPageIndex((current) => Math.max(0, current - 1))}
+                                            disabled={patientPageIndex === 0 || patientPickerLoading}
+                                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                            Previous
                                         </button>
-                                    ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (!nextPatientCursor) return;
+                                                setPatientCursorStack((current) => {
+                                                    const next = current.slice(0, patientPageIndex + 1);
+                                                    next.push(nextPatientCursor);
+                                                    return next;
+                                                });
+                                                setPatientPageIndex((current) => current + 1);
+                                            }}
+                                            disabled={!nextPatientCursor || patientPickerLoading}
+                                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}

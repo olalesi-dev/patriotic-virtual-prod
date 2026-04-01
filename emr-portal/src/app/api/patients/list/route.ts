@@ -47,6 +47,7 @@ export async function GET(request: Request) {
             statuses: readArray(searchParams, 'status'),
             teamIds: readArray(searchParams, 'teamId'),
             tags: readArray(searchParams, 'tag'),
+            excludeDoseSpotBlocked: searchParams.get('excludeDoseSpotBlocked') === 'true',
             cursor: searchParams.get('cursor'),
             pageSize: Number.isFinite(pageSize) ? pageSize : 25,
             sortField,

@@ -28,6 +28,20 @@ export interface DoseSpotPatientEnsureResponse {
     message: string;
 }
 
+export type DoseSpotPatientDeleteStatus =
+    | 'deleted'
+    | 'ambiguous_match'
+    | 'not_found'
+    | 'blocked';
+
+export interface DoseSpotPatientDeleteResponse {
+    status: DoseSpotPatientDeleteStatus;
+    patientUid: string;
+    deletedPatientIds: number[];
+    candidatePatientIds: number[];
+    message: string;
+}
+
 export interface DoseSpotSsoUrlResponse {
     status: DoseSpotPatientEnsureStatus | 'ready';
     syncStatus: DoseSpotSyncStatus;
@@ -43,6 +57,12 @@ export interface DoseSpotSsoUrlResponse {
 interface EnsureDoseSpotPatientInput {
     patientUid?: string;
     updateExisting?: boolean;
+}
+
+interface DeleteDoseSpotPatientInput {
+    patientUid?: string;
+    candidatePatientIds?: number[];
+    deactivateAllExactMatches?: boolean;
 }
 
 export async function ensureDoseSpotPatientLink(
@@ -69,4 +89,18 @@ export async function syncDoseSpotPatientBestEffort(
         console.warn('DoseSpot patient sync failed during best-effort attempt.', error);
         return null;
     }
+}
+
+export async function deleteDoseSpotPatientLink(
+    user: FirebaseUser,
+    input: DeleteDoseSpotPatientInput = {}
+): Promise<DoseSpotPatientDeleteResponse> {
+    return apiFetchJson<DoseSpotPatientDeleteResponse>(
+        getDoseSpotApiUrl('/api/v1/dosespot/patients/delete'),
+        {
+            method: 'POST',
+            user,
+            body: input
+        }
+    );
 }
