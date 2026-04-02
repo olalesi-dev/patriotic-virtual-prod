@@ -6,6 +6,7 @@ SOURCE_DIR="${BACKEND_SOURCE_DIR:-emr-backend}"
 PROJECT_ID="${GCP_PROJECT_ID:-patriotic-virtual-prod}"
 REGION="${GCP_REGION:-us-central1}"
 ENV_FILE="${BACKEND_ENV_FILE:-${SOURCE_DIR}/.env}"
+ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-true}"
 RESERVED_ENV_REGEX='^(PORT|K_SERVICE|K_REVISION|K_CONFIGURATION)='
 VALID_ENV_REGEX='^[A-Za-z_][A-Za-z0-9_]*='
 
@@ -44,11 +45,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
+DEPLOY_ARGS=(
+  --source "${SOURCE_DIR}"
+  --region "${REGION}"
+  --project "${PROJECT_ID}"
+)
+
+if [ "${ALLOW_UNAUTHENTICATED}" = "true" ]; then
+    DEPLOY_ARGS+=(--allow-unauthenticated)
+else
+    echo "🔒 Skipping --allow-unauthenticated (ALLOW_UNAUTHENTICATED=false)."
+fi
+
 gcloud run deploy "${SERVICE_NAME}" \
-  --source "${SOURCE_DIR}" \
-  --region "${REGION}" \
-  --allow-unauthenticated \
-  --project "${PROJECT_ID}" \
+  "${DEPLOY_ARGS[@]}" \
   "${ENV_ARGS[@]}"
 
 echo "✅ Backend deployed successfully!"
