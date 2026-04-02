@@ -11,7 +11,6 @@ import {
     markWebhookEventQueued,
     persistWebhookEvent,
     processWebhookEvent,
-    scheduleInlineWebhookProcessing,
     triggerDoseSpotDevTestActivity,
     verifyDoseSpotSecret,
     verifyDoseSpotTaskRequest
@@ -125,12 +124,20 @@ router.post('/push-notifications', async (req: Request, res: Response) => {
             receivedAt: new Date()
         });
 
+        let inlineProcessed = false;
         if (persisted.shouldEnqueue) {
-            const enqueueResult = await enqueueWebhookProcessing(persisted.eventId);
-            await markWebhookEventQueued(persisted.eventId, enqueueResult);
+            try {
+                const enqueueResult = await enqueueWebhookProcessing(persisted.eventId);
+                await markWebhookEventQueued(persisted.eventId, enqueueResult);
 
-            if (enqueueResult.mode === 'inline_fallback') {
-                scheduleInlineWebhookProcessing(persisted.eventId);
+                if (enqueueResult.mode === 'inline_fallback') {
+                    // Cloud Run throttles background CPU after the response; process inline to avoid dropped webhook work.
+                    await processWebhookEvent(persisted.eventId);
+                    inlineProcessed = true;
+                }
+            } catch (error) {
+                await markWebhookEventFailed(persisted.eventId, error);
+                throw error;
             }
         }
 
@@ -139,7 +146,8 @@ router.post('/push-notifications', async (req: Request, res: Response) => {
             eventId: persisted.eventId,
             eventType: persisted.eventType,
             duplicate: persisted.duplicate,
-            queued: persisted.shouldEnqueue
+            queued: persisted.shouldEnqueue,
+            inlineProcessed
         });
     } catch (error) {
         logger.error('[DoseSpot Webhook] Failed to ingest event', {

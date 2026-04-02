@@ -991,7 +991,10 @@ export async function persistWebhookEvent(input: PersistWebhookEventInput): Prom
         duplicate = true;
         const existing = snapshot.data() as Record<string, unknown>;
         const status = asNonEmptyString(existing.processingStatus) as DoseSpotProcessingStatus | null;
-        shouldEnqueue = status === 'FAILED';
+        const queueMode = asNonEmptyString(existing.queueMode);
+        const taskName = asNonEmptyString(existing.taskName);
+        const stuckPendingWithoutQueueMarker = status === 'PENDING' && !queueMode && !taskName;
+        shouldEnqueue = status === 'FAILED' || stuckPendingWithoutQueueMarker;
 
         transaction.set(docRef, {
             headersJson: sanitizeHeaders(input.headers),
