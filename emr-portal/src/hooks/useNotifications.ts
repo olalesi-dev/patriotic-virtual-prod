@@ -73,6 +73,7 @@ function normalizeNotificationType(value: unknown): AppNotificationType {
     const normalized = asString(value);
     if (normalized === 'team_invite') return 'team_invite';
     if (normalized === 'team_invite_response') return 'team_invite_response';
+    if (normalized === 'message_received') return 'message_received';
     if (normalized === 'appointment_rescheduled') return 'appointment_rescheduled';
     if (normalized === 'appointment_cancelled') return 'appointment_cancelled';
     if (normalized === 'dosespot_rx_counts') return 'dosespot_rx_counts';

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
+import { sendMessage } from '@/lib/server-messaging';
 import { loadProviderScopedPatientDetail, loadProviderScopedPatientSummary } from '@/lib/server-patients';
 import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
 
@@ -279,45 +280,12 @@ export async function PATCH(
             if (!text) {
                 return NextResponse.json({ success: false, error: 'Message text is required.' }, { status: 400 });
             }
-
-            const threadQuery = await firestore
-                .collection('threads')
-                .where('providerId', '==', user.uid)
-                .where('patientId', '==', params.id)
-                .limit(1)
-                .get();
-
-            const patientName = patientSummary.name;
-            const threadRef = threadQuery.docs[0]?.ref ?? firestore.collection('threads').doc();
-
-            if (!threadQuery.docs[0]) {
-                await threadRef.set({
-                    patientId: params.id,
-                    patientName,
-                    providerId: user.uid,
-                    providerName: user.email ?? 'Provider',
-                    subject: 'Patient conversation',
-                    category: 'Clinical',
-                    lastMessage: text,
-                    lastMessageAt: now,
-                    updatedAt: now,
-                    unreadCount: 0
-                });
-            } else {
-                await threadRef.set({
-                    lastMessage: text,
-                    lastMessageAt: now,
-                    updatedAt: now
-                }, { merge: true });
-            }
-
-            await threadRef.collection('messages').add({
-                senderId: user.uid,
-                senderType: 'provider',
-                senderName: user.email ?? 'Provider',
-                body: text,
-                createdAt: now,
-                read: true
+            await sendMessage(firestore, user, {
+                recipientId: params.id,
+                recipientType: 'patient',
+                subject: 'Patient conversation',
+                category: 'Clinical',
+                body: text
             });
         } else if (action === 'add_billing_statement') {
             const amount = asNumber(values.amount);
