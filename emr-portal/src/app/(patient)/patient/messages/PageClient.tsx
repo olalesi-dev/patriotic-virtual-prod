@@ -20,18 +20,16 @@ import {
     Download
 } from 'lucide-react';
 import { auth, db, storage } from '@/lib/firebase';
+import { apiFetchJson } from '@/lib/api-client';
 import {
     collection,
     query,
     where,
     orderBy,
     onSnapshot,
-    addDoc,
-    serverTimestamp,
     doc,
     updateDoc,
     Timestamp,
-    limit,
     getDocs
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -66,6 +64,12 @@ interface Message {
     };
 }
 
+interface SendMessageApiResponse {
+    success?: boolean;
+    error?: string;
+    threadId?: string;
+}
+
 const CATEGORIES = ['General', 'Medication', 'Test Results', 'Appointment Request', 'Urgent'];
 
 export default function MessagesPage() {
@@ -93,28 +97,45 @@ export default function MessagesPage() {
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    const sortThreads = (items: Thread[]) => [...items].sort((first, second) => {
+        const firstValue = first.lastMessageAt?.toDate ? first.lastMessageAt.toDate().getTime() : 0;
+        const secondValue = second.lastMessageAt?.toDate ? second.lastMessageAt.toDate().getTime() : 0;
+        return secondValue - firstValue;
+    });
+
     useEffect(() => {
+        let unsubThreads: (() => void) | null = null;
         const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+            unsubThreads?.();
             if (user) {
-                // Threads Listener
                 const threadsRef = collection(db, 'threads');
                 const q = query(
                     threadsRef,
-                    where('patientId', '==', user.uid),
-                    orderBy('lastMessageAt', 'desc')
+                    where('patientId', '==', user.uid)
                 );
 
-                const unsub = onSnapshot(q, (snapshot) => {
-                    const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Thread));
+                unsubThreads = onSnapshot(q, (snapshot) => {
+                    const data = sortThreads(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Thread)));
                     setThreads(data);
                     setLoading(false);
+                }, (error) => {
+                    console.error('Patient message threads listener failed:', error);
+                    toast.error('Unable to load your conversations right now.');
+                    setThreads([]);
+                    setLoading(false);
                 });
-
-                fetchProviders();
-                return () => unsub();
+                void fetchProviders();
+                return;
             }
+
+            setThreads([]);
+            setLoading(false);
         });
-        return () => unsubscribeAuth();
+
+        return () => {
+            unsubThreads?.();
+            unsubscribeAuth();
+        };
     }, []);
 
     useEffect(() => {
@@ -136,7 +157,11 @@ export default function MessagesPage() {
                 }
             });
             // Update thread unread count
-            updateDoc(doc(db, 'threads', activeThread.id), { unreadCount: 0 });
+            updateDoc(doc(db, 'threads', activeThread.id), { unreadCount: 0 }).catch(() => {});
+        }, (error) => {
+            console.error('Patient message listener failed:', error);
+            toast.error('Unable to open this conversation right now.');
+            setMessages([]);
         });
 
         return () => unsub();
@@ -174,23 +199,18 @@ export default function MessagesPage() {
         setNewMessage('');
 
         try {
-            const msgsRef = collection(db, 'threads', activeThread.id, 'messages');
-            await addDoc(msgsRef, {
-                senderId: auth.currentUser.uid,
-                senderType: 'patient',
-                body: text,
-                createdAt: serverTimestamp(),
-                read: false,
-                attachment: attachment || null
+            const payload = await apiFetchJson<SendMessageApiResponse>('/api/messages/send', {
+                method: 'POST',
+                user: auth.currentUser,
+                body: {
+                    threadId: activeThread.id,
+                    body: text,
+                    attachment: attachment || null
+                }
             });
-
-            // Update Thread
-            await updateDoc(doc(db, 'threads', activeThread.id), {
-                lastMessage: text || 'View Attachment',
-                lastMessageAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                providerUnreadCount: 1
-            });
+            if (!payload.success) {
+                throw new Error(payload.error || 'Failed to send message.');
+            }
         } catch (error) {
             toast.error('Failed to send message');
             setNewMessage(text);
@@ -229,29 +249,35 @@ export default function MessagesPage() {
 
         setIsSending(true);
         try {
-            const threadRef = await addDoc(collection(db, 'threads'), {
+            const payload = await apiFetchJson<SendMessageApiResponse>('/api/messages/send', {
+                method: 'POST',
+                user: auth.currentUser,
+                body: {
+                    recipientId: composeData.recipientId,
+                    recipientType: 'provider',
+                    subject: composeData.subject,
+                    category: composeData.category,
+                    body: composeData.body
+                }
+            });
+            if (!payload.success || !payload.threadId) {
+                throw new Error(payload.error || 'Failed to start conversation.');
+            }
+
+            setIsComposing(false);
+            setComposeData({ recipientId: '', recipientName: '', subject: '', category: 'General', body: '' });
+            setActiveThread({
+                id: payload.threadId,
                 patientId: auth.currentUser.uid,
                 providerId: composeData.recipientId,
                 providerName: composeData.recipientName,
                 subject: composeData.subject,
                 category: composeData.category,
                 lastMessage: composeData.body,
-                lastMessageAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
+                lastMessageAt: Timestamp.now(),
                 unreadCount: 0,
-                providerUnreadCount: 1,
+                updatedAt: Timestamp.now()
             });
-
-            await addDoc(collection(db, 'threads', threadRef.id, 'messages'), {
-                senderId: auth.currentUser.uid,
-                senderType: 'patient',
-                body: composeData.body,
-                createdAt: serverTimestamp(),
-                read: false
-            });
-
-            setIsComposing(false);
-            setComposeData({ recipientId: '', recipientName: '', subject: '', category: 'General', body: '' });
             toast.success('Conversation started');
         } catch (error) {
             toast.error('Failed to start conversation');
@@ -304,7 +330,7 @@ export default function MessagesPage() {
                                     {t.category}
                                 </span>
                                 <span className="text-[10px] font-bold text-slate-300">
-                                    {format(t.lastMessageAt?.toDate() || new Date(), 'h:mm a')}
+                                    {format(t.lastMessageAt?.toDate?.() || new Date(), 'h:mm a')}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center gap-2">
@@ -389,7 +415,7 @@ export default function MessagesPage() {
                                             </div>
                                             <div className={`flex items-center gap-2 px-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                                 <span className="text-[9px] font-bold text-slate-300 uppercase">
-                                                    {format(msg.createdAt?.toDate() || new Date(), 'h:mm a')}
+                                                    {format(msg.createdAt?.toDate?.() || new Date(), 'h:mm a')}
                                                 </span>
                                                 {isMe && msg.read && <CheckCheck className="w-3 h-3 text-emerald-500" />}
                                             </div>

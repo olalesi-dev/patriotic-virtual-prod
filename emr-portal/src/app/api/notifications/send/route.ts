@@ -110,10 +110,10 @@ export async function POST(request: Request) {
 
         const appointmentData = appointmentDoc.data() as Record<string, unknown>;
         const appointmentPatientId = asNonEmptyString(appointmentData.patientId) ?? asNonEmptyString(appointmentData.patientUid);
-        if (!appointmentPatientId || appointmentPatientId !== user.uid) {
+        if (!appointmentPatientId) {
             return NextResponse.json(
-                { success: false, error: 'You do not have access to notify for this appointment.' },
-                { status: 403 }
+                { success: false, error: 'Appointment patient could not be resolved.' },
+                { status: 400 }
             );
         }
 
@@ -124,6 +124,17 @@ export async function POST(request: Request) {
                 { status: 400 }
             );
         }
+
+        const isPatientActor = appointmentPatientId === user.uid;
+        const isProviderActor = providerId === user.uid;
+        if (!isPatientActor && !isProviderActor) {
+            return NextResponse.json(
+                { success: false, error: 'You do not have access to notify for this appointment.' },
+                { status: 403 }
+            );
+        }
+
+        const recipientId = isPatientActor ? providerId : appointmentPatientId;
 
         const [userDoc, patientDoc] = await Promise.all([
             db.collection('users').doc(user.uid).get(),
@@ -147,7 +158,7 @@ export async function POST(request: Request) {
         const body = buildNotificationBody(parsedBody.data.type, patientName, appointmentDate);
 
         const notification = await createNotification({
-            recipientId: providerId,
+            recipientId,
             actorId: user.uid,
             actorName: patientName,
             type: parsedBody.data.type,
@@ -156,9 +167,11 @@ export async function POST(request: Request) {
             href: '/dashboard',
             metadata: {
                 appointmentId: appointmentDoc.id,
-                patientId: user.uid,
+                patientId: appointmentPatientId,
+                providerId,
+                actorRole: isPatientActor ? 'patient' : 'provider',
                 status: asNonEmptyString(appointmentData.status),
-                trigger: 'patient_action'
+                trigger: isPatientActor ? 'patient_action' : 'provider_action'
             }
         });
 

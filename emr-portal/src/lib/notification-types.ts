@@ -1,6 +1,7 @@
 export type AppNotificationType =
     | 'team_invite'
     | 'team_invite_response'
+    | 'message_received'
     | 'appointment_booked'
     | 'appointment_rescheduled'
     | 'appointment_cancelled'

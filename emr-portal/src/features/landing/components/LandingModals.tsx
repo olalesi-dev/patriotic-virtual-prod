@@ -149,7 +149,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
 
     window.addEventListener("message", handleVouchedMessage);
     return () => window.removeEventListener("message", handleVouchedMessage);
-  }, [authMode]);
+  }, [authMode, initialService, setAuthModalOpen, setConsultModalOpen, showToast]);
 
   React.useEffect(() => {
     if (consultModalOpen) {
@@ -277,10 +277,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         email: user.email ?? current.email ?? "",
       }));
       showToast(userInfo?.isNewUser ? "Account created successfully." : "Signed in successfully.");
-      // TODO(homepage-identity-verify): Re-enable verify modal after demo.
-      // setAuthMode("verify");
-      setAuthModalOpen(false);
-      onLoginSuccess();
+      setAuthMode("verify");
     } catch (e: any) {
       showToast(e.message || "Google auth failed");
     } finally {
@@ -309,10 +306,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       });
 
       showToast("Account created. Please check your email to verify your email address.");
-      // TODO(homepage-identity-verify): Re-enable verify modal after demo.
-      // setAuthMode("verify");
-      setAuthModalOpen(false);
-      onLoginSuccess();
+      setAuthMode("verify");
     } catch (e: any) {
       showToast(e.message || "Registration failed");
     } finally {

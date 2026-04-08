@@ -650,11 +650,13 @@ export default function CalendarPage() {
             try {
                 const { auth } = await import('@/lib/firebase');
                 const tok = await auth.currentUser?.getIdToken();
-                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
-                await fetch(`${API}/api/v1/trigger/schedule-notification`, {
+                await fetch('/api/notifications/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
-                    body: JSON.stringify({ apptId: draggedAppt.id, scheduledAt: newStart.toISOString() })
+                    body: JSON.stringify({
+                        type: 'appointment_rescheduled',
+                        appointmentId: draggedAppt.id
+                    })
                 });
             } catch (err) {
                 console.error("Notification error:", err);
@@ -714,11 +716,13 @@ export default function CalendarPage() {
             try {
                 const { auth } = await import('@/lib/firebase');
                 const tok = await auth.currentUser?.getIdToken();
-                const API = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
-                await fetch(`${API}/api/v1/trigger/schedule-notification`, {
+                await fetch('/api/notifications/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
-                    body: JSON.stringify({ apptId: newRef.id, scheduledAt: startDate.toISOString() })
+                    body: JSON.stringify({
+                        type: 'appointment_booked',
+                        appointmentId: newRef.id
+                    })
                 });
             } catch (err) {
                 console.error("Notification error:", err);

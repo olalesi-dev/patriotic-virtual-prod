@@ -117,21 +117,61 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            const inboxQuery = query(collection(db, 'threads'), where('providerId', '==', nextUser.uid));
-            unsubInbox = onSnapshot(
-                inboxQuery,
+            let patientThreads: Array<{ id: string; unread: boolean }> = [];
+            let providerThreads: Array<{ id: string; unread: boolean }> = [];
+
+            const syncUnreadInbox = () => {
+                const byId = new Map<string, boolean>();
+                [...patientThreads, ...providerThreads].forEach((thread) => {
+                    byId.set(thread.id, thread.unread);
+                });
+                setUnreadInbox(Array.from(byId.values()).filter(Boolean).length);
+            };
+
+            const unsubscribePatientThreads = onSnapshot(
+                query(collection(db, 'threads'), where('providerId', '==', nextUser.uid)),
                 (snap) => {
-                    const unreadCount = snap.docs.reduce((count, threadDoc) => {
-                        const providerUnreadCount = threadDoc.data().providerUnreadCount;
-                        return count + (typeof providerUnreadCount === 'number' && providerUnreadCount > 0 ? 1 : 0);
-                    }, 0);
-                    setUnreadInbox(unreadCount);
+                    patientThreads = snap.docs
+                        .filter((threadDoc) => (threadDoc.data().threadType ?? 'patient_provider') === 'patient_provider')
+                        .map((threadDoc) => {
+                            const providerUnreadCount = threadDoc.data().providerUnreadCount;
+                            return {
+                                id: threadDoc.id,
+                                unread: typeof providerUnreadCount === 'number' && providerUnreadCount > 0
+                            };
+                        });
+                    syncUnreadInbox();
                 },
                 (error) => {
                     console.error('Inbox listener failed:', error);
                     setUnreadInbox(0);
                 }
             );
+
+            const unsubscribeProviderThreads = onSnapshot(
+                query(collection(db, 'threads'), where('participantIds', 'array-contains', nextUser.uid)),
+                (snap) => {
+                    providerThreads = snap.docs
+                        .filter((threadDoc) => threadDoc.data().threadType === 'provider_provider')
+                        .map((threadDoc) => {
+                            const providerUnreadCount = threadDoc.data().providerUnreadCount;
+                            return {
+                                id: threadDoc.id,
+                                unread: typeof providerUnreadCount === 'number' && providerUnreadCount > 0
+                            };
+                        });
+                    syncUnreadInbox();
+                },
+                (error) => {
+                    console.error('Team inbox listener failed:', error);
+                    setUnreadInbox(0);
+                }
+            );
+
+            unsubInbox = () => {
+                unsubscribePatientThreads();
+                unsubscribeProviderThreads();
+            };
 
             const waitlistQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
             unsubWaitlist = onSnapshot(
@@ -296,7 +336,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         {/* ORDERS & Rx */}
                         <CollapsibleGroup label="Orders & Rx" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Orders & Rx']} onToggle={() => toggleSection('Orders & Rx')}>
                             <NavItem href="/orders/erx" icon={Pill} label="eRx / Prescriptions" active={pathname === '/orders/erx'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/orders/erx/readiness" icon={ShieldCheck} label="eRx Readiness" active={pathname === '/orders/erx/readiness'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/orders/labs" icon={Microscope} label="Lab Orders" active={pathname === '/orders/labs'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/orders/imaging" icon={Scan} label="Imaging Orders" active={pathname === '/orders/imaging'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/orders/pacs" icon={Scan} label="PACS" active={pathname === '/orders/pacs'} collapsed={isSidebarCollapsed} />
@@ -353,6 +392,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         {/* INTEGRATIONS HUB */}
                         <CollapsibleGroup label="Integrations" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Integrations']} onToggle={() => toggleSection('Integrations')}>
                             <NavItem href="/admin/integrations" icon={Network} label="Integrations Hub" active={pathname === '/admin/integrations'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/erx-readiness" icon={ShieldCheck} label="eRx Readiness" active={pathname === '/admin/integrations/erx-readiness'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/integrations/doxy" icon={Video} label="Doxy.me" active={pathname === '/admin/integrations/doxy'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/integrations/radiantlogiq" icon={DatabaseZap} label="RadiantLogiq" active={pathname === '/admin/integrations/radiantlogiq'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/integrations/powerscribe" icon={Activity} label="PowerScribe 360" active={pathname === '/admin/integrations/powerscribe'} collapsed={isSidebarCollapsed} />
