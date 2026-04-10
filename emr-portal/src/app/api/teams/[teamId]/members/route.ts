@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { createNotification } from '@/lib/server-notifications';
-import { mapTeamSnapshot, mapUserDocToMember, toProviderRole } from '@/lib/server-teams';
+import { loadMergedUserRecord, mapTeamSnapshot, mapUserRecordToMember, toProviderRole } from '@/lib/server-teams';
 import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
@@ -42,10 +42,10 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Team id is required.' }, { status: 400 });
         }
 
-        const [teamDoc, targetDoctorDoc, actorDoc] = await Promise.all([
+        const [teamDoc, targetDoctorRecord, actorRecord] = await Promise.all([
             db.collection('teams').doc(teamId).get(),
-            db.collection('patients').doc(parsedBody.data.doctorId).get(),
-            db.collection('patients').doc(user.uid).get()
+            loadMergedUserRecord(db, parsedBody.data.doctorId),
+            loadMergedUserRecord(db, user.uid)
         ]);
 
         const team = mapTeamSnapshot(teamDoc);
@@ -57,7 +57,7 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Only team owner can add members directly.' }, { status: 403 });
         }
 
-        const targetDoctor = mapUserDocToMember(targetDoctorDoc);
+        const targetDoctor = mapUserRecordToMember(parsedBody.data.doctorId, targetDoctorRecord ?? undefined);
         if (!targetDoctor || !toProviderRole(targetDoctor.role)) {
             return NextResponse.json({ success: false, error: 'Selected user is not a provider.' }, { status: 400 });
         }
@@ -76,7 +76,7 @@ export async function POST(
             updatedAt: new Date()
         });
 
-        const actor = mapUserDocToMember(actorDoc) ?? {
+        const actor = mapUserRecordToMember(user.uid, actorRecord ?? undefined) ?? {
             id: user.uid,
             name: user.email?.split('@')[0] ?? 'Provider',
             email: user.email,

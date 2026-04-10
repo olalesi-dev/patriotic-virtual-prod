@@ -3,6 +3,7 @@ import type { AuthenticatedUser } from '@/lib/server-auth';
 import { loadProviderScopedPatientSummary } from '@/lib/server-patients';
 import { createNotification } from '@/lib/server-notifications';
 import { normalizeRole } from '@/lib/server-auth';
+import { buildTeamRepairPatch, mapTeamSnapshot } from '@/lib/server-teams';
 
 type MessageThreadType = 'patient_provider' | 'provider_provider';
 type MessageRecipientType = 'patient' | 'provider';
@@ -396,15 +397,17 @@ async function resolveThreadAccess(
     }
 
     const teamDoc = await firestore.collection('teams').doc(teamId).get();
-    if (!teamDoc.exists) {
+    const team = mapTeamSnapshot(teamDoc);
+    if (!team) {
         throw new Error('Selected team was not found.');
     }
 
-    const teamData = teamDoc.data() as Record<string, unknown>;
-    const memberIds = Array.isArray(teamData.memberIds)
-        ? teamData.memberIds.filter((entry): entry is string => typeof entry === 'string')
-        : [];
-    if (!memberIds.includes(actor.uid) || !memberIds.includes(recipientId)) {
+    const repairPatch = buildTeamRepairPatch(teamDoc, team);
+    if (repairPatch) {
+        await teamDoc.ref.set(repairPatch, { merge: true });
+    }
+
+    if (!team.memberIds.includes(actor.uid) || !team.memberIds.includes(recipientId)) {
         throw new Error('Provider messaging is limited to your own team members.');
     }
 
@@ -415,7 +418,7 @@ async function resolveThreadAccess(
 
     const now = new Date();
     const threadRef = firestore.collection('threads').doc();
-    const teamName = asNonEmptyString(input.teamName) ?? asNonEmptyString(teamData.name) ?? 'Care Team';
+    const teamName = asNonEmptyString(input.teamName) ?? team.name ?? 'Care Team';
     const participantSummaries = [actorSummary, recipientSummary];
     await threadRef.set({
         threadType: 'provider_provider',

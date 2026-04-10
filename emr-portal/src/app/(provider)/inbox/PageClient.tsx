@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { apiFetchJson } from '@/lib/api-client';
 import {
@@ -161,6 +161,7 @@ export default function InboxPage() {
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
     const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
     const [connectedInboxes, setConnectedInboxes] = useState<{ id: string, name: string, type: 'google' | 'microsoft' | string }[]>([]);
+    const messageScrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -316,6 +317,13 @@ export default function InboxPage() {
 
         return () => unsubscribe();
     }, [selectedThreadId, activeUser, threads]);
+
+    useEffect(() => {
+        if (!selectedThreadId) return;
+        const container = messageScrollRef.current;
+        if (!container) return;
+        container.scrollTop = container.scrollHeight;
+    }, [messages, selectedThreadId]);
 
     const getThreadDisplayName = (thread: InboxThread) => {
         if (thread.threadType === 'provider_provider') {
@@ -492,7 +500,7 @@ export default function InboxPage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-6rem)] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden font-sans">
+        <div className="flex h-[calc(100vh-6rem)] min-h-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden font-sans">
             <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col">
                 <div className="p-4 space-y-1">
                     <SidebarItem
@@ -598,7 +606,7 @@ export default function InboxPage() {
                 </div>
             </aside>
 
-            <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-slate-900/30 relative">
+            <div className="flex-1 flex min-h-0 flex-col min-w-0 bg-slate-50/50 dark:bg-slate-900/30 relative">
                 <div className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 shrink-0">
                     <div className="flex items-center justify-between px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -645,7 +653,7 @@ export default function InboxPage() {
                 </div>
 
                 {selectedThread ? (
-                    <div className="flex-1 flex flex-col bg-white dark:bg-slate-800 animate-fade-in">
+                    <div className="flex-1 flex min-h-0 flex-col bg-white dark:bg-slate-800 animate-fade-in">
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/20">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedThread.subject}</h3>
@@ -659,7 +667,7 @@ export default function InboxPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        <div ref={messageScrollRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
                             {messages.map((message) => {
                                 const isMe = message.senderId === activeUser?.uid;
                                 return (
@@ -690,7 +698,7 @@ export default function InboxPage() {
                             })}
                         </div>
 
-                        <form onSubmit={handleReply} className="p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex gap-4 items-end">
+                        <form onSubmit={handleReply} className="shrink-0 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 flex gap-4 items-end">
                             <button type="button" className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg hover:text-slate-600 transition-colors">
                                 <Paperclip className="w-5 h-5" />
                             </button>
