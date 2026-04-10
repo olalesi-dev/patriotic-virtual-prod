@@ -289,7 +289,7 @@ export default function MessagesPage() {
     if (loading) return <div className="flex items-center justify-center min-h-[400px]"><div className="w-8 h-8 border-4 border-sky-100 border-t-[#0EA5E9] rounded-full animate-spin"></div></div>;
 
     return (
-        <div className="h-[calc(100vh-160px)] -mt-4 bg-white dark:bg-slate-800 rounded-[40px] border border-slate-100 dark:border-slate-700 shadow-xl shadow-sky-900/5 flex overflow-hidden">
+        <div className="h-[calc(100vh-160px)] min-h-0 -mt-4 bg-white dark:bg-slate-800 rounded-[40px] border border-slate-100 dark:border-slate-700 shadow-xl shadow-sky-900/5 flex overflow-hidden">
 
             {/* THREAD LIST */}
             <div className={`
@@ -355,7 +355,7 @@ export default function MessagesPage() {
 
             {/* CHAT VIEW */}
             <div className={`
-                flex-1 flex flex-col min-w-0
+                flex-1 flex min-h-0 flex-col min-w-0
                 ${!activeThread && !isComposing ? 'hidden md:flex' : 'flex'}
             `}>
                 {activeThread ? (
@@ -386,7 +386,7 @@ export default function MessagesPage() {
                         </div>
 
                         {/* Messages Area */}
-                        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
+                        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
                             {messages.map((msg, i) => {
                                 const isMe = msg.senderType === 'patient';
                                 return (
@@ -426,7 +426,7 @@ export default function MessagesPage() {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-6 border-t border-slate-50 shrink-0 bg-white dark:bg-slate-800">
+                        <div className="shrink-0 border-t border-slate-50 bg-white dark:bg-slate-800 p-6">
                             <form onSubmit={handleSendMessage} className="flex items-end gap-3 max-w-4xl mx-auto">
                                 <div className="relative">
                                     <input

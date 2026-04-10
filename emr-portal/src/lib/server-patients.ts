@@ -798,9 +798,10 @@ async function loadProviderScopedPatientContext(
     firestore: FirebaseFirestore.Firestore,
     providerId: string
 ): Promise<ProviderScopedPatientContext> {
-    const [appointmentsSnap, threadsSnap, teamsSnap] = await Promise.all([
+    const [appointmentsSnap, threadsSnap, ownerTeamsSnap, memberTeamsSnap] = await Promise.all([
         firestore.collection('appointments').where('providerId', '==', providerId).limit(500).get(),
         firestore.collection('threads').where('providerId', '==', providerId).limit(500).get(),
+        firestore.collection('teams').where('ownerId', '==', providerId).limit(100).get(),
         firestore.collection('teams').where('memberIds', 'array-contains', providerId).limit(100).get()
     ]);
 
@@ -859,7 +860,11 @@ async function loadProviderScopedPatientContext(
         });
     });
 
-    teamsSnap.docs.forEach((docSnap) => {
+    const teamDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+    ownerTeamsSnap.docs.forEach((docSnap) => teamDocs.set(docSnap.id, docSnap));
+    memberTeamsSnap.docs.forEach((docSnap) => teamDocs.set(docSnap.id, docSnap));
+
+    teamDocs.forEach((docSnap) => {
         const data = docSnap.data() as Record<string, unknown>;
         const teamId = docSnap.id;
         const teamName = asNonEmptyString(data.name) ?? `Team ${teamId.slice(0, 6)}`;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { createNotification } from '@/lib/server-notifications';
-import { mapTeamSnapshot, mapUserDocToMember, toProviderRole } from '@/lib/server-teams';
+import { loadMergedUserRecord, mapTeamSnapshot, mapUserRecordToMember, toProviderRole } from '@/lib/server-teams';
 import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
@@ -34,9 +34,9 @@ export async function DELETE(
             return NextResponse.json({ success: false, error: 'Team id and member id are required.' }, { status: 400 });
         }
 
-        const [teamDoc, actorDoc] = await Promise.all([
+        const [teamDoc, actorRecord] = await Promise.all([
             db.collection('teams').doc(teamId).get(),
-            db.collection('patients').doc(user.uid).get()
+            loadMergedUserRecord(db, user.uid)
         ]);
 
         const team = mapTeamSnapshot(teamDoc);
@@ -68,7 +68,7 @@ export async function DELETE(
         });
 
         if (removedMember) {
-            const actor = mapUserDocToMember(actorDoc) ?? {
+            const actor = mapUserRecordToMember(user.uid, actorRecord ?? undefined) ?? {
                 id: user.uid,
                 name: user.email?.split('@')[0] ?? 'Provider',
                 email: user.email,
