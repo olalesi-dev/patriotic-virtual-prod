@@ -824,7 +824,7 @@ export default function InboxPage() {
                                     required
                                     value={composeRecipient}
                                     onChange={(e) => handleComposeRecipientChange(e.target.value)}
-                                    className="w-full bg-slate-800 border bg-transparent outline-none border-brand/40 text-sm text-white rounded-lg px-4 py-2.5"
+                                    className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand/20"
                                 >
                                     <option value="" className="text-slate-900">Select Recipient...</option>
                                     {composeRecipientType === 'patient'

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
-import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
+import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
 import {
     buildTeamRepairPatch,
     loadMergedUserRecord,
@@ -52,10 +52,13 @@ export async function GET(request: Request) {
             loadMergedUserRecords(firestore, 500)
         ]);
 
-        const role = toProviderRole(user.token.role ?? mergedCurrentUser?.role ?? user.role);
-        if (!role) {
-            return NextResponse.json({ success: false, error: 'Provider access required.' }, { status: 403 });
-        }
+        const effectiveRole = normalizeRole(
+            user.token.role ??
+            mergedCurrentUser?.role ??
+            user.role
+        );
+        const resolvedProviderAccessError = ensureProviderAccess(user, effectiveRole);
+        if (resolvedProviderAccessError) return resolvedProviderAccessError;
 
         const uniqueTeamDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
         ownerTeamsSnapshot.docs.forEach((doc) => uniqueTeamDocs.set(doc.id, doc));
