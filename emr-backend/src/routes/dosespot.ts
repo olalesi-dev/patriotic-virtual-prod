@@ -41,6 +41,17 @@ import { verifyFirebaseToken } from '../middleware/auth';
 
 const router = Router();
 
+function hasInternalDoseSpotAccess(req: Request): boolean {
+    const configuredSecret = typeof process.env.DOSESPOT_SECRET_KEY === 'string'
+        ? process.env.DOSESPOT_SECRET_KEY.trim()
+        : '';
+    const providedSecret = typeof req.headers['x-dosespot-secret'] === 'string'
+        ? req.headers['x-dosespot-secret'].trim()
+        : '';
+
+    return configuredSecret.length > 0 && providedSecret === configuredSecret;
+}
+
 function asNumber(value: unknown): number | null {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
     if (typeof value === 'string') {
@@ -293,6 +304,36 @@ router.post('/clinicians/sync', verifyFirebaseToken, async (req: Request, res: R
         logger.error('[DoseSpot Clinician] Failed to sync clinician', {
             requesterUid,
             requestedClinicianUid,
+            error: message
+        });
+        const status = message.includes('configured DoseSpot user is not authorized to add clinicians')
+            ? 502
+            : 500;
+        return res.status(status).json({ error: message });
+    }
+});
+
+router.post('/clinicians/internal-sync', async (req: Request, res: Response) => {
+    if (!hasInternalDoseSpotAccess(req)) {
+        return res.status(401).json({ error: 'Unauthorized internal DoseSpot sync request.' });
+    }
+
+    const body = getObjectBody(req);
+    const clinicianUid = typeof body.clinicianUid === 'string' && body.clinicianUid.trim().length > 0
+        ? body.clinicianUid.trim()
+        : null;
+
+    if (!clinicianUid) {
+        return res.status(400).json({ error: 'Missing clinicianUid.' });
+    }
+
+    try {
+        const result = await syncDoseSpotClinicianForUid(clinicianUid);
+        return res.status(200).json(result);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to sync DoseSpot clinician.';
+        logger.error('[DoseSpot Clinician] Internal sync failed', {
+            clinicianUid,
             error: message
         });
         const status = message.includes('configured DoseSpot user is not authorized to add clinicians')

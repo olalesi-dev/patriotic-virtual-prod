@@ -7,6 +7,49 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+async function triggerBackgroundDoseSpotSync(clinicianUid: string) {
+    const backendUrl = (
+        process.env.DOSESPOT_BACKEND_URL ||
+        process.env.NEXT_PUBLIC_API_URL
+    )?.trim();
+    const internalSecret = process.env.DOSESPOT_SECRET_KEY?.trim();
+
+    if (!backendUrl || !internalSecret) {
+        console.warn('[Admin Users] Skipping background DoseSpot sync due to missing backend URL or internal secret', {
+            clinicianUid,
+            hasBackendUrl: Boolean(backendUrl),
+            hasInternalSecret: Boolean(internalSecret)
+        });
+        return;
+    }
+
+    try {
+        const response = await fetch(`${backendUrl.replace(/\/$/, '')}/api/v1/dosespot/clinicians/internal-sync`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-dosespot-secret': internalSecret
+            },
+            body: JSON.stringify({ clinicianUid }),
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[Admin Users] Background DoseSpot sync failed', {
+                clinicianUid,
+                status: response.status,
+                error: errorText
+            });
+        }
+    } catch (error) {
+        console.error('[Admin Users] Background DoseSpot sync request failed', {
+            clinicianUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+    }
+}
+
 export async function GET() {
     try {
         if (!auth || !db) {
@@ -76,6 +119,10 @@ export async function POST(request: Request) {
         // Also set custom claims for security rules if needed
         await auth!.setCustomUserClaims(userRecord.uid, { role: payload.role });
 
+        if (payload.role === 'provider') {
+            void triggerBackgroundDoseSpotSync(userRecord.uid);
+        }
+
         return NextResponse.json({
             success: true,
             message: 'User created successfully',
@@ -84,7 +131,8 @@ export async function POST(request: Request) {
                 uid: userRecord.uid,
                 email: userRecord.email,
                 displayName: userRecord.displayName,
-                role: payload.role
+                role: payload.role,
+                syncQueued: payload.role === 'provider'
             }
         });
     } catch (error: any) {
