@@ -19,10 +19,12 @@ import { deleteDoseSpotPatientForUid, ensureDoseSpotPatientForUid } from '../ser
 import {
     acceptDoseSpotIdpDisclaimerForUid,
     acceptDoseSpotLegalAgreementForUid,
+    fetchDoseSpotClinicianRegistrationStatusForUid,
     fetchDoseSpotIdpDisclaimerForUid,
     fetchDoseSpotLegalAgreementsForUid,
     getDoseSpotClinicianReadinessForUid,
     initDoseSpotIdpForUid,
+    syncDoseSpotClinicianForUid,
     startDoseSpotIdpForUid,
     submitDoseSpotIdpAnswersForUid,
     submitDoseSpotIdpOtpForUid
@@ -264,6 +266,67 @@ router.get('/clinicians/readiness', verifyFirebaseToken, async (req: Request, re
             error: error instanceof Error ? error.message : String(error)
         });
         return res.status(500).json({ error: 'Failed to load DoseSpot clinician readiness.' });
+    }
+});
+
+router.post('/clinicians/sync', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = getObjectBody(req);
+    const requestedClinicianUid = typeof body.clinicianUid === 'string' && body.clinicianUid.trim().length > 0
+        ? body.clinicianUid.trim()
+        : requesterUid;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedClinicianUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to sync DoseSpot clinicians for another provider.' });
+        }
+
+        const result = await syncDoseSpotClinicianForUid(requestedClinicianUid);
+        return res.status(200).json(result);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to sync DoseSpot clinician.';
+        logger.error('[DoseSpot Clinician] Failed to sync clinician', {
+            requesterUid,
+            requestedClinicianUid,
+            error: message
+        });
+        const status = message.includes('configured DoseSpot user is not authorized to add clinicians')
+            ? 502
+            : 500;
+        return res.status(status).json({ error: message });
+    }
+});
+
+router.get('/clinicians/registration-status', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedClinicianUid = typeof req.query.clinicianUid === 'string' && req.query.clinicianUid.trim().length > 0
+        ? req.query.clinicianUid.trim()
+        : requesterUid;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedClinicianUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to read DoseSpot clinician registration status for another provider.' });
+        }
+
+        const result = await fetchDoseSpotClinicianRegistrationStatusForUid(requestedClinicianUid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to fetch registration status', {
+            requesterUid,
+            requestedClinicianUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load DoseSpot clinician registration status.' });
     }
 });
 

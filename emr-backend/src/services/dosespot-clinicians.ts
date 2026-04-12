@@ -83,6 +83,25 @@ export interface DoseSpotClinicianActionResponse {
     message: string;
 }
 
+export interface DoseSpotClinicianSyncResponse {
+    clinicianUid: string;
+    clinicianId: number | null;
+    synced: boolean;
+    registrationStatus: string | null;
+    missingFields: string[];
+    message: string;
+    rawResponse?: Record<string, unknown> | unknown[];
+}
+
+export interface DoseSpotClinicianRegistrationStatusResponse {
+    clinicianUid: string;
+    clinicianId: number | null;
+    registrationStatus: string | null;
+    synced: boolean;
+    message: string;
+    rawResponse?: Record<string, unknown> | unknown[];
+}
+
 interface FirestoreDoseSpotState {
     readinessStatus?: string;
     clinicianConfirmed?: boolean | null;
@@ -96,6 +115,11 @@ interface FirestoreDoseSpotState {
     lastEventAt?: unknown;
     lastOperation?: string | null;
     lastError?: string | null;
+    synced?: boolean;
+    registrationStatus?: string | null;
+    lastSyncAt?: unknown;
+    registrationStatusCheckedAt?: unknown;
+    lastSyncError?: string | null;
 }
 
 interface ClinicianContext {
@@ -174,6 +198,22 @@ function toIsoDate(value: unknown): string | null {
     return parsed ? parsed.toISOString() : null;
 }
 
+function toOptionalIsoDateOnly(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim();
+    if (!normalized) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+        return `${normalized}T00:00:00.000Z`;
+    }
+
+    const parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+
+    return parsed.toISOString();
+}
+
 function toPlainValue(value: unknown): unknown {
     if (value === undefined || value === null) return null;
     if (Array.isArray(value)) {
@@ -238,6 +278,147 @@ function pickBoolean(record: Record<string, unknown>, keys: string[]): boolean |
         if (value !== null) return value;
     }
     return null;
+}
+
+function toTrimmedStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((entry) => asNonEmptyString(entry))
+        .filter((entry): entry is string => Boolean(entry));
+}
+
+function normalizeRole(value: unknown): string | null {
+    const normalized = asNonEmptyString(value)?.toLowerCase() ?? null;
+    return normalized && normalized.length > 0 ? normalized : null;
+}
+
+function normalizePdmpRoleType(value: string | null): string | null {
+    if (!value) return null;
+    const normalized = value.trim();
+    if (!normalized) return null;
+    if (normalized === 'NursePracticioner') {
+        return 'NursePractitioner';
+    }
+    return normalized;
+}
+
+function mapPdmpRoleTypeToDoseSpotValue(value: string | null): number | null {
+    if (!value) return null;
+
+    const normalized = normalizePdmpRoleType(value);
+    if (!normalized) return null;
+
+    const byName: Record<string, number> = {
+        Physician: 1,
+        Dentist: 2,
+        NursePractitioner: 3,
+        NursePracticioner: 3,
+        PhysiciansAssistant: 4,
+        Resident: 6,
+        Intern: 7,
+        Psychologist: 8,
+        Optometrist: 9,
+        NaturopathicPhysician: 10
+    };
+
+    return byName[normalized] ?? null;
+}
+
+function isDoseSpotAddClinicianAuthorizationError(result: DoseSpotResult | undefined): boolean {
+    const description = result?.ResultDescription ?? '';
+    return (result?.ResultCode ?? '').toUpperCase() === 'ERROR' &&
+        /Property:\s*ClinicianID\s+Details:\s*User is not authorized to do this action\.?/i.test(description);
+}
+
+function getDoseSpotAddClinicianAuthorizationMessage(): string {
+    const clinicId = asNonEmptyString(process.env.DOSESPOT_CLINIC_ID);
+    const userId = asNonEmptyString(process.env.DOSESPOT_USER_ID);
+    return [
+        'DoseSpot authenticated the current backend credentials, but the configured DoseSpot user is not authorized to add clinicians.',
+        userId ? `Configured DoseSpot user: ${userId}.` : null,
+        clinicId ? `Clinic: ${clinicId}.` : null,
+        'DoseSpot must grant clinician-management access to that user, or you need to switch to a clinic admin/proxy admin account.'
+    ].filter(Boolean).join(' ');
+}
+
+function isProviderRole(value: unknown): boolean {
+    const role = normalizeRole(value);
+    return Boolean(role && ['provider', 'doctor', 'clinician'].includes(role));
+}
+
+function findFirstString(source: Record<string, unknown>, keys: string[]): string | null {
+    for (const key of keys) {
+        const value = asNonEmptyString(source[key]);
+        if (value) return value;
+    }
+    return null;
+}
+
+function inferClinicianSpecialtyType(value: string | null): string | null {
+    if (!value) return null;
+
+    const directMap = new Map<string, string>([
+        ['allergyandimmunology', 'AllergyAndImmunology'],
+        ['dermatology', 'Dermatology'],
+        ['dentistry', 'Dentistry'],
+        ['behavioralhealth', 'BehavioralHealth'],
+        ['behavioral health', 'BehavioralHealth'],
+        ['familymedicine', 'FamilyMedicine'],
+        ['family medicine', 'FamilyMedicine'],
+        ['internalmedicine', 'InternalMedicine'],
+        ['internal medicine', 'InternalMedicine'],
+        ['obstetricsandgynecology', 'ObstetricsAndGynecology'],
+        ['obstetrics and gynecology', 'ObstetricsAndGynecology'],
+        ['obgyn', 'ObstetricsAndGynecology'],
+        ['orthopedics', 'Orthopedics'],
+        ['orthopaedics', 'Orthopedics'],
+        ['pediatrics', 'Pediatrics'],
+        ['physicalmedicine', 'PhysicalMedicine'],
+        ['physical medicine', 'PhysicalMedicine'],
+        ['psychiatry', 'Psychiatry'],
+        ['urology', 'Urology']
+    ]);
+
+    const normalized = value.toLowerCase().replace(/[^a-z]/g, '');
+    return directMap.get(value.toLowerCase()) ?? directMap.get(normalized) ?? null;
+}
+
+function buildClinicScopedRecord(
+    key: 'DEANumber' | 'NADEANumber' | 'LicenseNumber',
+    value: string | null,
+    state: string | null
+): Record<string, unknown>[] {
+    if (!value) return [];
+
+    const record: Record<string, unknown> = {
+        [key]: value
+    };
+
+    if (state) {
+        record.State = state;
+    }
+
+    const clinicId = asNonEmptyString(process.env.DOSESPOT_CLINIC_ID);
+    if (clinicId) {
+        record.ClinicId = clinicId;
+    }
+
+    return [record];
+}
+
+function normalizeRegistrationStatus(response: unknown): string | null {
+    if (typeof response === 'string') {
+        return response.trim() || null;
+    }
+
+    if (!isRecord(response)) {
+        return null;
+    }
+
+    return (
+        pickString(response, ['Item', 'RegistrationStatus', 'Status', 'Name']) ??
+        (isRecord(response.Result) ? pickString(response.Result, ['ResultDescription']) : null)
+    );
 }
 
 function normalizeLegalAgreements(response: unknown): DoseSpotLegalAgreement[] {
@@ -389,8 +570,11 @@ function normalizeStoredReadiness(
 }
 
 async function loadClinicianContext(clinicianUid: string): Promise<ClinicianContext> {
-    const userDoc = await admin.firestore().collection('users').doc(clinicianUid).get();
-    if (!userDoc.exists) {
+    const [userDoc, patientDoc] = await Promise.all([
+        admin.firestore().collection('users').doc(clinicianUid).get(),
+        admin.firestore().collection('patients').doc(clinicianUid).get()
+    ]);
+    if (!userDoc.exists && !patientDoc.exists) {
         return {
             clinicianUid,
             clinicianId: null,
@@ -398,7 +582,10 @@ async function loadClinicianContext(clinicianUid: string): Promise<ClinicianCont
         };
     }
 
-    const userData = userDoc.data() as Record<string, unknown>;
+    const userData = {
+        ...(patientDoc.exists ? patientDoc.data() as Record<string, unknown> : {}),
+        ...(userDoc.exists ? userDoc.data() as Record<string, unknown> : {})
+    };
     return {
         clinicianUid,
         clinicianId: asNumber(userData.doseSpotClinicianId),
@@ -615,8 +802,276 @@ async function buildStoredReadiness(clinicianUid: string): Promise<DoseSpotClini
     return normalizeStoredReadiness(context.clinicianUid, context.clinicianId, context.storedState);
 }
 
+async function loadClinicianSourceRecord(clinicianUid: string): Promise<Record<string, unknown>> {
+    const [userDoc, patientDoc] = await Promise.all([
+        admin.firestore().collection('users').doc(clinicianUid).get(),
+        admin.firestore().collection('patients').doc(clinicianUid).get()
+    ]);
+
+    const userData = userDoc.exists ? userDoc.data() as Record<string, unknown> : {};
+    const patientData = patientDoc.exists ? patientDoc.data() as Record<string, unknown> : {};
+    const merged = {
+        ...patientData,
+        ...userData
+    };
+
+    if (!isProviderRole(merged.role)) {
+        throw new Error('DoseSpot clinician sync is only available for provider profiles.');
+    }
+
+    return merged;
+}
+
+function buildDoseSpotClinicianPayload(
+    clinicianUid: string,
+    source: Record<string, unknown>
+): { missingFields: string[]; payload: Record<string, unknown> } {
+    const firstName = findFirstString(source, ['firstName']);
+    const middleName = findFirstString(source, ['middleName']);
+    const lastName = findFirstString(source, ['lastName']);
+    const prefix = findFirstString(source, ['prefix']);
+    const suffix = findFirstString(source, ['suffix']);
+    const dateOfBirth = toOptionalIsoDateOnly(source.dateOfBirth ?? source.dob);
+    const email = findFirstString(source, ['email']);
+    const address1 = findFirstString(source, ['address1', 'address']);
+    const address2 = findFirstString(source, ['address2']);
+    const city = findFirstString(source, ['city']);
+    const state = findFirstString(source, ['state']);
+    const zipCode = findFirstString(source, ['zipCode', 'zip']);
+    const primaryPhone = findFirstString(source, ['phone', 'primaryPhone', 'clinicPhone']);
+    const primaryPhoneType = findFirstString(source, ['primaryPhoneType']) ?? 'Work';
+    const primaryFax = findFirstString(source, ['primaryFax', 'clinicFax']);
+    const npiNumber = findFirstString(source, ['npiNumber', 'npi']);
+    const deaNumber = findFirstString(source, ['deaNumber']);
+    const stateLicenseNumber = findFirstString(source, ['stateLicenseNumber']);
+    const stateLicenseState = findFirstString(source, ['stateLicenseState', 'state']);
+    const pdmpRoleType = normalizePdmpRoleType(findFirstString(source, ['pdmpRoleType']));
+    const pdmpRoleTypeValue = mapPdmpRoleTypeToDoseSpotValue(pdmpRoleType);
+    const specialty = findFirstString(source, ['clinicianSpecialtyType', 'specialty']);
+    const clinicianSpecialtyType = findFirstString(source, ['clinicianSpecialtyType']) ?? inferClinicianSpecialtyType(specialty);
+    const clinicianRoleTypes = toTrimmedStringArray(source.clinicianRoleTypes);
+    const active = asBoolean(source.active) ?? normalizeRole(source.status) !== 'disabled';
+    const epcsRequested = asBoolean(source.epcsRequested) ?? true;
+
+    const missingFields: string[] = [];
+    const required = [
+        ['firstName', firstName],
+        ['lastName', lastName],
+        ['dateOfBirth', dateOfBirth],
+        ['address1', address1],
+        ['city', city],
+        ['state', state],
+        ['zipCode', zipCode],
+        ['primaryPhone', primaryPhone],
+        ['primaryFax', primaryFax],
+        ['npiNumber', npiNumber],
+    ] as const;
+
+    for (const [field, value] of required) {
+        if (!value) {
+            missingFields.push(field);
+        }
+    }
+
+    const payload: Record<string, unknown> = {
+        FirstName: firstName,
+        MiddleName: middleName,
+        LastName: lastName,
+        DateOfBirth: dateOfBirth,
+        Email: email,
+        Address1: address1,
+        Address2: address2,
+        City: city,
+        State: state,
+        ZipCode: zipCode,
+        PrimaryPhone: primaryPhone,
+        PrimaryPhoneType: primaryPhoneType,
+        PrimaryFax: primaryFax,
+        DEANumber: deaNumber,
+        DEANumbers: buildClinicScopedRecord('DEANumber', deaNumber, stateLicenseState),
+        MedicalLicenseNumbers: buildClinicScopedRecord('LicenseNumber', stateLicenseNumber, stateLicenseState),
+        NPINumber: npiNumber,
+        ClinicianRoleType: clinicianRoleTypes.length > 0 ? clinicianRoleTypes : ['PrescribingClinician'],
+        EPCSRequested: epcsRequested,
+        Active: active,
+        PDMPRoleType: pdmpRoleTypeValue,
+        ClinicianSpecialtyType: clinicianSpecialtyType
+    };
+
+    if (prefix) payload.Prefix = prefix;
+    if (suffix) payload.Suffix = suffix;
+
+    return {
+        missingFields,
+        payload: Object.fromEntries(
+            Object.entries(payload).filter(([, value]) => (
+                value !== null &&
+                value !== undefined &&
+                !(typeof value === 'string' && value.trim().length === 0) &&
+                !(Array.isArray(value) && value.length === 0)
+            ))
+        )
+    };
+}
+
+async function persistClinicianSyncSnapshot(
+    clinicianUid: string,
+    patch: {
+        clinicianId?: number | null;
+        synced?: boolean;
+        registrationStatus?: string | null;
+        lastSyncError?: string | null;
+    }
+): Promise<void> {
+    const now = new Date();
+    const updates: Record<string, unknown> = {
+        'doseSpot.lastSyncAt': now,
+        updatedAt: now
+    };
+
+    if (patch.clinicianId !== undefined && patch.clinicianId !== null) {
+        updates.doseSpotClinicianId = patch.clinicianId;
+    }
+    if (patch.synced !== undefined) {
+        updates['doseSpot.synced'] = patch.synced;
+    }
+    if (patch.registrationStatus !== undefined) {
+        updates['doseSpot.registrationStatus'] = patch.registrationStatus;
+        updates['doseSpot.registrationStatusCheckedAt'] = now;
+    }
+    if (patch.lastSyncError !== undefined) {
+        updates['doseSpot.lastSyncError'] = patch.lastSyncError;
+    }
+
+    await Promise.all([
+        admin.firestore().collection('users').doc(clinicianUid).set(updates, { merge: true }),
+        admin.firestore().collection('patients').doc(clinicianUid).set(updates, { merge: true })
+    ]);
+}
+
 export async function getDoseSpotClinicianReadinessForUid(clinicianUid: string): Promise<DoseSpotClinicianReadiness> {
     return buildStoredReadiness(clinicianUid);
+}
+
+export async function fetchDoseSpotClinicianRegistrationStatusForUid(
+    clinicianUid: string
+): Promise<DoseSpotClinicianRegistrationStatusResponse> {
+    const context = await requireClinicianContext(clinicianUid);
+    const response = await doseSpotApiFetch<Record<string, unknown> | unknown[]>(
+        `api/clinicians/${context.clinicianId}/registrationStatus`,
+        {
+            method: 'GET',
+            onBehalfOfClinicianId: context.clinicianId
+        }
+    );
+
+    if (isRecord(response) && isRecord(response.Result)) {
+        ensureDoseSpotResultOk(response.Result as DoseSpotResult, 'registration status');
+    }
+
+    const registrationStatus = normalizeRegistrationStatus(response);
+    await persistClinicianSyncSnapshot(clinicianUid, {
+        clinicianId: context.clinicianId,
+        synced: true,
+        registrationStatus,
+        lastSyncError: null
+    });
+
+    return {
+        clinicianUid,
+        clinicianId: context.clinicianId,
+        registrationStatus,
+        synced: true,
+        rawResponse: toResponseObject(response),
+        message: registrationStatus
+            ? `DoseSpot registration status: ${registrationStatus}.`
+            : 'DoseSpot did not return a clinician registration status.'
+    };
+}
+
+export async function syncDoseSpotClinicianForUid(
+    clinicianUid: string
+): Promise<DoseSpotClinicianSyncResponse> {
+    const existingContext = await loadClinicianContext(clinicianUid);
+    if (existingContext.clinicianId) {
+        const status = await fetchDoseSpotClinicianRegistrationStatusForUid(clinicianUid);
+        return {
+            clinicianUid,
+            clinicianId: status.clinicianId,
+            synced: true,
+            registrationStatus: status.registrationStatus,
+            missingFields: [],
+            rawResponse: status.rawResponse,
+            message: 'Provider is already linked to DoseSpot.'
+        };
+    }
+
+    const source = await loadClinicianSourceRecord(clinicianUid);
+    const { missingFields, payload } = buildDoseSpotClinicianPayload(clinicianUid, source);
+
+    if (missingFields.length > 0) {
+        await persistClinicianSyncSnapshot(clinicianUid, {
+            synced: false,
+            lastSyncError: `Missing required fields: ${missingFields.join(', ')}`
+        });
+
+        return {
+            clinicianUid,
+            clinicianId: null,
+            synced: false,
+            registrationStatus: null,
+            missingFields,
+            message: 'Provider profile is missing required DoseSpot clinician fields.'
+        };
+    }
+
+    const response = await doseSpotApiFetch<Record<string, unknown> | unknown[]>(
+        'api/clinicians',
+        {
+            method: 'POST',
+            body: payload
+        }
+    );
+
+    if (isRecord(response) && isRecord(response.Result)) {
+        const result = response.Result as DoseSpotResult;
+        if (isDoseSpotAddClinicianAuthorizationError(result)) {
+            const message = getDoseSpotAddClinicianAuthorizationMessage();
+            await persistClinicianSyncSnapshot(clinicianUid, {
+                synced: false,
+                lastSyncError: message
+            });
+            throw new Error(message);
+        }
+
+        ensureDoseSpotResultOk(result, 'add clinician');
+    }
+
+    const clinicianId = Array.isArray(response)
+        ? null
+        : asNumber(response.Id ?? response.id ?? response.ClinicianId ?? response.clinicianId ?? response.Item);
+
+    if (!clinicianId) {
+        throw new Error('DoseSpot did not return a clinician ID after creating the clinician.');
+    }
+
+    await persistClinicianSyncSnapshot(clinicianUid, {
+        clinicianId,
+        synced: true,
+        lastSyncError: null
+    });
+
+    const status = await fetchDoseSpotClinicianRegistrationStatusForUid(clinicianUid);
+
+    return {
+        clinicianUid,
+        clinicianId,
+        synced: true,
+        registrationStatus: status.registrationStatus,
+        missingFields: [],
+        rawResponse: toResponseObject(response),
+        message: 'Provider synced to DoseSpot successfully.'
+    };
 }
 
 export async function fetchDoseSpotLegalAgreementsForUid(clinicianUid: string): Promise<DoseSpotClinicianActionResponse> {
