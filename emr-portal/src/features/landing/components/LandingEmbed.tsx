@@ -50,8 +50,8 @@ const POPULAR_SERVICES: ServiceCard[] = [
       es: "Disfunción Eréctil",
     },
     description: {
-      en: "Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.",
-      es: "Sildenafil, tadalafil y compuestos personalizados — entregados discretamente después de una evaluación de seguridad cardiovascular.",
+      en: "Confidential men's health evaluation with cardiovascular safety screening. All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate.",
+      es: "Evaluacion confidencial de salud masculina con revision de seguridad cardiovascular. Todos los tratamientos requieren revision y aprobacion de un medico con licencia. Las recetas se emiten solo cuando son clinicamente apropiadas.",
     },
   },
   {
@@ -79,12 +79,12 @@ const POPULAR_SERVICES: ServiceCard[] = [
     color: "blue",
     price: 129,
     title: {
-      en: "Rx Weight Loss",
-      es: "Rx y Pérdida de Peso",
+      en: "Medical Weight Management",
+      es: "Manejo Medico del Peso",
     },
     description: {
-      en: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
-      es: "Evaluación médica integral de pérdida de peso. Detección para elegibilidad de Rx, titulación personalizada y orientación dietética. Costo del medicamento por separado.",
+      en: "Comprehensive medical weight management evaluation with eligibility screening, titration planning, and dietary guidance. Medication cost separate. All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate.",
+      es: "Evaluacion medica integral para el manejo del peso con evaluacion de elegibilidad, plan de titulacion y orientacion dietetica. El costo del medicamento es aparte. Todos los tratamientos requieren revision y aprobacion de un medico con licencia. Las recetas se emiten solo cuando son clinicamente apropiadas.",
     },
   },
 ];
@@ -99,87 +99,88 @@ const COPY = {
       clinicians: "For Clinicians and Facilities",
       reviews: "Reviews",
       login: "Log In",
-      getStarted: "Get Started",
+      getStarted: "Start My Free Intake",
       dashboard: "Dashboard",
       logout: "Log Out",
     },
     hero: {
-      badge: "Board-Certified Physicians Online Now",
+      badge: "Board-Certified Physician Oversight",
       titleHtml:
-        'Healthcare<br />that comes<br />to <span class="gt">you.</span>',
+        'Evidence-based treatment plans,<br />reviewed by <span class="gt">board-certified physicians.</span>',
       subtitle:
-        "General telehealth, radiology second opinions, physician-supervised AI imaging, and expert video consults - all protocol-driven, all from board-certified providers.",
-      cta: "Start Your Visit ->",
+        "Complete a confidential medical intake. A licensed physician reviews your information and determines whether treatment is appropriate for you. Prescriptions are only issued when clinically indicated.",
+      cta: "Start My Free Intake",
       servicesKicker: "Browse Services",
-      servicesHeading: "Pick a treatment and start intake in minutes.",
+      servicesHeading: "Select a service and begin your evaluation.",
       servicesSub:
-        "Tap any card to begin a secure, protocol-driven consultation flow.",
+        "Complete a secure intake for physician review. All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate.",
     },
     safety: [
-      "Evidence-Based Protocols",
-      "Automated Safety Screening",
-      "Contraindication Checks",
-      "Board-Certified Review",
+      "Board-Certified Physicians",
+      "No Controlled Substances",
+      "Florida-Licensed Providers",
+      "HIPAA-Compliant Platform",
+      "Pharmacy Partner: Strive Pharmacy (LegitScript Certified)",
     ],
     protocol: {
       eyebrow: "Our Approach",
       titleHtml: "Protocol-driven care.<br />No exceptions.",
       subtitle:
-        "Every prescription, every consultation, every imaging read follows strict clinical protocols. Our automated screening catches contraindications before they become problems.",
+        "Every consultation, treatment request, and imaging review follows strict clinical protocols. Our automated screening helps flag contraindications before care decisions are made.",
       pills: [
-        "Automated contraindication screening on every visit",
+        "Structured intake and contraindication screening on every visit",
         "Evidence-based treatment protocols for all services",
-        "Board-certified physician review required for every Rx",
-        "HIPAA-compliant platform with full audit logging",
+        "Board-certified physician review required for every treatment request",
+        "No controlled substances are prescribed through this platform",
       ],
     },
     how: {
       eyebrow: "How It Works",
       titleHtml: "Care in four<br />simple steps.",
       subtitle:
-        "From first click to treatment at your door — protocol-driven at every step.",
+        "From first click to physician review, every step is secure and protocol-driven.",
       steps: [
         {
           number: "01",
           title: "Pick Your Service",
           description:
-            "Choose from clinical visits, AI tools, and membership plans — general telehealth, weight loss, sexual health, hormone therapy, AI imaging, and much more.",
+            "Choose from telehealth, weight management, men's health, imaging education, and diagnostic services. Currently accepting patients in Florida.",
         },
         {
           number: "02",
-          title: "Safety Screening",
+          title: "Complete Intake",
           description:
-            "Complete a secure intake. Our system automatically screens for contraindications to ensure safe, protocol-based treatment.",
+            "Complete a secure intake. Our system screens for contraindications and other safety concerns before physician review.",
         },
         {
           number: "03",
-          title: "Provider Reviews",
+          title: "Physician Review",
           description:
-            "A board-certified physician or radiologist reviews your case against clinical protocols and creates a personalized plan.",
+            "A board-certified physician or radiologist reviews your case and determines whether treatment or follow-up is appropriate.",
         },
         {
           number: "04",
-          title: "Get Treated",
+          title: "Care Plan & Next Steps",
           description:
-            "Prescriptions ship to your door. Radiology reports delivered digitally. Video consults from anywhere. Ongoing support included.",
+            "If treatment is clinically appropriate, prescriptions are issued by a licensed physician and routed to our pharmacy partner, Strive Pharmacy (LegitScript Certified). Video consults and radiology reviews are delivered securely online.",
         },
       ],
     },
     reviews: {
       eyebrow: "Reviews",
-      titleHtml: "Real results,<br />real people.",
+      titleHtml: "Real care experiences,<br />real patients.",
       subtitle:
-        "Hear from Florida patients who transformed their health with Patriotic Virtual Telehealth.",
+        "Hear from Florida patients about their care experience with Patriotic Virtual Telehealth.",
     },
     cta: {
       title: "Your health, your schedule.",
       description:
-        "Protocol-driven care from board-certified physicians and radiologists — entirely online, entirely safe. Now available in Florida.",
-      button: "Start Your Free Visit →",
+        "Complete a confidential intake and request a consultation. A licensed physician reviews your information and determines whether treatment is appropriate.",
+      button: "Request a Consultation",
     },
     footer: {
       brand:
-        "Board-certified telehealth and radiology services. Protocol-driven care, delivered to your door. Currently serving Florida.",
+        "Board-certified telehealth and radiology services. Currently accepting patients in Florida. No controlled substances are prescribed through this platform.",
       company: "Company",
       about: "About Us",
       careers: "Careers",
@@ -189,7 +190,8 @@ const COPY = {
       contact: "Contact",
       privacy: "Privacy Policy",
       copy: "© 2026 Patriotic Virtual Telehealth. All rights reserved.",
-      badges: "HIPAA Compliant · FL-Licensed · Protocol-Based · Encrypted",
+      badges:
+        "HIPAA Compliant · Florida-Licensed Providers · Board-Certified Physicians · Encrypted",
     },
   },
   es: {
@@ -201,87 +203,88 @@ const COPY = {
       clinicians: "Para Clínicos e Instalaciones",
       reviews: "Opiniones",
       login: "Iniciar Sesión",
-      getStarted: "Comenzar",
+      getStarted: "Comienza Mi Evaluacion",
       dashboard: "Panel",
       logout: "Cerrar Sesión",
     },
     hero: {
-      badge: "Médicos Certificados en Línea Ahora",
+      badge: "Supervision de Medicos Certificados",
       titleHtml:
-        'Atención médica<br />que llega<br />a <span class="gt">usted.</span>',
+        'Planes de tratamiento basados en evidencia,<br />revisados por <span class="gt">medicos certificados.</span>',
       subtitle:
-        "Telesalud general, segundas opiniones en radiología, imágenes con IA supervisadas por médicos y consultas por video con expertos — todo guiado por protocolos, todo con proveedores certificados.",
-      cta: "Comienza Tu Visita ->",
+        "Complete una evaluacion medica confidencial. Un medico con licencia revisa su informacion y determina si el tratamiento es apropiado para usted. Las recetas solo se emiten cuando son clinicamente apropiadas.",
+      cta: "Comienza Mi Evaluacion",
       servicesKicker: "Ver Servicios",
-      servicesHeading: "Elige un tratamiento y comienza el proceso en minutos.",
+      servicesHeading: "Elige un servicio y comienza tu evaluacion.",
       servicesSub:
-        "Toca cualquier tarjeta para iniciar una consulta segura y guiada por protocolos.",
+        "Complete un registro seguro para revision medica. Todos los tratamientos requieren revision y aprobacion por un medico con licencia. Las recetas se emiten solo cuando son clinicamente apropiadas.",
     },
     safety: [
-      "Protocolos Basados en Evidencia",
-      "Detección de Seguridad Automatizada",
-      "Verificación de Contraindicaciones",
-      "Revisión por Médico Certificado",
+      "Medicos Certificados",
+      "Sin Sustancias Controladas",
+      "Proveedores con Licencia en Florida",
+      "Plataforma Compatible con HIPAA",
+      "Farmacia Aliada: Strive Pharmacy (LegitScript Certified)",
     ],
     protocol: {
       eyebrow: "Nuestro Enfoque",
-      titleHtml: "Atención guiada por protocolos.<br />Sin excepciones.",
+      titleHtml: "Atencion guiada por protocolos.<br />Sin excepciones.",
       subtitle:
-        "Cada receta, cada consulta, cada lectura de imagen sigue protocolos clínicos estrictos. Nuestra detección automatizada capta contraindicaciones antes de que se conviertan en problemas.",
+        "Cada consulta, solicitud de tratamiento y revision de imagen sigue protocolos clinicos estrictos. Nuestra deteccion automatizada ayuda a identificar contraindicaciones antes de tomar decisiones clinicas.",
       pills: [
-        "Detección automática de contraindicaciones en cada visita",
+        "Registro estructurado y evaluacion de contraindicaciones en cada visita",
         "Protocolos de tratamiento basados en evidencia para todos los servicios",
-        "Revisión médica certificada requerida para cada receta",
-        "Plataforma compatible con HIPAA con registro de auditoría completo",
+        "Revision medica certificada requerida para cada solicitud de tratamiento",
+        "No se prescriben sustancias controladas en esta plataforma",
       ],
     },
     how: {
-      eyebrow: "Cómo Funciona",
-      titleHtml: "Atención en cuatro<br />pasos sencillos.",
+      eyebrow: "Como Funciona",
+      titleHtml: "Atencion en cuatro<br />pasos sencillos.",
       subtitle:
-        "Desde el primer clic hasta el tratamiento en su puerta — guiado por protocolos en cada paso.",
+        "Desde el primer clic hasta la revision medica, cada paso es seguro y guiado por protocolos.",
       steps: [
         {
           number: "01",
           title: "Elige Tu Servicio",
           description:
-            "Elige entre consultas clínicas, herramientas de IA y planes de membresía — telesalud general, pérdida de peso, salud sexual, terapia hormonal, imágenes con IA y mucho más.",
+            "Elige entre telesalud, manejo del peso, salud masculina, educacion en imagenes y servicios diagnosticos. Actualmente aceptamos pacientes en Florida.",
         },
         {
           number: "02",
-          title: "Evaluación de Seguridad",
+          title: "Completa tu Registro",
           description:
-            "Completa un registro seguro. Nuestro sistema detecta automáticamente contraindicaciones para garantizar un tratamiento seguro basado en protocolos.",
+            "Completa un registro seguro. Nuestro sistema evalua contraindicaciones y otras senales de seguridad antes de la revision medica.",
         },
         {
           number: "03",
-          title: "Revisión del Proveedor",
+          title: "Revision Medica",
           description:
-            "Un médico o radiólogo certificado revisa su caso según protocolos clínicos y crea un plan personalizado.",
+            "Un medico o radiologo certificado revisa su caso y determina si el tratamiento o seguimiento es apropiado.",
         },
         {
           number: "04",
-          title: "Recibe Atención",
+          title: "Plan de Atencion y Siguientes Pasos",
           description:
-            "Las recetas llegan a su puerta. Informes de radiología entregados digitalmente. Consultas por video desde cualquier lugar. Soporte continuo incluido.",
+            "Si el tratamiento es clinicamente apropiado, las recetas son emitidas por un medico con licencia y enviadas a nuestra farmacia aliada, Strive Pharmacy (LegitScript Certified). Las consultas por video y revisiones de radiologia se entregan de forma segura en linea.",
         },
       ],
     },
     reviews: {
       eyebrow: "Opiniones",
-      titleHtml: "Resultados reales,<br />personas reales.",
+      titleHtml: "Experiencias reales,<br />pacientes reales.",
       subtitle:
-        "Escuche a pacientes de Florida que transformaron su salud con Patriotic Virtual Telehealth.",
+        "Conozca la experiencia de pacientes de Florida con Patriotic Virtual Telehealth.",
     },
     cta: {
       title: "Tu salud, tu horario.",
       description:
-        "Atención guiada por protocolos de médicos y radiólogos certificados — completamente en línea, completamente segura. Ahora disponible en Florida.",
-      button: "Comienza Tu Visita Gratis →",
+        "Complete un registro confidencial y solicite una consulta. Un medico con licencia revisa su informacion y determina si el tratamiento es apropiado.",
+      button: "Solicitar una Consulta",
     },
     footer: {
       brand:
-        "Servicios de telesalud y radiología certificados. Atención guiada por protocolos, entregada a su puerta. Actualmente atendiendo a Florida.",
+        "Servicios de telesalud y radiologia certificados. Actualmente aceptamos pacientes en Florida. No se prescriben sustancias controladas en esta plataforma.",
       company: "Empresa",
       about: "Sobre Nosotros",
       careers: "Empleos",
@@ -292,7 +295,7 @@ const COPY = {
       privacy: "Política de Privacidad",
       copy: "© 2026 Patriotic Virtual Telehealth. Todos los derechos reservados.",
       badges:
-        "Compatible con HIPAA · Licencia en FL · Basado en Protocolos · Encriptado",
+        "Compatible con HIPAA · Proveedores con Licencia en Florida · Medicos Certificados · Encriptado",
     },
   },
 } as const;
@@ -302,6 +305,7 @@ const SAFETY_ICON_BACKGROUNDS = [
   "var(--blue)",
   "var(--amber)",
   "var(--violet)",
+  "var(--navy)",
 ] as const;
 const PROTOCOL_PILL_ICONS = ["🛡", "📋", "⚕️", "🔒"] as const;
 const MARQUEE_ITEMS = [
@@ -310,7 +314,7 @@ const MARQUEE_ITEMS = [
   { icon: "📱", label: "Digital Health Platform" },
   { icon: "🌴", label: "Available in Florida" },
   { icon: "🩺", label: "General Telehealth" },
-  { icon: "💊", label: "Rx Weight Loss" },
+  { icon: "💊", label: "Weight Management" },
   { icon: "⚡", label: "Erectile Dysfunction" },
 ] as const;
 const PROTOCOL_METRICS = [
@@ -324,9 +328,9 @@ const TESTIMONIALS = [
     initials: "MR",
     avatarClass: "ta1",
     quote:
-      '"Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right."',
+      '"The intake was thorough, the physician review felt careful, and I understood exactly which treatment options were appropriate for me."',
     name: "Marcus R.",
-    details: "Weight Loss · Jacksonville, FL",
+    details: "Weight Management · Jacksonville, FL",
   },
   {
     initials: "SK",
@@ -344,6 +348,21 @@ const TESTIMONIALS = [
     name: "James D.",
     details: "AI + Radiologist · Orlando, FL",
   },
+] as const;
+
+const NON_PRESCRIBE_REASONS = [
+  "If a condition requires in-person evaluation",
+  "If requested treatment is not clinically appropriate",
+  "If there are contraindications based on medical history",
+  "If symptoms indicate a more serious or emergency condition",
+  "If the patient is not eligible under physician guidelines",
+] as const;
+
+const CLINICAL_SAFETY_MODEL = [
+  "All patients complete a structured medical intake",
+  "Licensed physicians review every case",
+  "Treatments are prescribed only when clinically appropriate",
+  "Care decisions follow established medical guidelines",
 ] as const;
 
 function getAboutTabStyle(isActive: boolean) {
@@ -792,7 +811,10 @@ export function LandingEmbed() {
                   <span>{copy.hero.badge}</span>
                 </div>
                 <div className="hero-badge" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#00d9a3', marginLeft: '8px' }}>
-                  <span>📍 Services are currently available to patients located in Florida only.</span>
+                  <span>{locale === "en" ? "Currently accepting patients in Florida." : "Actualmente aceptamos pacientes en Florida."}</span>
+                </div>
+                <div className="hero-badge" style={{ background: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#fde68a', marginLeft: '8px' }}>
+                  <span>{locale === "en" ? "No Controlled Substances Prescribed" : "No Se Prescriben Sustancias Controladas"}</span>
                 </div>
                 <h1 dangerouslySetInnerHTML={{ __html: copy.hero.titleHtml }} />
                 <p className="hero-sub">{copy.hero.subtitle}</p>
@@ -808,6 +830,14 @@ export function LandingEmbed() {
                     {copy.hero.cta}
                   </button>
                 </div>
+                <p
+                  className="hero-sub"
+                  style={{ fontSize: "0.85em", color: "#fcd34d", marginTop: "12px" }}
+                >
+                  {locale === "en"
+                    ? "For medical emergencies, call 911. This platform does not treat acute or serious conditions."
+                    : "Para emergencias medicas, llame al 911. Esta plataforma no trata condiciones agudas o graves."}
+                </p>
                 <div style={{ marginTop: "16px", fontSize: "0.9em", color: "var(--g400)", textAlign: "center", maxWidth: "560px" }}>
                   Our platform integrates advanced clinical software and AI to support efficient, high-quality care delivery.
                 </div>
@@ -915,6 +945,11 @@ export function LandingEmbed() {
                   </div>
                   <h3>{copy.hero.servicesHeading}</h3>
                   <p>{copy.hero.servicesSub}</p>
+                  <p style={{ fontSize: "12px", color: "var(--g400)", marginTop: "8px" }}>
+                    {locale === "en"
+                      ? "For medical emergencies, call 911. This platform does not treat acute or serious conditions."
+                      : "Para emergencias medicas, llame al 911. Esta plataforma no trata condiciones agudas o graves."}
+                  </p>
                 </div>
                 <div
                   className="services-tabs hero-services-tabs"
@@ -947,6 +982,11 @@ export function LandingEmbed() {
                     ))}
                   </div>
                 </div>
+                <p style={{ fontSize: "12px", color: "var(--g400)", marginTop: "12px" }}>
+                  {locale === "en"
+                    ? "*Results vary by individual. Weight loss outcomes depend on adherence to treatment plan, lifestyle modifications, and physician-determined eligibility. Not all patients are candidates for GLP-1 therapy."
+                    : "*Los resultados varian segun cada persona. Los resultados de perdida de peso dependen de la adherencia al plan de tratamiento, las modificaciones del estilo de vida y la elegibilidad determinada por el medico. No todos los pacientes son candidatos para la terapia con GLP-1."}
+                </p>
               </div>
             </div>
           </div>
@@ -1046,6 +1086,94 @@ export function LandingEmbed() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="how-section" id="when-we-do-not-prescribe">
+          <div className="container">
+            <div className="sec-eye eye-blue">
+              <div className="eye-line" style={{ background: "var(--blue)" }} />
+              <span>
+                {locale === "en"
+                  ? "When We Do Not Prescribe"
+                  : "Cuando No Prescribimos"}
+              </span>
+            </div>
+            <h2 className="sec-title">
+              {locale === "en"
+                ? "When We Do Not Prescribe"
+                : "Cuando No Prescribimos"}
+            </h2>
+            <p className="sec-sub">
+              {locale === "en"
+                ? "Treatment decisions are based on physician judgment, medical history, and patient safety."
+                : "Las decisiones de tratamiento se basan en el juicio medico, la historia clinica y la seguridad del paciente."}
+            </p>
+            <div className="steps-grid">
+              {NON_PRESCRIBE_REASONS.map((reason, index) => (
+                <div className="step" key={reason}>
+                  <div className="step-acc" />
+                  <div className="step-num">{String(index + 1).padStart(2, "0")}</div>
+                  <p>
+                    {locale === "en"
+                      ? reason
+                      : [
+                          "Si una condicion requiere una evaluacion en persona",
+                          "Si el tratamiento solicitado no es clinicamente apropiado",
+                          "Si existen contraindicaciones segun la historia clinica",
+                          "Si los sintomas indican una condicion mas grave o una emergencia",
+                          "Si el paciente no es elegible segun las guias medicas",
+                        ][index]}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="how-section" id="clinical-safety-model">
+          <div className="container">
+            <div className="sec-eye eye-em">
+              <div className="eye-line" />
+              <span>
+                {locale === "en"
+                  ? "Clinical Safety Model"
+                  : "Modelo de Seguridad Clinica"}
+              </span>
+            </div>
+            <h2 className="sec-title">
+              {locale === "en"
+                ? "Clinical Safety Model"
+                : "Modelo de Seguridad Clinica"}
+            </h2>
+            <p className="sec-sub">
+              {locale === "en"
+                ? "Every case follows a structured review process designed to support safe, consistent care."
+                : "Cada caso sigue un proceso estructurado de revision para apoyar una atencion segura y consistente."}
+            </p>
+            <div className="steps-grid">
+              {CLINICAL_SAFETY_MODEL.map((item, index) => (
+                <div className="step" key={item}>
+                  <div className="step-acc" />
+                  <div className="step-num">{String(index + 1).padStart(2, "0")}</div>
+                  <p>
+                    {locale === "en"
+                      ? item
+                      : [
+                          "Todos los pacientes completan un registro medico estructurado",
+                          "Medicos con licencia revisan cada caso",
+                          "Los tratamientos solo se prescriben cuando son clinicamente apropiados",
+                          "Las decisiones de atencion siguen guias medicas establecidas",
+                        ][index]}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="sec-sub" style={{ marginTop: 20 }}>
+              {locale === "en"
+                ? "Clinicians are supported by AI-powered clinical decision tools to enhance safety and consistency of care."
+                : "Los clinicos cuentan con herramientas de decision clinica impulsadas por IA para mejorar la seguridad y la consistencia de la atencion."}
+            </p>
           </div>
         </section>
 
@@ -1474,6 +1602,30 @@ export function LandingEmbed() {
               </div>
             </div>
 
+            <div
+              style={{
+                display: "grid",
+                gap: "10px",
+                marginTop: "24px",
+                paddingTop: "24px",
+                borderTop: "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <p style={{ margin: 0, color: "#cbd5e1", fontSize: "13px", lineHeight: 1.6 }}>
+                {locale === "en"
+                  ? "For medical emergencies, call 911. This platform does not treat acute or serious conditions."
+                  : "Para emergencias medicas, llame al 911. Esta plataforma no trata condiciones agudas o graves."}
+              </p>
+              <p style={{ margin: 0, color: "#cbd5e1", fontSize: "13px", lineHeight: 1.6 }}>
+                {locale === "en"
+                  ? "All treatments are prescribed, when appropriate, by board-certified physicians licensed in applicable states."
+                  : "Todos los tratamientos se prescriben, cuando es apropiado, por medicos certificados con licencia en los estados correspondientes."}
+              </p>
+              <p style={{ margin: 0, color: "#cbd5e1", fontSize: "13px", lineHeight: 1.6 }}>
+                Pharmacy Partner: Strive Pharmacy (LegitScript Certified)
+              </p>
+            </div>
+
             <div className="footer-bottom">
               <span>{copy.footer.copy}</span>
               <span>{copy.footer.badges}</span>
@@ -1493,8 +1645,9 @@ export function LandingEmbed() {
             </div>
 
             <p style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', maxWidth: '48rem', margin: '2rem auto 0' }}>
-              All treatments are prescribed only after evaluation by a licensed medical provider.
-              Not all patients qualify. Results may vary.
+              {locale === "en"
+                ? "All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate."
+                : "Todos los tratamientos requieren revision y aprobacion por un medico con licencia. Las recetas se emiten solo cuando son clinicamente apropiadas."}
             </p>
           </div>
         </footer>
@@ -2085,14 +2238,16 @@ export function LandingEmbed() {
               </p>
 
               <h4 style={{ color: "white", marginBottom: 6 }}>
-                4. Rx Weight Loss
+                4. Weight Management Treatments
               </h4>
               <p style={{ marginBottom: 12 }}>
-                For Rx agonist prescriptions (e.g., Semaglutide/Tirzepatide),
+                For GLP-1 agonist prescriptions (e.g., Semaglutide/Tirzepatide),
                 you acknowledge potential side effects including nausea,
                 vomiting, and risk of thyroid C-cell tumors. You confirm you do
                 not have a personal or family history of Medullary Thyroid
-                Carcinoma (MTC) or MEN 2 syndrome.
+                Carcinoma (MTC) or MEN 2 syndrome. All treatments require
+                review and approval by a licensed physician. Prescriptions are
+                issued only when clinically appropriate.
               </p>
 
               <h4 style={{ color: "white", marginBottom: 6 }}>

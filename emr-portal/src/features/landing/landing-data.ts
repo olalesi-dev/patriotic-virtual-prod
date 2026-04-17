@@ -79,15 +79,15 @@ export const LANDING_COPY = {
             logout: 'Log Out',
         },
         hero: {
-            badge: 'Board-Certified Physicians Online Now',
-            titleHtml: 'Healthcare<br />that comes<br />to <span class="gt">you.</span>',
+            badge: 'Board-Certified Physician Oversight',
+            titleHtml: 'Evidence-based treatment plans,<br />reviewed by <span class="gt">board-certified physicians.</span>',
             subtitle:
-                'General telehealth, radiology second opinions, physician-supervised AI imaging, and expert video consults - all protocol-driven, all from board-certified providers.',
-            cta: 'Start Your Visit ->',
+                'Complete a confidential medical intake. A licensed physician reviews your information and determines whether treatment is appropriate for you. Prescriptions are only issued when clinically indicated.',
+            cta: 'Start My Free Intake',
             servicesKicker: 'Browse Services',
-            servicesTitle: 'Pick a treatment and start intake in minutes.',
+            servicesTitle: 'Select a service and begin your evaluation.',
             servicesSubtitle:
-                'Tap any card to begin a secure, protocol-driven consultation flow.',
+                'Complete a secure intake for physician review. All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate.',
         },
         safety: [
             'Evidence-Based Protocols',
@@ -129,27 +129,27 @@ export const LANDING_COPY = {
                         'A board-certified physician or radiologist reviews your case against clinical protocols and creates a personalized plan.',
                 },
                 {
-                    title: 'Get Treated',
+                    title: 'Care Plan & Next Steps',
                     description:
-                        'Prescriptions ship to your door. Radiology reports are delivered digitally. Video consults can happen from anywhere. Ongoing support is included.',
+                        'If treatment is clinically appropriate, prescriptions are issued by a licensed physician and routed to our pharmacy partner, Strive Pharmacy (LegitScript Certified). Video consults and radiology reviews are delivered securely online.',
                 },
             ],
         },
         reviews: {
             eyebrow: 'Reviews',
-            titleHtml: 'Real results,<br />real people.',
+            titleHtml: 'Real care experiences,<br />real patients.',
             subtitle:
-                'Hear from Florida patients who transformed their health with Patriotic Virtual Telehealth.',
+                'Hear from Florida patients about their care experience with Patriotic Virtual Telehealth.',
         },
         cta: {
             title: 'Your health, your schedule.',
             description:
                 'Protocol-driven care from board-certified physicians and radiologists - entirely online, entirely safe. Now available in Florida.',
-            button: 'Start Your Free Visit ->',
+            button: 'Request a Consultation',
         },
         footer: {
             brand:
-                'Board-certified telehealth and radiology services. Protocol-driven care, delivered to your door. Currently serving Florida.',
+                'Board-certified telehealth and radiology services. Currently accepting patients in Florida. No controlled substances are prescribed through this platform.',
             company: 'Company',
             support: 'Support',
             about: 'About Us',
@@ -338,12 +338,12 @@ export const HERO_SERVICES: LandingService[] = [
         tone: 'blue',
         price: 129,
         title: {
-            en: 'Rx Weight Loss',
-            es: 'Rx y Perdida de Peso',
+            en: 'Medical Weight Management',
+            es: 'Manejo Medico del Peso',
         },
         description: {
-            en: 'Comprehensive medical weight loss evaluation with Rx eligibility screening, personalized titration, and dietary guidance.',
-            es: 'Evaluacion medica integral de perdida de peso con elegibilidad para Rx, titulacion personalizada y orientacion dietetica.',
+            en: 'Comprehensive medical weight management evaluation with eligibility screening, titration planning, and dietary guidance. All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate.',
+            es: 'Evaluacion medica integral para el manejo del peso con evaluacion de elegibilidad, plan de titulacion y orientacion dietetica. Todos los tratamientos requieren revision y aprobacion por un medico con licencia. Las recetas se emiten solo cuando son clinicamente apropiadas.',
         },
     },
 ];
@@ -363,7 +363,7 @@ export const MARQUEE_ITEMS = [
     { label: 'Digital Health Platform', icon: MonitorSmartphone },
     { label: 'Available in Florida', icon: MapPinned },
     { label: 'General Telehealth', icon: Stethoscope },
-    { label: 'Rx Weight Loss', icon: Pill },
+    { label: 'Weight Management', icon: Pill },
     { label: 'Erectile Dysfunction', icon: Zap },
 ] as const;
 
@@ -447,9 +447,9 @@ export const TESTIMONIALS = [
     {
         initials: 'MR',
         quote:
-            'Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right.',
+            'The intake was thorough, the physician review felt careful, and I understood exactly which treatment options were appropriate for me.',
         name: 'Marcus R.',
-        details: 'Weight Loss - Jacksonville, FL',
+        details: 'Weight Management - Jacksonville, FL',
     },
     {
         initials: 'SK',
