@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
+import { sendMessage } from '@/lib/server-messaging';
 import { loadProviderScopedPatientDetail, loadProviderScopedPatientSummary } from '@/lib/server-patients';
 import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
 
@@ -114,6 +115,7 @@ export async function PATCH(
             const lastName = asNonEmptyString(values.lastName);
             const displayName = [firstName, lastName].filter(Boolean).join(' ');
             const sex = asNonEmptyString(values.sex);
+            const preferredPharmacyDoseSpotId = asNumber(values.preferredPharmacyDoseSpotId);
             const nextPatientData = {
                 ...(displayName ? { name: displayName, displayName, firstName, lastName } : {}),
                 ...(asNonEmptyString(values.email) ? { email: asNonEmptyString(values.email) } : {}),
@@ -123,6 +125,7 @@ export async function PATCH(
                 ...(asNonEmptyString(values.state) ? { state: asNonEmptyString(values.state) } : {}),
                 ...(asNonEmptyString(values.primaryConcern) ? { primaryConcern: asNonEmptyString(values.primaryConcern) } : {}),
                 ...(asNonEmptyString(values.preferredPharmacy) ? { preferredPharmacy: asNonEmptyString(values.preferredPharmacy) } : {}),
+                ...(preferredPharmacyDoseSpotId && preferredPharmacyDoseSpotId > 0 ? { preferredPharmacyDoseSpotId } : {}),
                 ...(Array.isArray(values.allergies) ? { allergies: asStringArray(values.allergies) } : {}),
                 updatedAt: now
             };
@@ -133,6 +136,7 @@ export async function PATCH(
                 ...(asNonEmptyString(values.email) ? { email: asNonEmptyString(values.email) } : {}),
                 ...(asNonEmptyString(values.phone) ? { phone: asNonEmptyString(values.phone) } : {}),
                 ...(sex ? { sex, sexAtBirth: sex, gender: sex } : {}),
+                ...(preferredPharmacyDoseSpotId && preferredPharmacyDoseSpotId > 0 ? { preferredPharmacyDoseSpotId } : {}),
                 updatedAt: now
             }, { merge: true });
         } else if (action === 'add_problem') {
@@ -276,45 +280,12 @@ export async function PATCH(
             if (!text) {
                 return NextResponse.json({ success: false, error: 'Message text is required.' }, { status: 400 });
             }
-
-            const threadQuery = await firestore
-                .collection('threads')
-                .where('providerId', '==', user.uid)
-                .where('patientId', '==', params.id)
-                .limit(1)
-                .get();
-
-            const patientName = patientSummary.name;
-            const threadRef = threadQuery.docs[0]?.ref ?? firestore.collection('threads').doc();
-
-            if (!threadQuery.docs[0]) {
-                await threadRef.set({
-                    patientId: params.id,
-                    patientName,
-                    providerId: user.uid,
-                    providerName: user.email ?? 'Provider',
-                    subject: 'Patient conversation',
-                    category: 'Clinical',
-                    lastMessage: text,
-                    lastMessageAt: now,
-                    updatedAt: now,
-                    unreadCount: 0
-                });
-            } else {
-                await threadRef.set({
-                    lastMessage: text,
-                    lastMessageAt: now,
-                    updatedAt: now
-                }, { merge: true });
-            }
-
-            await threadRef.collection('messages').add({
-                senderId: user.uid,
-                senderType: 'provider',
-                senderName: user.email ?? 'Provider',
-                body: text,
-                createdAt: now,
-                read: true
+            await sendMessage(firestore, user, {
+                recipientId: params.id,
+                recipientType: 'patient',
+                subject: 'Patient conversation',
+                category: 'Clinical',
+                body: text
             });
         } else if (action === 'add_billing_statement') {
             const amount = asNumber(values.amount);

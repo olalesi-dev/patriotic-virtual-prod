@@ -37,7 +37,9 @@ export function usePushNotifications(activeUser: FirebaseUser | null) {
 
         const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
         if (!vapidKey) {
-            console.warn('Push notifications disabled: NEXT_PUBLIC_FIREBASE_VAPID_KEY is not configured.');
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('Push notifications disabled: NEXT_PUBLIC_FIREBASE_VAPID_KEY is not configured.');
+            }
             return;
         }
 

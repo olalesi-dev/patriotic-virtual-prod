@@ -110,7 +110,8 @@ export default function BillingPage() {
         setIsProcessingPayment(true);
         try {
             const token = await auth.currentUser?.getIdToken();
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/billing/create-balance-checkout`, {
+            const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+            const response = await fetch(`${apiOrigin}/api/v1/billing/create-balance-checkout`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -143,7 +144,8 @@ export default function BillingPage() {
 
         try {
             const token = await auth.currentUser?.getIdToken();
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/insurance/update`, {
+            const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+            const response = await fetch(`${apiOrigin}/api/v1/insurance/update`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

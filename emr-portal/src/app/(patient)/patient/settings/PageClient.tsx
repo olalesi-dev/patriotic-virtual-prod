@@ -2,12 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { User, Bell, Lock, Shield, ChevronRight, Save, CheckCircle2 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { updateProfile } from 'firebase/auth';
+import { syncDoseSpotPatientBestEffort } from '@/lib/dosespot-patient-sync';
+import { normalizeUsPhone, normalizeUsZip } from '@/lib/patient-registration';
+import { US_STATE_OPTIONS, normalizeUsStateCode } from '@/lib/us-states';
+
+function normalizeDoseSpotGender(value: string | null | undefined): 'Male' | 'Female' | 'Unknown' {
+    const normalized = (value ?? '').trim().toLowerCase();
+    if (normalized === 'male' || normalized === 'm') return 'Male';
+    if (normalized === 'female' || normalized === 'f') return 'Female';
+    return 'Unknown';
+}
 
 export default function PatientSettingsPage() {
     const [user, setUser] = useState<any>(null);
-    const [profile, setProfile] = useState({ firstName: '', lastName: '', phone: '', dateOfBirth: '', state: '' });
+    const [profile, setProfile] = useState({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        dateOfBirth: '',
+        sex: '',
+        address1: '',
+        city: '',
+        state: '',
+        zipCode: '',
+    });
     const [notifs, setNotifs] = useState({ email: true, sms: false, reminders: true });
     const [saving, setSaving] = useState(false);
     const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security'>('profile');
@@ -23,9 +44,13 @@ export default function PatientSettingsPage() {
                     setProfile({
                         firstName: d.firstName || d.displayName?.split(' ')[0] || '',
                         lastName: d.lastName || d.displayName?.split(' ')[1] || '',
-                        phone: d.phone || '',
-                        dateOfBirth: d.dateOfBirth || '',
-                        state: d.state || '',
+                        phone: d.phone || d.phoneNumber || '',
+                        dateOfBirth: d.dateOfBirth || d.dob || '',
+                        sex: normalizeDoseSpotGender(d.sex || d.sexAtBirth || d.gender || ''),
+                        address1: d.address1 || d.address || '',
+                        city: d.city || '',
+                        state: normalizeUsStateCode(d.state || '') || '',
+                        zipCode: d.zipCode || d.zip || '',
                     });
                     if (d.notifications) setNotifs(d.notifications);
                 }
@@ -38,14 +63,73 @@ export default function PatientSettingsPage() {
         if (!user) return;
         setSaving(true);
         try {
-            await updateDoc(doc(db, 'users', user.uid), {
-                ...profile,
+            const firstName = profile.firstName.trim();
+            const lastName = profile.lastName.trim();
+            const fullName = `${firstName} ${lastName}`.trim();
+            const normalizedPhone = profile.phone ? normalizeUsPhone(profile.phone) : null;
+            const normalizedZip = profile.zipCode ? normalizeUsZip(profile.zipCode) : null;
+            const normalizedState = profile.state ? normalizeUsStateCode(profile.state) : null;
+            const normalizedSex = normalizeDoseSpotGender(profile.sex);
+            const address1 = profile.address1.trim();
+            const city = profile.city.trim();
+
+            if (!firstName || !lastName) {
+                toast.error('First name and last name are required.');
+                return;
+            }
+
+            if (profile.phone && !normalizedPhone) {
+                toast.error('Phone number must be a valid 10-digit US phone number.');
+                return;
+            }
+
+            if (profile.zipCode && !normalizedZip) {
+                toast.error('ZIP code must be a valid 5-digit US ZIP.');
+                return;
+            }
+
+            if (profile.state && !normalizedState) {
+                toast.error('Please select a valid US state.');
+                return;
+            }
+
+            const nextProfile = {
+                firstName,
+                lastName,
+                name: fullName,
+                displayName: fullName,
+                email: user.email || null,
+                phone: normalizedPhone,
+                phoneNumber: normalizedPhone,
+                dateOfBirth: profile.dateOfBirth || null,
+                dob: profile.dateOfBirth || null,
+                sex: normalizedSex,
+                sexAtBirth: normalizedSex,
+                gender: normalizedSex,
+                address: address1 || null,
+                address1: address1 || null,
+                city: city || null,
+                state: normalizedState,
+                zip: normalizedZip,
+                zipCode: normalizedZip,
                 notifications: notifs,
                 updatedAt: serverTimestamp()
-            });
+            };
+
+            await Promise.all([
+                setDoc(doc(db, 'users', user.uid), nextProfile, { merge: true }),
+                setDoc(doc(db, 'patients', user.uid), nextProfile, { merge: true })
+            ]);
+
+            if (auth.currentUser && fullName) {
+                await updateProfile(auth.currentUser, { displayName: fullName });
+                void syncDoseSpotPatientBestEffort(auth.currentUser, { updateExisting: true });
+            }
+
             toast.success('Settings saved!');
         } catch (e) {
             toast.error('Failed to save settings');
+            console.error(e);
         } finally {
             setSaving(false);
         }
@@ -87,22 +171,60 @@ export default function PatientSettingsPage() {
                             <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Profile Information</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {[
-                                    { label: 'First Name', key: 'firstName' },
-                                    { label: 'Last Name', key: 'lastName' },
-                                    { label: 'Phone', key: 'phone' },
-                                    { label: 'Date of Birth', key: 'dateOfBirth' },
-                                    { label: 'State', key: 'state' },
-                                ].map(({ label, key }) => (
+                                    { label: 'First Name', key: 'firstName', type: 'text' },
+                                    { label: 'Last Name', key: 'lastName', type: 'text' },
+                                    { label: 'Phone', key: 'phone', type: 'tel' },
+                                    { label: 'Date of Birth', key: 'dateOfBirth', type: 'date' },
+                                    { label: 'Biological Sex', key: 'sex', type: 'select' },
+                                    { label: 'City', key: 'city', type: 'text' },
+                                    { label: 'State', key: 'state', type: 'select-state' },
+                                    { label: 'ZIP Code', key: 'zipCode', type: 'text' },
+                                ].map(({ label, key, type }) => (
                                     <div key={key} className="space-y-1.5">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}</label>
-                                        <input
-                                            type="text"
-                                            value={(profile as any)[key]}
-                                            onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))}
-                                            className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none transition-all"
-                                        />
+                                        {type === 'select' ? (
+                                            <select
+                                                value={(profile as any)[key]}
+                                                onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))}
+                                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none transition-all bg-white dark:bg-slate-800"
+                                            >
+                                                <option value="">Select...</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Unknown">Unknown</option>
+                                            </select>
+                                        ) : type === 'select-state' ? (
+                                            <select
+                                                value={(profile as any)[key]}
+                                                onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))}
+                                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none transition-all bg-white dark:bg-slate-800"
+                                            >
+                                                <option value="">Select state</option>
+                                                {US_STATE_OPTIONS.map((state) => (
+                                                    <option key={state.code} value={state.code}>
+                                                        {state.name} ({state.code})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                type={type}
+                                                value={(profile as any)[key]}
+                                                onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))}
+                                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none transition-all"
+                                            />
+                                        )}
                                     </div>
                                 ))}
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Address Line 1</label>
+                                    <input
+                                        type="text"
+                                        value={profile.address1}
+                                        onChange={e => setProfile(p => ({ ...p, address1: e.target.value }))}
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none transition-all"
+                                    />
+                                </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Email</label>
                                     <input type="email" value={user?.email || ''} disabled className="w-full border border-slate-100 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-400 bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed" />

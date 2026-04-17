@@ -14,6 +14,11 @@ export async function GET(
             action: 'Encounter',
             details: `${encounter.title} • ${encounter.status}`
         })),
+        ...patient.activeMedications.map((medication) => ({
+            date: medication.startDate ?? '',
+            action: 'Medication',
+            details: `${medication.name} • ${medication.status}`
+        })),
         ...patient.orders.map((order) => ({
             date: order.orderedAt ?? '',
             action: 'Order',

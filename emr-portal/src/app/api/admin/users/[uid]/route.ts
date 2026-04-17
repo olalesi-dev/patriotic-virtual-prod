@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth, db } from '@/lib/firebase-admin';
+import {
+    adminUpdateUserSchema,
+    buildAdminUserProfileFields
+} from '@/lib/dosespot-clinician-profile';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,10 +16,17 @@ export async function PATCH(
             throw new Error('Firebase Admin not initialized');
         }
         const { uid } = params;
-        const { role, disabled, displayName } = await request.json();
+        const rawBody = await request.json();
+        const { disabled } = rawBody as { disabled?: boolean };
+        const parsedBody = adminUpdateUserSchema.safeParse(rawBody);
+        const hasProfilePatch = parsedBody.success;
 
         const updates: any = {};
-        if (displayName !== undefined) updates.displayName = displayName;
+        if (hasProfilePatch) {
+            const displayName = `${parsedBody.data.firstName} ${parsedBody.data.lastName}`.trim();
+            updates.displayName = displayName;
+            updates.email = parsedBody.data.email;
+        }
         if (disabled !== undefined) updates.disabled = disabled;
 
         // Update Auth if needed
@@ -23,29 +34,36 @@ export async function PATCH(
             await auth!.updateUser(uid, updates);
         }
 
-        // Update Firestore role/profile
-        const firestoreUpdates: any = {};
-        if (role !== undefined) {
-            firestoreUpdates.role = role;
-            // Update custom claims too
-            await auth!.setCustomUserClaims(uid, { role });
-        }
-        if (displayName !== undefined) {
-            firestoreUpdates.name = displayName;
-            firestoreUpdates.firstName = displayName.split(' ')[0];
-            firestoreUpdates.lastName = displayName.split(' ').slice(1).join(' ');
-        }
-        if (disabled !== undefined) {
-            firestoreUpdates.status = disabled ? 'disabled' : 'active';
-        }
+        const existingUserDoc = await db!.collection('users').doc(uid).get();
+        const existingDoseSpot = existingUserDoc.exists
+            ? {
+                synced: existingUserDoc.data()?.doseSpot?.synced,
+                registrationStatus: existingUserDoc.data()?.doseSpot?.registrationStatus ?? null,
+                lastSyncError: existingUserDoc.data()?.doseSpot?.lastSyncError ?? null
+            }
+            : null;
+
+        const firestoreUpdates: Record<string, unknown> = hasProfilePatch
+            ? buildAdminUserProfileFields(parsedBody.data, {
+                uid,
+                disabled,
+                existingDoseSpot
+            })
+            : {};
 
         if (Object.keys(firestoreUpdates).length > 0) {
-            // Use set with merge: true to avoid NOT_FOUND errors if the doc doesn't exist yet
-            await db!.collection('patients').doc(uid).set(firestoreUpdates, { merge: true });
+            const role = String(firestoreUpdates.role || '');
+            if (role) {
+                await auth!.setCustomUserClaims(uid, { role });
+            }
 
-            // Also sync the update to the 'users' collection so providers/admins 
-            // have their role and profile stored where the dashboard expects it
-            await db!.collection('users').doc(uid).set(firestoreUpdates, { merge: true });
+            await Promise.all([
+                db!.collection('patients').doc(uid).set(firestoreUpdates, { merge: true }),
+                db!.collection('users').doc(uid).set(firestoreUpdates, { merge: true })
+            ]);
+        } else if (!hasProfilePatch && disabled === undefined) {
+            const message = parsedBody.success ? 'Nothing to update.' : (parsedBody.error.issues[0]?.message || 'Invalid user payload.');
+            return NextResponse.json({ success: false, error: message }, { status: 400 });
         }
 
         return NextResponse.json({ success: true, message: 'User updated successfully' });
@@ -69,7 +87,10 @@ export async function DELETE(
         await auth!.deleteUser(uid);
 
         // Delete from Firestore
-        await db!.collection('patients').doc(uid).delete();
+        await Promise.allSettled([
+            db!.collection('patients').doc(uid).delete(),
+            db!.collection('users').doc(uid).delete()
+        ]);
 
         return NextResponse.json({ success: true, message: 'User deleted successfully' });
     } catch (error: any) {

@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
-import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
-import { mapTeamSnapshot, mapUserDocToMember, toProviderRole } from '@/lib/server-teams';
-import type { PatientSummary, ProviderSummary } from '@/lib/team-types';
+import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
+import {
+    buildTeamRepairPatch,
+    loadMergedUserRecord,
+    loadMergedUserRecords,
+    mapTeamSnapshot,
+    mapUserRecordToMember,
+    mapUserRecordToPatientSummary,
+    mapUserRecordToProviderSummary,
+    toProviderRole
+} from '@/lib/server-teams';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,34 +24,6 @@ function asNonEmptyString(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const normalized = value.trim();
     return normalized.length > 0 ? normalized : null;
-}
-
-function normalizePatientSummaries(
-    patientDocs: Array<{ id: string; data: Record<string, unknown> }>,
-    userPatientDocs: Array<{ id: string; data: Record<string, unknown> }>
-): PatientSummary[] {
-    const map = new Map<string, PatientSummary>();
-
-    const push = (id: string, data: Record<string, unknown>) => {
-        const current = map.get(id);
-        const name = asNonEmptyString(data.name)
-            ?? asNonEmptyString(data.displayName)
-            ?? [asNonEmptyString(data.firstName), asNonEmptyString(data.lastName)].filter(Boolean).join(' ')
-            ?? asNonEmptyString(data.email)?.split('@')[0]
-            ?? `Patient ${id.slice(0, 6)}`;
-
-        map.set(id, {
-            id,
-            name,
-            email: asNonEmptyString(data.email) ?? current?.email ?? null,
-            teamId: asNonEmptyString(data.teamId) ?? current?.teamId ?? null
-        });
-    };
-
-    patientDocs.forEach((doc) => push(doc.id, doc.data));
-    userPatientDocs.forEach((doc) => push(doc.id, doc.data));
-
-    return Array.from(map.values()).sort((first, second) => first.name.localeCompare(second.name));
 }
 
 export async function GET(request: Request) {
@@ -65,47 +45,54 @@ export async function GET(request: Request) {
     const firestore = db;
 
     try {
-        const [userDoc, teamSnapshot, providersSnapshot, patientsSnapshot, patientUsersSnapshot] = await Promise.all([
-            firestore.collection('users').doc(user.uid).get(),
+        const [mergedCurrentUser, ownerTeamsSnapshot, memberTeamsSnapshot, mergedUserRecords] = await Promise.all([
+            loadMergedUserRecord(firestore, user.uid),
+            firestore.collection('teams').where('ownerId', '==', user.uid).get(),
             firestore.collection('teams').where('memberIds', 'array-contains', user.uid).get(),
-            firestore.collection('users').where('role', 'in', ['provider', 'doctor', 'clinician', 'admin']).limit(200).get(),
-            firestore.collection('patients').limit(200).get(),
-            firestore.collection('users').where('role', '==', 'patient').limit(200).get()
+            loadMergedUserRecords(firestore, 500)
         ]);
 
-        const role = toProviderRole(user.token.role ?? userDoc.data()?.role ?? user.role);
-        if (!role) {
-            return NextResponse.json({ success: false, error: 'Provider access required.' }, { status: 403 });
-        }
+        const effectiveRole = normalizeRole(
+            user.token.role ??
+            mergedCurrentUser?.role ??
+            user.role
+        );
+        const resolvedProviderAccessError = ensureProviderAccess(user, effectiveRole);
+        if (resolvedProviderAccessError) return resolvedProviderAccessError;
 
-        const teams = teamSnapshot.docs
+        const uniqueTeamDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+        ownerTeamsSnapshot.docs.forEach((doc) => uniqueTeamDocs.set(doc.id, doc));
+        memberTeamsSnapshot.docs.forEach((doc) => uniqueTeamDocs.set(doc.id, doc));
+
+        const teamDocs = Array.from(uniqueTeamDocs.values());
+        const teams = teamDocs
             .map((teamDoc) => mapTeamSnapshot(teamDoc))
             .filter((team): team is NonNullable<typeof team> => Boolean(team))
             .sort((first, second) => first.name.localeCompare(second.name));
 
-        const providers: ProviderSummary[] = providersSnapshot.docs.reduce<ProviderSummary[]>((accumulator, providerDoc) => {
-            const data = providerDoc.data() as Record<string, unknown>;
-            const providerRole = toProviderRole(data.role);
-            if (!providerRole) return accumulator;
+        const teamRepairWrites = teamDocs.map((teamDoc) => {
+            const normalizedTeam = mapTeamSnapshot(teamDoc);
+            if (!normalizedTeam) return null;
+            const patch = buildTeamRepairPatch(teamDoc, normalizedTeam);
+            if (!patch) return null;
+            return teamDoc.ref.set(patch, { merge: true });
+        }).filter((write): write is Promise<FirebaseFirestore.WriteResult> => Boolean(write));
 
-            accumulator.push({
-                id: providerDoc.id,
-                name: asNonEmptyString(data.name)
-                    ?? asNonEmptyString(data.displayName)
-                    ?? [asNonEmptyString(data.firstName), asNonEmptyString(data.lastName)].filter(Boolean).join(' ')
-                    ?? asNonEmptyString(data.email)?.split('@')[0]
-                    ?? `Provider ${providerDoc.id.slice(0, 6)}`,
-                email: asNonEmptyString(data.email),
-                role: providerRole
-            });
+        if (teamRepairWrites.length > 0) {
+            await Promise.all(teamRepairWrites);
+        }
 
-            return accumulator;
-        }, []).sort((first, second) => first.name.localeCompare(second.name));
+        const providers = mergedUserRecords
+            .map((record) => mapUserRecordToProviderSummary(record.id, record.data))
+            .filter((provider): provider is NonNullable<typeof provider> => Boolean(provider))
+            .sort((first, second) => first.name.localeCompare(second.name));
 
-        const patients = normalizePatientSummaries(
-            patientsSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> })),
-            patientUsersSnapshot.docs.map((patientDoc) => ({ id: patientDoc.id, data: patientDoc.data() as Record<string, unknown> }))
-        );
+        const providerIds = new Set(providers.map((provider) => provider.id));
+        const patients = mergedUserRecords
+            .map((record) => mapUserRecordToPatientSummary(record.id, record.data))
+            .filter((patient): patient is NonNullable<typeof patient> => Boolean(patient))
+            .filter((patient) => !providerIds.has(patient.id))
+            .sort((first, second) => first.name.localeCompare(second.name));
 
         return NextResponse.json({
             success: true,
@@ -147,8 +134,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: 'Invalid team payload.' }, { status: 400 });
         }
 
-        const userDoc = await firestore.collection('users').doc(user.uid).get();
-        const member = mapUserDocToMember(userDoc) ?? {
+        const mergedCurrentUser = await loadMergedUserRecord(firestore, user.uid);
+        const member = mapUserRecordToMember(user.uid, mergedCurrentUser ?? undefined) ?? {
             id: user.uid,
             name: user.email?.split('@')[0] ?? 'Provider',
             email: user.email,

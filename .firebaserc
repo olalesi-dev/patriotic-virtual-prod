@@ -1,6 +1,9 @@
 {
   "projects": {
-    "default": "patriotic-virtual-prod"
+    "default": "patriotic-virtual-prod",
+    "prod": "patriotic-virtual-prod",
+    "dev": "patriotic-virtual-dev",
+    "test": "patriotic-virtual-test"
   },
   "targets": {
     "patriotic-virtual-prod": {
@@ -10,6 +13,26 @@
         ],
         "emr": [
           "patriotic-virtual-emr"
+        ]
+      }
+    },
+    "patriotic-virtual-dev": {
+      "hosting": {
+        "landing": [
+          "patriotic-virtual-dev"
+        ],
+        "emr": [
+          "patriotic-virtual-dev-emr"
+        ]
+      }
+    },
+    "patriotic-virtual-test": {
+      "hosting": {
+        "landing": [
+          "patriotic-virtual-test"
+        ],
+        "emr": [
+          "patriotic-virtual-test-emr"
         ]
       }
     }

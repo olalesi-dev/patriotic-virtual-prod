@@ -286,33 +286,33 @@ export const TRUST_PILLS = [
 
 export const HERO_SERVICES: LandingService[] = [
     {
-        id: 'imaging-video',
-        key: 'imaging_video',
-        icon: Camera,
-        tone: 'rose',
-        price: 449,
+        id: 'weight-loss',
+        key: 'weight_loss',
+        icon: Pill,
+        tone: 'blue',
+        price: 129,
         title: {
-            en: 'Imaging + Video Consult',
-            es: 'Imagenes + Consulta por Video',
+            en: 'Rx Weight Loss',
+            es: 'Rx y Perdida de Peso',
         },
         description: {
-            en: 'Full imaging review plus a 30 to 60 minute secure video consultation to discuss findings directly with a specialist.',
-            es: 'Revision completa de imagenes mas una consulta segura por video de 30 a 60 minutos para analizar los hallazgos directamente con un especialista.',
+            en: 'Comprehensive medical weight loss evaluation with Rx eligibility screening, personalized titration, and dietary guidance.',
+            es: 'Evaluacion medica integral de perdida de peso con elegibilidad para Rx, titulacion personalizada y orientacion dietetica.',
         },
     },
     {
-        id: 'erectile-dysfunction',
-        key: 'erectile_dysfunction',
-        icon: Zap,
-        tone: 'blue',
+        id: 'general-health',
+        key: 'general_visit',
+        icon: Stethoscope,
+        tone: 'emerald',
         price: 79,
         title: {
-            en: 'Erectile Dysfunction',
-            es: 'Disfuncion Erectil',
+            en: 'General Health Visit',
+            es: 'Visita de Salud General',
         },
         description: {
-            en: 'Sildenafil, tadalafil and custom compounds delivered discreetly after cardiovascular safety screening.',
-            es: 'Sildenafil, tadalafil y compuestos personalizados entregados discretamente despues de una evaluacion de seguridad cardiovascular.',
+            en: 'Virtual visits for non-emergent health concerns — medication management, wellness checks, and health advice.',
+            es: 'Visitas virtuales para problemas de salud no urgentes — manejo de medicamentos, chequeos de bienestar y consejos de salud.',
         },
     },
     {
@@ -332,11 +332,11 @@ export const HERO_SERVICES: LandingService[] = [
         },
     },
     {
-        id: 'weight-loss',
-        key: 'weight_loss',
-        icon: Pill,
-        tone: 'blue',
-        price: 129,
+        id: 'imaging-video',
+        key: 'imaging_video',
+        icon: Camera,
+        tone: 'rose',
+        price: 449,
         title: {
             en: 'Medical Weight Management',
             es: 'Manejo Medico del Peso',

@@ -20,6 +20,18 @@ function generatePhrase(): string {
     return Array.from(bytes).map(b => chars[b % chars.length]).join('');
 }
 
+function stripDoseSpotPadding(value: string): string {
+    return value.endsWith('==') ? value.slice(0, -2) : value;
+}
+
+function normalizeEnvValue(value: string | undefined, name: string): string {
+    const normalized = value?.trim();
+    if (!normalized) {
+        throw new Error(`Missing ${name} env var`);
+    }
+    return normalized;
+}
+
 /**
  * SingleSignOnCode  (Encrypted Clinic ID)
  * ─────────────────────────────────────────────────────────────────────────────
@@ -34,7 +46,7 @@ function generatePhrase(): string {
 function generateEncryptedClinicId(clinicKey: string, phrase: string): string {
     const raw     = phrase + clinicKey;
     const hash    = crypto.createHash('sha512').update(Buffer.from(raw, 'utf8')).digest();
-    const hashB64 = hash.toString('base64').replace(/=+$/, '');
+    const hashB64 = stripDoseSpotPadding(hash.toString('base64'));
     const result  = phrase + hashB64;
     return encodeURIComponent(result);
 }
@@ -54,7 +66,7 @@ function generateEncryptedUserId(userId: string, clinicKey: string, phrase: stri
     const phrase22 = phrase.slice(0, 22);
     const raw      = userId + phrase22 + clinicKey;
     const hash     = crypto.createHash('sha512').update(Buffer.from(raw, 'utf8')).digest();
-    const hashB64  = hash.toString('base64').replace(/=+$/, '');
+    const hashB64  = stripDoseSpotPadding(hash.toString('base64'));
     return encodeURIComponent(hashB64);
 }
 
@@ -89,13 +101,9 @@ export function generateSSOUrl(params: {
     encounterId?: string;              // Link to a specific consult/encounter
     refillsErrors?: boolean;           // Open the Refills & Errors view
 }): string {
-    const clinicId  = process.env.DOSESPOT_CLINIC_ID!;
-    const clinicKey = process.env.DOSESPOT_CLINIC_KEY!;
-    const baseUrl   = process.env.DOSESPOT_BASE_URL!;
-
-    if (!clinicId || !clinicKey || !baseUrl) {
-        throw new Error('Missing DOSESPOT_CLINIC_ID, DOSESPOT_CLINIC_KEY, or DOSESPOT_BASE_URL env vars');
-    }
+    const clinicId  = normalizeEnvValue(process.env.DOSESPOT_CLINIC_ID, 'DOSESPOT_CLINIC_ID');
+    const clinicKey = normalizeEnvValue(process.env.DOSESPOT_CLINIC_KEY, 'DOSESPOT_CLINIC_KEY');
+    const baseUrl   = normalizeEnvValue(process.env.DOSESPOT_BASE_URL, 'DOSESPOT_BASE_URL').replace(/\/+$/, '');
 
     const phrase        = generatePhrase();
     const ssoCode       = generateEncryptedClinicId(clinicKey, phrase);
@@ -141,48 +149,57 @@ export function generateSSOUrl(params: {
 }
 
 // ─── OAuth2 access-token helper (for REST API calls, not SSO) ────────────────
-let tokenCache: { accessToken: string; expiresAt: number } | null = null;
-
 export async function getDoseSpotAccessToken(onBehalfOfClinicianId?: number): Promise<string> {
-    // Return cached token if still valid (with 60 s safety buffer)
-    if (tokenCache && Date.now() < tokenCache.expiresAt - 60_000) {
-        return tokenCache.accessToken;
-    }
+    const fetchToken = async (acrValues?: string): Promise<string> => {
+        const params = new URLSearchParams({
+            grant_type: 'password',
+            client_id: process.env.DOSESPOT_CLINIC_ID!,
+            client_secret: process.env.DOSESPOT_CLINIC_KEY!,
+            username: process.env.DOSESPOT_USER_ID!,
+            password: process.env.DOSESPOT_CLINIC_KEY!,
+            scope: 'api',
+        });
+        if (acrValues) {
+            params.set('acr_values', acrValues);
+        }
 
-    const params = new URLSearchParams({
-        grant_type:    'password',
-        client_id:     process.env.DOSESPOT_CLINIC_ID!,
-        client_secret: process.env.DOSESPOT_CLINIC_KEY!,
-        username:      process.env.DOSESPOT_USER_ID!,
-        password:      process.env.DOSESPOT_CLINIC_KEY!,
-        scope:         'api',
-    });
+        const response = await fetch(`${process.env.DOSESPOT_BASE_URL}/webapi/v2/connect/token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                ...(process.env.DOSESPOT_SUBSCRIPTION_KEY
+                    ? { 'Subscription-Key': process.env.DOSESPOT_SUBSCRIPTION_KEY }
+                    : {}),
+            },
+            body: params.toString(),
+        });
 
-    if (onBehalfOfClinicianId) {
-        params.set('acr_values', `OnBehalfOfUserId=${onBehalfOfClinicianId}`);
-    }
+        if (!response.ok) {
+            const responseText = (await response.text()).trim();
+            const extra = responseText ? ` - ${responseText.slice(0, 240)}` : '';
+            throw new Error(`DoseSpot token fetch failed: ${response.status} ${response.statusText}${extra}`);
+        }
 
-    const response = await fetch(`${process.env.DOSESPOT_BASE_URL}/webapi/v2/connect/token`, {
-        method:  'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            ...(process.env.DOSESPOT_SUBSCRIPTION_KEY
-                ? { 'Subscription-Key': process.env.DOSESPOT_SUBSCRIPTION_KEY }
-                : {}),
-        },
-        body: params.toString(),
-    });
+        const data = await response.json() as { access_token?: string };
+        if (!data.access_token) {
+            throw new Error('DoseSpot token fetch failed: Missing access_token in response.');
+        }
 
-    if (!response.ok) {
-        throw new Error(`DoseSpot token fetch failed: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    tokenCache = {
-        accessToken: data.access_token,
-        expiresAt:   Date.now() + data.expires_in * 1000,
+        return data.access_token;
     };
 
-    return data.access_token;
+    if (!onBehalfOfClinicianId) {
+        return fetchToken();
+    }
+
+    try {
+        return await fetchToken(`OnBehalfOfUserId=${onBehalfOfClinicianId}`);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const shouldFallback = message.includes('OnBehalfOfUser validation failed');
+        if (!shouldFallback) {
+            throw error;
+        }
+        return fetchToken();
+    }
 }

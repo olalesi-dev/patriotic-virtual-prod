@@ -74,8 +74,8 @@ export default function BillingPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Determine API base URL (in dev, assumption is localhost:8080)
-                const API_BASE = 'http://localhost:8080/api/v1/billing';
+                const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+                const API_BASE = `${apiOrigin}/api/v1/billing`;
 
                 // Get Token (Dynamically import to avoid SSR issues if any, though allow auth from lib is fine)
                 const { auth } = await import('@/lib/firebase');
@@ -178,7 +178,8 @@ export default function BillingPage() {
             if (!user) throw new Error("Not logged in");
 
             const token = await user.getIdToken();
-            const res = await fetch('http://localhost:8080/api/v1/billing/invoices', {
+            const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+            const res = await fetch(`${apiOrigin}/api/v1/billing/invoices`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

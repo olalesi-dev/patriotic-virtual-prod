@@ -6396,6 +6396,45 @@
     }
     
 </style>
+
+<script>
+  (function() {
+    var host = window.location.hostname;
+    var env = 'prod';
+    if (host.includes('dev')) env = 'dev';
+    if (host.includes('test')) env = 'test';
+    
+    if (env !== 'prod') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var banner = document.createElement('div');
+        banner.style.padding = '8px 16px';
+        banner.style.textAlign = 'center';
+        banner.style.fontFamily = 'monospace, sans-serif';
+        banner.style.fontSize = '12px';
+        banner.style.fontWeight = 'bold';
+        banner.style.letterSpacing = '1px';
+        banner.style.zIndex = '999999';
+        banner.style.position = 'relative';
+        banner.style.display = 'flex';
+        banner.style.alignItems = 'center';
+        banner.style.justifyContent = 'center';
+        banner.style.gap = '8px';
+        
+        if (env === 'dev') {
+          banner.style.backgroundColor = '#dc2626'; // red-600
+          banner.style.color = '#ffffff';
+          banner.innerHTML = '🚧 THIS IS A DEVELOPMENT ENVIRONMENT. DATA ENTERED HERE IS NOT REAL.';
+        } else if (env === 'test') {
+          banner.style.backgroundColor = '#f59e0b'; // amber-500
+          banner.style.color = '#ffffff';
+          banner.innerHTML = '⚠️ THIS IS A TEST/STAGING ENVIRONMENT. NOT FOR PRODUCTION USE.';
+        }
+        
+        document.body.insertBefore(banner, document.body.firstChild);
+      });
+    }
+  })();
+</script>
 </head>
 
 <body>
@@ -6703,7 +6742,7 @@
         <div class="marquee-item"><span>🌴</span>Available in Florida</div>
         <div class="marquee-item"><span>🩺</span>General Telehealth</div>
         <div class="marquee-item"><span>💊</span>Rx Weight Loss</div>
-        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        
 
         <!-- Duplicates for uninterrupted scrolling -->
         <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
@@ -6712,7 +6751,7 @@
         <div class="marquee-item"><span>🌴</span>Available in Florida</div>
         <div class="marquee-item"><span>🩺</span>General Telehealth</div>
         <div class="marquee-item"><span>💊</span>Rx Weight Loss</div>
-        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        
 
         <div class="marquee-item"><span>🤖</span>AI Health Assistant</div>
         <div class="marquee-item"><span>🔬</span>AI-Powered Imaging</div>
@@ -6720,7 +6759,7 @@
         <div class="marquee-item"><span>🌴</span>Available in Florida</div>
         <div class="marquee-item"><span>🩺</span>General Telehealth</div>
         <div class="marquee-item"><span>💊</span>Rx Weight Loss</div>
-        <div class="marquee-item"><span>⚡</span>Erectile Dysfunction</div>
+        
       </div>
     </section>
 
@@ -7166,7 +7205,7 @@
             <h4 data-i18n="footer-support">Support</h4>
             <a href="/faq" data-i18n="footer-faq">FAQ</a>
             <a href="mailto:hello@patriotictelehealth.com">✉️ hello@patriotictelehealth.com</a>
-            <span style="color: #9ca3af; font-size: 14px; margin-bottom: 12px; display: block;">📞 (202) 215-0636<br>📍 176 NW 25th St, Miami, FL 33127</span>
+            <span style="color: #9ca3af; font-size: 14px; margin-bottom: 12px; display: block;">📞 (321) 204-0902<br>📍 176 NW 25th St, Miami, FL 33127</span>
             <a href="/terms" data-i18n="footer-terms">Terms of Service</a>
             <a href="/privacy-policy" data-i18n="footer-privacy">Privacy Policy</a>
             <a href="/npp">Notice of Privacy Practices</a>
@@ -7534,7 +7573,6 @@
             <select id="regState" style="padding: 10px 12px">
               <option value="">Select state</option>
               <option value="FL">Florida ✓</option>
-              <option value="IN" disabled style="color: #9ca3af">Indiana (Soon)</option>
             </select>
           </div>
           <div class="fg" style="flex: 1; margin-bottom: 0">
@@ -8897,30 +8935,29 @@
 
     const svcs = [
   {
-    id: "imaging-video",
-    k: "imaging_video",
-    name: "Imaging + Video Consult",
-    desc: "Full imaging review plus a 30 - 60 minute secure video consultation to discuss findings directly with a specialist.",
-    icon: "📹",
-    ic: "rose",
-    c: "rose",
-    price: 449,
-    cat: ["popular", "radiology"],
-    stripe: "prod_TmuBq5Pwvt1rBc",
-    priceId: "PRICE_ID_VIDEO_CONSULT",
-  },
-  {
-    id: "erectile-dysfunction",
-    k: "erectile_dysfunction",
-    name: "Erectile Dysfunction",
-    desc: "Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.",
-    icon: "⚡",
+    id: "weight-loss",
+    k: "weight_loss",
+    name: "Rx Weight Loss",
+    desc: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
+    icon: "💊",
     ic: "blue",
     c: "blue",
+    price: 129,
+    cat: ["popular", "clinical"],
+    stripe: "prod_TsnZ1goCbeavNz",
+    priceId: "PRICE_ID_WEIGHT_LOSS",
+  },
+  {
+    id: "general-visit",
+    k: "general_visit",
+    name: "General Health Visit",
+    desc: "Virtual visits for non-emergent health concerns — medication management, wellness checks, health advice. Convenient care from home.",
+    icon: "🩺",
+    ic: "teal",
+    c: "teal",
     price: 79,
-    cat: ["popular", "mens", "clinical"],
-    stripe: "prod_TupASTZvm9MPDJ",
-    priceId: "PRICE_ID_ED",
+    cat: ["popular", "clinical"], stripe: "prod_Tsna4xzySPbKT0",
+    priceId: "PRICE_ID_GENERAL_VISIT",
   },
   {
     id: "membership-elite",
@@ -8937,18 +8974,33 @@
     priceId: "PRICE_ID_ELITE",
   },
   {
-    id: "weight-loss",
-    k: "weight_loss",
-    name: "Rx Weight Loss",
-    desc: "Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.",
-    icon: "💊",
+    id: "imaging-video",
+    k: "imaging_video",
+    name: "Imaging + Video Consult",
+    desc: "Full imaging review plus a 30 - 60 minute secure video consultation to discuss findings directly with a specialist.",
+    icon: "📹",
+    ic: "rose",
+    c: "rose",
+    price: 449,
+    cat: ["popular", "radiology"],
+    stripe: "prod_TmuBq5Pwvt1rBc",
+    priceId: "PRICE_ID_VIDEO_CONSULT",
+  },
+  
+  {
+    id: "erectile-dysfunction",
+    k: "erectile_dysfunction",
+    name: "Erectile Dysfunction",
+    desc: "Sildenafil, tadalafil & custom compounds — discreetly delivered after cardiovascular safety screening.",
+    icon: "⚡",
     ic: "blue",
     c: "blue",
-    price: 129,
-    cat: ["popular", "clinical"],
-    stripe: "prod_TsnZ1goCbeavNz",
-    priceId: "PRICE_ID_WEIGHT_LOSS",
+    price: 79,
+    cat: [], stripe: "prod_TupASTZvm9MPDJ",
+    priceId: "PRICE_ID_ED",
   },
+  
+  
   {
     id: "ai-imaging",
     k: "ai_imaging",
@@ -9030,19 +9082,7 @@
     stripe: "",
     priceId: "",
   },
-  {
-    id: "general-visit",
-    k: "general_visit",
-    name: "General Visit",
-    desc: "Virtual visits for non-emergent health concerns — medication management, wellness checks, health advice. Convenient care from home.",
-    icon: "🩺",
-    ic: "teal",
-    c: "teal",
-    price: 79,
-    cat: ["clinical"],
-    stripe: "prod_Tsna4xzySPbKT0",
-    priceId: "PRICE_ID_GENERAL_VISIT",
-  }
+  
 ];
 
     const iQs = {
@@ -9404,7 +9444,6 @@
           aiState = "find";
           aiBot("I can help with that! What's your main concern?", [
             "Lose weight",
-            "Hormone issues",
             "Sexual health",
             "General health question",
             "AI health tools",
@@ -9424,7 +9463,7 @@
           v.includes("cost")
         ) {
           aiBot(
-            "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>Rx Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
+            "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>Rx Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n📹 <b>Imaging + Video Consult</b> — $449\n\nMembership plans: <b>All Access — Elite — $199</b>.\n\nWant to check eligibility for a specific treatment?",
             [
               "🔍 Check eligibility",
               "💰 Membership details",
@@ -9433,7 +9472,7 @@
           );
         } else if (v.includes("Membership details")) {
           aiBot(
-            "Our membership tiers:\n\n💡 <b>Telehealth Basic</b> — $29/mo (AI + limited visits)\n📋 <b>Telehealth Standard</b> — $59/mo (1 visit/month)\n⚕️ <b>Telehealth Premium</b> — $99/mo (unlimited/priority)\n🎯 <b>All Access Core</b> — $99/mo (telehealth + AI tools)\n⭐ <b>All Access Plus</b> — $149/mo (+ AI imaging)\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
+            "Our membership tiers:\n\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
             ["✅ Sign up", "🔍 Check eligibility", "📋 More details"],
           );
         } else if (
@@ -9443,7 +9482,7 @@
           v.includes("Sign up")
         ) {
           aiBot(
-            "Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana coming soon.",
+            "Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>.",
           );
           setTimeout(() => openModal("register"), 1200);
         } else if (aiState === "elig_svc") {
@@ -9520,7 +9559,7 @@
           v.includes("erect")
         ) {
           aiBot(
-            "We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n⏱️ <b>Premature Ejaculation</b> — $79 (SSRI therapy, topical agents)\n\nAll medications shipped discreetly after safety screening.",
+            "We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n\nAll medications shipped discreetly after safety screening.",
             ["🔍 Check eligibility", "✅ Start a visit"],
           );
         } else if (
@@ -9541,7 +9580,7 @@
           v.includes("tools")
         ) {
           aiBot(
-            "Our AI & digital tools:\n\n🤖 <b>AI Health Assistant</b> — $29 (health education & care navigation)\n🔬 <b>AI Imaging Analysis</b> — $99 (physician-supervised report interpretation)\n📱 <b>Digital Health Platform</b> — $19/mo (tools, content & AI features)\n\nThese are available to everyone, no state restriction!",
+            "Our AI & digital tools:\n\n🔬 <b>AI Imaging Analysis</b> — $99 (physician-supervised report interpretation)\n\nThese are available to everyone, no state restriction!",
             [
               "✅ Sign up",
               "💰 Membership plans",
@@ -10351,7 +10390,7 @@
         document.getElementById(id).classList.add("hidden"),
       );
       document.getElementById("cS1").classList.remove("hidden");
-      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => s.k === window._initialSvcClick) : svcs;
+      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => (s.k === window._initialSvcClick || s.k === "general_visit")) : svcs;
       document.getElementById("svcSel").innerHTML = clinicalSvcs
         .map(
           (s) =>

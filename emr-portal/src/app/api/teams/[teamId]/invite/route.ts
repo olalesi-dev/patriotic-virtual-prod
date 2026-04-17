@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { createNotification } from '@/lib/server-notifications';
-import { mapTeamSnapshot, mapUserDocToMember, toProviderRole } from '@/lib/server-teams';
+import { loadMergedUserRecord, mapTeamSnapshot, mapUserRecordToMember, toProviderRole } from '@/lib/server-teams';
 import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
@@ -46,10 +46,10 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'You are already in your own team.' }, { status: 400 });
         }
 
-        const [teamDoc, inviterDoc, targetDoctorDoc] = await Promise.all([
+        const [teamDoc, inviterRecord, targetDoctorRecord] = await Promise.all([
             db.collection('teams').doc(teamId).get(),
-            db.collection('users').doc(user.uid).get(),
-            db.collection('users').doc(parsedBody.data.doctorId).get()
+            loadMergedUserRecord(db, user.uid),
+            loadMergedUserRecord(db, parsedBody.data.doctorId)
         ]);
 
         const team = mapTeamSnapshot(teamDoc);
@@ -61,7 +61,7 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Only team owner can send invitations.' }, { status: 403 });
         }
 
-        const targetDoctor = mapUserDocToMember(targetDoctorDoc);
+        const targetDoctor = mapUserRecordToMember(parsedBody.data.doctorId, targetDoctorRecord ?? undefined);
         if (!targetDoctor || !toProviderRole(targetDoctor.role)) {
             return NextResponse.json({ success: false, error: 'Target user is not an eligible provider.' }, { status: 400 });
         }
@@ -70,7 +70,7 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Doctor is already a team member.' }, { status: 409 });
         }
 
-        const inviter = mapUserDocToMember(inviterDoc) ?? {
+        const inviter = mapUserRecordToMember(user.uid, inviterRecord ?? undefined) ?? {
             id: user.uid,
             name: user.email?.split('@')[0] ?? 'Provider',
             email: user.email,

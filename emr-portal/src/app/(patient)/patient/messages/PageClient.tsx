@@ -20,18 +20,16 @@ import {
     Download
 } from 'lucide-react';
 import { auth, db, storage } from '@/lib/firebase';
+import { apiFetchJson } from '@/lib/api-client';
 import {
     collection,
     query,
     where,
     orderBy,
     onSnapshot,
-    addDoc,
-    serverTimestamp,
     doc,
     updateDoc,
     Timestamp,
-    limit,
     getDocs
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -66,6 +64,12 @@ interface Message {
     };
 }
 
+interface SendMessageApiResponse {
+    success?: boolean;
+    error?: string;
+    threadId?: string;
+}
+
 const CATEGORIES = ['General', 'Medication', 'Test Results', 'Appointment Request', 'Urgent'];
 
 export default function MessagesPage() {
@@ -93,28 +97,45 @@ export default function MessagesPage() {
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    const sortThreads = (items: Thread[]) => [...items].sort((first, second) => {
+        const firstValue = first.lastMessageAt?.toDate ? first.lastMessageAt.toDate().getTime() : 0;
+        const secondValue = second.lastMessageAt?.toDate ? second.lastMessageAt.toDate().getTime() : 0;
+        return secondValue - firstValue;
+    });
+
     useEffect(() => {
+        let unsubThreads: (() => void) | null = null;
         const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+            unsubThreads?.();
             if (user) {
-                // Threads Listener
                 const threadsRef = collection(db, 'threads');
                 const q = query(
                     threadsRef,
-                    where('patientId', '==', user.uid),
-                    orderBy('lastMessageAt', 'desc')
+                    where('patientId', '==', user.uid)
                 );
 
-                const unsub = onSnapshot(q, (snapshot) => {
-                    const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Thread));
+                unsubThreads = onSnapshot(q, (snapshot) => {
+                    const data = sortThreads(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Thread)));
                     setThreads(data);
                     setLoading(false);
+                }, (error) => {
+                    console.error('Patient message threads listener failed:', error);
+                    toast.error('Unable to load your conversations right now.');
+                    setThreads([]);
+                    setLoading(false);
                 });
-
-                fetchProviders();
-                return () => unsub();
+                void fetchProviders();
+                return;
             }
+
+            setThreads([]);
+            setLoading(false);
         });
-        return () => unsubscribeAuth();
+
+        return () => {
+            unsubThreads?.();
+            unsubscribeAuth();
+        };
     }, []);
 
     useEffect(() => {
@@ -136,7 +157,11 @@ export default function MessagesPage() {
                 }
             });
             // Update thread unread count
-            updateDoc(doc(db, 'threads', activeThread.id), { unreadCount: 0 });
+            updateDoc(doc(db, 'threads', activeThread.id), { unreadCount: 0 }).catch(() => {});
+        }, (error) => {
+            console.error('Patient message listener failed:', error);
+            toast.error('Unable to open this conversation right now.');
+            setMessages([]);
         });
 
         return () => unsub();
@@ -174,23 +199,18 @@ export default function MessagesPage() {
         setNewMessage('');
 
         try {
-            const msgsRef = collection(db, 'threads', activeThread.id, 'messages');
-            await addDoc(msgsRef, {
-                senderId: auth.currentUser.uid,
-                senderType: 'patient',
-                body: text,
-                createdAt: serverTimestamp(),
-                read: false,
-                attachment: attachment || null
+            const payload = await apiFetchJson<SendMessageApiResponse>('/api/messages/send', {
+                method: 'POST',
+                user: auth.currentUser,
+                body: {
+                    threadId: activeThread.id,
+                    body: text,
+                    attachment: attachment || null
+                }
             });
-
-            // Update Thread
-            await updateDoc(doc(db, 'threads', activeThread.id), {
-                lastMessage: text || 'View Attachment',
-                lastMessageAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                providerUnreadCount: 1
-            });
+            if (!payload.success) {
+                throw new Error(payload.error || 'Failed to send message.');
+            }
         } catch (error) {
             toast.error('Failed to send message');
             setNewMessage(text);
@@ -229,29 +249,35 @@ export default function MessagesPage() {
 
         setIsSending(true);
         try {
-            const threadRef = await addDoc(collection(db, 'threads'), {
+            const payload = await apiFetchJson<SendMessageApiResponse>('/api/messages/send', {
+                method: 'POST',
+                user: auth.currentUser,
+                body: {
+                    recipientId: composeData.recipientId,
+                    recipientType: 'provider',
+                    subject: composeData.subject,
+                    category: composeData.category,
+                    body: composeData.body
+                }
+            });
+            if (!payload.success || !payload.threadId) {
+                throw new Error(payload.error || 'Failed to start conversation.');
+            }
+
+            setIsComposing(false);
+            setComposeData({ recipientId: '', recipientName: '', subject: '', category: 'General', body: '' });
+            setActiveThread({
+                id: payload.threadId,
                 patientId: auth.currentUser.uid,
                 providerId: composeData.recipientId,
                 providerName: composeData.recipientName,
                 subject: composeData.subject,
                 category: composeData.category,
                 lastMessage: composeData.body,
-                lastMessageAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
+                lastMessageAt: Timestamp.now(),
                 unreadCount: 0,
-                providerUnreadCount: 1,
+                updatedAt: Timestamp.now()
             });
-
-            await addDoc(collection(db, 'threads', threadRef.id, 'messages'), {
-                senderId: auth.currentUser.uid,
-                senderType: 'patient',
-                body: composeData.body,
-                createdAt: serverTimestamp(),
-                read: false
-            });
-
-            setIsComposing(false);
-            setComposeData({ recipientId: '', recipientName: '', subject: '', category: 'General', body: '' });
             toast.success('Conversation started');
         } catch (error) {
             toast.error('Failed to start conversation');
@@ -263,7 +289,7 @@ export default function MessagesPage() {
     if (loading) return <div className="flex items-center justify-center min-h-[400px]"><div className="w-8 h-8 border-4 border-sky-100 border-t-[#0EA5E9] rounded-full animate-spin"></div></div>;
 
     return (
-        <div className="h-[calc(100vh-160px)] -mt-4 bg-white dark:bg-slate-800 rounded-[40px] border border-slate-100 dark:border-slate-700 shadow-xl shadow-sky-900/5 flex overflow-hidden">
+        <div className="h-[calc(100vh-160px)] min-h-0 -mt-4 bg-white dark:bg-slate-800 rounded-[40px] border border-slate-100 dark:border-slate-700 shadow-xl shadow-sky-900/5 flex overflow-hidden">
 
             {/* THREAD LIST */}
             <div className={`
@@ -304,7 +330,7 @@ export default function MessagesPage() {
                                     {t.category}
                                 </span>
                                 <span className="text-[10px] font-bold text-slate-300">
-                                    {format(t.lastMessageAt?.toDate() || new Date(), 'h:mm a')}
+                                    {format(t.lastMessageAt?.toDate?.() || new Date(), 'h:mm a')}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center gap-2">
@@ -329,7 +355,7 @@ export default function MessagesPage() {
 
             {/* CHAT VIEW */}
             <div className={`
-                flex-1 flex flex-col min-w-0
+                flex-1 flex min-h-0 flex-col min-w-0
                 ${!activeThread && !isComposing ? 'hidden md:flex' : 'flex'}
             `}>
                 {activeThread ? (
@@ -360,7 +386,7 @@ export default function MessagesPage() {
                         </div>
 
                         {/* Messages Area */}
-                        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
+                        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
                             {messages.map((msg, i) => {
                                 const isMe = msg.senderType === 'patient';
                                 return (
@@ -389,7 +415,7 @@ export default function MessagesPage() {
                                             </div>
                                             <div className={`flex items-center gap-2 px-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                                 <span className="text-[9px] font-bold text-slate-300 uppercase">
-                                                    {format(msg.createdAt?.toDate() || new Date(), 'h:mm a')}
+                                                    {format(msg.createdAt?.toDate?.() || new Date(), 'h:mm a')}
                                                 </span>
                                                 {isMe && msg.read && <CheckCheck className="w-3 h-3 text-emerald-500" />}
                                             </div>
@@ -400,7 +426,7 @@ export default function MessagesPage() {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-6 border-t border-slate-50 shrink-0 bg-white dark:bg-slate-800">
+                        <div className="shrink-0 border-t border-slate-50 bg-white dark:bg-slate-800 p-6">
                             <form onSubmit={handleSendMessage} className="flex items-end gap-3 max-w-4xl mx-auto">
                                 <div className="relative">
                                     <input

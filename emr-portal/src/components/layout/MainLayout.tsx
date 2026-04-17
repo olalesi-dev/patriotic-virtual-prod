@@ -5,6 +5,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut, ShoppingBag,
@@ -12,7 +13,7 @@ import {
     ChevronDown, ChevronRight, Puzzle, Key, Network, Share2, Sparkles
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { GlobalNotificationDrawer } from '@/components/common/GlobalNotificationDrawer';
+import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
 import { GlobalBanner } from '@/components/common/GlobalBanner';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { GlobalSearch } from './GlobalSearch';
@@ -24,6 +25,7 @@ import { apiFetchJson } from '@/lib/api-client';
 import { PatientDetailResponse } from '@/lib/patient-registry-types';
 import { usePracticeModules, initializeModulesListener } from '@/hooks/usePracticeModules';
 import { SPECIALTY_MODULES } from '@/lib/module-registry';
+import { db } from '@/lib/firebase';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -72,6 +74,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [type, setType] = useState('video');
 
     const router = useRouter();
+    const sidebarWidth = isSidebarCollapsed ? 80 : 256;
     usePushNotifications(activeUser);
 
     const profile = useUserProfile();
@@ -99,31 +102,89 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     });
 
     React.useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((nextUser) => {
-            setActiveUser(nextUser);
-        });
-
-        const unsubModules = initializeModulesListener();
-
         let unsubInbox = () => {};
         let unsubWaitlist = () => {};
 
-        const setupListeners = async (user: FirebaseUser) => {
-            const { db } = await import('@/lib/firebase');
-            const { collection, query, where, onSnapshot } = await import('firebase/firestore');
-            
-            // Inbox Listener
-            const inboxQuery = query(collection(db, 'threads'), where('providerId', '==', user.uid), where('providerUnreadCount', '>', 0));
-            unsubInbox = onSnapshot(inboxQuery, (snap) => setUnreadInbox(snap.docs.length));
-            
-            // Waitlist Listener
-            const waitlistQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
-            unsubWaitlist = onSnapshot(waitlistQuery, (snap) => setUnreadWaitlist(snap.docs.length));
-        };
+        const unsubscribe = auth.onAuthStateChanged((nextUser) => {
+            setActiveUser(nextUser);
 
-        if (auth.currentUser) {
-            setupListeners(auth.currentUser);
-        }
+            unsubInbox();
+            unsubWaitlist();
+
+            if (!nextUser) {
+                setUnreadInbox(0);
+                setUnreadWaitlist(0);
+                return;
+            }
+
+            let patientThreads: Array<{ id: string; unread: boolean }> = [];
+            let providerThreads: Array<{ id: string; unread: boolean }> = [];
+
+            const syncUnreadInbox = () => {
+                const byId = new Map<string, boolean>();
+                [...patientThreads, ...providerThreads].forEach((thread) => {
+                    byId.set(thread.id, thread.unread);
+                });
+                setUnreadInbox(Array.from(byId.values()).filter(Boolean).length);
+            };
+
+            const unsubscribePatientThreads = onSnapshot(
+                query(collection(db, 'threads'), where('providerId', '==', nextUser.uid)),
+                (snap) => {
+                    patientThreads = snap.docs
+                        .filter((threadDoc) => (threadDoc.data().threadType ?? 'patient_provider') === 'patient_provider')
+                        .map((threadDoc) => {
+                            const providerUnreadCount = threadDoc.data().providerUnreadCount;
+                            return {
+                                id: threadDoc.id,
+                                unread: typeof providerUnreadCount === 'number' && providerUnreadCount > 0
+                            };
+                        });
+                    syncUnreadInbox();
+                },
+                (error) => {
+                    console.error('Inbox listener failed:', error);
+                    setUnreadInbox(0);
+                }
+            );
+
+            const unsubscribeProviderThreads = onSnapshot(
+                query(collection(db, 'threads'), where('participantIds', 'array-contains', nextUser.uid)),
+                (snap) => {
+                    providerThreads = snap.docs
+                        .filter((threadDoc) => threadDoc.data().threadType === 'provider_provider')
+                        .map((threadDoc) => {
+                            const providerUnreadCount = threadDoc.data().providerUnreadCount;
+                            return {
+                                id: threadDoc.id,
+                                unread: typeof providerUnreadCount === 'number' && providerUnreadCount > 0
+                            };
+                        });
+                    syncUnreadInbox();
+                },
+                (error) => {
+                    console.error('Team inbox listener failed:', error);
+                    setUnreadInbox(0);
+                }
+            );
+
+            unsubInbox = () => {
+                unsubscribePatientThreads();
+                unsubscribeProviderThreads();
+            };
+
+            const waitlistQuery = query(collection(db, 'appointments'), where('status', '==', 'PENDING_SCHEDULING'));
+            unsubWaitlist = onSnapshot(
+                waitlistQuery,
+                (snap) => setUnreadWaitlist(snap.docs.length),
+                (error) => {
+                    console.error('Waitlist listener failed:', error);
+                    setUnreadWaitlist(0);
+                }
+            );
+        });
+
+        const unsubModules = initializeModulesListener();
 
         return () => {
             unsubscribe();
@@ -201,7 +262,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
             {/* SIDEBAR */}
             <aside
-                className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-sidebar flex flex-col fixed inset-y-0 z-30 text-white shadow-xl transition-all duration-300 ease-in-out`}
+                className="bg-sidebar fixed inset-y-0 left-0 z-30 flex shrink-0 flex-col text-white shadow-xl transition-[width] duration-300 ease-in-out"
+                style={{ width: `${sidebarWidth}px` }}
             >
                 {/* Logo Area */}
                 <div className={`h-16 flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'px-6'} border-b border-sidebar-active/50 relative`}>
@@ -317,6 +379,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                         {/* ADMIN */}
                         <CollapsibleGroup label="Admin" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Admin']} onToggle={() => toggleSection('Admin')}>
+                            <NavItem href="/admin/global-settings" icon={ShieldAlert} label="Global Sys Settings" active={pathname === '/admin/global-settings'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
@@ -329,6 +392,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         {/* INTEGRATIONS HUB */}
                         <CollapsibleGroup label="Integrations" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Integrations']} onToggle={() => toggleSection('Integrations')}>
                             <NavItem href="/admin/integrations" icon={Network} label="Integrations Hub" active={pathname === '/admin/integrations'} collapsed={isSidebarCollapsed} />
+                            <NavItem href="/admin/integrations/erx-readiness" icon={ShieldCheck} label="eRx Readiness" active={pathname === '/admin/integrations/erx-readiness'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/integrations/doxy" icon={Video} label="Doxy.me" active={pathname === '/admin/integrations/doxy'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/integrations/radiantlogiq" icon={DatabaseZap} label="RadiantLogiq" active={pathname === '/admin/integrations/radiantlogiq'} collapsed={isSidebarCollapsed} />
                             <NavItem href="/admin/integrations/powerscribe" icon={Activity} label="PowerScribe 360" active={pathname === '/admin/integrations/powerscribe'} collapsed={isSidebarCollapsed} />
@@ -365,7 +429,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </aside>
 
             {/* MAIN CONTENT WRAPPER */}
-            <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-64'} flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out`}>
+            <main
+                className="flex-1 flex min-w-0 flex-col transition-[margin-left] duration-300 ease-in-out"
+                style={{ marginLeft: `${sidebarWidth}px` }}
+            >
 
                 {/* Header */}
                 <header className="h-16 bg-white dark:bg-slate-800 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm/50 backdrop-blur-sm bg-white/90 dark:bg-slate-800/90">
@@ -395,7 +462,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
                         <ThemeToggle />
 
-                        <GlobalNotificationDrawer />
+                        <ProviderNotificationBell />
 
                         <button
                             onClick={() => setIsBookingModalOpen(true)}

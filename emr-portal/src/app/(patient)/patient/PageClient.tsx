@@ -20,6 +20,7 @@ import {
     Gift
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
+import { apiFetchJson } from '@/lib/api-client';
 import {
     collection,
     query,
@@ -27,9 +28,7 @@ import {
     limit,
     onSnapshot,
     Timestamp,
-    getDocs,
-    addDoc,
-    serverTimestamp
+    getDocs
 } from 'firebase/firestore';
 import { format, isSameDay, isAfter, subMinutes, addMinutes } from 'date-fns';
 import Link from 'next/link';
@@ -68,6 +67,11 @@ interface LabResult {
     date: Timestamp;
     status: 'Normal' | 'Review Needed' | 'Critical';
     value: string;
+}
+
+interface SendMessageApiResponse {
+    success?: boolean;
+    error?: string;
 }
 
 export default function PatientDashboard() {
@@ -270,25 +274,20 @@ export default function PatientDashboard() {
 
         setIsSendingMsg(true);
         try {
-            const threadRef = await addDoc(collection(db, 'threads'), {
-                patientId: auth.currentUser.uid,
-                providerId: composeData.recipientId,
-                providerName: composeData.recipientName,
-                subject: composeData.subject,
-                category: composeData.category,
-                lastMessage: composeData.body,
-                lastMessageAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                unreadCount: 0
+            const payload = await apiFetchJson<SendMessageApiResponse>('/api/messages/send', {
+                method: 'POST',
+                user: auth.currentUser,
+                body: {
+                    recipientId: composeData.recipientId,
+                    recipientType: 'provider',
+                    subject: composeData.subject,
+                    category: composeData.category,
+                    body: composeData.body
+                }
             });
-
-            await addDoc(collection(db, 'threads', threadRef.id, 'messages'), {
-                senderId: auth.currentUser.uid,
-                senderType: 'patient',
-                body: composeData.body,
-                createdAt: serverTimestamp(),
-                read: false
-            });
+            if (!payload.success) {
+                throw new Error(payload.error || 'Failed to send message.');
+            }
 
             setIsMessagingOpen(false);
             setComposeData({ recipientId: '', recipientName: '', subject: '', category: 'General', body: '' });
@@ -701,4 +700,3 @@ function DashboardSkeleton() {
         </div>
     );
 }
-
