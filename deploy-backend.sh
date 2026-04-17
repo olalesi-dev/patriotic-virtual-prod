@@ -1,24 +1,64 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-echo "🚀 Deploying Backend Service to Cloud Run..."
+SERVICE_NAME="${CLOUD_RUN_SERVICE:-patriotic-virtual-backend}"
+SOURCE_DIR="${BACKEND_SOURCE_DIR:-emr-backend}"
+PROJECT_ID="${GCP_PROJECT_ID:-patriotic-virtual-prod}"
+REGION="${GCP_REGION:-us-central1}"
+ENV_FILE="${BACKEND_ENV_FILE:-${SOURCE_DIR}/.env}"
+ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-true}"
+RESERVED_ENV_REGEX='^(PORT|K_SERVICE|K_REVISION|K_CONFIGURATION)='
+VALID_ENV_REGEX='^[A-Za-z_][A-Za-z0-9_]*='
 
-# Check if .env exists to set variables
-ENV_ARGS=""
-if [ -f "backend/.env" ]; then
-    echo "📄 Found backend/.env, setting environment variables..."
-    # Read .env file line by line and construct --set-env-vars string
-    # Handling simple key-value pairs
-    VARS=$(grep -v '^#' backend/.env | grep -v '^$' | tr '\n' ',' | sed 's/,$//')
-    ENV_ARGS="--set-env-vars=$VARS"
+echo "🚀 Deploying backend service to Cloud Run..."
+echo "   Service: ${SERVICE_NAME}"
+echo "   Source:  ${SOURCE_DIR}"
+echo "   Region:  ${REGION}"
+echo "   Project: ${PROJECT_ID}"
+
+if ! command -v gcloud >/dev/null 2>&1; then
+    echo "❌ gcloud CLI is not installed or not on PATH."
+    exit 1
 fi
 
-# Deploy
-gcloud run deploy patriotic-virtual-backend \
-  --source backend \
-  --region us-central1 \
-  --allow-unauthenticated \
-  "$ENV_ARGS" \
-  --project patriotic-virtual-prod
+if [ ! -d "${SOURCE_DIR}" ]; then
+    echo "❌ Source directory not found: ${SOURCE_DIR}"
+    exit 1
+fi
 
-echo "✅ Backend Deployed Successfully!"
+ENV_ARGS=()
+SANITIZED_ENV_FILE=""
+if [ -f "${ENV_FILE}" ]; then
+    SANITIZED_ENV_FILE="$(mktemp "${TMPDIR:-/tmp}/deploy-backend.XXXXXX.env")"
+    grep -E "${VALID_ENV_REGEX}" "${ENV_FILE}" | grep -vE "${RESERVED_ENV_REGEX}" > "${SANITIZED_ENV_FILE}" || true
+    echo "📄 Using env file: ${ENV_FILE}"
+    echo "🧹 Removed comments, blank lines, and Cloud Run reserved env vars before deploy."
+    ENV_ARGS=(--env-vars-file "${SANITIZED_ENV_FILE}")
+else
+    echo "⚠️  Env file not found, reusing existing Cloud Run env configuration."
+fi
+
+cleanup() {
+    if [ -n "${SANITIZED_ENV_FILE}" ] && [ -f "${SANITIZED_ENV_FILE}" ]; then
+        rm -f "${SANITIZED_ENV_FILE}"
+    fi
+}
+trap cleanup EXIT
+
+DEPLOY_ARGS=(
+  --source "${SOURCE_DIR}"
+  --region "${REGION}"
+  --project "${PROJECT_ID}"
+)
+
+if [ "${ALLOW_UNAUTHENTICATED}" = "true" ]; then
+    DEPLOY_ARGS+=(--allow-unauthenticated)
+else
+    echo "🔒 Skipping --allow-unauthenticated (ALLOW_UNAUTHENTICATED=false)."
+fi
+
+gcloud run deploy "${SERVICE_NAME}" \
+  "${DEPLOY_ARGS[@]}" \
+  "${ENV_ARGS[@]}"
+
+echo "✅ Backend deployed successfully!"

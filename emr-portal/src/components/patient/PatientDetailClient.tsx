@@ -588,6 +588,14 @@ export function PatientDetailClient({ patientId }: { patientId: string }) {
                             <ShieldCheck className="h-4 w-4" />
                             Allergies: {patient.allergies.join(', ')}
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/orders/erx?patientUid=${patient.id}`)}
+                            className="inline-flex items-center gap-2 rounded-2xl bg-brand px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:bg-brand/90"
+                        >
+                            <Pill className="h-4 w-4" />
+                            Open eRx
+                        </button>
                         <div className="text-sm font-semibold text-slate-500">
                             Last activity: {patient.lastActivityAt ? new Date(patient.lastActivityAt).toLocaleString() : 'No recent activity'}
                         </div>

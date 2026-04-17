@@ -31,11 +31,32 @@ export function LoginForm() {
     const recaptchaRef = React.useRef<RecaptchaVerifier | null>(null);
     const hasCheckedRedirectRef = React.useRef(false);
     const router = useRouter();
+    const PROVIDER_ROLES = React.useMemo(() => new Set(['provider', 'clinician', 'admin', 'staff']), []);
 
     const isMfaRequiredError = (authError: any) => {
         return authError?.code === 'auth/multi-factor-auth-required' ||
             authError?.message?.includes('multi-factor-auth-required') ||
             authError?.code?.includes('multi-factor-auth-required');
+    };
+
+    const getMfaErrorMessage = (authError: any) => {
+        const code = authError?.code;
+
+        switch (code) {
+            case 'auth/app-not-authorized':
+            case 'auth/unauthorized-domain':
+                return 'This domain is not authorized for Firebase phone verification. Add the current site domain in Firebase Authentication > Settings > Authorized domains.';
+            case 'auth/invalid-app-credential':
+            case 'auth/captcha-check-failed':
+                return 'Firebase rejected the reCAPTCHA/app verification handshake. Refresh the page and retry. If this persists, verify reCAPTCHA and phone auth are configured correctly in Firebase.';
+            case 'auth/operation-not-allowed':
+                return 'Phone-based MFA is not enabled for this Firebase project. Enable Phone as a sign-in provider and multi-factor authentication in Firebase Console.';
+            case 'auth/quota-exceeded':
+            case 'auth/too-many-requests':
+                return 'Firebase temporarily blocked additional verification attempts. Wait a few minutes and try again.';
+            default:
+                return authError?.message || 'Failed to initiate MFA challenge.';
+        }
     };
 
     const startPhoneMfaChallenge = async (authError: any, flowLabel: string) => {
@@ -60,7 +81,9 @@ export function LoginForm() {
             setMfaStep(true);
         } catch (mfaError: any) {
             console.error(`MFA Initiation Error (${flowLabel}):`, mfaError);
-            setError('Failed to initiate MFA challenge.');
+            recaptchaRef.current?.clear();
+            recaptchaRef.current = null;
+            setError(getMfaErrorMessage(mfaError));
         }
     };
 
@@ -78,6 +101,27 @@ export function LoginForm() {
         }
     }, []);
 
+    const resolvePostLoginDestination = React.useCallback(async (user: any) => {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            let role = '';
+
+            if (userDoc.exists()) {
+                role = String(userDoc.data()?.role || '').toLowerCase();
+            } else {
+                const patientDoc = await getDoc(doc(db, 'patients', user.uid));
+                if (patientDoc.exists()) {
+                    role = String(patientDoc.data()?.role || '').toLowerCase();
+                }
+            }
+
+            return PROVIDER_ROLES.has(role) ? '/dashboard' : '/patient';
+        } catch (destinationError) {
+            console.error('Post-login destination lookup failed:', destinationError);
+            return '/patient';
+        }
+    }, [PROVIDER_ROLES]);
+
     React.useEffect(() => {
         if (hasCheckedRedirectRef.current) return;
         hasCheckedRedirectRef.current = true;
@@ -86,7 +130,8 @@ export function LoginForm() {
                 const result = await getRedirectResult(auth);
                 if (result) {
                     await upsertUserProfile(result.user);
-                    router.replace('/');
+                    const destination = await resolvePostLoginDestination(result.user);
+                    router.replace(destination);
                 }
             } catch (err: any) {
                 console.error('Redirect Result Error:', err.code, err.message, err);
@@ -101,15 +146,16 @@ export function LoginForm() {
             }
         };
         checkRedirectResult();
-    }, [router, upsertUserProfile]);
+    }, [resolvePostLoginDestination, router, upsertUserProfile]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            router.replace('/');
+            const signInResult = await signInWithEmailAndPassword(auth, email, password);
+            const destination = await resolvePostLoginDestination(signInResult.user);
+            router.replace(destination);
         } catch (err: any) {
             if (isMfaRequiredError(err)) {
                 await startPhoneMfaChallenge(err, 'Email flow');
@@ -129,7 +175,8 @@ export function LoginForm() {
         try {
             const popupResult = await signInWithPopup(auth, provider);
             await upsertUserProfile(popupResult.user);
-            router.replace('/');
+            const destination = await resolvePostLoginDestination(popupResult.user);
+            router.replace(destination);
         } catch (err: any) {
             if (isMfaRequiredError(err)) {
                 await startPhoneMfaChallenge(err, 'Google flow');
@@ -154,8 +201,9 @@ export function LoginForm() {
         try {
             const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
             const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
-            await resolver.resolveSignIn(multiFactorAssertion);
-            router.replace('/');
+            const signInResult = await resolver.resolveSignIn(multiFactorAssertion);
+            const destination = await resolvePostLoginDestination(signInResult.user);
+            router.replace(destination);
         } catch (err: any) {
             setError('Invalid verification code.');
         } finally {

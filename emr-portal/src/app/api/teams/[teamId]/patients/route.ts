@@ -52,12 +52,10 @@ export async function POST(
         await db.runTransaction(async (transaction) => {
             const teamRef = db!.collection('teams').doc(teamId);
             const patientRef = db!.collection('patients').doc(patientId);
-            const userPatientRef = db!.collection('users').doc(patientId);
 
-            const [teamDoc, patientDoc, patientUserDoc] = await Promise.all([
+            const [teamDoc, patientDoc] = await Promise.all([
                 transaction.get(teamRef),
-                transaction.get(patientRef),
-                transaction.get(userPatientRef)
+                transaction.get(patientRef)
             ]);
 
             const team = mapTeamSnapshot(teamDoc);
@@ -69,11 +67,7 @@ export async function POST(
                 throw new Error('Only team members can assign patients to this team.');
             }
 
-            const patientData = (
-                patientDoc.exists
-                    ? patientDoc.data()
-                    : (patientUserDoc.exists ? patientUserDoc.data() : {})
-            ) as Record<string, unknown>;
+            const patientData = (patientDoc.exists ? patientDoc.data() : {}) as Record<string, unknown>;
             const previousTeamId = asNonEmptyString(patientData.teamId);
 
             if (previousTeamId && previousTeamId !== teamId) {
@@ -98,13 +92,6 @@ export async function POST(
                 teamId,
                 updatedAt: new Date()
             }, { merge: true });
-
-            if (patientUserDoc.exists) {
-                transaction.set(userPatientRef, {
-                    teamId,
-                    updatedAt: new Date()
-                }, { merge: true });
-            }
         });
 
         return NextResponse.json({ success: true, teamId, patientId });

@@ -6,13 +6,14 @@ function generatePhrase() {
     return Array.from(bytes).map(b => chars[b % chars.length]).join('');
 }
 
+function stripDoseSpotPadding(value) {
+    return value.endsWith('==') ? value.slice(0, -2) : value;
+}
+
 function generateEncryptedClinicId(clinicKey, phrase) {
     const concatenated = phrase + clinicKey;
     const hash = crypto.createHash('sha512').update(Buffer.from(concatenated, 'utf8')).digest();
-    let hashB64 = hash.toString('base64');
-    if (hashB64.endsWith('==')) {
-        hashB64 = hashB64.slice(0, -2);
-    }
+    const hashB64 = stripDoseSpotPadding(hash.toString('base64'));
     const finalString = phrase + hashB64;
     return encodeURIComponent(finalString);
 }
@@ -21,17 +22,14 @@ function generateEncryptedUserId(userId, clinicKey, phrase) {
     const phrase22 = phrase.slice(0, 22);
     const concatenated = userId + phrase22 + clinicKey;
     const hash = crypto.createHash('sha512').update(Buffer.from(concatenated, 'utf8')).digest();
-    let hashB64 = hash.toString('base64');
-    if (hashB64.endsWith('==')) {
-        hashB64 = hashB64.slice(0, -2);
-    }
+    const hashB64 = stripDoseSpotPadding(hash.toString('base64'));
     return encodeURIComponent(hashB64);
 }
 
 function generateSSOUrl(params) {
     const clinicId = (process.env.DOSESPOT_CLINIC_ID || '1007159').trim();
     const clinicKey = (process.env.DOSESPOT_CLINIC_KEY || 'HPHH63FJA79VHFQQ5S4UR2K9JMVTF2N9').trim();
-    const baseUrl = (process.env.DOSESPOT_BASE_URL || 'https://my.staging.dosespot.com').trim();
+    const baseUrl = (process.env.DOSESPOT_BASE_URL || 'https://my.staging.dosespot.com').trim().replace(/\/+$/, '');
 
     const phrase = generatePhrase();
 
@@ -56,7 +54,7 @@ function generateSSOUrl(params) {
 
     if (params.refillsErrors) {
         urlParams.set('RefillsErrors', '1');
-        urlParams.delete('PatientId'); // mutually exclusive per DoseSpot spec
+        urlParams.delete('PatientId'); 
     }
 
     return `${baseUrl}/LoginSingleSignOn.aspx?${urlParams.toString()}`;

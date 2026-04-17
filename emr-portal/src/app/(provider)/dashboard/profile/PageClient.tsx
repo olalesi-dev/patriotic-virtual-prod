@@ -1,27 +1,47 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, User, Phone, MapPin, Calendar, Shield, FileText, Activity, Edit3, Save, X, Loader2, CheckCircle2, Award, Building, Stethoscope, ExternalLink, Info } from 'lucide-react';
+import { Camera, User, Phone, MapPin, Calendar, Shield, FileText, Activity, Edit3, Save, X, Loader2, CheckCircle2, Award, Building, Stethoscope, ExternalLink, Info, RefreshCw, AlertCircle } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
+import Link from 'next/link';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
 import { AITextarea } from '@/components/ui/AITextarea';
+import { syncDoseSpotClinician } from '@/lib/dosespot-clinician-sync';
+import {
+    DOSESPOT_CLINICIAN_SPECIALTIES,
+    DOSESPOT_PDMP_ROLE_TYPES,
+    DOSESPOT_PHONE_TYPES,
+    buildAdminUserProfileFields,
+    formatDoseSpotEnumLabel,
+    normalizeDoseSpotPdmpRoleType,
+    type AdminUpdateUserInput
+} from '@/lib/dosespot-clinician-profile';
 
 interface ProfileData {
+    prefix: string;
     firstName: string;
+    middleName: string;
     lastName: string;
+    suffix: string;
     dateOfBirth: string;
     gender: string;
     phone: string;
+    primaryPhoneType: string;
+    primaryFax: string;
     address: string;
+    address2: string;
     city: string;
     state: string;
     zip: string;
     specialty: string;
+    pdmpRoleType: string;
+    epcsRequested: boolean;
+    active: boolean;
     npi: string;
     deaNumber: string;
     stateLicenseNumber: string;
@@ -39,9 +59,11 @@ interface ProfileData {
 }
 
 const EMPTY: ProfileData = {
-    firstName: '', lastName: '', dateOfBirth: '', gender: '', phone: '',
-    address: '', city: '', state: '', zip: '',
-    specialty: '', npi: '', deaNumber: '', stateLicenseNumber: '', stateLicenseState: '',
+    prefix: '', firstName: '', middleName: '', lastName: '', suffix: '',
+    dateOfBirth: '', gender: '', phone: '', primaryPhoneType: 'Work', primaryFax: '',
+    address: '', address2: '', city: '', state: '', zip: '',
+    specialty: '', pdmpRoleType: '', epcsRequested: true, active: true,
+    npi: '', deaNumber: '', stateLicenseNumber: '', stateLicenseState: '',
     clinicName: '', clinicPhone: '', clinicFax: '',
     medicalSchool: '', residency: '', doseSpotClinicianId: '', photoURL: '',
     aboutMe: '', languagesSpoken: '', complianceDocs: [],
@@ -50,10 +72,16 @@ const EMPTY: ProfileData = {
 export default function ProviderProfilePage() {
     const userProfile = useUserProfile();
     const [data, setData] = useState<ProfileData>(EMPTY);
+    const [doseSpotStatus, setDoseSpotStatus] = useState({
+        synced: false,
+        registrationStatus: null as string | null,
+        lastSyncError: null as string | null
+    });
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [syncingDoseSpot, setSyncingDoseSpot] = useState(false);
     const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'practice' | 'compliance' | 'erx'>('personal');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const docInputRef = useRef<HTMLInputElement>(null);
@@ -66,17 +94,26 @@ export default function ProviderProfilePage() {
                 if (snap.exists()) {
                     const d = snap.data();
                     setData({
+                        prefix: d.prefix || '',
                         firstName: d.firstName || userProfile.displayName.split(' ')[0] || '',
+                        middleName: d.middleName || '',
                         lastName: d.lastName || userProfile.displayName.split(' ')[1] || '',
+                        suffix: d.suffix || '',
                         dateOfBirth: d.dateOfBirth || '',
                         gender: d.gender || '',
                         phone: d.phone || '',
-                        address: d.address || '',
+                        primaryPhoneType: d.primaryPhoneType || 'Work',
+                        primaryFax: d.primaryFax || d.clinicFax || '',
+                        address: d.address1 || d.address || '',
+                        address2: d.address2 || '',
                         city: d.city || '',
                         state: d.state || '',
-                        zip: d.zip || '',
-                        specialty: d.specialty || '',
-                        npi: d.npi || '',
+                        zip: d.zipCode || d.zip || '',
+                        specialty: d.clinicianSpecialtyType || d.specialty || '',
+                        pdmpRoleType: normalizeDoseSpotPdmpRoleType(typeof d.pdmpRoleType === 'string' ? d.pdmpRoleType : ''),
+                        epcsRequested: d.epcsRequested !== false,
+                        active: d.active !== false && d.status !== 'disabled',
+                        npi: d.npiNumber || d.npi || '',
                         deaNumber: d.deaNumber || '',
                         stateLicenseNumber: d.stateLicenseNumber || '',
                         stateLicenseState: d.stateLicenseState || '',
@@ -90,6 +127,11 @@ export default function ProviderProfilePage() {
                         aboutMe: d.aboutMe || '',
                         languagesSpoken: d.languagesSpoken || '',
                         complianceDocs: d.complianceDocs || [],
+                    });
+                    setDoseSpotStatus({
+                        synced: d.doseSpot?.synced === true,
+                        registrationStatus: typeof d.doseSpot?.registrationStatus === 'string' ? d.doseSpot.registrationStatus : null,
+                        lastSyncError: typeof d.doseSpot?.lastSyncError === 'string' ? d.doseSpot.lastSyncError : null
                     });
                 } else {
                     setData(prev => ({
@@ -135,17 +177,69 @@ export default function ProviderProfilePage() {
         setSaving(true);
         try {
             const fullName = `${data.firstName} ${data.lastName}`.trim();
-            const sanitizedPhone = data.phone?.replace(/\D/g, '') || '';
-
-            await setDoc(doc(db, 'users', auth.currentUser.uid), {
-                ...data,
-                phone: sanitizedPhone,
-                displayName: fullName,
-                name: fullName,
+            const sanitizePhone = (value: string) => value.replace(/\D/g, '');
+            const adminShape: AdminUpdateUserInput = {
+                firstName: data.firstName,
+                lastName: data.lastName,
                 email: userProfile.email,
-                role: 'provider', // Explicitly ensure role is provider
+                phone: sanitizePhone(data.phone),
+                dob: data.dateOfBirth,
+                sex: data.gender as AdminUpdateUserInput['sex'],
+                role: 'provider',
+                prefix: data.prefix,
+                middleName: data.middleName,
+                suffix: data.suffix,
+                address1: data.address,
+                address2: data.address2,
+                city: data.city,
+                state: data.state,
+                zipCode: data.zip,
+                primaryPhoneType: (DOSESPOT_PHONE_TYPES as readonly string[]).includes(data.primaryPhoneType)
+                    ? data.primaryPhoneType as AdminUpdateUserInput['primaryPhoneType']
+                    : 'Work',
+                primaryFax: sanitizePhone(data.primaryFax),
+                npiNumber: data.npi,
+                deaNumber: data.deaNumber,
+                stateLicenseNumber: data.stateLicenseNumber,
+                stateLicenseState: data.stateLicenseState,
+                clinicianSpecialtyType: (DOSESPOT_CLINICIAN_SPECIALTIES as readonly string[]).includes(data.specialty)
+                    ? data.specialty as AdminUpdateUserInput['clinicianSpecialtyType']
+                    : '',
+                pdmpRoleType: (DOSESPOT_PDMP_ROLE_TYPES as readonly string[]).includes(normalizeDoseSpotPdmpRoleType(data.pdmpRoleType))
+                    ? normalizeDoseSpotPdmpRoleType(data.pdmpRoleType) as AdminUpdateUserInput['pdmpRoleType']
+                    : '',
+                epcsRequested: data.epcsRequested,
+                active: data.active
+            };
+            const providerProfile = buildAdminUserProfileFields(adminShape, {
+                uid: auth.currentUser.uid,
+                existingDoseSpot: doseSpotStatus
+            });
+            const clinicianId = data.doseSpotClinicianId.trim();
+            const normalizedClinicianId = clinicianId.length > 0 && /^\d+$/.test(clinicianId)
+                ? Number(clinicianId)
+                : clinicianId || null;
+            const profilePayload = {
+                ...providerProfile,
+                dateOfBirth: data.dateOfBirth,
+                gender: data.gender,
+                aboutMe: data.aboutMe,
+                languagesSpoken: data.languagesSpoken,
+                clinicName: data.clinicName,
+                clinicPhone: sanitizePhone(data.clinicPhone),
+                clinicFax: sanitizePhone(data.clinicFax),
+                medicalSchool: data.medicalSchool,
+                residency: data.residency,
+                complianceDocs: data.complianceDocs,
+                photoURL: data.photoURL,
+                doseSpotClinicianId: normalizedClinicianId,
                 updatedAt: serverTimestamp(),
-            }, { merge: true });
+            };
+
+            await Promise.all([
+                setDoc(doc(db, 'users', auth.currentUser.uid), profilePayload, { merge: true }),
+                setDoc(doc(db, 'patients', auth.currentUser.uid), profilePayload, { merge: true })
+            ]);
 
             if (fullName) await updateProfile(auth.currentUser, { displayName: fullName });
             setEditing(false);
@@ -155,6 +249,44 @@ export default function ProviderProfilePage() {
             console.error(e);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDoseSpotSync = async () => {
+        if (!auth.currentUser) {
+            toast.error('Please sign in again before syncing DoseSpot.');
+            return;
+        }
+
+        setSyncingDoseSpot(true);
+        try {
+            const result = await syncDoseSpotClinician(auth.currentUser);
+            const syncErrorMessage = result.synced
+                ? null
+                : (result.missingFields.length > 0
+                    ? `Missing DoseSpot fields: ${result.missingFields.join(', ')}`
+                    : result.message);
+            setData((prev) => ({
+                ...prev,
+                doseSpotClinicianId: result.clinicianId ? String(result.clinicianId) : prev.doseSpotClinicianId
+            }));
+            setDoseSpotStatus({
+                synced: result.synced,
+                registrationStatus: result.registrationStatus,
+                lastSyncError: syncErrorMessage
+            });
+
+            if (result.synced) {
+                toast.success(result.message);
+            } else {
+                toast.error(syncErrorMessage ?? result.message);
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'DoseSpot sync failed.';
+            setDoseSpotStatus((prev) => ({ ...prev, lastSyncError: message }));
+            toast.error(message);
+        } finally {
+            setSyncingDoseSpot(false);
         }
     };
 
@@ -225,7 +357,7 @@ export default function ProviderProfilePage() {
                         className="w-full border border-slate-200 dark:border-slate-700 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800 dark:bg-slate-800"
                     >
                         <option value="">Select...</option>
-                        {options.map(o => <option key={o} value={o}>{o}</option>)}
+                        {options.map(o => <option key={o} value={o}>{formatDoseSpotEnumLabel(o)}</option>)}
                     </select>
                 ) : (
                     <input
@@ -237,7 +369,30 @@ export default function ProviderProfilePage() {
                 )
             ) : (
                 <p className={`text-sm font-bold py-2 px-1 ${data[key] ? 'text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600 italic'}`}>
-                    {(data[key] as string) || 'Not provided'}
+                    {((options && typeof data[key] === 'string' && data[key])
+                        ? formatDoseSpotEnumLabel(data[key] as string)
+                        : data[key] as string) || 'Not provided'}
+                </p>
+            )}
+        </div>
+    );
+
+    const toggleField = (label: string, key: keyof Pick<ProfileData, 'epcsRequested' | 'active'>, helpText?: string) => (
+        <div className="space-y-2" key={key}>
+            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</label>
+            {editing ? (
+                <label className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                    <span>{helpText ?? label}</span>
+                    <input
+                        type="checkbox"
+                        checked={data[key]}
+                        onChange={(event) => setData((prev) => ({ ...prev, [key]: event.target.checked }))}
+                        className="h-4 w-4 rounded border-slate-300 text-[#0EA5E9] focus:ring-[#0EA5E9]"
+                    />
+                </label>
+            ) : (
+                <p className="text-sm font-bold py-2 px-1 text-slate-800 dark:text-slate-100">
+                    {data[key] ? 'Enabled' : 'Disabled'}
                 </p>
             )}
         </div>
@@ -262,7 +417,7 @@ export default function ProviderProfilePage() {
         </div>
     );
 
-    const completionFields: (keyof ProfileData)[] = ['firstName', 'lastName', 'specialty', 'npi', 'phone', 'clinicName', 'stateLicenseNumber'];
+    const completionFields: (keyof ProfileData)[] = ['firstName', 'lastName', 'dateOfBirth', 'phone', 'address', 'city', 'state', 'zip', 'primaryFax', 'npi'];
     const completed = completionFields.filter(f => data[f]).length;
     const completionPct = Math.round((completed / completionFields.length) * 100);
 
@@ -398,12 +553,21 @@ export default function ProviderProfilePage() {
                                     <User className="w-3.5 h-3.5" /> Basic Information
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {field('Prefix', 'prefix')}
                                     {field('First Name', 'firstName')}
+                                    {field('Middle Name', 'middleName')}
                                     {field('Last Name', 'lastName')}
+                                    {field('Suffix', 'suffix')}
                                     {field('Date of Birth', 'dateOfBirth', 'date')}
                                     {field('Gender', 'gender', 'text', ['Male', 'Female', 'Non-binary', 'Prefer not to say'])}
                                     {field('Personal Phone', 'phone', 'tel')}
+                                    {field('Primary Phone Type', 'primaryPhoneType', 'text', [...DOSESPOT_PHONE_TYPES])}
+                                    {field('Primary Fax', 'primaryFax', 'tel')}
                                     {field('Primary Address', 'address')}
+                                    {field('Address Line 2', 'address2')}
+                                    {field('City', 'city')}
+                                    {field('State', 'state')}
+                                    {field('ZIP Code', 'zip')}
                                     {field('Languages Spoken', 'languagesSpoken', 'text')}
                                     {textareaField('About Me / Bio', 'aboutMe')}
                                 </div>
@@ -483,12 +647,15 @@ export default function ProviderProfilePage() {
                                 </p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {field('Specialty', 'specialty')}
+                                {field('Clinician Specialty Type', 'specialty', 'text', [...DOSESPOT_CLINICIAN_SPECIALTIES])}
                                 {field('NPI Number', 'npi')}
                                 {field('DEA Number', 'deaNumber')}
                                 {field('DoseSpot ID (Read Only)', 'doseSpotClinicianId')}
                                 {field('State License #', 'stateLicenseNumber')}
-                                {field('License State', 'stateLicenseState', 'text', ['Florida', 'New York', 'California', 'Texas'])}
+                                {field('License State', 'stateLicenseState')}
+                                {field('PDMP Role Type', 'pdmpRoleType', 'text', [...DOSESPOT_PDMP_ROLE_TYPES])}
+                                {toggleField('EPCS Requested', 'epcsRequested', 'Request EPCS registration for this clinician')}
+                                {toggleField('Active', 'active', 'Mark this clinician as active for DoseSpot')}
                                 {field('Medical School', 'medicalSchool')}
                                 {field('Residency', 'residency')}
                             </div>
@@ -522,11 +689,18 @@ export default function ProviderProfilePage() {
                                     <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                         <ExternalLink className="w-3.5 h-3.5" /> e-Prescribing Portal
                                     </h3>
-                                    {data.doseSpotClinicianId && (
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1.5">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> ID Linked: {data.doseSpotClinicianId}
-                                        </span>
-                                    )}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {doseSpotStatus.registrationStatus && (
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                Registration: {doseSpotStatus.registrationStatus}
+                                            </span>
+                                        )}
+                                        {data.doseSpotClinicianId && (
+                                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1.5">
+                                                <CheckCircle2 className="w-3.5 h-3.5" /> ID Linked: {data.doseSpotClinicianId}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {!data.doseSpotClinicianId ? (
@@ -536,17 +710,52 @@ export default function ProviderProfilePage() {
                                         </div>
                                         <h4 className="text-lg font-black text-slate-700 dark:text-slate-200 dark:text-slate-300 uppercase italic">eRx Not Configured</h4>
                                         <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto mt-2">
-                                            Please enter your DoseSpot Clinician ID in the <span className="text-indigo-500 font-bold">Credentials</span> tab to enable e-prescribing.
+                                            Complete your provider credentials, then sync this profile to DoseSpot to enable e-prescribing.
                                         </p>
-                                        <button 
-                                            onClick={() => setActiveTab('professional')}
-                                            className="mt-6 text-xs font-black text-indigo-500 uppercase tracking-widest hover:underline"
-                                        >
-                                            Go to Credentials
-                                        </button>
+                                        <div className="mt-6 flex flex-col items-center gap-3">
+                                            <button
+                                                onClick={handleDoseSpotSync}
+                                                disabled={syncingDoseSpot || doseSpotStatus.synced}
+                                                title={doseSpotStatus.synced ? 'Provider already synced to DoseSpot' : 'Sync to DoseSpot'}
+                                                className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-5 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {syncingDoseSpot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                                                Sync to DoseSpot
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('professional')}
+                                                className="text-xs font-black uppercase tracking-widest text-indigo-500 hover:underline"
+                                            >
+                                                Go to Credentials
+                                            </button>
+                                        </div>
+                                        {doseSpotStatus.lastSyncError && (
+                                            <div className="mx-auto mt-4 flex max-w-md items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-left text-xs text-amber-700">
+                                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                                                <span>{doseSpotStatus.lastSyncError}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
+                                        <div className="flex flex-wrap gap-3">
+                                            <button
+                                                onClick={handleDoseSpotSync}
+                                                disabled={syncingDoseSpot || doseSpotStatus.synced}
+                                                title={doseSpotStatus.synced ? 'Provider already synced to DoseSpot' : 'Sync to DoseSpot'}
+                                                className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {syncingDoseSpot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                                                Sync to DoseSpot
+                                            </button>
+                                            {doseSpotStatus.synced && (
+                                                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-emerald-700">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                                    Synced
+                                                </span>
+                                            )}
+                                        </div>
+
                                         <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800 flex items-start gap-3">
                                             <Info className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
                                             <div className="space-y-1">
@@ -556,11 +765,33 @@ export default function ProviderProfilePage() {
                                                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium leading-relaxed">
                                                     You are currently signed in as Clinician #{data.doseSpotClinicianId}. Any prescriptions written here will be linked to your professional record.
                                                 </p>
+                                                {doseSpotStatus.registrationStatus && (
+                                                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium leading-relaxed">
+                                                        Registration Status: {doseSpotStatus.registrationStatus}
+                                                    </p>
+                                                )}
                                             </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-3">
+                                            <Link
+                                                href="/orders/erx/readiness"
+                                                className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100"
+                                            >
+                                                DoseSpot Readiness
+                                                <ExternalLink className="h-3.5 w-3.5" />
+                                            </Link>
+                                            <Link
+                                                href="/orders/erx?refillsErrors=true"
+                                                className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-amber-700 transition hover:bg-amber-100"
+                                            >
+                                                Refills & Errors
+                                                <ExternalLink className="h-3.5 w-3.5" />
+                                            </Link>
                                         </div>
                                         
                                         <div className="rounded-[24px] overflow-hidden border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-inner">
-                                            <DoseSpotFrame height="800px" />
+                                            <DoseSpotFrame height="920px" />
                                         </div>
                                     </div>
                                 )}

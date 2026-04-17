@@ -5,13 +5,14 @@ import React, { useState } from "react";
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  updateProfile, 
   GoogleAuthProvider, 
+  getAdditionalUserInfo,
   signInWithPopup 
 } from "firebase/auth";
 import { apiFetchJson } from "@/lib/api-client";
 import { auth, db } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { finalizePatientRegistration, type PatientRegistrationFormValues, validatePatientRegistration } from "@/lib/patient-registration";
 import { svcs, iQs } from "./landingModalsData";
 
 interface LandingModalsProps {
@@ -19,11 +20,14 @@ interface LandingModalsProps {
   setConsultModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   authModalOpen: boolean;
   setAuthModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isAuthenticated: boolean;
   authMode: "login" | "register" | "verify";
   setAuthMode: React.Dispatch<React.SetStateAction<"login" | "register" | "verify">>;
   initialService: string | null;
   initialConsultStep?: number;
   onLoginSuccess: () => void;
+  onOpenRegister: () => void;
+  onOpenLogin: () => void;
   showToast: (m: string) => void;
 }
 
@@ -32,11 +36,14 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   setConsultModalOpen,
   authModalOpen,
   setAuthModalOpen,
+  isAuthenticated,
   authMode,
   setAuthMode,
   initialService,
   initialConsultStep = 1,
   onLoginSuccess,
+  onOpenRegister,
+  onOpenLogin,
   showToast,
 }) => {
   const [consultStep, setConsultStep] = useState(initialConsultStep);
@@ -48,14 +55,20 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   
-  const [regFirst, setRegFirst] = useState("");
-  const [regLast, setRegLast] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [regState, setRegState] = useState("");
-  const [regSex, setRegSex] = useState("");
-  const [regDob, setRegDob] = useState("");
-  const [regPhone, setRegPhone] = useState("");
+  const [registerForm, setRegisterForm] = useState<PatientRegistrationFormValues>({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    sex: "",
+    address1: "",
+    city: "",
+    state: "FL",
+    zipCode: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const checkoutMutation = useMutation({
     mutationFn: async ({
       token,
@@ -127,7 +140,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
           showToast("Identity verification completed successfully.");
           setAuthModalOpen(false);
           setConsultModalOpen(true);
-          setConsultStep(1);
+          setConsultStep(initialService ? 2 : 1);
         } else {
           showToast("Identity verification failed. Please try again or contact support.");
         }
@@ -136,13 +149,14 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
 
     window.addEventListener("message", handleVouchedMessage);
     return () => window.removeEventListener("message", handleVouchedMessage);
-  }, [authMode]);
+  }, [authMode, initialService, setAuthModalOpen, setConsultModalOpen, showToast]);
 
   React.useEffect(() => {
-    if (consultModalOpen && initialConsultStep > 1) {
+    if (consultModalOpen) {
       setConsultStep(initialConsultStep);
+      setSelSvc(initialService);
     }
-  }, [consultModalOpen, initialConsultStep]);
+  }, [consultModalOpen, initialConsultStep, initialService]);
 
   const handleConsultClose = () => {
     setConsultModalOpen(false);
@@ -160,6 +174,11 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   const cN = (s: number) => {
     if (s === 2 && !selSvc) {
       showToast("Select a service.");
+      return;
+    }
+    if (s === 2 && !isAuthenticated) {
+      showToast("Create an account or log in to continue.");
+      onOpenRegister();
       return;
     }
     if (s === 3) {
@@ -229,29 +248,36 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   };
 
   const handleGoogleAuth = async () => {
+    const validation = validatePatientRegistration(registerForm, {
+      requireEmail: false,
+      requirePassword: false,
+    });
+    if (validation.error || !validation.data) {
+      showToast(validation.error ?? "Please complete the required patient details first.");
+      return;
+    }
+
     setIsSubmitting(true);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      
-      // Check if user exists in patients
-      const patientRef = doc(db, 'patients', user.uid);
-      await setDoc(patientRef, {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName,
-        role: 'patient',
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      const userInfo = getAdditionalUserInfo(result);
 
-      setAuthModalOpen(false);
-      onLoginSuccess();
-      if (authMode === "register") {
-        setAuthModalOpen(true);
-        setAuthMode("verify");
-      }
+      await finalizePatientRegistration(user, validation.data, {
+        emailOverride: user.email ?? registerForm.email ?? null,
+        mergePatientRecord: true,
+        doseSpotUpdateExisting: !(userInfo?.isNewUser ?? false),
+        auditAction: userInfo?.isNewUser ? "ACCOUNT_CREATED" : "ACCOUNT_PROFILE_COMPLETED",
+      });
+
+      setRegisterForm((current) => ({
+        ...current,
+        email: user.email ?? current.email ?? "",
+      }));
+      showToast(userInfo?.isNewUser ? "Account created successfully." : "Signed in successfully.");
+      setAuthMode("verify");
     } catch (e: any) {
       showToast(e.message || "Google auth failed");
     } finally {
@@ -260,52 +286,27 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   };
 
   const handleRegister = async () => {
-    if (!regEmail || !regPassword || !regFirst || !regLast) {
-      showToast("Please fill in first name, last name, email and password.");
+    const validation = validatePatientRegistration(registerForm);
+    if (validation.error || !validation.data) {
+      showToast(validation.error ?? "Please fill in all required patient details.");
       return;
     }
-    
-    if (regDob) {
-      const birthDate = new Date(regDob);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-      }
-      if (age < 18) {
-        showToast("You must be at least 18 years old to use this service.");
-        return;
-      }
-    }
+
     setIsSubmitting(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, regEmail, regPassword);
-      const user = userCredential.user;
-      
-      await updateProfile(user, {
-        displayName: `${regFirst} ${regLast}`.trim()
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        validation.data.email,
+        registerForm.password ?? ""
+      );
+
+      await finalizePatientRegistration(userCredential.user, validation.data, {
+        sendVerificationEmail: true,
+        auditAction: "ACCOUNT_CREATED",
       });
 
-      await setDoc(doc(db, 'patients', user.uid), {
-        uid: user.uid,
-        email: regEmail,
-        name: `${regFirst} ${regLast}`.trim(),
-        firstName: regFirst,
-        lastName: regLast,
-        dob: regDob || null,
-        sex: regSex || null,
-        state: regState || null,
-        phone: regPhone || null,
-        role: 'patient',
-        status: 'active',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      showToast("Account created! Please verify your identity.");
+      showToast("Account created. Please check your email to verify your email address.");
       setAuthMode("verify");
-      // Prevent closing modal so you can render verify step
     } catch (e: any) {
       showToast(e.message || "Registration failed");
     } finally {
@@ -323,7 +324,10 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         className={`mo ${authModalOpen ? "active" : ""}`}
         onClick={handleAuthClose}
       >
-        <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className={`modal ${authMode === "register" ? "auth-register-modal" : authMode === "verify" ? "auth-verify-modal" : ""}`}
+          onClick={(e) => e.stopPropagation()}
+        >
           {authMode === "login" ? (
             <div id="loginForm">
               <h2>Welcome back</h2>
@@ -376,90 +380,116 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               <h2 style={{ marginBottom: "4px" }}>Get started</h2>
               <p className="ms" style={{ marginBottom: "16px" }}>Currently available in Florida.</p>
 
-              <div className="fr">
+              <div className="auth-register-grid">
                 <div className="fg">
                   <label>First Name</label>
                   <input
                     placeholder="First"
-                    value={regFirst}
-                    onChange={(e) => setRegFirst(e.target.value)}
+                    value={registerForm.firstName}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, firstName: e.target.value }))}
                   />
                 </div>
                 <div className="fg">
                   <label>Last Name</label>
                   <input
                     placeholder="Last"
-                    value={regLast}
-                    onChange={(e) => setRegLast(e.target.value)}
+                    value={registerForm.lastName}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, lastName: e.target.value }))}
                   />
                 </div>
-              </div>
-
-              <div className="fg">
-                <label>Email</label>
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                />
-              </div>
-
-              <div className="fg">
-                <label>Password</label>
-                <input
-                  type="password"
-                  placeholder="Min. 8 characters"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                />
-              </div>
-
-              <div className="fr">
                 <div className="fg">
-                  <label>State</label>
-                  <select value={regState} onChange={(e) => setRegState(e.target.value)}>
-                    <option value="">Select state</option>
-                    <option value="Florida">Florida</option>
-                  </select>
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={registerForm.email}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, email: e.target.value }))}
+                  />
                 </div>
-                <div className="fg">
-                  <label>Biological Sex *</label>
-                  <select value={regSex} onChange={(e) => setRegSex(e.target.value)}>
-                    <option value="">Select</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="fr">
                 <div className="fg">
                   <label>Date of Birth</label>
                   <input
                     type="date"
-                    value={regDob}
-                    onChange={(e) => setRegDob(e.target.value)}
+                    value={registerForm.dob}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, dob: e.target.value }))}
                   />
+                </div>
+                <div className="fg">
+                  <label>Biological Sex *</label>
+                  <select value={registerForm.sex} onChange={(e) => setRegisterForm((current) => ({ ...current, sex: e.target.value }))}>
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Unknown">Unknown</option>
+                  </select>
                 </div>
                 <div className="fg">
                   <label>Phone Number *</label>
                   <input
                     placeholder="(555) 555-5555"
-                    value={regPhone}
-                    onChange={(e) => setRegPhone(e.target.value)}
+                    value={registerForm.phone}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, phone: e.target.value }))}
+                  />
+                </div>
+                <div className="fg">
+                  <label className="auth-readonly-label">State</label>
+                  <div className="auth-readonly-field">Florida (FL)</div>
+                </div>
+                <div className="fg auth-span-2">
+                  <label>Address Line 1</label>
+                  <input
+                    placeholder="2798 Parsifal St NE"
+                    value={registerForm.address1}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, address1: e.target.value }))}
+                  />
+                </div>
+                <div className="fg auth-span-2">
+                  <label>City</label>
+                  <input
+                    placeholder="Miami"
+                    value={registerForm.city}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, city: e.target.value }))}
+                  />
+                </div>
+                <div className="fg">
+                  <label>ZIP Code</label>
+                  <input
+                    inputMode="numeric"
+                    placeholder="33101"
+                    value={registerForm.zipCode}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, zipCode: e.target.value }))}
+                  />
+                </div>
+                <div className="fg">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    placeholder="Min. 8 characters"
+                    value={registerForm.password}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, password: e.target.value }))}
+                  />
+                </div>
+                <div className="fg">
+                  <label>Confirm Password</label>
+                  <input
+                    type="password"
+                    placeholder="Repeat password"
+                    value={registerForm.confirmPassword}
+                    onChange={(e) => setRegisterForm((current) => ({ ...current, confirmPassword: e.target.value }))}
                   />
                 </div>
               </div>
 
-              <button
-                className="btn btn-primary btn-large"
-                style={{ width: "100%", marginBottom: "14px", marginTop: "8px" }}
-                onClick={handleRegister}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Creating..." : "Create Account"}
-              </button>
+              <div className="auth-register-actions">
+                <button
+                  className="btn btn-primary btn-large auth-register-button"
+                  style={{ marginBottom: "14px", marginTop: "8px" }}
+                  onClick={handleRegister}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Creating..." : "Create Account"}
+                </button>
+              </div>
 
               <div
                 style={{
@@ -476,27 +506,28 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 <div style={{ flex: 1, height: "1px", background: "var(--g200)" }}></div>
               </div>
 
-              <button
-                className="btn btn-outline"
-                style={{ 
-                  width: "100%", 
-                  marginBottom: "20px",
-                  borderColor: "var(--g200)",
-                  background: "transparent",
-                  color: "#fff",
-                  fontSize: "15px"
-                }}
-                onClick={handleGoogleAuth}
-                disabled={isSubmitting}
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                Sign up with Google
-              </button>
+              <div className="auth-register-actions">
+                <button
+                  className="btn btn-outline auth-register-button"
+                  style={{ 
+                    marginBottom: "20px",
+                    borderColor: "var(--g200)",
+                    background: "transparent",
+                    color: "#fff",
+                    fontSize: "15px"
+                  }}
+                  onClick={handleGoogleAuth}
+                  disabled={isSubmitting}
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                  </svg>
+                  Sign up with Google
+                </button>
+              </div>
 
               <p className="ff">
                 Have an account? <a onClick={() => setAuthMode("login")}>Log in</a>
@@ -508,11 +539,13 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               <p className="ms" style={{ marginBottom: "20px" }}>
                 For your safety and to comply with telehealth regulations, please verify your identity with a valid ID.
               </p>
-              <iframe 
-                src={`/vouched.html?firstName=${encodeURIComponent(regFirst)}&lastName=${encodeURIComponent(regLast)}&email=${encodeURIComponent(regEmail)}&phone=${encodeURIComponent(regPhone)}`}
-                style={{ width: "100%", minHeight: "550px", border: "none", borderRadius: "12px" }}
-                allow="camera; microphone"
-              />
+              <div className="auth-verify-frame">
+                <iframe 
+                  src={`/vouched.html?firstName=${encodeURIComponent(registerForm.firstName)}&lastName=${encodeURIComponent(registerForm.lastName)}&email=${encodeURIComponent(registerForm.email ?? "")}&phone=${encodeURIComponent(registerForm.phone)}`}
+                  style={{ width: "100%", minHeight: "640px", border: "none", borderRadius: "16px", background: "#ffffff" }}
+                  allow="camera; microphone"
+                />
+              </div>
             </div>
           )}
         </div>
@@ -520,6 +553,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
 
       {/* CONSULT MODAL */}
       <div
+        id="consultModal"
         className={`mo ${consultModalOpen ? "active" : ""}`}
         onClick={handleConsultClose}
       >
@@ -540,9 +574,20 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
             <div className="iq">
               <h3>What brings you in?</h3>
               <p>Select the service that fits your needs.</p>
+              {!isAuthenticated ? (
+                <div className="consult-auth-gate">
+                  <p className="consult-auth-copy">
+                    You are not signed in yet. Pick your service, then create a patient account or log in to continue with intake and checkout.
+                  </p>
+                </div>
+              ) : (
+                <p className="consult-auth-status">
+                  You are already signed in, so you can go straight into intake for the selected service.
+                </p>
+              )}
               <div className="rg" id="svcSel">
                 {svcs
-                  .filter((s) => (initialService ? s.k === initialService : true))
+                  .filter((s) => (initialService ? (s.k === initialService || s.k === "general_visit") : true))
                   .map((s) => (
                   <div
                     key={s.k}
@@ -562,7 +607,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 Cancel
               </button>
               <button className="btn btn-primary" onClick={() => cN(2)}>
-                Continue →
+                {isAuthenticated ? "Continue →" : "Create Account →"}
               </button>
             </div>
           </div>

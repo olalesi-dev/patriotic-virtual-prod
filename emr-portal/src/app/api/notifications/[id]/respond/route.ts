@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { createNotification } from '@/lib/server-notifications';
-import { mapTeamSnapshot, mapUserDocToMember, toProviderRole } from '@/lib/server-teams';
+import { loadMergedUserRecord, mapTeamSnapshot, mapUserRecordToMember, toProviderRole } from '@/lib/server-teams';
 import { ensureProviderAccess, requireAuthenticatedUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
@@ -45,9 +45,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
             return NextResponse.json({ success: false, error: 'Notification id is required.' }, { status: 400 });
         }
 
-        const [notificationDoc, currentUserDoc] = await Promise.all([
+        const [notificationDoc, currentUserRecord] = await Promise.all([
             db.collection('notifications').doc(notificationId).get(),
-            db.collection('users').doc(user.uid).get()
+            loadMergedUserRecord(db, user.uid)
         ]);
 
         if (!notificationDoc.exists) {
@@ -73,12 +73,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
             return NextResponse.json({ success: false, error: 'Team metadata missing from invite.' }, { status: 400 });
         }
 
-        const userRole = toProviderRole(user.token.role ?? currentUserDoc.data()?.role ?? user.role);
+        const userRole = toProviderRole(user.token.role ?? currentUserRecord?.role ?? user.role);
         if (!userRole) {
             return NextResponse.json({ success: false, error: 'Only doctors/providers can respond to team invitations.' }, { status: 403 });
         }
 
-        const currentMember = mapUserDocToMember(currentUserDoc) ?? {
+        const currentMember = mapUserRecordToMember(user.uid, currentUserRecord ?? undefined) ?? {
             id: user.uid,
             name: user.email?.split('@')[0] ?? 'Provider',
             email: user.email,

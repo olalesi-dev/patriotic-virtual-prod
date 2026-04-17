@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense, useMemo } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
+import { apiFetchJson } from "@/lib/api-client";
 import { auth, db } from "@/lib/firebase";
 import { LandingModals } from "./LandingModals";
 
@@ -384,18 +385,39 @@ function PaymentStatusHandler({
   onSuccess,
   onCancel,
 }: {
-  onSuccess: () => void;
+  onSuccess: (sessionId: string | null, consultationId: string | null) => void | Promise<void>;
   onCancel: () => void;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const handledStatusRef = useRef<string | null>(null);
+  const paymentStatus = searchParams?.get("payment") ?? null;
+  const sessionId = searchParams?.get("session_id") ?? null;
+  const consultationId = searchParams?.get("consultationId") ?? null;
+  const cleanedUrl = useMemo(() => {
+    if (!searchParams) return pathname;
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("payment");
+    const query = nextParams.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }, [pathname, searchParams]);
 
   useEffect(() => {
-    if (searchParams?.get("payment") === "success") {
-      onSuccess();
-    } else if (searchParams?.get("payment") === "cancelled") {
+    if (!paymentStatus || handledStatusRef.current === paymentStatus) {
+      return;
+    }
+
+    handledStatusRef.current = paymentStatus;
+
+    if (paymentStatus === "success") {
+      void onSuccess(sessionId, consultationId);
+    } else if (paymentStatus === "cancelled") {
       onCancel();
     }
-  }, [searchParams, onSuccess, onCancel]);
+
+    router.replace(cleanedUrl, { scroll: false });
+  }, [cleanedUrl, consultationId, onCancel, onSuccess, paymentStatus, router, sessionId]);
 
   return null;
 }
@@ -425,7 +447,26 @@ export function LandingEmbed() {
 
   const copy = COPY[locale];
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async (sessionId: string | null, consultationId: string | null) => {
+    if (auth.currentUser && sessionId && consultationId) {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        await apiFetchJson('/api/v1/payments/confirm-telehealth-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: {
+            sessionId,
+            consultationId,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to confirm telehealth checkout session:', error);
+      }
+    }
+
     setInitialConsultStep(4);
     setConsultModalOpen(true);
   };
@@ -560,6 +601,7 @@ export function LandingEmbed() {
   const handlePrimaryCta = () => {
     setMobileMenuOpen(false);
     setInitialService(null);
+    setInitialConsultStep(1);
     if (!isAuthenticated) {
       setAuthInitiator("header_get_started");
       setAuthMode("register");
@@ -572,13 +614,9 @@ export function LandingEmbed() {
   const handleServiceStart = (serviceKey: string) => {
     setMobileMenuOpen(false);
     setInitialService(serviceKey);
-    if (!isAuthenticated) {
-      setAuthInitiator("service_card");
-      setAuthMode("register");
-      setAuthModalOpen(true);
-    } else {
-      setConsultModalOpen(true);
-    }
+    setInitialConsultStep(1);
+    setAuthInitiator("service_card");
+    setConsultModalOpen(true);
   };
 
   const handleLogout = async () => {
@@ -1598,7 +1636,7 @@ export function LandingEmbed() {
                 </a>
                 <a href="/npp" target="_blank">Notice of Privacy Practices</a>
                 <a href="/telehealth-consent" target="_blank">Telehealth Consent</a>
-                <span style={{ color: '#9ca3af', fontSize: '14px', marginTop: '12px', display: 'block' }}>📞 (202) 215-0636<br/>📍 176 NW 25th St, Miami, FL 33127</span>
+                <span style={{ color: '#9ca3af', fontSize: '14px', marginTop: '12px', display: 'block' }}>📞 (321) 204-0902<br/>📍 176 NW 25th St, Miami, FL 33127</span>
               </div>
             </div>
 
@@ -2324,6 +2362,7 @@ export function LandingEmbed() {
         setConsultModalOpen={setConsultModalOpen}
         authModalOpen={authModalOpen}
         setAuthModalOpen={setAuthModalOpen}
+        isAuthenticated={isAuthenticated}
         authMode={authMode}
         setAuthMode={setAuthMode}
         initialService={initialService}
@@ -2331,10 +2370,24 @@ export function LandingEmbed() {
         onLoginSuccess={() => {
           if (authInitiator === "header_login") {
             setInitialService(null);
+            setInitialConsultStep(1);
             router.push("/");
           } else {
+            setInitialConsultStep(authInitiator === "service_card" && initialService ? 2 : 1);
             setConsultModalOpen(true);
           }
+        }}
+        onOpenRegister={() => {
+          setConsultModalOpen(false);
+          setAuthInitiator("service_card");
+          setAuthMode("register");
+          setAuthModalOpen(true);
+        }}
+        onOpenLogin={() => {
+          setConsultModalOpen(false);
+          setAuthInitiator("service_card");
+          setAuthMode("login");
+          setAuthModalOpen(true);
         }}
         showToast={showToast}
       />

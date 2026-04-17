@@ -8,6 +8,29 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 import { updateProfile } from 'firebase/auth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
+import { syncDoseSpotPatientBestEffort } from '@/lib/dosespot-patient-sync';
+import { US_STATE_OPTIONS, normalizeUsStateCode } from '@/lib/us-states';
+
+type FieldOption = string | { value: string; label: string };
+
+function normalizeUsPhone(value: string): string | null {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 10) return digits;
+    if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
+    return null;
+}
+
+function normalizeUsZip(value: string): string | null {
+    const digits = value.replace(/\D/g, '');
+    return digits.length >= 5 ? digits.slice(0, 5) : null;
+}
+
+function normalizeDoseSpotGender(value: string | null | undefined): 'Male' | 'Female' | 'Unknown' {
+    const normalized = (value ?? '').trim().toLowerCase();
+    if (normalized === 'male' || normalized === 'm') return 'Male';
+    if (normalized === 'female' || normalized === 'f') return 'Female';
+    return 'Unknown';
+}
 
 interface ProfileData {
     firstName: string;
@@ -62,13 +85,13 @@ export default function PatientProfilePage() {
                     setData({
                         firstName: d.firstName || userProfile.displayName.split(' ')[0] || '',
                         lastName: d.lastName || userProfile.displayName.split(' ')[1] || '',
-                        dateOfBirth: d.dateOfBirth || '',
-                        gender: d.gender || '',
-                        phone: d.phone || '',
-                        address: d.address || '',
+                        dateOfBirth: d.dateOfBirth || d.dob || '',
+                        gender: normalizeDoseSpotGender(d.gender || d.sex || d.sexAtBirth || ''),
+                        phone: d.phone || d.phoneNumber || '',
+                        address: d.address || d.address1 || '',
                         city: d.city || '',
-                        state: d.state || '',
-                        zip: d.zip || '',
+                        state: normalizeUsStateCode(d.state || '') || '',
+                        zip: d.zip || d.zipCode || '',
                         emergencyContact: d.emergencyContact || '',
                         emergencyPhone: d.emergencyPhone || '',
                         bloodType: d.bloodType || '',
@@ -128,20 +151,71 @@ export default function PatientProfilePage() {
         setSaving(true);
         try {
             const fullName = `${data.firstName} ${data.lastName}`.trim();
-            // Sanitize phone for DoseSpot (must be 10 digits)
-            const sanitizedPhone = data.phone?.replace(/\D/g, '') || '';
+            const firstName = data.firstName.trim();
+            const lastName = data.lastName.trim();
+            const normalizedGender = normalizeDoseSpotGender(data.gender);
+            const normalizedPhone = data.phone ? normalizeUsPhone(data.phone) : null;
+            const normalizedZip = data.zip ? normalizeUsZip(data.zip) : null;
+            const normalizedState = data.state ? normalizeUsStateCode(data.state) : null;
+            const address = data.address.trim();
+            const city = data.city.trim();
 
-            await setDoc(doc(db, 'users', auth.currentUser.uid), {
-                ...data,
-                phone: sanitizedPhone, // save the clean version
-                displayName: fullName,
+            if (!firstName || !lastName) {
+                toast.error('First name and last name are required.');
+                return;
+            }
+
+            if (data.phone && !normalizedPhone) {
+                toast.error('Phone number must be a valid 10-digit US phone number.');
+                return;
+            }
+
+            if (data.zip && !normalizedZip) {
+                toast.error('ZIP code must be a valid 5-digit US ZIP.');
+                return;
+            }
+
+            if (data.state && !normalizedState) {
+                toast.error('Please select a valid US state.');
+                return;
+            }
+
+            const doseSpotReadyProfile = {
+                firstName,
+                lastName,
                 name: fullName,
+                displayName: fullName,
                 email: userProfile.email,
-                role: 'patient',
-                updatedAt: serverTimestamp(),
-            }, { merge: true });
+                phone: normalizedPhone,
+                phoneNumber: normalizedPhone,
+                dob: data.dateOfBirth || null,
+                dateOfBirth: data.dateOfBirth || null,
+                sex: normalizedGender,
+                sexAtBirth: normalizedGender,
+                gender: normalizedGender,
+                address: address || null,
+                address1: address || null,
+                city: city || null,
+                state: normalizedState,
+                zip: normalizedZip,
+                zipCode: normalizedZip,
+                role: 'patient'
+            };
+
+            await Promise.all([
+                setDoc(doc(db, 'users', auth.currentUser.uid), {
+                    ...data,
+                    ...doseSpotReadyProfile,
+                    updatedAt: serverTimestamp(),
+                }, { merge: true }),
+                setDoc(doc(db, 'patients', auth.currentUser.uid), {
+                    ...doseSpotReadyProfile,
+                    updatedAt: serverTimestamp(),
+                }, { merge: true })
+            ]);
             // Update Firebase Auth display name
             if (fullName) await updateProfile(auth.currentUser, { displayName: fullName });
+            void syncDoseSpotPatientBestEffort(auth.currentUser, { updateExisting: true });
             setEditing(false);
             toast.success('Profile saved successfully!');
         } catch (e) {
@@ -152,7 +226,7 @@ export default function PatientProfilePage() {
         }
     };
 
-    const field = (label: string, key: keyof ProfileData, type = 'text', options?: string[]) => (
+    const field = (label: string, key: keyof ProfileData, type = 'text', options?: FieldOption[]) => (
         <div className="space-y-1.5" key={key}>
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
             {editing ? (
@@ -163,7 +237,11 @@ export default function PatientProfilePage() {
                         className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-[#0EA5E9]/20 focus:border-[#0EA5E9] outline-none bg-white dark:bg-slate-800"
                     >
                         <option value="">Select...</option>
-                        {options.map(o => <option key={o} value={o}>{o}</option>)}
+                        {options.map((option) => {
+                            const value = typeof option === 'string' ? option : option.value;
+                            const text = typeof option === 'string' ? option : option.label;
+                            return <option key={value} value={value}>{text}</option>;
+                        })}
                     </select>
                 ) : (
                     <input
@@ -335,7 +413,7 @@ export default function PatientProfilePage() {
                                     {field('First Name', 'firstName')}
                                     {field('Last Name', 'lastName')}
                                     {field('Date of Birth', 'dateOfBirth', 'date')}
-                                    {field('Gender', 'gender', 'text', ['Male', 'Female', 'Non-binary', 'Prefer not to say'])}
+                                    {field('Gender', 'gender', 'text', ['Male', 'Female', 'Unknown'])}
                                     {field('Phone', 'phone', 'tel')}
                                     {field('Primary Language', 'primaryLanguage', 'text', ['English', 'Spanish', 'French', 'Portuguese', 'Other'])}
                                 </div>
@@ -350,7 +428,10 @@ export default function PatientProfilePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2">{field('Street Address', 'address')}</div>
                                     {field('City', 'city')}
-                                    {field('State', 'state')}
+                                    {field('State', 'state', 'text', US_STATE_OPTIONS.map((state) => ({
+                                        value: state.code,
+                                        label: `${state.name} (${state.code})`
+                                    })))}
                                     {field('ZIP Code', 'zip')}
                                 </div>
                             </section>

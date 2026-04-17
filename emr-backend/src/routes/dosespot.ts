@@ -1,224 +1,882 @@
-/**
- * DoseSpot Push Notification Webhook Handler
- *
- * DoseSpot POSTs to this endpoint to push real-time notification counts
- * for a given clinician. The payload contains counts of:
- *   - PendingPrescriptions
- *   - TransmissionErrors
- *   - RefillRequests
- *   - ChangeRequests
- *
- * Docs ref: DoseSpot API v2 Push Notifications / Sync endpoint setup.
- *
- * Security: We verify the request using a HMAC-SHA256 signature that
- * DoseSpot sends in the X-DoseSpot-Signature header (if configured),
- * OR we fall back to a shared secret check via the clinic key.
- * The endpoint is intentionally public (no Firebase auth) because it is
- * called server-to-server from DoseSpot's infrastructure.
- */
-
 import { Router, Request, Response } from 'express';
 import * as admin from 'firebase-admin';
-import crypto from 'crypto';
 import { logger } from '../utils/logger';
+import {
+    enqueueWebhookProcessing,
+    ensureDoseSpotTestClinicianForUser,
+    extractEventType,
+    getDoseSpotWebhookRuntimeHealth,
+    getDoseSpotWebhookValidationReport,
+    markWebhookEventFailed,
+    markWebhookEventQueued,
+    persistWebhookEvent,
+    processWebhookEvent,
+    triggerDoseSpotDevTestActivity,
+    verifyDoseSpotSecret,
+    verifyDoseSpotTaskRequest
+} from '../services/dosespot-push';
+import { deleteDoseSpotPatientForUid, ensureDoseSpotPatientForUid } from '../services/dosespot-patients';
+import {
+    acceptDoseSpotIdpDisclaimerForUid,
+    acceptDoseSpotLegalAgreementForUid,
+    fetchDoseSpotClinicianRegistrationStatusForUid,
+    fetchDoseSpotIdpDisclaimerForUid,
+    fetchDoseSpotLegalAgreementsForUid,
+    getDoseSpotClinicianReadinessForUid,
+    initDoseSpotIdpForUid,
+    syncDoseSpotClinicianForUid,
+    startDoseSpotIdpForUid,
+    submitDoseSpotIdpAnswersForUid,
+    submitDoseSpotIdpOtpForUid
+} from '../services/dosespot-clinicians';
+import {
+    fetchDoseSpotMedicationHistoryForPatientUid,
+    fetchDoseSpotPendingRefillsQueue,
+    fetchDoseSpotPendingRxChangesQueue,
+    fetchDoseSpotPrescriptionSummaryForPatientUid,
+    logDoseSpotMedicationHistoryConsentForPatientUid
+} from '../services/dosespot-workflows';
+import { runDoseSpotScreenDemoValidation } from '../services/dosespot-validation';
+import { verifyFirebaseToken } from '../middleware/auth';
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+function hasInternalDoseSpotAccess(req: Request): boolean {
+    const configuredSecret = typeof process.env.DOSESPOT_SECRET_KEY === 'string'
+        ? process.env.DOSESPOT_SECRET_KEY.trim()
+        : '';
+    const providedSecret = typeof req.headers['x-dosespot-secret'] === 'string'
+        ? req.headers['x-dosespot-secret'].trim()
+        : '';
 
-/**
- * Verify the incoming DoseSpot push notification secret.
- * DoseSpot sends the webhook secret in the Authorization header as:
- *   "Authorization: Secret {{DOSESPOT_WEBHOOK_SECRET}}"
- *
- * This is a DIFFERENT key from DOSESPOT_CLINIC_KEY (which is used for SSO URL signing).
- * The webhook secret was provided by DoseSpot when the push notification endpoint was configured.
- */
-function verifyDoseSpotSecret(req: Request): boolean {
-    const webhookSecret = process.env.DOSESPOT_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-        logger.warn('[DoseSpot Webhook] DOSESPOT_WEBHOOK_SECRET not set — skipping secret verification');
-        return true; // Can't verify without the key; don't block in dev
-    }
-
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-        if (process.env.DOSESPOT_WEBHOOK_STRICT === 'true') {
-            logger.warn('[DoseSpot Webhook] Missing Authorization header in strict mode — rejecting');
-            return false;
-        }
-        logger.info('[DoseSpot Webhook] No Authorization header — allowing (non-strict mode)');
-        return true;
-    }
-
-    const expectedHeader = `Secret ${webhookSecret}`;
-    
-    // Constant-time comparison to prevent timing attacks
-    try {
-        return crypto.timingSafeEqual(
-            Buffer.from(authHeader, 'utf8'),
-            Buffer.from(expectedHeader, 'utf8')
-        );
-    } catch {
-        // If lengths don't match, timingSafeEqual throws. Treat as mismatch.
-        logger.warn('[DoseSpot Webhook] Secret mismatch — invalid Authorization header');
-        return false;
-    }
+    return configuredSecret.length > 0 && providedSecret === configuredSecret;
 }
 
-// ---------------------------------------------------------------------------
-// POST /api/v1/dosespot/push-notifications
-// ---------------------------------------------------------------------------
+function asNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+}
 
-/**
- * Expected DoseSpot push payload shape (v2 API):
- * {
- *   "EventType": "PrescriberNotificationCounts",
- *   "Data": {
- *     "ClinicianId": 123,
- *     "PendingPrescriptionCount": 10,
- *     ...
- *     "Total": {
- *       "PendingPrescriptionCount": 15,
- *       "TransmissionErrorCount": 1,
- *       "RefillRequestCount": 4,
- *       "ChangeRequestCount": 1
- *     }
- *   }
- * }
- *
- * We store this under: /users/{uid}/dosespot/notifications
- * matching the existing notification-count GET endpoint schema.
- * We look up the provider uid by their DoseSpot clinician ID.
- */
+function normalizeRole(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toLowerCase();
+    return normalized.length > 0 ? normalized : null;
+}
+
+function parsePositiveInt(value: unknown): number | undefined {
+    const parsed = asNumber(value);
+    if (!parsed || parsed <= 0) return undefined;
+    return Math.floor(parsed);
+}
+
+function parseClinicScope(value: unknown): 'Current' | 'All' {
+    if (typeof value !== 'string') return 'Current';
+    return value.trim().toLowerCase() === 'all' ? 'All' : 'Current';
+}
+
+function canManageOtherPatients(role: string | null): boolean {
+    return Boolean(role && [
+        'provider',
+        'doctor',
+        'clinician',
+        'admin',
+        'systems admin',
+        'staff',
+        'orgadmin',
+        'superadmin',
+        'biller'
+    ].includes(role));
+}
+
+function getObjectBody(req: Request): Record<string, unknown> {
+    return (typeof req.body === 'object' && req.body !== null && !Array.isArray(req.body))
+        ? req.body as Record<string, unknown>
+        : {};
+}
+
+async function resolveDoseSpotRequester(uid: string, tokenRole: unknown) {
+    const firestore = admin.firestore();
+    const [userDoc, patientDoc] = await Promise.all([
+        firestore.collection('users').doc(uid).get(),
+        firestore.collection('patients').doc(uid).get()
+    ]);
+
+    const userData = userDoc.exists ? userDoc.data() : undefined;
+    const patientData = patientDoc.exists ? patientDoc.data() : undefined;
+
+    return {
+        role: normalizeRole(tokenRole) ?? normalizeRole(userData?.role) ?? normalizeRole(patientData?.role),
+        doseSpotClinicianId: asNumber(userData?.doseSpotClinicianId)
+    };
+}
+
 router.post('/push-notifications', async (req: Request, res: Response) => {
-    // 1. Verify Authorization secret
     if (!verifyDoseSpotSecret(req)) {
         return res.status(401).json({ error: 'Invalid or missing DoseSpot secret' });
     }
 
-    const { EventType, Data } = req.body;
-
-    // Gracefully ignore events we don't handle yet (e.g. PrescriptionResult, MedicationStatusUpdate)
-    // Always return 200 so DoseSpot doesn't retry them.
-    if (EventType !== 'PrescriberNotificationCounts') {
-        logger.info(`[DoseSpot Webhook] Ignoring unhandled EventType: ${EventType}`);
-        return res.status(200).json({ received: true, ignored: true, reason: 'unhandled_event_type' });
+    if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
+        return res.status(400).json({ error: 'Invalid DoseSpot payload' });
     }
 
-    if (!Data || !Data.ClinicianId) {
-        logger.warn('[DoseSpot Webhook] Missing Data or ClinicianId in payload', { body: req.body });
-        return res.status(400).json({ error: 'Missing Data.ClinicianId' });
+    const payload = req.body as Record<string, unknown>;
+    const eventType = extractEventType(payload);
+    if (!eventType) {
+        return res.status(400).json({ error: 'Missing EventType' });
     }
-
-    const clinicianId = parseInt(String(Data.ClinicianId), 10);
-    if (isNaN(clinicianId)) {
-        return res.status(400).json({ error: 'Invalid ClinicianId' });
-    }
-
-    // PDF spec shows counts both at clinic level and total aggregate level.
-    // We want the 'Total' aggregate counts to badge the UI accurately.
-    const totals = Data.Total || {};
-    const pendingPrescriptions = parseInt(String(totals.PendingPrescriptionCount ?? 0), 10) || 0;
-    const transmissionErrors   = parseInt(String(totals.TransmissionErrorCount   ?? 0), 10) || 0;
-    const refillRequests       = parseInt(String(totals.RefillRequestCount       ?? 0), 10) || 0;
-    const changeRequests       = parseInt(String(totals.ChangeRequestCount       ?? 0), 10) || 0;
-    const totalCount           = pendingPrescriptions + transmissionErrors + refillRequests + changeRequests;
-
-    logger.info('[DoseSpot Webhook] Received notification counts', {
-        clinicianId,
-        pendingPrescriptions,
-        transmissionErrors,
-        refillRequests,
-        changeRequests,
-        totalCount,
-    });
 
     try {
-        // 3. Find the provider in Firestore by their DoseSpot clinician ID
-        const usersRef = admin.firestore().collection('users');
-        const snapshot = await usersRef
-            .where('doseSpotClinicianId', '==', clinicianId)
-            .limit(1)
-            .get();
+        const persisted = await persistWebhookEvent({
+            payload,
+            headers: req.headers,
+            authorizationValid: true,
+            receivedAt: new Date()
+        });
 
-        if (snapshot.empty) {
-            // DoseSpot may push for clinicians not yet set up in our system.
-            // Return 200 so DoseSpot doesn't keep retrying — just log and move on.
-            logger.warn('[DoseSpot Webhook] No user found for clinicianId — ignoring', { clinicianId });
-            return res.status(200).json({ received: true, matched: false });
+        let inlineProcessed = false;
+        if (persisted.shouldEnqueue) {
+            try {
+                const enqueueResult = await enqueueWebhookProcessing(persisted.eventId);
+                await markWebhookEventQueued(persisted.eventId, enqueueResult);
+
+                if (enqueueResult.mode === 'inline_fallback') {
+                    // Cloud Run throttles background CPU after the response; process inline to avoid dropped webhook work.
+                    await processWebhookEvent(persisted.eventId);
+                    inlineProcessed = true;
+                }
+            } catch (error) {
+                await markWebhookEventFailed(persisted.eventId, error);
+                throw error;
+            }
         }
 
-        const providerDoc = snapshot.docs[0];
-        const providerUid = providerDoc.id;
-
-        // 4. Write notification counts to Firestore
-        //    Path: /users/{uid}/dosespot/notifications  (matches existing GET endpoint)
-        await admin.firestore()
-            .collection('users')
-            .doc(providerUid)
-            .collection('dosespot')
-            .doc('notifications')
-            .set({
-                pendingPrescriptions,
-                transmissionErrors,
-                refillRequests,
-                changeRequests,
-                total: totalCount,
-                lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-                sourceClinicianId: clinicianId,
-            }, { merge: true });
-
-        // 5. If there are critical alerts, create an in-app notification as well
-        if (totalCount > 0) {
-            const alertParts: string[] = [];
-            if (pendingPrescriptions > 0) alertParts.push(`${pendingPrescriptions} pending Rx`);
-            if (transmissionErrors    > 0) alertParts.push(`${transmissionErrors} transmission error(s)`);
-            if (refillRequests        > 0) alertParts.push(`${refillRequests} refill request(s)`);
-            if (changeRequests        > 0) alertParts.push(`${changeRequests} change request(s)`);
-
-            await admin.firestore().collection('notifications').add({
-                userId: providerUid,
-                title: 'eRx Action Required',
-                message: `DoseSpot: ${alertParts.join(', ')}. Open the eRx tab to review.`,
-                type: 'dosespot_erx',
-                status: 'unread',
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                meta: {
-                    clinicianId,
-                    pendingPrescriptions,
-                    transmissionErrors,
-                    refillRequests,
-                    changeRequests,
-                },
-            });
-
-            logger.info('[DoseSpot Webhook] In-app notification created for provider', { providerUid, totalCount });
-        }
-
-        // 6. Respond 200 — DoseSpot requires a 200 OK to stop retrying
-        return res.status(200).json({ received: true, matched: true, providerUid, total: totalCount });
-
-    } catch (error: any) {
-        logger.error('[DoseSpot Webhook] Error processing push notification', error);
-        // Return 500 so DoseSpot will retry the delivery
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.status(200).json({
+            received: true,
+            eventId: persisted.eventId,
+            eventType: persisted.eventType,
+            duplicate: persisted.duplicate,
+            queued: persisted.shouldEnqueue,
+            inlineProcessed
+        });
+    } catch (error) {
+        logger.error('[DoseSpot Webhook] Failed to ingest event', {
+            eventType,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to ingest DoseSpot event' });
     }
 });
 
-// ---------------------------------------------------------------------------
-// GET /api/v1/dosespot/push-notifications/health
-// Simple health check so DoseSpot can verify the endpoint is reachable
-// ---------------------------------------------------------------------------
+router.post('/push-notifications/process', async (req: Request, res: Response) => {
+    const authorized = await verifyDoseSpotTaskRequest(req);
+    if (!authorized) {
+        return res.status(401).json({ error: 'Unauthorized task invocation' });
+    }
+
+    if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
+        return res.status(400).json({ error: 'Invalid processor payload' });
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const eventId = typeof body.eventId === 'string' ? body.eventId.trim() : '';
+    if (!eventId) {
+        return res.status(400).json({ error: 'Missing eventId' });
+    }
+
+    try {
+        const result = await processWebhookEvent(eventId);
+        return res.status(200).json({
+            success: true,
+            alreadyProcessed: result.alreadyProcessed,
+            eventId,
+            notificationId: result.notificationId,
+            recipientId: result.recipientId,
+            internalType: result.internalType
+        });
+    } catch (error) {
+        await markWebhookEventFailed(eventId, error);
+        return res.status(500).json({
+            error: 'DoseSpot event processing failed',
+            eventId
+        });
+    }
+});
+
 router.get('/push-notifications/health', (_req: Request, res: Response) => {
     res.status(200).json({
         status: 'ok',
         service: 'patriotic-telehealth-dosespot-webhook',
         timestamp: new Date().toISOString(),
+        runtime: getDoseSpotWebhookRuntimeHealth()
     });
+});
+
+router.get('/push-notifications/validation', verifyFirebaseToken, async (_req: Request, res: Response) => {
+    try {
+        const report = await getDoseSpotWebhookValidationReport();
+        return res.status(200).json(report);
+    } catch (error) {
+        logger.error('[DoseSpot Webhook] Failed to build webhook validation report', {
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to load DoseSpot webhook validation report.' });
+    }
+});
+
+router.post('/screen-demo/validation', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = getObjectBody(req);
+    const requestedPatientUid = typeof body.patientUid === 'string' && body.patientUid.trim().length > 0
+        ? body.patientUid.trim()
+        : undefined;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedPatientUid && requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to run DoseSpot validation for another patient.' });
+        }
+
+        const result = await runDoseSpotScreenDemoValidation({
+            requesterUid,
+            requesterClinicianId: requester.doseSpotClinicianId,
+            patientUid: requestedPatientUid,
+            clinicId: parseClinicScope(body.clinicId)
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Validation] Failed to run screen-demo checks', {
+            requesterUid,
+            requestedPatientUid: requestedPatientUid ?? null,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to run DoseSpot screen-demo validation.' });
+    }
+});
+
+router.get('/clinicians/readiness', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const readiness = await getDoseSpotClinicianReadinessForUid(uid);
+        return res.status(200).json({ readiness });
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to load readiness', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to load DoseSpot clinician readiness.' });
+    }
+});
+
+router.post('/clinicians/sync', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = getObjectBody(req);
+    const requestedClinicianUid = typeof body.clinicianUid === 'string' && body.clinicianUid.trim().length > 0
+        ? body.clinicianUid.trim()
+        : requesterUid;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedClinicianUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to sync DoseSpot clinicians for another provider.' });
+        }
+
+        const result = await syncDoseSpotClinicianForUid(requestedClinicianUid);
+        return res.status(200).json(result);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to sync DoseSpot clinician.';
+        logger.error('[DoseSpot Clinician] Failed to sync clinician', {
+            requesterUid,
+            requestedClinicianUid,
+            error: message
+        });
+        const status = message.includes('configured DoseSpot user is not authorized to add clinicians')
+            ? 502
+            : 500;
+        return res.status(status).json({ error: message });
+    }
+});
+
+router.post('/clinicians/internal-sync', async (req: Request, res: Response) => {
+    if (!hasInternalDoseSpotAccess(req)) {
+        return res.status(401).json({ error: 'Unauthorized internal DoseSpot sync request.' });
+    }
+
+    const body = getObjectBody(req);
+    const clinicianUid = typeof body.clinicianUid === 'string' && body.clinicianUid.trim().length > 0
+        ? body.clinicianUid.trim()
+        : null;
+
+    if (!clinicianUid) {
+        return res.status(400).json({ error: 'Missing clinicianUid.' });
+    }
+
+    try {
+        const result = await syncDoseSpotClinicianForUid(clinicianUid);
+        return res.status(200).json(result);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to sync DoseSpot clinician.';
+        logger.error('[DoseSpot Clinician] Internal sync failed', {
+            clinicianUid,
+            error: message
+        });
+        const status = message.includes('configured DoseSpot user is not authorized to add clinicians')
+            ? 502
+            : 500;
+        return res.status(status).json({ error: message });
+    }
+});
+
+router.get('/clinicians/registration-status', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedClinicianUid = typeof req.query.clinicianUid === 'string' && req.query.clinicianUid.trim().length > 0
+        ? req.query.clinicianUid.trim()
+        : requesterUid;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedClinicianUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to read DoseSpot clinician registration status for another provider.' });
+        }
+
+        const result = await fetchDoseSpotClinicianRegistrationStatusForUid(requestedClinicianUid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to fetch registration status', {
+            requesterUid,
+            requestedClinicianUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load DoseSpot clinician registration status.' });
+    }
+});
+
+router.get('/clinicians/legal-agreements', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await fetchDoseSpotLegalAgreementsForUid(uid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to load legal agreements', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load DoseSpot legal agreements.' });
+    }
+});
+
+router.post('/clinicians/legal-agreements/accept', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await acceptDoseSpotLegalAgreementForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to accept legal agreement', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot legal agreement acceptance.' });
+    }
+});
+
+router.get('/clinicians/idp/disclaimer', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await fetchDoseSpotIdpDisclaimerForUid(uid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to load IDP disclaimer', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load DoseSpot IDP disclaimer.' });
+    }
+});
+
+router.post('/clinicians/idp/disclaimer', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await acceptDoseSpotIdpDisclaimerForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to accept IDP disclaimer', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP disclaimer acceptance.' });
+    }
+});
+
+router.post('/clinicians/idp/init', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await initDoseSpotIdpForUid(uid);
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to initialize IDP', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to initialize DoseSpot IDP.' });
+    }
+});
+
+router.post('/clinicians/idp/start', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await startDoseSpotIdpForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to start IDP', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP request.' });
+    }
+});
+
+router.post('/clinicians/idp/answers', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await submitDoseSpotIdpAnswersForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to submit IDP answers', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP answers.' });
+    }
+});
+
+router.post('/clinicians/idp/otp', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await submitDoseSpotIdpOtpForUid(uid, getObjectBody(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Clinician] Failed to submit IDP OTP', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit DoseSpot IDP OTP.' });
+    }
+});
+
+router.post('/push-notifications/dev/test-activity', verifyFirebaseToken, async (req: Request, res: Response) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+    }
+
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await triggerDoseSpotDevTestActivity(uid);
+        return res.status(200).json({
+            success: true,
+            ...result
+        });
+    } catch (error) {
+        logger.error('[DoseSpot Webhook] Failed to create dev test activity', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to create test DoseSpot activity' });
+    }
+});
+
+router.post('/push-notifications/dev/link-test-clinician', verifyFirebaseToken, async (req: Request, res: Response) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+    }
+
+    const uid = req['user']?.uid;
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = getObjectBody(req);
+    const requestedClinicianId = typeof body.clinicianId === 'number'
+        ? body.clinicianId
+        : (typeof body.clinicianId === 'string' ? Number.parseInt(body.clinicianId, 10) : null);
+
+    try {
+        const result = await ensureDoseSpotTestClinicianForUser(
+            uid,
+            Number.isFinite(requestedClinicianId ?? NaN) ? requestedClinicianId : null
+        );
+        return res.status(200).json({
+            success: true,
+            ...result
+        });
+    } catch (error) {
+        logger.error('[DoseSpot Webhook] Failed to link dev test clinician', {
+            uid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to link test DoseSpot clinician' });
+    }
+});
+
+router.post('/patients/ensure', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = (typeof req.body === 'object' && req.body !== null && !Array.isArray(req.body))
+        ? req.body as Record<string, unknown>
+        : {};
+    const requestedPatientUid = typeof body.patientUid === 'string' && body.patientUid.trim().length > 0
+        ? body.patientUid.trim()
+        : requesterUid;
+    const updateExisting = body.updateExisting === true;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+
+        if (requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to sync DoseSpot data for another patient.' });
+        }
+
+        const result = await ensureDoseSpotPatientForUid(requestedPatientUid, {
+            updateExisting
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Patient Sync] Ensure route failed', {
+            requesterUid,
+            requestedPatientUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to ensure DoseSpot patient link' });
+    }
+});
+
+router.post('/patients/:patientUid/preferred-pharmacy/sync', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedPatientUid = typeof req.params.patientUid === 'string' ? req.params.patientUid.trim() : '';
+    if (!requestedPatientUid) {
+        return res.status(400).json({ error: 'Missing patientUid route parameter.' });
+    }
+
+    const body = getObjectBody(req);
+    const preferredPharmacyDoseSpotId = asNumber(body.preferredPharmacyDoseSpotId ?? body.pharmacyId);
+    const preferredPharmacy = typeof body.preferredPharmacy === 'string' && body.preferredPharmacy.trim().length > 0
+        ? body.preferredPharmacy.trim()
+        : null;
+
+    if (preferredPharmacyDoseSpotId !== null && preferredPharmacyDoseSpotId <= 0) {
+        return res.status(400).json({ error: 'preferredPharmacyDoseSpotId must be a positive integer.' });
+    }
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to sync preferred pharmacy for another patient.' });
+        }
+
+        if (preferredPharmacyDoseSpotId || preferredPharmacy) {
+            const now = new Date();
+            const patch: Record<string, unknown> = {
+                ...(preferredPharmacyDoseSpotId ? { preferredPharmacyDoseSpotId } : {}),
+                ...(preferredPharmacy ? { preferredPharmacy } : {}),
+                updatedAt: now
+            };
+
+            await Promise.all([
+                admin.firestore().collection('patients').doc(requestedPatientUid).set(patch, { merge: true }),
+                admin.firestore().collection('users').doc(requestedPatientUid).set(patch, { merge: true })
+            ]);
+        }
+
+        const result = await ensureDoseSpotPatientForUid(requestedPatientUid, {
+            updateExisting: false,
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Patient Sync] Preferred pharmacy sync route failed', {
+            requesterUid,
+            requestedPatientUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to sync DoseSpot preferred pharmacy.' });
+    }
+});
+
+router.post('/patients/delete', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const body = (typeof req.body === 'object' && req.body !== null && !Array.isArray(req.body))
+        ? req.body as Record<string, unknown>
+        : {};
+    const requestedPatientUid = typeof body.patientUid === 'string' && body.patientUid.trim().length > 0
+        ? body.patientUid.trim()
+        : requesterUid;
+    const deactivateAllExactMatches = body.deactivateAllExactMatches === true;
+    const candidatePatientIds = Array.isArray(body.candidatePatientIds)
+        ? body.candidatePatientIds
+            .map((value) => asNumber(value))
+            .filter((value): value is number => value !== null && value > 0)
+        : [];
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+
+        if (requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to delete DoseSpot data for another patient.' });
+        }
+
+        const result = await deleteDoseSpotPatientForUid(requestedPatientUid, {
+            candidatePatientIds,
+            deactivateAllExactMatches
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Patient Delete] Delete route failed', {
+            requesterUid,
+            requestedPatientUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to delete DoseSpot patient link' });
+    }
+});
+
+router.get('/patients/:patientUid/medication-history', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedPatientUid = typeof req.params.patientUid === 'string' ? req.params.patientUid.trim() : '';
+    if (!requestedPatientUid) {
+        return res.status(400).json({ error: 'Missing patientUid route parameter.' });
+    }
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to read DoseSpot workflows for another patient.' });
+        }
+
+        const result = await fetchDoseSpotMedicationHistoryForPatientUid(requestedPatientUid, {
+            start: typeof req.query.start === 'string' ? req.query.start : undefined,
+            end: typeof req.query.end === 'string' ? req.query.end : undefined,
+            pageNumber: parsePositiveInt(req.query.pageNumber)
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Workflow] Failed to load medication history', {
+            requesterUid,
+            requestedPatientUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to load DoseSpot medication history.' });
+    }
+});
+
+router.post('/patients/:patientUid/medication-history/consent', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedPatientUid = typeof req.params.patientUid === 'string' ? req.params.patientUid.trim() : '';
+    if (!requestedPatientUid) {
+        return res.status(400).json({ error: 'Missing patientUid route parameter.' });
+    }
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to update DoseSpot workflows for another patient.' });
+        }
+
+        const result = await logDoseSpotMedicationHistoryConsentForPatientUid(requestedPatientUid);
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Workflow] Failed to log medication history consent', {
+            requesterUid,
+            requestedPatientUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to log DoseSpot medication-history consent.' });
+    }
+});
+
+router.get('/patients/:patientUid/prescriptions', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedPatientUid = typeof req.params.patientUid === 'string' ? req.params.patientUid.trim() : '';
+    if (!requestedPatientUid) {
+        return res.status(400).json({ error: 'Missing patientUid route parameter.' });
+    }
+
+    const statusClassRaw = typeof req.query.statusClass === 'string' ? req.query.statusClass.trim() : '';
+    const statusClass = statusClassRaw === 'Active' || statusClassRaw === 'Inactive' || statusClassRaw === 'Pending'
+        ? statusClassRaw
+        : undefined;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to read DoseSpot workflows for another patient.' });
+        }
+
+        const result = await fetchDoseSpotPrescriptionSummaryForPatientUid(requestedPatientUid, {
+            startDate: typeof req.query.startDate === 'string' ? req.query.startDate : undefined,
+            endDate: typeof req.query.endDate === 'string' ? req.query.endDate : undefined,
+            pageNumber: parsePositiveInt(req.query.pageNumber),
+            statusClass,
+            prescriptionStatus: typeof req.query.prescriptionStatus === 'string' ? req.query.prescriptionStatus : undefined
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Workflow] Failed to load prescription summary', {
+            requesterUid,
+            requestedPatientUid,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to load DoseSpot prescription summary.' });
+    }
+});
+
+router.get('/queues/refills', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedPatientUid = typeof req.query.patientUid === 'string' && req.query.patientUid.trim().length > 0
+        ? req.query.patientUid.trim()
+        : undefined;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedPatientUid && requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to read DoseSpot workflows for another patient.' });
+        }
+
+        const result = await fetchDoseSpotPendingRefillsQueue({
+            clinicId: parseClinicScope(req.query.clinicId),
+            patientUid: requestedPatientUid,
+            pageNumber: parsePositiveInt(req.query.pageNumber)
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Workflow] Failed to load pending refill queue', {
+            requesterUid,
+            requestedPatientUid: requestedPatientUid ?? null,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to load DoseSpot refill queue.' });
+    }
+});
+
+router.get('/queues/rxchanges', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const requesterUid = req['user']?.uid;
+    if (!requesterUid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const requestedPatientUid = typeof req.query.patientUid === 'string' && req.query.patientUid.trim().length > 0
+        ? req.query.patientUid.trim()
+        : undefined;
+
+    try {
+        const requester = await resolveDoseSpotRequester(requesterUid, req['user']?.role);
+        if (requestedPatientUid && requestedPatientUid !== requesterUid && !canManageOtherPatients(requester.role)) {
+            return res.status(403).json({ error: 'Not authorized to read DoseSpot workflows for another patient.' });
+        }
+
+        const result = await fetchDoseSpotPendingRxChangesQueue({
+            clinicId: parseClinicScope(req.query.clinicId),
+            patientUid: requestedPatientUid,
+            pageNumber: parsePositiveInt(req.query.pageNumber)
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[DoseSpot Workflow] Failed to load pending RxChange queue', {
+            requesterUid,
+            requestedPatientUid: requestedPatientUid ?? null,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        return res.status(500).json({ error: 'Failed to load DoseSpot RxChange queue.' });
+    }
 });
 
 export default router;

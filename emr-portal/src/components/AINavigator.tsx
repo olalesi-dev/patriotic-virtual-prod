@@ -205,7 +205,7 @@ export default function AINavigator() {
     let nextCtx = { ...aiCtx };
 
     if (v === "✅ Start a visit" || v.includes("Start a visit") || v.includes("sign up") || v.includes("register") || v.includes("Sign up")) {
-      addBotMessage("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>, with Indiana coming soon.", undefined, true);
+      addBotMessage("Great! Let me take you to registration. We're currently serving <b>Florida residents only</b>.", undefined, true);
       setTimeout(() => {
         window.location.href = "/?#services"; // Or trigger landing modals 
       }, 1200);
@@ -225,7 +225,6 @@ export default function AINavigator() {
       nextState = "find";
       addBotMessage("I can help with that! What's your main concern?", [
         "Lose weight",
-        "Hormone issues",
         "Sexual health",
         "General health question",
         "AI health tools",
@@ -237,12 +236,12 @@ export default function AINavigator() {
       );
     } else if (v.includes("Pricing") || v.includes("plans") || v.includes("cost") || v.includes("See pricing")) {
       addBotMessage(
-        "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>GLP-1 Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n⏱️ <b>Premature Ejaculation</b> — $79\n\nMembership plans from <b>$29/mo</b> to <b>$199/mo</b>.\n\nWant to check eligibility for a specific treatment?",
+        "Our one-time clinical visits:\n\n🩺 <b>General Visit</b> — $79\n💊 <b>GLP-1 Weight Loss</b> — $129\n⚡ <b>Erectile Dysfunction</b> — $79\n📹 <b>Imaging + Video Consult</b> — $449\n\nMembership plans: <b>All Access — Elite — $199</b>.\n\nWant to check eligibility for a specific treatment?",
         ["🔍 Check eligibility", "💰 Membership details", "✅ Start a visit"]
       );
     } else if (v.includes("Membership details")) {
       addBotMessage(
-        "Our membership tiers:\n\n💡 <b>Telehealth Basic</b> — $29/mo (AI + limited visits)\n📋 <b>Telehealth Standard</b> — $59/mo (1 visit/month)\n⚕️ <b>Telehealth Premium</b> — $99/mo (unlimited/priority)\n🎯 <b>All Access Core</b> — $99/mo (telehealth + AI tools)\n⭐ <b>All Access Plus</b> — $149/mo (+ AI imaging)\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
+        "Our membership tiers:\n\n🏆 <b>All Access Elite</b> — $199/mo (everything + priority)",
         ["✅ Start a visit", "🔍 Check eligibility", "📋 More details"]
       );
     } else if (aiState === "elig_svc" || v.includes("Check another treatment")) {
@@ -288,11 +287,11 @@ export default function AINavigator() {
       addBotMessage("For weight loss, we offer <b>GLP-1 medication consultations</b> at $129/visit. Your provider screens eligibility, creates a titration schedule, and prescribes if appropriate. Medication cost is separate.\n\nWant to check if you qualify?", ["🔍 Check my eligibility", "✅ Start a visit", "💰 Pricing"]);
 
     } else if (v.includes("Sexual") || v.includes("Erectile") || v.includes("ED") || v.includes("erect")) {
-      addBotMessage("We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n⏱️ <b>Premature Ejaculation</b> — $79 (SSRI therapy, topical agents)\n\nAll medications shipped discreetly after safety screening.", ["🔍 Check eligibility", "✅ Start a visit"]);
+      addBotMessage("We offer:\n\n⚡ <b>Erectile Dysfunction</b> — $79 (sildenafil, tadalafil, custom compounds)\n\nAll medications shipped discreetly after safety screening.", ["🔍 Check eligibility", "✅ Start a visit"]);
     } else if (v.includes("General") || v.includes("sick") || v.includes("cold") || v.includes("flu") || v.includes("health question")) {
       addBotMessage("Our <b>General Visit</b> ($79) covers non-emergent health concerns — medication management, wellness checks, health advice. A board-certified provider reviews your case.\n\nWant to start a visit?", ["✅ Start a visit", "🔍 Check eligibility"]);
     } else if (v.includes("AI") || v.includes("imaging") || v.includes("digital") || v.includes("tools")) {
-      addBotMessage("Our AI & digital tools:\n\n🤖 <b>AI Health Assistant</b> — $29 (health education & care navigation)\n🔬 <b>AI Imaging Analysis</b> — $99 (physician-supervised report interpretation)\n📱 <b>Digital Health Platform</b> — $19/mo (tools, content & AI features)\n\nThese are available to everyone, no state restriction!", ["✅ Start a visit", "💰 Membership plans", "🔍 Check treatment eligibility"]);
+      addBotMessage("Our AI & digital tools:\n\n🔬 <b>AI Imaging Analysis</b> — $99 (physician-supervised report interpretation)\n\nThese are available to everyone, no state restriction!", ["✅ Start a visit", "💰 Membership plans", "🔍 Check treatment eligibility"]);
     } else if (v.includes("notify")) {
       addBotMessage("We'll let you know as soon as we launch in your state! Our AI tools and digital platform are available nationwide in the meantime.\n\nAnything else I can help with?", ["💊 Find a service", "📋 How does it work?"]);
     } else {

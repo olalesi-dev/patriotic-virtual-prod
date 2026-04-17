@@ -144,13 +144,21 @@ export default function ProviderTeamPage() {
             assignPatientForm.setValue('teamId', nextTeamId);
         }
 
-        const firstProvider = providers.find((provider) => provider.id !== activeUser.uid);
+        const allowedProviderRoles = new Set(['provider', 'doctor', 'clinician']);
+        const filteredProviderOptions = providers.filter((provider) => (
+            provider.id !== activeUser.uid
+            && provider.role
+            && allowedProviderRoles.has(provider.role.toLowerCase())
+        ));
+        const firstProvider = filteredProviderOptions[0];
         if (firstProvider) {
             addDoctorForm.setValue('doctorId', firstProvider.id);
             inviteDoctorForm.setValue('doctorId', firstProvider.id);
         }
 
-        const firstPatient = patients[0];
+        const providerIds = new Set(filteredProviderOptions.map((provider) => provider.id));
+        const filteredPatientOptions = patients.filter((patient) => !providerIds.has(patient.id));
+        const firstPatient = filteredPatientOptions[0];
         if (firstPatient) {
             assignPatientForm.setValue('patientId', firstPatient.id);
         }
@@ -267,9 +275,26 @@ export default function ProviderTeamPage() {
     }, [activeUser, teams]);
 
     const providerOptions = useMemo(() => {
-        if (!activeUser) return providers;
-        return providers.filter((provider) => provider.id !== activeUser.uid);
+        const allowedRoles = new Set(['provider', 'doctor', 'clinician']);
+        if (!activeUser) {
+            return providers.filter((provider) => (
+                provider.role ? allowedRoles.has(provider.role.toLowerCase()) : false
+            ));
+        }
+        return providers.filter((provider) => (
+            provider.id !== activeUser.uid
+            && provider.role
+            && allowedRoles.has(provider.role.toLowerCase())
+        ));
     }, [activeUser, providers]);
+
+    const providerIdSet = useMemo(() => {
+        return new Set(providerOptions.map((provider) => provider.id));
+    }, [providerOptions]);
+
+    const patientOptions = useMemo(() => {
+        return patients.filter((patient) => !providerIdSet.has(patient.id));
+    }, [patients, providerIdSet]);
 
     const patientMap = useMemo(() => {
         return new Map(patients.map((patient) => [patient.id, patient]));
@@ -756,11 +781,11 @@ export default function ProviderTeamPage() {
                             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Patient</label>
                             <select
                                 {...assignPatientForm.register('patientId')}
-                                disabled={isMutating?.startsWith('assign-') || patients.length === 0}
+                                disabled={isMutating?.startsWith('assign-') || patientOptions.length === 0}
                                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                             >
-                                {patients.length === 0 && <option value="">No patients</option>}
-                                {patients.map((patient) => (
+                                {patientOptions.length === 0 && <option value="">No patients</option>}
+                                {patientOptions.map((patient) => (
                                     <option key={patient.id} value={patient.id}>
                                         {patient.name}
                                         {patient.teamId ? ' (assigned)' : ''}

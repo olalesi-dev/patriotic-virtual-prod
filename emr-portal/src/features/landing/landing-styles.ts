@@ -3755,6 +3755,21 @@
         0 10px 10px -5px rgba(0, 0, 0, 0.35) !important;
     }
 
+    #authModal .auth-register-modal {
+      max-width: 980px;
+      width: min(980px, calc(100vw - 48px));
+    }
+
+    #authModal .auth-register-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0 14px;
+    }
+
+    #authModal .auth-register-grid .fg {
+      margin-bottom: 16px;
+    }
+
     #authModal h2 {
       color: var(--auth-title) !important;
     }
@@ -3803,6 +3818,138 @@
 
     #authModal [style*="color: var(--g400)"] {
       color: var(--auth-muted) !important;
+    }
+
+    .auth-register-modal {
+      max-width: 980px;
+      width: min(980px, calc(100vw - 48px));
+    }
+
+    .auth-verify-modal {
+      max-width: 920px;
+      width: min(920px, calc(100vw - 48px));
+    }
+
+    .auth-register-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0 14px;
+      align-items: start;
+    }
+
+    .auth-register-grid .fg {
+      margin-bottom: 16px;
+    }
+
+    .auth-register-grid .auth-span-2 {
+      grid-column: span 2;
+    }
+
+    .auth-readonly-field {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--g200);
+      border-radius: var(--r-sm);
+      font-family: "Outfit", sans-serif;
+      font-size: 14px;
+      color: #ffffff;
+      background: var(--navy-light);
+      opacity: 0.95;
+    }
+
+    .auth-readonly-label {
+      display: block;
+    }
+
+    .auth-verify-frame {
+      background: #ffffff;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .auth-register-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .auth-register-button {
+      width: min(100%, 320px);
+      justify-content: center;
+    }
+
+    .consult-auth-gate {
+      margin: 0 0 18px;
+      padding: 16px;
+      border: 1px solid rgba(91, 127, 255, 0.28);
+      border-radius: 14px;
+      background: rgba(91, 127, 255, 0.08);
+    }
+
+    .consult-auth-copy {
+      margin: 0 0 12px;
+      color: var(--g700);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .consult-auth-status {
+      margin: 0 0 16px;
+      color: var(--g600);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 980px) {
+      .auth-register-modal {
+        width: min(760px, calc(100vw - 32px));
+      }
+
+      .auth-verify-modal {
+        width: min(760px, calc(100vw - 32px));
+      }
+
+      .auth-register-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .auth-register-grid .auth-span-2 {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .auth-register-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-register-grid .auth-span-2 {
+        grid-column: auto;
+      }
+
+      .auth-register-button {
+        width: 100%;
+      }
+
+      .auth-verify-modal {
+        width: min(100vw - 24px, 680px);
+      }
+    }
+
+    @media (max-width: 900px) {
+      #authModal .auth-register-modal {
+        width: min(760px, calc(100vw - 32px));
+      }
+
+      #authModal .auth-register-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      #authModal .auth-register-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* DARK MODE PATIENT CHART OVERRIDE */
@@ -6226,4 +6373,3 @@
       color: #ffffff !important;
     }
 `;
-
