@@ -21,6 +21,9 @@ import { svcs, iQs } from "./landingModalsData";
 interface LandingModalsProps {
   consultModalOpen: boolean;
   setConsultModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onConsultClose: () => void;
+  onConsultStepChange: (step: number) => void;
+  onConsultServiceChange: (service: string | null) => void;
   authModalOpen: boolean;
   setAuthModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isAuthenticated: boolean;
@@ -37,6 +40,9 @@ interface LandingModalsProps {
 export const LandingModals: React.FC<LandingModalsProps> = ({
   consultModalOpen,
   setConsultModalOpen,
+  onConsultClose,
+  onConsultStepChange,
+  onConsultServiceChange,
   authModalOpen,
   setAuthModalOpen,
   isAuthenticated,
@@ -142,6 +148,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
     clearAutoCloseTimer();
     verificationHandledRef.current = null;
     setConsultModalOpen(false);
+    onConsultClose();
     setTimeout(() => {
       setConsultStep(1);
       setIntake({});
@@ -149,7 +156,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       setVerificationError(null);
       setPostBookingVerificationOutcome(null);
     }, 300);
-  }, [clearAutoCloseTimer, setConsultModalOpen]);
+  }, [clearAutoCloseTimer, onConsultClose, setConsultModalOpen]);
 
   const finalizeVerificationSuccess = React.useCallback((
     outcome: "verified" | "review_required",
@@ -164,11 +171,12 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
     setVerificationError(null);
     setPostBookingVerificationOutcome(outcome);
     setConsultStep(5);
+    onConsultStepChange(5);
     showToast(message);
     autoCloseTimerRef.current = window.setTimeout(() => {
       handleConsultClose();
     }, 2000);
-  }, [clearAutoCloseTimer, handleConsultClose, showToast]);
+  }, [clearAutoCloseTimer, handleConsultClose, onConsultStepChange, showToast]);
 
   React.useEffect(() => {
     if (consultModalOpen) {
@@ -251,10 +259,12 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       }
     }
     setConsultStep(s);
+    onConsultStepChange(s);
   };
 
   const cB = (s: number) => {
     setConsultStep(s);
+    onConsultStepChange(s);
   };
 
   const subC = async () => {
@@ -643,7 +653,10 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                   <div
                     key={s.k}
                     className={`ro ${selSvc === s.k ? "sel" : ""}`}
-                    onClick={() => setSelSvc(s.k)}
+                    onClick={() => {
+                      setSelSvc(s.k);
+                      onConsultServiceChange(s.k);
+                    }}
                   >
                     <div className="rd2"></div>
                     <span>
