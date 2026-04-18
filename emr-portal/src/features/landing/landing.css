@@ -1881,6 +1881,11 @@
       overflow-y: auto;
     }
 
+    .cm.cm-verify {
+      max-width: min(1120px, calc(100vw - 48px));
+      padding-inline: 36px;
+    }
+
     .ip {
       display: flex;
       gap: 4px;
@@ -3853,6 +3858,19 @@
       border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
+    .consult-verify-step {
+      max-width: 100%;
+    }
+
+    .consult-verify-copy {
+      max-width: 620px;
+    }
+
+    .consult-verify-frame {
+      width: min(100%, 1040px);
+      margin: 0 auto;
+    }
+
     .auth-register-actions {
       display: flex;
       justify-content: center;
@@ -3886,6 +3904,11 @@
     }
 
     @media (max-width: 980px) {
+      .cm.cm-verify {
+        max-width: min(860px, calc(100vw - 32px));
+        padding-inline: 28px;
+      }
+
       .auth-register-modal {
         width: min(760px, calc(100vw - 32px));
       }
@@ -3904,6 +3927,15 @@
     }
 
     @media (max-width: 640px) {
+      .cm.cm-verify {
+        max-width: calc(100vw - 24px);
+        padding-inline: 20px;
+      }
+
+      .consult-verify-copy {
+        max-width: 100%;
+      }
+
       .auth-register-grid {
         grid-template-columns: 1fr;
       }

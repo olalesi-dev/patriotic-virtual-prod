@@ -10,8 +10,10 @@ import {
   signInWithPopup 
 } from "firebase/auth";
 import { apiFetchJson } from "@/lib/api-client";
-import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth } from "@/lib/firebase";
+import { VouchedVerification } from "@/components/auth/VouchedVerification";
+import type { VouchedCompletionResponse } from "@/lib/identity-verification";
+import { useIdentityVerificationProfile } from "@/hooks/useIdentityVerificationProfile";
 import { finalizePatientRegistration, type PatientRegistrationFormValues, validatePatientRegistration } from "@/lib/patient-registration";
 import { svcs, iQs } from "./landingModalsData";
 
@@ -21,8 +23,8 @@ interface LandingModalsProps {
   authModalOpen: boolean;
   setAuthModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isAuthenticated: boolean;
-  authMode: "login" | "register" | "verify";
-  setAuthMode: React.Dispatch<React.SetStateAction<"login" | "register" | "verify">>;
+  authMode: "login" | "register";
+  setAuthMode: React.Dispatch<React.SetStateAction<"login" | "register">>;
   initialService: string | null;
   initialConsultStep?: number;
   onLoginSuccess: () => void;
@@ -54,6 +56,12 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   // Auth States
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [postBookingVerificationOutcome, setPostBookingVerificationOutcome] = useState<"verified" | "review_required" | null>(null);
+  const verificationHandledRef = React.useRef<"verified" | "review_required" | null>(null);
+  const autoCloseTimerRef = React.useRef<number | null>(null);
+  const verificationUser = auth.currentUser;
+  const verificationProfile = useIdentityVerificationProfile(verificationUser);
   
   const [registerForm, setRegisterForm] = useState<PatientRegistrationFormValues>({
     firstName: "",
@@ -122,54 +130,108 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
     },
   });
 
-  React.useEffect(() => {
-    if (authMode !== "verify") return;
-
-    const handleVouchedMessage = async (e: MessageEvent) => {
-      if (e.data?.type === 'VOUCHED_DONE') {
-        const { success, jobId } = e.data;
-        
-        if (auth.currentUser) {
-          await setDoc(doc(db, "patients", auth.currentUser.uid), {
-            vouchedJobId: jobId,
-            isIdentityVerified: success
-          }, { merge: true });
-        }
-        
-        if (success) {
-          showToast("Identity verification completed successfully.");
-          setAuthModalOpen(false);
-          setConsultModalOpen(true);
-          setConsultStep(initialService ? 2 : 1);
-        } else {
-          showToast("Identity verification failed. Please try again or contact support.");
-        }
-      }
-    };
-
-    window.addEventListener("message", handleVouchedMessage);
-    return () => window.removeEventListener("message", handleVouchedMessage);
-  }, [authMode, initialService, setAuthModalOpen, setConsultModalOpen, showToast]);
-
-  React.useEffect(() => {
-    if (consultModalOpen) {
-      setConsultStep(initialConsultStep);
-      setSelSvc(initialService);
+  const clearAutoCloseTimer = React.useCallback(() => {
+    if (autoCloseTimerRef.current !== null) {
+      window.clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = null;
     }
-  }, [consultModalOpen, initialConsultStep, initialService]);
+  }, []);
 
-  const handleConsultClose = () => {
+  const handleConsultClose = React.useCallback(() => {
+    clearAutoCloseTimer();
+    verificationHandledRef.current = null;
     setConsultModalOpen(false);
     setTimeout(() => {
       setConsultStep(1);
       setIntake({});
       setSelSvc(null);
+      setVerificationError(null);
+      setPostBookingVerificationOutcome(null);
     }, 300);
-  };
+  }, [clearAutoCloseTimer, setConsultModalOpen]);
+
+  const finalizeVerificationSuccess = React.useCallback((
+    outcome: "verified" | "review_required",
+    message: string,
+  ) => {
+    if (verificationHandledRef.current === outcome) {
+      return;
+    }
+
+    verificationHandledRef.current = outcome;
+    clearAutoCloseTimer();
+    setVerificationError(null);
+    setPostBookingVerificationOutcome(outcome);
+    setConsultStep(5);
+    showToast(message);
+    autoCloseTimerRef.current = window.setTimeout(() => {
+      handleConsultClose();
+    }, 2000);
+  }, [clearAutoCloseTimer, handleConsultClose, showToast]);
+
+  React.useEffect(() => {
+    if (consultModalOpen) {
+      clearAutoCloseTimer();
+      verificationHandledRef.current = null;
+      setConsultStep(initialConsultStep);
+      setSelSvc(initialService);
+      setVerificationError(null);
+      setPostBookingVerificationOutcome(null);
+    }
+  }, [clearAutoCloseTimer, consultModalOpen, initialConsultStep, initialService]);
+
+  React.useEffect(() => {
+    if (!consultModalOpen || consultStep !== 4 || verificationProfile.loading) {
+      return;
+    }
+
+    if (verificationProfile.status === "verified") {
+      finalizeVerificationSuccess("verified", "Identity verification completed successfully.");
+      return;
+    }
+
+    if (verificationProfile.status === "review_required") {
+      finalizeVerificationSuccess(
+        "review_required",
+        "Identity verification completed and is pending manual review.",
+      );
+    }
+  }, [consultModalOpen, consultStep, finalizeVerificationSuccess, verificationProfile.loading, verificationProfile.status]);
+
+  React.useEffect(() => {
+    return () => {
+      clearAutoCloseTimer();
+    };
+  }, [clearAutoCloseTimer]);
 
   const handleAuthClose = () => {
+    setVerificationError(null);
     setAuthModalOpen(false);
   };
+
+  const handleVerificationCompleted = React.useCallback((result: VouchedCompletionResponse) => {
+    setVerificationError(null);
+
+    if (result.verified) {
+      finalizeVerificationSuccess("verified", "Identity verification completed successfully.");
+      return;
+    }
+
+    if (result.status === "review_required") {
+      const message = result.warningMessage || "Identity verification completed and is pending manual review.";
+      finalizeVerificationSuccess("review_required", message);
+      return;
+    }
+
+    const message = result.failureReason || "Identity verification failed. Please try again or contact support.";
+    setVerificationError(message);
+    showToast(message);
+  }, [finalizeVerificationSuccess, showToast]);
+
+  const handleVerificationError = React.useCallback((message: string) => {
+    setVerificationError(message);
+    showToast(message);
+  }, [showToast]);
 
   const cN = (s: number) => {
     if (s === 2 && !selSvc) {
@@ -277,7 +339,8 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         email: user.email ?? current.email ?? "",
       }));
       showToast(userInfo?.isNewUser ? "Account created successfully." : "Signed in successfully.");
-      setAuthMode("verify");
+      setAuthModalOpen(false);
+      onLoginSuccess();
     } catch (e: any) {
       showToast(e.message || "Google auth failed");
     } finally {
@@ -306,7 +369,8 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       });
 
       showToast("Account created. Please check your email to verify your email address.");
-      setAuthMode("verify");
+      setAuthModalOpen(false);
+      onLoginSuccess();
     } catch (e: any) {
       showToast(e.message || "Registration failed");
     } finally {
@@ -325,7 +389,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         onClick={handleAuthClose}
       >
         <div
-          className={`modal ${authMode === "register" ? "auth-register-modal" : authMode === "verify" ? "auth-verify-modal" : ""}`}
+          className={`modal ${authMode === "register" ? "auth-register-modal" : ""}`}
           onClick={(e) => e.stopPropagation()}
         >
           {authMode === "login" ? (
@@ -533,21 +597,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 Have an account? <a onClick={() => setAuthMode("login")}>Log in</a>
               </p>
             </div>
-          ) : (
-            <div id="verifyForm" style={{ textAlign: "center", padding: "16px 0" }}>
-              <h2 style={{ marginBottom: "8px" }}>Identity Verification</h2>
-              <p className="ms" style={{ marginBottom: "20px" }}>
-                For your safety and to comply with telehealth regulations, please verify your identity with a valid ID.
-              </p>
-              <div className="auth-verify-frame">
-                <iframe 
-                  src={`/vouched.html?firstName=${encodeURIComponent(registerForm.firstName)}&lastName=${encodeURIComponent(registerForm.lastName)}&email=${encodeURIComponent(registerForm.email ?? "")}&phone=${encodeURIComponent(registerForm.phone)}`}
-                  style={{ width: "100%", minHeight: "640px", border: "none", borderRadius: "16px", background: "#ffffff" }}
-                  allow="camera; microphone"
-                />
-              </div>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -557,7 +607,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         className={`mo ${consultModalOpen ? "active" : ""}`}
         onClick={handleConsultClose}
       >
-        <div className="modal cm" onClick={(e) => e.stopPropagation()}>
+        <div className={`modal cm ${consultStep === 4 ? "cm-verify" : ""}`} onClick={(e) => e.stopPropagation()}>
           <div id="cS1" className={consultStep === 1 ? "" : "hidden"}>
             <h2>Begin My Evaluation</h2>
             <p className="ms">
@@ -783,7 +833,93 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
             </div>
           </div>
           
-          <div id="cS4" className={consultStep === 4 ? "" : "hidden"} style={{ textAlign: "center", padding: "24px 0" }}>
+          <div id="cS4" className={consultStep === 4 ? "consult-verify-step" : "hidden"} style={{ textAlign: "center", padding: "24px 0" }}>
+          <div style={{
+                width: "64px",
+                height: "64px",
+                borderRadius: "50%",
+                background: "rgba(14, 165, 233, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "28px",
+                margin: "0 auto 20px",
+                color: "#0ea5e9"
+              }}>
+            🪪
+          </div>
+          <h2 style={{ marginBottom: "8px" }}>Complete Identity Verification</h2>
+          <p className="ms consult-verify-copy" style={{ margin: "0 auto 20px" }}>
+            Your appointment request has been booked. The last step is a secure ID check so our clinical team can finalize your case.
+          </p>
+          {verificationError ? (
+            <div
+              style={{
+                margin: "0 auto 16px",
+                padding: "12px 14px",
+                borderRadius: "12px",
+                background: "#fef2f2",
+                color: "#b91c1c",
+                fontSize: "13px",
+                fontWeight: 600,
+                textAlign: "left",
+                maxWidth: "720px",
+              }}
+            >
+              {verificationError}
+            </div>
+          ) : null}
+          <div className="auth-verify-frame consult-verify-frame">
+            {!isAuthenticated || !verificationUser ? (
+              <div
+                style={{
+                  minHeight: "320px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontWeight: 600,
+                  padding: "24px",
+                  background: "#ffffff",
+                  borderRadius: "16px",
+                }}
+              >
+                Sign in again to continue identity verification for this appointment.
+              </div>
+            ) : verificationProfile.loading ? (
+              <div
+                style={{
+                  minHeight: "320px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontWeight: 600,
+                  padding: "24px",
+                  background: "#ffffff",
+                  borderRadius: "16px",
+                }}
+              >
+                Loading your secure verification details...
+              </div>
+            ) : (
+              <VouchedVerification
+                user={verificationUser}
+                firstName={verificationProfile.firstName}
+                lastName={verificationProfile.lastName}
+                email={verificationProfile.email}
+                phone={verificationProfile.phone}
+                birthDate={verificationProfile.birthDate}
+                onCompleted={handleVerificationCompleted}
+                onError={handleVerificationError}
+              />
+            )}
+          </div>
+        </div>
+
+          <div id="cS5" className={consultStep === 5 ? "" : "hidden"} style={{ textAlign: "center", padding: "24px 0" }}>
           <div style={{
                 width: "64px",
                 height: "64px",
@@ -801,6 +937,15 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
           <p className="ms" style={{ maxWidth: "340px", margin: "0 auto 28px" }}>
             A licensed provider will review your request and determine whether treatment is appropriate. Next-step instructions will be sent to your registered email address.
           </p>
+          {postBookingVerificationOutcome === "review_required" ? (
+            <p className="ms" style={{ maxWidth: "420px", margin: "0 auto 20px", color: "#92400e" }}>
+              Your ID check was submitted successfully and is pending manual review. Our team will continue processing your appointment.
+            </p>
+          ) : postBookingVerificationOutcome === "verified" ? (
+            <p className="ms" style={{ maxWidth: "420px", margin: "0 auto 20px", color: "#047857" }}>
+              Your identity has been verified and attached to this appointment.
+            </p>
+          ) : null}
           <button className="btn btn-primary" onClick={() => {
                 handleConsultClose();
                 window.location.href = "/dashboard";

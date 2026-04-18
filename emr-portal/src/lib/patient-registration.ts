@@ -180,6 +180,19 @@ export async function finalizePatientRegistration(
         phoneNumber: registration.phone,
         role: 'patient',
         status: 'active',
+        isIdentityVerified: false,
+        identityVerification: {
+            provider: 'vouched',
+            status: 'not_started',
+            verified: false,
+            jobId: null,
+            internalId: null,
+            verifiedAt: null,
+            lastUpdatedAt: serverTimestamp(),
+            failureReason: null,
+            warningCode: null,
+            warningMessage: null,
+        },
         emailVerified: user.emailVerified,
         updatedAt: serverTimestamp()
     };
