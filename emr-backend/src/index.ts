@@ -58,7 +58,11 @@ app.use(cors({
 
 app.options('*', cors());
 app.use(morgan('combined'));
-app.use(express.json());
+app.use(express.json({
+    verify: (req, _res, buf) => {
+        (req as typeof req & { rawBody?: string }).rawBody = buf.toString('utf8');
+    },
+}));
 
 // Public Routes (No Auth)
 app.get('/', (_req, res) => {
