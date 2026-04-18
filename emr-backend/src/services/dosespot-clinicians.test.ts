@@ -181,6 +181,7 @@ test('buildDoseSpotClinicianPayload sends only DEANumber when a single DEA value
             zipCode: '02118',
             phone: '6175551212',
             primaryFax: '6175553434',
+            email: 'casey@example.com',
             npiNumber: '1234567890',
             deaNumber: 'AB1234567',
             stateLicenseNumber: 'ML-42',
@@ -191,6 +192,7 @@ test('buildDoseSpotClinicianPayload sends only DEANumber when a single DEA value
     assert.deepEqual(missingFields, []);
     assert.equal(payload.DEANumber, 'AB1234567');
     assert.equal('DEANumbers' in payload, false);
+    assert.equal('Email' in payload, false);
     assert.deepEqual(payload.MedicalLicenseNumbers, [
         {
             LicenseNumber: 'ML-42',
