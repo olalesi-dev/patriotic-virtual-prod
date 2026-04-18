@@ -183,7 +183,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
     }
     if (s === 3) {
       if (intake['florida_confirmation'] !== 'Yes') {
-        showToast("Services are currently available to patients located in Florida only.");
+        showToast("Currently accepting patients in Florida only.");
         return;
       }
     }
@@ -559,9 +559,12 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       >
         <div className="modal cm" onClick={(e) => e.stopPropagation()}>
           <div id="cS1" className={consultStep === 1 ? "" : "hidden"}>
-            <h2>Start a Visit</h2>
+            <h2>Begin My Evaluation</h2>
             <p className="ms">
-              Choose your service. 100% confidential. Protocol-based care.
+              Choose a consultation option and complete a confidential intake.
+            </p>
+            <p className="ms" style={{ fontSize: "12px", color: "#b45309" }}>
+              For medical emergencies, call 911. This platform does not treat acute or serious conditions. No controlled substances are prescribed through this platform.
             </p>
             <div className="ip">
               <div className="ipb act"></div>
@@ -750,9 +753,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 marginBottom: "24px",
               }}
             >
-              By submitting you confirm the information is accurate. A
-              board-certified provider will review your medical information against our treatment
-              protocols. No prescription will be generated prior to a clinical encounter, and a licensed provider must review and approve all compounded medication orders before transmission to the pharmacy.
+              By submitting you confirm the information is accurate. A licensed provider will review your medical information against our treatment protocols. All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate. No controlled substances are prescribed through this platform. Pharmacy Partner: Strive Pharmacy (LegitScript Certified).
             </p>
             <div style={{ marginTop: "16px", display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px", background: "rgba(255, 255, 255, 0.5)", border: "1px solid var(--g200)", borderRadius: "var(--r-sm)" }}>
               <input type="checkbox" id="npp-consent" checked={intake.nppConsent || false} onChange={e => setIntake({...intake, nppConsent: e.target.checked})} style={{ marginTop: "2px", cursor: "pointer" }} />
@@ -777,7 +778,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 onClick={subC}
                 disabled={isSubmitting || !intake.nppConsent || !intake.telehealthConsent}
               >
-                {isSubmitting ? "Processing..." : "Submit Visit →"}
+                {isSubmitting ? "Processing..." : "Request Consultation →"}
               </button>
             </div>
           </div>
@@ -796,9 +797,9 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               }}>
             ✓
           </div>
-          <h2 style={{ marginBottom: "8px" }}>Visit Submitted!</h2>
+          <h2 style={{ marginBottom: "8px" }}>Consultation Request Submitted</h2>
           <p className="ms" style={{ maxWidth: "340px", margin: "0 auto 28px" }}>
-            A board-certified provider will be in contact with the patient in 24 hours to schedule their appointment. An email confirmation has also been sent to your registered address.
+            A licensed provider will review your request and determine whether treatment is appropriate. Next-step instructions will be sent to your registered email address.
           </p>
           <button className="btn btn-primary" onClick={() => {
                 handleConsultClose();
