@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense, useMemo } from "react";
+import { useEffect, useRef, useState, Suspense, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
@@ -398,12 +398,30 @@ function PaymentStatusHandler({
   const paymentStatus = searchParams?.get("payment") ?? null;
   const sessionId = searchParams?.get("session_id") ?? null;
   const consultationId = searchParams?.get("consultationId") ?? null;
+  const replaceUrlWithoutNavigation = useCallback((url: string) => {
+    if (typeof window !== "undefined") {
+      window.history.replaceState(window.history.state, "", url);
+      return;
+    }
+
+    router.replace(url, { scroll: false });
+  }, [router]);
   const cleanedUrl = useMemo(() => {
     if (!searchParams) return pathname;
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.delete("payment");
     nextParams.delete("session_id");
     nextParams.delete("consultationId");
+    const query = nextParams.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }, [pathname, searchParams]);
+  const successModalUrl = useMemo(() => {
+    const nextParams = new URLSearchParams(searchParams?.toString() ?? "");
+    nextParams.delete("payment");
+    nextParams.delete("session_id");
+    nextParams.delete("consultationId");
+    nextParams.set("modal", "consult");
+    nextParams.set("consultStep", "4");
     const query = nextParams.toString();
     return query ? `${pathname}?${query}` : pathname;
   }, [pathname, searchParams]);
@@ -421,19 +439,23 @@ function PaymentStatusHandler({
         if (!confirmed) {
           return;
         }
+        replaceUrlWithoutNavigation(successModalUrl);
+        return;
       } else if (paymentStatus === "cancelled") {
         onCancel();
       }
 
-      router.replace(cleanedUrl, { scroll: false });
+      replaceUrlWithoutNavigation(cleanedUrl);
     })();
-  }, [cleanedUrl, consultationId, onCancel, onSuccess, paymentStatus, ready, router, sessionId]);
+  }, [cleanedUrl, consultationId, onCancel, onSuccess, paymentStatus, ready, replaceUrlWithoutNavigation, sessionId, successModalUrl]);
 
   return null;
 }
 
 export function LandingEmbed() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [locale, setLocale] = useState<LandingLocale>("en");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [scrolled, setScrolled] = useState(false);
@@ -455,8 +477,67 @@ export function LandingEmbed() {
   const [initialService, setInitialService] = useState<string | null>(null);
   const [initialConsultStep, setInitialConsultStep] = useState(1);
   const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
+  const urlModal = searchParams?.get("modal") ?? null;
+  const urlConsultService = searchParams?.get("consultService") ?? null;
+  const urlConsultStep = useMemo(() => {
+    const rawStep = searchParams?.get("consultStep") ?? "";
+    const parsed = Number.parseInt(rawStep, 10);
+    if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 5) {
+      return parsed;
+    }
+    return 1;
+  }, [searchParams]);
 
   const copy = COPY[locale];
+
+  const replaceLandingUrl = (mutate: (params: URLSearchParams) => void) => {
+    const currentUrl = typeof window !== "undefined"
+      ? new URL(window.location.href)
+      : new URL(`${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`, "https://patriotic-virtual-emr.web.app");
+    const nextParams = new URLSearchParams(currentUrl.search);
+    mutate(nextParams);
+    const query = nextParams.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+
+    if (typeof window !== "undefined") {
+      window.history.replaceState(window.history.state, "", nextUrl);
+      return;
+    }
+
+    router.replace(nextUrl, { scroll: false });
+  };
+
+  const syncConsultModalUrl = (options: {
+    open: boolean;
+    step?: number;
+    service?: string | null;
+  }) => {
+    const nextStep = options.step ?? 1;
+    const nextService = options.service ?? null;
+
+    setConsultModalOpen(options.open);
+    setInitialConsultStep(nextStep);
+    setInitialService(nextService);
+
+    replaceLandingUrl((params) => {
+      if (options.open) {
+        params.set("modal", "consult");
+        params.set("consultStep", String(nextStep));
+        if (nextService) {
+          params.set("consultService", nextService);
+        } else {
+          params.delete("consultService");
+        }
+        return;
+      }
+
+      if (params.get("modal") === "consult") {
+        params.delete("modal");
+      }
+      params.delete("consultStep");
+      params.delete("consultService");
+    });
+  };
 
   const getPendingConsultationId = () => {
     if (typeof window === "undefined") {
@@ -475,6 +556,13 @@ export function LandingEmbed() {
     window.sessionStorage.removeItem("pendingConsultationId");
     window.localStorage.removeItem("pendingConsultationId");
   };
+
+  useEffect(() => {
+    const shouldOpenConsult = urlModal === "consult";
+    setConsultModalOpen((current) => current === shouldOpenConsult ? current : shouldOpenConsult);
+    setInitialConsultStep((current) => current === urlConsultStep ? current : urlConsultStep);
+    setInitialService((current) => current === urlConsultService ? current : urlConsultService);
+  }, [urlConsultService, urlConsultStep, urlModal]);
 
   const handlePaymentSuccess = async (sessionId: string | null, consultationId: string | null) => {
     const resolvedConsultationId = consultationId || getPendingConsultationId();
@@ -657,7 +745,7 @@ export function LandingEmbed() {
       setAuthMode("register");
       setAuthModalOpen(true);
     } else {
-      setConsultModalOpen(true);
+      syncConsultModalUrl({ open: true, step: 1, service: null });
     }
   };
 
@@ -666,7 +754,7 @@ export function LandingEmbed() {
     setInitialService(serviceKey);
     setInitialConsultStep(1);
     setAuthInitiator("service_card");
-    setConsultModalOpen(true);
+    syncConsultModalUrl({ open: true, step: 1, service: serviceKey });
   };
 
   const handleLogout = async () => {
@@ -2629,6 +2717,17 @@ export function LandingEmbed() {
       <LandingModals
         consultModalOpen={consultModalOpen}
         setConsultModalOpen={setConsultModalOpen}
+        onConsultClose={() => syncConsultModalUrl({ open: false })}
+        onConsultStepChange={(step) => syncConsultModalUrl({
+          open: true,
+          step,
+          service: initialService,
+        })}
+        onConsultServiceChange={(service) => syncConsultModalUrl({
+          open: true,
+          step: initialConsultStep,
+          service,
+        })}
         authModalOpen={authModalOpen}
         setAuthModalOpen={setAuthModalOpen}
         isAuthenticated={isAuthenticated}
