@@ -4,6 +4,7 @@ import {
     adminUpdateUserSchema,
     buildAdminUserProfileFields
 } from '@/lib/dosespot-clinician-profile';
+import { shouldUsePatientsCollection } from '@/lib/user-record-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,10 +58,13 @@ export async function PATCH(
                 await auth!.setCustomUserClaims(uid, { role });
             }
 
-            await Promise.all([
-                db!.collection('patients').doc(uid).set(firestoreUpdates, { merge: true }),
-                db!.collection('users').doc(uid).set(firestoreUpdates, { merge: true })
-            ]);
+            await db!.collection('users').doc(uid).set(firestoreUpdates, { merge: true });
+
+            if (shouldUsePatientsCollection(role)) {
+                await db!.collection('patients').doc(uid).set(firestoreUpdates, { merge: true });
+            } else {
+                await db!.collection('patients').doc(uid).delete();
+            }
         } else if (!hasProfilePatch && disabled === undefined) {
             const message = parsedBody.success ? 'Nothing to update.' : (parsedBody.error.issues[0]?.message || 'Invalid user payload.');
             return NextResponse.json({ success: false, error: message }, { status: 400 });
