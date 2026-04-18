@@ -387,7 +387,7 @@ function PaymentStatusHandler({
   onCancel,
   ready,
 }: {
-  onSuccess: (sessionId: string | null, consultationId: string | null) => void | Promise<void>;
+  onSuccess: (sessionId: string | null, consultationId: string | null) => boolean | Promise<boolean>;
   onCancel: () => void;
   ready: boolean;
 }) {
@@ -415,13 +415,18 @@ function PaymentStatusHandler({
 
     handledStatusRef.current = paymentStatus;
 
-    if (paymentStatus === "success") {
-      void onSuccess(sessionId, consultationId);
-    } else if (paymentStatus === "cancelled") {
-      onCancel();
-    }
+    void (async () => {
+      if (paymentStatus === "success") {
+        const confirmed = await onSuccess(sessionId, consultationId);
+        if (!confirmed) {
+          return;
+        }
+      } else if (paymentStatus === "cancelled") {
+        onCancel();
+      }
 
-    router.replace(cleanedUrl, { scroll: false });
+      router.replace(cleanedUrl, { scroll: false });
+    })();
   }, [cleanedUrl, consultationId, onCancel, onSuccess, paymentStatus, ready, router, sessionId]);
 
   return null;
@@ -477,7 +482,7 @@ export function LandingEmbed() {
     if (!sessionId || !resolvedConsultationId) {
       console.error('Missing Stripe return details after checkout.', { sessionId, consultationId: resolvedConsultationId });
       showToast("We couldn't finalize the checkout return. Please contact support if you were charged.");
-      return;
+      return false;
     }
 
     if (!auth.currentUser) {
@@ -485,7 +490,7 @@ export function LandingEmbed() {
       setAuthInitiator("header_login");
       setAuthMode("login");
       setAuthModalOpen(true);
-      return;
+      return false;
     }
 
     try {
@@ -505,11 +510,12 @@ export function LandingEmbed() {
     } catch (error) {
       console.error('Failed to confirm telehealth checkout session:', error);
       showToast("Your payment succeeded, but we couldn't finalize the consultation automatically. Please contact support.");
-      return;
+      return false;
     }
 
     setInitialConsultStep(4);
     setConsultModalOpen(true);
+    return true;
   };
 
   const handlePaymentCancel = () => {
