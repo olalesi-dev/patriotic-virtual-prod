@@ -69,6 +69,10 @@ jobs:
           NEXT_PUBLIC_FIREBASE_VAPID_KEY: '${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}'
           STRIPE_SECRET_KEY: '${{ secrets.STRIPE_SECRET_KEY }}'
           NEXT_PUBLIC_APP_URL: 'https://patriotic-virtual-emr.web.app'
+          DOSESPOT_BACKEND_URL: '${{ secrets.DOSESPOT_BACKEND_URL }}'
+          NEXT_PUBLIC_VOUCHED_PUBLIC_KEY: '${{ secrets.NEXT_PUBLIC_VOUCHED_PUBLIC_KEY }}'
+          NEXT_PUBLIC_VOUCHED_WEBHOOK_ORIGIN: '${{ secrets.NEXT_PUBLIC_VOUCHED_WEBHOOK_ORIGIN }}'
+
 
       - name: Deploy to Firebase Landing
         uses: FirebaseExtended/action-hosting-deploy@v0
