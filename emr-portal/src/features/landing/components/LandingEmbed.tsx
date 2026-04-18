@@ -1729,6 +1729,14 @@ export function LandingEmbed() {
               >
                 Alvaro Berrios, MS, FNP-BC
               </button>
+              <button
+                id="aboutTab3"
+                onClick={() => setAboutTab(3)}
+                style={getAboutTabStyle(aboutTab === 3)}
+                type="button"
+              >
+                L. Lue Winston, APRN
+              </button>
             </div>
 
             <div
@@ -2193,6 +2201,218 @@ export function LandingEmbed() {
                     designed to address the healthcare needs of uninsured
                     patients, ensuring that quality care is accessible to all —
                     regardless of insurance status.
+                  </p>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            {/* PROFILE: L. LUE WINSTON */}
+            <div
+              id="aboutProfile3"
+              style={{
+                display: aboutTab === 3 ? "flex" : "none",
+                gap: 24,
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "3px solid var(--blue)",
+                }}
+              >
+                <img
+                  src="/assets/l_lue_winston.jpg"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  alt="L. Lue Winston"
+                />
+              </div>
+              <div>
+                <h2 style={{ marginBottom: 8 }}>
+                  La Donna L. Lue Winston, MSN, APRN, SCRN
+                </h2>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: "var(--g500)",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 20,
+                  }}
+                >
+                  Adult-Gerontology Acute Care Nurse Practitioner
+                </div>
+                <p
+                  style={{
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    color: "var(--g700)",
+                    marginBottom: 24,
+                    maxWidth: 600,
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                >
+                  Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.
+                </p>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 24,
+                    textAlign: "left",
+                    width: "100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "var(--g50)",
+                      padding: 20,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: 15,
+                        color: "var(--navy)",
+                        marginBottom: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      🎓 Education
+                    </h3>
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        fontSize: 13,
+                        color: "var(--g600)",
+                        lineHeight: 1.6,
+                        margin: 0,
+                        padding: 0,
+                      }}
+                    >
+                      <li style={{ marginBottom: 6 }}>
+                        <b>Post Master's APRN:</b> Nova Southeastern University
+                      </li>
+                      <li style={{ marginBottom: 6 }}>
+                        <b>MS in Nursing Ed:</b> Phoenix University
+                      </li>
+                      <li style={{ marginBottom: 6 }}>
+                        <b>BS in Biology:</b> Nova Southeastern University
+                      </li>
+                    </ul>
+                  </div>
+                  <div
+                    style={{
+                      background: "var(--g50)",
+                      padding: 20,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: 15,
+                        color: "var(--navy)",
+                        marginBottom: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      🩺 Areas of Expertise
+                    </h3>
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        fontSize: 13,
+                        color: "var(--g600)",
+                        lineHeight: 1.6,
+                        margin: 0,
+                        padding: 0,
+                      }}
+                    >
+                      <li style={{ marginBottom: 6 }}>Acute Care · Critical Care</li>
+                      <li style={{ marginBottom: 6 }}>Stroke & Neurological Care</li>
+                      <li style={{ marginBottom: 6 }}>Quality Assurance & Compliance</li>
+                    </ul>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    marginTop: 24,
+                    width: "100%",
+                    textAlign: "left",
+                    background: "var(--g50)",
+                    padding: 20,
+                    borderRadius: 12,
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: 15,
+                      color: "var(--navy)",
+                      marginBottom: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    🤝 Leadership & Affiliations
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--g600)",
+                      lineHeight: 1.6,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <b>President:</b> Broward County Chapter of AACN (2022-2023, 2025-2026)
+                    <br />
+                    <b>Board Member:</b> Miami VHA APRN Council Board
+                    <br />
+                    <b>Stroke Coordinator:</b> Miami Veterans Health Administration
+                  </p>
+                </div>
+                <div
+                  style={{
+                    marginTop: 24,
+                    width: "100%",
+                    textAlign: "left",
+                    background: "var(--g50)",
+                    padding: 20,
+                    borderRadius: 12,
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: 15,
+                      color: "var(--navy)",
+                      marginBottom: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    🌱 Community Impact
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--g600)",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    La Donna is deeply committed to community health, actively participating in breast cancer walks, food drives, and conducting stroke health screenings. She also serves as clinical adjunct faculty, educating future nurses.
                   </p>
                 </div>
               </div>
