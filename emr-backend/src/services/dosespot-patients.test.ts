@@ -2,6 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { doseSpotPatientTestables } from './dosespot-patients';
 
+process.env.DOSESPOT_DEFAULT_CLINICIAN_ID = process.env.DOSESPOT_DEFAULT_CLINICIAN_ID ?? '445566';
+
+function withEnv<T>(name: string, value: string | undefined, run: () => Promise<T> | T): Promise<T> | T {
+    const previous = process.env[name];
+
+    if (value === undefined) {
+        delete process.env[name];
+    } else {
+        process.env[name] = value;
+    }
+
+    try {
+        return run();
+    } finally {
+        if (previous === undefined) {
+            delete process.env[name];
+        } else {
+            process.env[name] = previous;
+        }
+    }
+}
+
 function buildSource(overrides: Record<string, unknown> = {}) {
     return {
         patientUid: 'patient-1',
@@ -82,6 +104,63 @@ test('ensureDoseSpotPatientWithSource creates a new DoseSpot patient when search
     assert.equal(result.status, 'created_new');
     assert.equal(result.syncStatus, 'ready');
     assert.equal(result.doseSpotPatientId, 777);
+});
+
+test('resolveDoseSpotPatientOperationClinicianId prefers explicit clinician ids and otherwise uses DOSESPOT_DEFAULT_CLINICIAN_ID', async () => {
+    await withEnv('DOSESPOT_DEFAULT_CLINICIAN_ID', '445566', async () => {
+        assert.equal(doseSpotPatientTestables.resolveDoseSpotPatientOperationClinicianId(778899), 778899);
+        assert.equal(doseSpotPatientTestables.resolveDoseSpotPatientOperationClinicianId(undefined), 445566);
+    });
+});
+
+test('ensureDoseSpotPatientWithSource uses DOSESPOT_DEFAULT_CLINICIAN_ID when no provider clinician context is supplied', async () => {
+    await withEnv('DOSESPOT_DEFAULT_CLINICIAN_ID', '445566', async () => {
+        let searchClinicianId: number | undefined;
+        let addClinicianId: number | undefined;
+
+        const result = await doseSpotPatientTestables.ensureDoseSpotPatientWithSource(
+            buildSource(),
+            {},
+            buildGateway({
+                searchPatients: async (_params: unknown, onBehalfOfClinicianId?: number) => {
+                    searchClinicianId = onBehalfOfClinicianId;
+                    return [];
+                },
+                addPatient: async (_payload: unknown, onBehalfOfClinicianId?: number) => {
+                    addClinicianId = onBehalfOfClinicianId;
+                    return 777;
+                }
+            }),
+            async () => undefined
+        );
+
+        assert.equal(result.status, 'created_new');
+        assert.equal(searchClinicianId, 445566);
+        assert.equal(addClinicianId, 445566);
+    });
+});
+
+test('ensureDoseSpotPatientWithSource blocks when no provider clinician context or default clinician env is configured', async () => {
+    await withEnv('DOSESPOT_DEFAULT_CLINICIAN_ID', undefined, async () => {
+        let searchCalled = false;
+
+        const result = await doseSpotPatientTestables.ensureDoseSpotPatientWithSource(
+            buildSource(),
+            {},
+            buildGateway({
+                searchPatients: async () => {
+                    searchCalled = true;
+                    return [];
+                }
+            }),
+            async () => undefined
+        );
+
+        assert.equal(result.status, 'blocked');
+        assert.equal(result.syncStatus, 'blocked');
+        assert.equal(searchCalled, false);
+        assert.equal(result.lastError, doseSpotPatientTestables.getDoseSpotPatientClinicianContextError());
+    });
 });
 
 test('ensureDoseSpotPatientWithSource blocks patient creation when DoseSpot-required address or phone fields are missing', async () => {
@@ -180,6 +259,7 @@ test('ensureDoseSpotPatientWithSource converts transient DoseSpot failures into 
     assert.equal(result.status, 'pending_retry');
     assert.equal(result.syncStatus, 'pending_retry');
     assert.equal(result.doseSpotPatientId, null);
+    assert.equal(result.lastError, '503 upstream');
     assert.equal(persisted[0]?.retryCount, 3);
     assert.equal(persisted[0]?.lastError, '503 upstream');
 });

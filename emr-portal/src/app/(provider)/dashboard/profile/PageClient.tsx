@@ -69,6 +69,10 @@ const EMPTY: ProfileData = {
     aboutMe: '', languagesSpoken: '', complianceDocs: [],
 };
 
+function isDoseSpotClinicianSynced(clinicianId: string, status: { synced: boolean; lastSyncError: string | null }): boolean {
+    return status.synced || clinicianId.trim().length > 0;
+}
+
 export default function ProviderProfilePage() {
     const userProfile = useUserProfile();
     const [data, setData] = useState<ProfileData>(EMPTY);
@@ -85,6 +89,7 @@ export default function ProviderProfilePage() {
     const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'practice' | 'compliance' | 'erx'>('personal');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const docInputRef = useRef<HTMLInputElement>(null);
+    const doseSpotClinicianSynced = isDoseSpotClinicianSynced(data.doseSpotClinicianId, doseSpotStatus);
 
     useEffect(() => {
         if (!userProfile.uid) return;
@@ -713,15 +718,17 @@ export default function ProviderProfilePage() {
                                             Complete your provider credentials, then sync this profile to DoseSpot to enable e-prescribing.
                                         </p>
                                         <div className="mt-6 flex flex-col items-center gap-3">
-                                            <button
-                                                onClick={handleDoseSpotSync}
-                                                disabled={syncingDoseSpot || doseSpotStatus.synced}
-                                                title={doseSpotStatus.synced ? 'Provider already synced to DoseSpot' : 'Sync to DoseSpot'}
-                                                className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-5 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                {syncingDoseSpot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                                                Sync to DoseSpot
-                                            </button>
+                                            {!doseSpotClinicianSynced && (
+                                                <button
+                                                    onClick={handleDoseSpotSync}
+                                                    disabled={syncingDoseSpot}
+                                                    title="Sync to DoseSpot"
+                                                    className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-5 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    {syncingDoseSpot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                                                    Sync to DoseSpot
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => setActiveTab('professional')}
                                                 className="text-xs font-black uppercase tracking-widest text-indigo-500 hover:underline"
@@ -739,16 +746,18 @@ export default function ProviderProfilePage() {
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="flex flex-wrap gap-3">
-                                            <button
-                                                onClick={handleDoseSpotSync}
-                                                disabled={syncingDoseSpot || doseSpotStatus.synced}
-                                                title={doseSpotStatus.synced ? 'Provider already synced to DoseSpot' : 'Sync to DoseSpot'}
-                                                className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                {syncingDoseSpot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                                                Sync to DoseSpot
-                                            </button>
-                                            {doseSpotStatus.synced && (
+                                            {!doseSpotClinicianSynced && (
+                                                <button
+                                                    onClick={handleDoseSpotSync}
+                                                    disabled={syncingDoseSpot}
+                                                    title="Sync to DoseSpot"
+                                                    className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    {syncingDoseSpot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                                                    Sync to DoseSpot
+                                                </button>
+                                            )}
+                                            {doseSpotClinicianSynced && (
                                                 <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-emerald-700">
                                                     <CheckCircle2 className="h-3.5 w-3.5" />
                                                     Synced

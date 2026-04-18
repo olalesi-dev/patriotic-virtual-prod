@@ -165,3 +165,37 @@ test('normalizeIdpQuestions extracts questions and answer options from DoseSpot 
         }
     ]);
 });
+
+test('buildDoseSpotClinicianPayload sends only DEANumber when a single DEA value exists', () => {
+    process.env.DOSESPOT_CLINIC_ID = '1007159';
+
+    const { missingFields, payload } = doseSpotClinicianTestables.buildDoseSpotClinicianPayload(
+        'provider-1',
+        {
+            firstName: 'Casey',
+            lastName: 'Prescriber',
+            dateOfBirth: '1984-02-03',
+            address1: '123 Main St',
+            city: 'Boston',
+            state: 'MA',
+            zipCode: '02118',
+            phone: '6175551212',
+            primaryFax: '6175553434',
+            npiNumber: '1234567890',
+            deaNumber: 'AB1234567',
+            stateLicenseNumber: 'ML-42',
+            stateLicenseState: 'MA'
+        }
+    );
+
+    assert.deepEqual(missingFields, []);
+    assert.equal(payload.DEANumber, 'AB1234567');
+    assert.equal('DEANumbers' in payload, false);
+    assert.deepEqual(payload.MedicalLicenseNumbers, [
+        {
+            LicenseNumber: 'ML-42',
+            State: 'MA',
+            ClinicId: '1007159'
+        }
+    ]);
+});
