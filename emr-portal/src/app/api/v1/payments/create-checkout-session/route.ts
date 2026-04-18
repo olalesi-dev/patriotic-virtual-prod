@@ -7,6 +7,7 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const stripe = STRIPE_SECRET_KEY
   ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' as any })
   : null;
+const DEFAULT_APP_URL = 'https://patriotic-virtual-emr.web.app';
 
 // Mirrors the backend CATALOG
 const CATALOG: Record<string, { name: string; amount: number; interval?: string }> = {
@@ -39,15 +40,17 @@ function buildCheckoutRedirectUrl(options: {
   paymentStatus: 'success' | 'cancelled';
 }): string {
   const { baseUrl, targetUrl, consultationId, sessionId, paymentStatus } = options;
-  const normalizedBaseUrl = baseUrl.trim().replace(/\/$/, '');
+  const normalizedBaseUrl = normalizeAbsoluteUrl(baseUrl) ?? DEFAULT_APP_URL;
   const normalizedTargetUrl = targetUrl?.trim();
 
   let redirectUrl: URL;
-  try {
-    redirectUrl = normalizedTargetUrl
-      ? new URL(normalizedTargetUrl, normalizedBaseUrl)
-      : new URL(normalizedBaseUrl);
-  } catch {
+  if (normalizedTargetUrl) {
+    try {
+      redirectUrl = new URL(normalizedTargetUrl, normalizedBaseUrl);
+    } catch {
+      redirectUrl = new URL(normalizedBaseUrl);
+    }
+  } else {
     redirectUrl = new URL(normalizedBaseUrl);
   }
 
@@ -63,6 +66,34 @@ function buildCheckoutRedirectUrl(options: {
   }
 
   return redirectUrl.toString();
+}
+
+function normalizeAbsoluteUrl(value?: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    return new URL(trimmed).toString().replace(/\/$/, '');
+  } catch {
+    return null;
+  }
+}
+
+function resolveCheckoutBaseUrl(req: NextRequest): string {
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const normalizedConfiguredUrl = normalizeAbsoluteUrl(configuredAppUrl);
+
+  if (configuredAppUrl && !normalizedConfiguredUrl) {
+    console.warn('Invalid NEXT_PUBLIC_APP_URL for Stripe checkout redirects; falling back to request origin.', {
+      nextPublicAppUrl: configuredAppUrl,
+    });
+  }
+
+  return (
+    normalizedConfiguredUrl
+    ?? normalizeAbsoluteUrl(req.nextUrl.origin)
+    ?? DEFAULT_APP_URL
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -83,9 +114,7 @@ export async function POST(req: NextRequest) {
     const { serviceKey, consultationId, priceId, returnUrl, cancelUrl } = await req.json();
     const adminDb = db as admin.firestore.Firestore;
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      'https://patriotic-virtual-emr.web.app';
+    const baseUrl = resolveCheckoutBaseUrl(req);
 
     // If Stripe is not configured, use mock flow
     if (!stripe) {
