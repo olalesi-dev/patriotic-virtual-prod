@@ -45,6 +45,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
+if [ -n "${SANITIZED_ENV_FILE}" ] && [ -f "${SANITIZED_ENV_FILE}" ]; then
+    for required_var in STRIPE_SECRET_KEY FRONTEND_URL; do
+        if ! grep -q "^${required_var}=" "${SANITIZED_ENV_FILE}"; then
+            echo "❌ Required backend env var missing from ${ENV_FILE}: ${required_var}"
+            exit 1
+        fi
+    done
+fi
+
 DEPLOY_ARGS=(
   --source "${SOURCE_DIR}"
   --region "${REGION}"

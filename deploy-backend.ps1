@@ -36,6 +36,15 @@ if (Test-Path $EnvFile) {
     Get-Content $EnvFile | Where-Object { $_ -match $ValidEnvPattern -and $_ -notmatch $ReservedEnvPattern } | Set-Content $SanitizedEnvFile
     Write-Host "📄 Using env file: $EnvFile" -ForegroundColor Green
     Write-Host "🧹 Removed comments, blank lines, and Cloud Run reserved env vars before deploy." -ForegroundColor Yellow
+
+    $requiredVars = @("STRIPE_SECRET_KEY", "FRONTEND_URL")
+    foreach ($requiredVar in $requiredVars) {
+        if (-not (Select-String -Path $SanitizedEnvFile -Pattern "^${requiredVar}=" -Quiet)) {
+            Write-Host "❌ Required backend env var missing from ${EnvFile}: ${requiredVar}" -ForegroundColor Red
+            exit 1
+        }
+    }
+
     $deployArgs += @("--env-vars-file", $SanitizedEnvFile)
 }
 else {

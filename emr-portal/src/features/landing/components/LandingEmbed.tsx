@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { apiFetchJson } from "@/lib/api-client";
+import { getApiUrl } from "@/lib/api-origin";
 import { auth, db } from "@/lib/firebase";
 import { LandingModals } from "./LandingModals";
 
@@ -489,7 +490,7 @@ export function LandingEmbed() {
 
     try {
       const token = await auth.currentUser.getIdToken();
-      await apiFetchJson('/api/v1/payments/confirm-telehealth-session', {
+      await apiFetchJson(getApiUrl('/api/v1/payments/confirm-telehealth-session'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -10,6 +10,7 @@ import {
   signInWithPopup 
 } from "firebase/auth";
 import { apiFetchJson } from "@/lib/api-client";
+import { getApiUrl } from "@/lib/api-origin";
 import { auth } from "@/lib/firebase";
 import { VouchedVerification } from "@/components/auth/VouchedVerification";
 import type { VouchedCompletionResponse } from "@/lib/identity-verification";
@@ -100,7 +101,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         Authorization: `Bearer ${token}`,
       };
 
-      const consultation = await apiFetchJson<{ id: string }>("/api/v1/consultations", {
+      const consultation = await apiFetchJson<{ id: string }>(getApiUrl("/api/v1/consultations"), {
         method: "POST",
         headers,
         body: {
@@ -110,7 +111,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         },
       });
 
-      const payment = await apiFetchJson<{ url?: string }>("/api/v1/payments/create-checkout-session", {
+      const payment = await apiFetchJson<{ url?: string }>(getApiUrl("/api/v1/payments/create-checkout-session"), {
         method: "POST",
         headers,
         body: {
