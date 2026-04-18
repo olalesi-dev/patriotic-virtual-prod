@@ -2205,7 +2205,6 @@ export function LandingEmbed() {
                 </div>
               </div>
             </div>
-            </div>
 
             {/* PROFILE: L. LUE WINSTON */}
             <div
