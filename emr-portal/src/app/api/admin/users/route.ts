@@ -4,6 +4,7 @@ import {
     adminCreateUserSchema,
     buildAdminUserProfileFields
 } from '@/lib/dosespot-clinician-profile';
+import { shouldUsePatientsCollection } from '@/lib/user-record-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,9 +65,14 @@ export async function GET() {
                 db!.collection('users').doc(userRecord.uid).get(),
                 db!.collection('patients').doc(userRecord.uid).get()
             ]);
-            const userData = userDoc.data();
-            const patientData = patientDoc.data();
-            const merged = { ...(patientData ?? {}), ...(userData ?? {}) } as Record<string, unknown>;
+            const userData = userDoc.exists ? userDoc.data() as Record<string, unknown> : undefined;
+            const patientData = patientDoc.exists ? patientDoc.data() as Record<string, unknown> : undefined;
+            const merged = (
+                shouldUsePatientsCollection(userData?.role)
+                || (!userData && (!patientData || shouldUsePatientsCollection(patientData.role)))
+            )
+                ? { ...(patientData ?? {}), ...(userData ?? {}) }
+                : { ...(userData ?? {}) };
 
             return {
                 uid: userRecord.uid,
@@ -111,10 +117,11 @@ export async function POST(request: Request) {
             includeCreatedAt: true
         });
 
-        await Promise.all([
-            db!.collection('patients').doc(userRecord.uid).set(profile, { merge: true }),
-            db!.collection('users').doc(userRecord.uid).set(profile, { merge: true })
-        ]);
+        await db!.collection('users').doc(userRecord.uid).set(profile, { merge: true });
+
+        if (shouldUsePatientsCollection(payload.role)) {
+            await db!.collection('patients').doc(userRecord.uid).set(profile, { merge: true });
+        }
 
         // Also set custom claims for security rules if needed
         await auth!.setCustomUserClaims(userRecord.uid, { role: payload.role });

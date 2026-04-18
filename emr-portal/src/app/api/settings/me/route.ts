@@ -11,6 +11,7 @@ import {
     settingsPatchSchema,
     type UserSettings
 } from '@/lib/settings';
+import { shouldUsePatientsCollection } from '@/lib/user-record-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -267,8 +268,7 @@ export async function PATCH(request: Request) {
             }, { merge: true });
 
             const patientDocRef = db.collection('patients').doc(user.uid);
-            const shouldUpdatePatientDoc = context.patientDocData !== null || role === 'patient';
-            if (shouldUpdatePatientDoc) {
+            if (shouldUsePatientsCollection(role)) {
                 batch.set(patientDocRef, {
                     firstName: profile.firstName,
                     lastName: profile.lastName,
@@ -278,6 +278,8 @@ export async function PATCH(request: Request) {
                     phoneNumber: profile.phone,
                     updatedAt: now
                 }, { merge: true });
+            } else if (context.patientDocData !== null) {
+                batch.delete(patientDocRef);
             }
 
             if (adminAuth) {

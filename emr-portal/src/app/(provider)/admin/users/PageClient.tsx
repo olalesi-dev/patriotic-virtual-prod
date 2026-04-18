@@ -28,7 +28,7 @@ import {
     X,
     XCircle
 } from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { auth, db } from '@/lib/firebase';
 import { apiFetchJson } from '@/lib/api-client';
@@ -47,6 +47,7 @@ import {
 } from '@/lib/dosespot-clinician-profile';
 import { syncDoseSpotClinician } from '@/lib/dosespot-clinician-sync';
 import { ensureDoseSpotPatientLink } from '@/lib/dosespot-patient-sync';
+import { shouldUsePatientsCollection } from '@/lib/user-record-scope';
 
 interface UserData {
     uid: string;
@@ -489,13 +490,15 @@ export default function UserManagementPage() {
         try {
             const [userSnap, patientSnap] = await Promise.all([
                 getDoc(doc(db, 'users', user.uid)),
-                getDoc(doc(db, 'patients', user.uid))
+                shouldUsePatientsCollection(user.role)
+                    ? getDoc(doc(db, 'patients', user.uid))
+                    : Promise.resolve(null)
             ]);
 
             const merged = mergeFirestoreProfile(
                 user,
                 {
-                    ...(patientSnap.exists() ? patientSnap.data() : {}),
+                    ...((patientSnap && patientSnap.exists()) ? patientSnap.data() : {}),
                     ...(userSnap.exists() ? userSnap.data() : {})
                 }
             );
@@ -628,10 +631,19 @@ export default function UserManagementPage() {
 
         setSavingPhone(true);
         try {
-            await Promise.all([
-                setDoc(doc(db, 'users', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true }),
-                setDoc(doc(db, 'patients', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true })
-            ]);
+            const writes = [
+                setDoc(doc(db, 'users', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true })
+            ];
+
+            if (shouldUsePatientsCollection(selectedUser.role)) {
+                writes.push(
+                    setDoc(doc(db, 'patients', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true })
+                );
+            } else {
+                writes.push(deleteDoc(doc(db, 'patients', selectedUser.uid)));
+            }
+
+            await Promise.all(writes);
             setSelectedUser((current) => current ? { ...current, phone: editPhone } : current);
             setIsEditingPhone(false);
             toast.success('Phone number updated.');

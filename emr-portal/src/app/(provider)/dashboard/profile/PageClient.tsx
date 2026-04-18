@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, User, Phone, MapPin, Calendar, Shield, FileText, Activity, Edit3, Save, X, Loader2, CheckCircle2, Award, Building, Stethoscope, ExternalLink, Info, RefreshCw, AlertCircle } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
 import Link from 'next/link';
@@ -243,7 +243,7 @@ export default function ProviderProfilePage() {
 
             await Promise.all([
                 setDoc(doc(db, 'users', auth.currentUser.uid), profilePayload, { merge: true }),
-                setDoc(doc(db, 'patients', auth.currentUser.uid), profilePayload, { merge: true })
+                deleteDoc(doc(db, 'patients', auth.currentUser.uid))
             ]);
 
             if (fullName) await updateProfile(auth.currentUser, { displayName: fullName });
