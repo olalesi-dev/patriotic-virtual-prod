@@ -888,7 +888,6 @@ function buildDoseSpotClinicianPayload(
         PrimaryPhoneType: primaryPhoneType,
         PrimaryFax: primaryFax,
         DEANumber: deaNumber,
-        DEANumbers: buildClinicScopedRecord('DEANumber', deaNumber, stateLicenseState),
         MedicalLicenseNumbers: buildClinicScopedRecord('LicenseNumber', stateLicenseNumber, stateLicenseState),
         NPINumber: npiNumber,
         ClinicianRoleType: clinicianRoleTypes.length > 0 ? clinicianRoleTypes : ['PrescribingClinician'],
@@ -1310,6 +1309,7 @@ export async function applyDoseSpotClinicianWebhookEvent(
 }
 
 export const doseSpotClinicianTestables = {
+    buildDoseSpotClinicianPayload,
     deriveReadinessStatus,
     normalizeDisclaimer,
     normalizeIdpQuestions,

@@ -1,4 +1,9 @@
-import { ensureDoseSpotPatientForUid, type EnsureDoseSpotPatientResult } from './dosespot-patients';
+import {
+    ensureDoseSpotPatientForUid,
+    getDoseSpotPatientClinicianContextError,
+    resolveDoseSpotPatientOperationClinicianId,
+    type EnsureDoseSpotPatientResult
+} from './dosespot-patients';
 import { doseSpotApiFetch, ensureDoseSpotResultOk, type DoseSpotResult } from './dosespot-rest';
 
 export type DoseSpotWorkflowSyncStatus =
@@ -143,6 +148,7 @@ interface ResolvedPatientContext {
     message: string;
     missingFields: string[];
     candidatePatientIds: number[];
+    effectiveOnBehalfOfClinicianId?: number;
 }
 
 interface HistoryOptions {
@@ -266,9 +272,23 @@ function defaultHistoryRange(): { start: string; end: string } {
 async function resolvePatientContext(
     options: ResolvePatientContextOptions
 ): Promise<ResolvedPatientContext> {
+    const effectiveOnBehalfOfClinicianId = resolveDoseSpotPatientOperationClinicianId(options.onBehalfOfClinicianId);
+    if (!effectiveOnBehalfOfClinicianId) {
+        return {
+            patientUid: options.patientUid,
+            doseSpotPatientId: null,
+            status: null,
+            syncStatus: 'blocked',
+            message: getDoseSpotPatientClinicianContextError(),
+            missingFields: [],
+            candidatePatientIds: [],
+            effectiveOnBehalfOfClinicianId: undefined
+        };
+    }
+
     const ensureResult = await ensureDoseSpotPatientForUid(options.patientUid, {
         updateExisting: false,
-        onBehalfOfClinicianId: options.onBehalfOfClinicianId
+        onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
     });
 
     return {
@@ -278,7 +298,8 @@ async function resolvePatientContext(
         syncStatus: ensureResult.syncStatus,
         message: ensureResult.message,
         missingFields: ensureResult.missingFields,
-        candidatePatientIds: ensureResult.candidatePatientIds
+        candidatePatientIds: ensureResult.candidatePatientIds,
+        effectiveOnBehalfOfClinicianId
     };
 }
 
@@ -342,7 +363,7 @@ export async function fetchDoseSpotMedicationHistoryForPatientUid(
             `api/patients/${patient.doseSpotPatientId}/medications/history?${query.toString()}`,
             {
                 method: 'GET',
-                onBehalfOfClinicianId: options.onBehalfOfClinicianId
+                onBehalfOfClinicianId: patient.effectiveOnBehalfOfClinicianId
             }
         );
 
@@ -359,7 +380,7 @@ export async function fetchDoseSpotMedicationHistoryForPatientUid(
                 {
                     method: 'POST',
                     body: {},
-                    onBehalfOfClinicianId: options.onBehalfOfClinicianId
+                    onBehalfOfClinicianId: patient.effectiveOnBehalfOfClinicianId
                 }
             );
 
@@ -367,7 +388,7 @@ export async function fetchDoseSpotMedicationHistoryForPatientUid(
                 `api/patients/${patient.doseSpotPatientId}/medications/history?${query.toString()}`,
                 {
                     method: 'GET',
-                    onBehalfOfClinicianId: options.onBehalfOfClinicianId
+                    onBehalfOfClinicianId: patient.effectiveOnBehalfOfClinicianId
                 }
             );
             ensureDoseSpotResultOk(response.Result, 'get medication history');
@@ -422,7 +443,7 @@ export async function logDoseSpotMedicationHistoryConsentForPatientUid(
             {
                 method: 'POST',
                 body: {},
-                onBehalfOfClinicianId: options.onBehalfOfClinicianId
+                onBehalfOfClinicianId: patient.effectiveOnBehalfOfClinicianId
             }
         );
         ensureDoseSpotResultOk(response.Result, 'log medication history consent');
@@ -502,7 +523,7 @@ export async function fetchDoseSpotPrescriptionSummaryForPatientUid(
             `api/patients/${patient.doseSpotPatientId}/prescriptions?${query.toString()}`,
             {
                 method: 'GET',
-                onBehalfOfClinicianId: options.onBehalfOfClinicianId
+                onBehalfOfClinicianId: patient.effectiveOnBehalfOfClinicianId
             }
         );
 
@@ -581,6 +602,7 @@ export async function fetchDoseSpotPendingRefillsQueue(
     const clinicId = normalizeClinicId(options.clinicId);
     const pageNumber = normalizePageNumber(options.pageNumber);
     const patientContext = await resolveQueuePatientContext(options.patientUid, options.onBehalfOfClinicianId);
+    const effectiveOnBehalfOfClinicianId = patientContext?.effectiveOnBehalfOfClinicianId ?? options.onBehalfOfClinicianId;
 
     if (patientContext && (!patientContext.doseSpotPatientId || patientContext.syncStatus !== 'ready')) {
         return buildQueueBlockedResult(patientContext, clinicId, pageNumber);
@@ -599,7 +621,7 @@ export async function fetchDoseSpotPendingRefillsQueue(
             `api/refills/pending/detailed?${query.toString()}`,
             {
                 method: 'GET',
-                onBehalfOfClinicianId: options.onBehalfOfClinicianId
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
             }
         );
         ensureDoseSpotResultOk(response.Result, 'list pending refill requests');
@@ -648,6 +670,7 @@ export async function fetchDoseSpotPendingRxChangesQueue(
     const clinicId = normalizeClinicId(options.clinicId);
     const pageNumber = normalizePageNumber(options.pageNumber);
     const patientContext = await resolveQueuePatientContext(options.patientUid, options.onBehalfOfClinicianId);
+    const effectiveOnBehalfOfClinicianId = patientContext?.effectiveOnBehalfOfClinicianId ?? options.onBehalfOfClinicianId;
 
     if (patientContext && (!patientContext.doseSpotPatientId || patientContext.syncStatus !== 'ready')) {
         return buildQueueBlockedResult(patientContext, clinicId, pageNumber);
@@ -666,7 +689,7 @@ export async function fetchDoseSpotPendingRxChangesQueue(
             `api/rxchanges/pending/detailed?${query.toString()}`,
             {
                 method: 'GET',
-                onBehalfOfClinicianId: options.onBehalfOfClinicianId
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
             }
         );
         ensureDoseSpotResultOk(response.Result, 'list pending rxchange notifications');

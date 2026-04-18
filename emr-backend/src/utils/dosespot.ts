@@ -5,6 +5,7 @@ import crypto from 'crypto';
 //   DOSESPOT_CLINIC_ID   = 1007159
 //   DOSESPOT_CLINIC_KEY  = HPHH63FJA79VHFQQ5S4UR2K9JMVTF2N9
 //   DOSESPOT_USER_ID     = 3088396   (the "system" clinician / proxy admin)
+//   DOSESPOT_DEFAULT_CLINICIAN_ID = 3088396   (used only for patient REST flows when no provider clinician is available)
 //   DOSESPOT_BASE_URL    = https://my.staging.dosespot.com
 
 // FIRESTORE DEPENDENCY:
@@ -149,19 +150,16 @@ export function generateSSOUrl(params: {
 }
 
 // ─── OAuth2 access-token helper (for REST API calls, not SSO) ────────────────
-export async function getDoseSpotAccessToken(onBehalfOfClinicianId?: number): Promise<string> {
-    const fetchToken = async (acrValues?: string): Promise<string> => {
+export async function getDoseSpotAccessToken(clinicianIdForRestAuth?: number): Promise<string> {
+    const fetchToken = async (usernameOverride?: string): Promise<string> => {
         const params = new URLSearchParams({
             grant_type: 'password',
             client_id: process.env.DOSESPOT_CLINIC_ID!,
             client_secret: process.env.DOSESPOT_CLINIC_KEY!,
-            username: process.env.DOSESPOT_USER_ID!,
+            username: usernameOverride ?? process.env.DOSESPOT_USER_ID!,
             password: process.env.DOSESPOT_CLINIC_KEY!,
             scope: 'api',
         });
-        if (acrValues) {
-            params.set('acr_values', acrValues);
-        }
 
         const response = await fetch(`${process.env.DOSESPOT_BASE_URL}/webapi/v2/connect/token`, {
             method: 'POST',
@@ -188,18 +186,9 @@ export async function getDoseSpotAccessToken(onBehalfOfClinicianId?: number): Pr
         return data.access_token;
     };
 
-    if (!onBehalfOfClinicianId) {
+    if (!clinicianIdForRestAuth) {
         return fetchToken();
     }
 
-    try {
-        return await fetchToken(`OnBehalfOfUserId=${onBehalfOfClinicianId}`);
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        const shouldFallback = message.includes('OnBehalfOfUser validation failed');
-        if (!shouldFallback) {
-            throw error;
-        }
-        return fetchToken();
-    }
+    return fetchToken(clinicianIdForRestAuth.toString());
 }

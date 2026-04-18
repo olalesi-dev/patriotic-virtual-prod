@@ -86,9 +86,12 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
         }
 
         const data = providerDoc.data();
-        const doseSpotClinicianId = data?.doseSpotClinicianId;
+        const doseSpotClinicianIdRaw = data?.doseSpotClinicianId;
+        const doseSpotClinicianId = typeof doseSpotClinicianIdRaw === 'number'
+            ? doseSpotClinicianIdRaw
+            : Number.parseInt(String(doseSpotClinicianIdRaw), 10);
 
-        if (!doseSpotClinicianId) {
+        if (!Number.isFinite(doseSpotClinicianId) || doseSpotClinicianId <= 0) {
             return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
         }
 
@@ -110,7 +113,8 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
 
         if (patientUid) {
             ensuredPatientContext = await ensureDoseSpotPatientForUid(patientUid, {
-                updateExisting: false
+                updateExisting: false,
+                onBehalfOfClinicianId: doseSpotClinicianId
             });
 
             if (!ensuredPatientContext.doseSpotPatientId || ensuredPatientContext.syncStatus !== 'ready') {
@@ -144,7 +148,7 @@ app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
         });
     } catch (error: any) {
         logger.error('Error generating DoseSpot SSO URL:', error);
-        return res.status(500).json({ error: 'Failed to build SSO link' });
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to build SSO link' });
     }
 });
 
