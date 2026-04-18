@@ -430,7 +430,7 @@ export function LandingEmbed() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [consentOpen, setConsentOpen] = useState(false);
-  const [aboutTab, setAboutTab] = useState<1 | 2>(1);
+  const [aboutTab, setAboutTab] = useState<1 | 2 | 3>(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [dashboardHref, setDashboardHref] = useState("/dashboard");
   const [toastMessage, setToastMessage] = useState("");
