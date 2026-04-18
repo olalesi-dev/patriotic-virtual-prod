@@ -384,9 +384,11 @@ function getAboutTabStyle(isActive: boolean) {
 function PaymentStatusHandler({
   onSuccess,
   onCancel,
+  ready,
 }: {
   onSuccess: (sessionId: string | null, consultationId: string | null) => void | Promise<void>;
   onCancel: () => void;
+  ready: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -399,12 +401,14 @@ function PaymentStatusHandler({
     if (!searchParams) return pathname;
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.delete("payment");
+    nextParams.delete("session_id");
+    nextParams.delete("consultationId");
     const query = nextParams.toString();
     return query ? `${pathname}?${query}` : pathname;
   }, [pathname, searchParams]);
 
   useEffect(() => {
-    if (!paymentStatus || handledStatusRef.current === paymentStatus) {
+    if (!ready || !paymentStatus || handledStatusRef.current === paymentStatus) {
       return;
     }
 
@@ -417,7 +421,7 @@ function PaymentStatusHandler({
     }
 
     router.replace(cleanedUrl, { scroll: false });
-  }, [cleanedUrl, consultationId, onCancel, onSuccess, paymentStatus, router, sessionId]);
+  }, [cleanedUrl, consultationId, onCancel, onSuccess, paymentStatus, ready, router, sessionId]);
 
   return null;
 }
@@ -432,6 +436,7 @@ export function LandingEmbed() {
   const [consentOpen, setConsentOpen] = useState(false);
   const [aboutTab, setAboutTab] = useState<1 | 2 | 3>(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [dashboardHref, setDashboardHref] = useState("/dashboard");
   const [toastMessage, setToastMessage] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
@@ -447,24 +452,59 @@ export function LandingEmbed() {
 
   const copy = COPY[locale];
 
+  const getPendingConsultationId = () => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return window.sessionStorage.getItem("pendingConsultationId")
+      || window.localStorage.getItem("pendingConsultationId");
+  };
+
+  const clearPendingConsultationId = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.sessionStorage.removeItem("pendingConsultationId");
+    window.localStorage.removeItem("pendingConsultationId");
+  };
+
   const handlePaymentSuccess = async (sessionId: string | null, consultationId: string | null) => {
-    if (auth.currentUser && sessionId && consultationId) {
-      try {
-        const token = await auth.currentUser.getIdToken();
-        await apiFetchJson('/api/v1/payments/confirm-telehealth-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: {
-            sessionId,
-            consultationId,
-          },
-        });
-      } catch (error) {
-        console.error('Failed to confirm telehealth checkout session:', error);
-      }
+    const resolvedConsultationId = consultationId || getPendingConsultationId();
+
+    if (!sessionId || !resolvedConsultationId) {
+      console.error('Missing Stripe return details after checkout.', { sessionId, consultationId: resolvedConsultationId });
+      showToast("We couldn't finalize the checkout return. Please contact support if you were charged.");
+      return;
+    }
+
+    if (!auth.currentUser) {
+      showToast("Sign in again to finish confirming your payment.");
+      setAuthInitiator("header_login");
+      setAuthMode("login");
+      setAuthModalOpen(true);
+      return;
+    }
+
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await apiFetchJson('/api/v1/payments/confirm-telehealth-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: {
+          sessionId,
+          consultationId: resolvedConsultationId,
+        },
+      });
+      clearPendingConsultationId();
+    } catch (error) {
+      console.error('Failed to confirm telehealth checkout session:', error);
+      showToast("Your payment succeeded, but we couldn't finalize the consultation automatically. Please contact support.");
+      return;
     }
 
     setInitialConsultStep(4);
@@ -472,6 +512,7 @@ export function LandingEmbed() {
   };
 
   const handlePaymentCancel = () => {
+    clearPendingConsultationId();
     showToast("Payment was cancelled.");
     router.push("/");
   };
@@ -532,11 +573,13 @@ export function LandingEmbed() {
       if (!user) {
         setIsAuthenticated(false);
         setDashboardHref("/dashboard");
+        setAuthReady(true);
         return;
       }
 
       setIsAuthenticated(true);
       setDashboardHref("/dashboard");
+      setAuthReady(true);
 
       try {
         const patientDoc = await getDoc(doc(db, "patients", user.uid));
@@ -2614,6 +2657,7 @@ export function LandingEmbed() {
         <PaymentStatusHandler
           onSuccess={handlePaymentSuccess}
           onCancel={handlePaymentCancel}
+          ready={authReady}
         />
       </Suspense>
     </>

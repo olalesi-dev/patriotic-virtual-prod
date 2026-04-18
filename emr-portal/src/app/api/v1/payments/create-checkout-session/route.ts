@@ -31,6 +31,40 @@ const CATALOG: Record<string, { name: string; amount: number; interval?: string 
   telehealth_basic: { name: 'Telehealth Basic', amount: 2900, interval: 'month' },
 };
 
+function buildCheckoutRedirectUrl(options: {
+  baseUrl: string;
+  targetUrl?: string | null;
+  consultationId?: string | null;
+  sessionId: string;
+  paymentStatus: 'success' | 'cancelled';
+}): string {
+  const { baseUrl, targetUrl, consultationId, sessionId, paymentStatus } = options;
+  const normalizedBaseUrl = baseUrl.trim().replace(/\/$/, '');
+  const normalizedTargetUrl = targetUrl?.trim();
+
+  let redirectUrl: URL;
+  try {
+    redirectUrl = normalizedTargetUrl
+      ? new URL(normalizedTargetUrl, normalizedBaseUrl)
+      : new URL(normalizedBaseUrl);
+  } catch {
+    redirectUrl = new URL(normalizedBaseUrl);
+  }
+
+  redirectUrl.searchParams.set('payment', paymentStatus);
+
+  if (paymentStatus === 'success') {
+    redirectUrl.searchParams.set('session_id', sessionId);
+    if (consultationId) {
+      redirectUrl.searchParams.set('consultationId', consultationId);
+    }
+  } else {
+    redirectUrl.searchParams.delete('session_id');
+  }
+
+  return redirectUrl.toString();
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization') || '';
@@ -95,7 +129,13 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const mockUrl = `${baseUrl}?payment=success&session_id=mock_session_${Date.now()}&consultationId=${consultationId}`;
+      const mockUrl = buildCheckoutRedirectUrl({
+        baseUrl,
+        targetUrl: returnUrl,
+        consultationId,
+        sessionId: `mock_session_${Date.now()}`,
+        paymentStatus: 'success',
+      });
       return NextResponse.json({ sessionId: 'mock_' + Date.now(), url: mockUrl });
     }
 
@@ -120,10 +160,19 @@ export async function POST(req: NextRequest) {
       allow_promotion_codes: true,
       line_items: [lineItem],
       mode: item.interval ? 'subscription' : 'payment',
-      success_url: returnUrl
-        ? returnUrl.replace('{CHECKOUT_SESSION_ID}', '{CHECKOUT_SESSION_ID}')
-        : `${baseUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}&consultationId=${consultationId}`,
-      cancel_url: cancelUrl || `${baseUrl}?payment=cancelled`,
+      success_url: buildCheckoutRedirectUrl({
+        baseUrl,
+        targetUrl: returnUrl,
+        consultationId,
+        sessionId: '{CHECKOUT_SESSION_ID}',
+        paymentStatus: 'success',
+      }),
+      cancel_url: buildCheckoutRedirectUrl({
+        baseUrl,
+        targetUrl: cancelUrl,
+        paymentStatus: 'cancelled',
+        sessionId: '{CHECKOUT_SESSION_ID}',
+      }),
       metadata: {
         serviceKey,
         consultationId: consultationId || '',
