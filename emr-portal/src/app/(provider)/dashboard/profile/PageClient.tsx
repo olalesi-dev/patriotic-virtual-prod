@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, User, Phone, MapPin, Calendar, Shield, FileText, Activity, Edit3, Save, X, Loader2, CheckCircle2, Award, Building, Stethoscope, ExternalLink, Info, RefreshCw, AlertCircle } from 'lucide-react';
+import { Camera, User, Phone, MapPin, Calendar, Shield, FileText, Activity, Edit3, Save, X, Loader2, CheckCircle2, Award, Building, Stethoscope, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { deleteDoc, doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -763,23 +763,6 @@ export default function ProviderProfilePage() {
                                                     Synced
                                                 </span>
                                             )}
-                                        </div>
-
-                                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800 flex items-start gap-3">
-                                            <Info className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
-                                            <div className="space-y-1">
-                                                <p className="text-xs text-emerald-800 dark:text-emerald-300 font-bold leading-relaxed">
-                                                    SSO Integration Active (Staging)
-                                                </p>
-                                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium leading-relaxed">
-                                                    You are currently signed in as Clinician #{data.doseSpotClinicianId}. Any prescriptions written here will be linked to your professional record.
-                                                </p>
-                                                {doseSpotStatus.registrationStatus && (
-                                                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium leading-relaxed">
-                                                        Registration Status: {doseSpotStatus.registrationStatus}
-                                                    </p>
-                                                )}
-                                            </div>
                                         </div>
 
                                         <div className="flex flex-wrap gap-3">
