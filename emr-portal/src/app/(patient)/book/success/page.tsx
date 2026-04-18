@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import PageClient from './PageClient';
 import { buildPageMetadata } from '@/lib/metadata';
@@ -9,5 +10,9 @@ export const metadata: Metadata = buildPageMetadata(
 );
 
 export default function Page() {
-    return <PageClient />;
+    return (
+        <Suspense fallback={null}>
+            <PageClient />
+        </Suspense>
+    );
 }

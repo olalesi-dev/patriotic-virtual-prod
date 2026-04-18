@@ -3,16 +3,22 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
-import { signInWithCustomToken } from 'firebase/auth';
+import { signInWithCustomToken, type User as FirebaseUser } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
-import { CheckCircle2, Calendar, Clock, User, ArrowRight, Sparkles, Phone } from 'lucide-react';
-import { format } from 'date-fns';
+import { CheckCircle2, Clock, User, ArrowRight, Sparkles, Phone, ShieldCheck } from 'lucide-react';
+import { VouchedVerification } from '@/components/auth/VouchedVerification';
+import type { IdentityVerificationStatus, VouchedCompletionResponse } from '@/lib/identity-verification';
+import { useIdentityVerificationProfile } from '@/hooks/useIdentityVerificationProfile';
 
 export default function SuccessPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [status, setStatus] = useState('processing');
+    const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(() => auth.currentUser);
+    const [verificationError, setVerificationError] = useState<string | null>(null);
+    const [verificationOutcome, setVerificationOutcome] = useState<IdentityVerificationStatus | null>(null);
     const writtenRef = useRef(false);
+    const verificationProfile = useIdentityVerificationProfile(currentUser);
 
     const patientName = searchParams.get('patientName');
     const service = searchParams.get('service');
@@ -22,6 +28,12 @@ export default function SuccessPage() {
     const appointmentId = searchParams.get('appointmentId');
     const consultationId = searchParams.get('consultationId');  // passed from main site
     const bridgeToken = searchParams.get('token');               // cross-domain SSO token
+
+    useEffect(() => {
+        return auth.onAuthStateChanged((user) => {
+            setCurrentUser(user);
+        });
+    }, []);
 
     useEffect(() => {
         const init = async () => {
@@ -80,6 +92,39 @@ export default function SuccessPage() {
 
         init();
     }, [patientName, service, date, time, sessionId, appointmentId, consultationId, bridgeToken]);
+
+    useEffect(() => {
+        if (verificationProfile.loading) {
+            return;
+        }
+
+        if (verificationProfile.status === 'verified' || verificationProfile.status === 'review_required') {
+            setVerificationOutcome(verificationProfile.status);
+        }
+    }, [verificationProfile.loading, verificationProfile.status]);
+
+    const handleVerificationCompleted = React.useCallback((result: VouchedCompletionResponse) => {
+        setVerificationError(null);
+
+        if (result.verified) {
+            setVerificationOutcome('verified');
+            return;
+        }
+
+        if (result.status === 'review_required') {
+            setVerificationOutcome('review_required');
+            setVerificationError(result.warningMessage || 'Identity verification was submitted and is pending manual review.');
+            return;
+        }
+
+        setVerificationError(result.failureReason || 'Identity verification failed. Please try again or contact support.');
+    }, []);
+
+    const handleVerificationError = React.useCallback((message: string) => {
+        setVerificationError(message);
+    }, []);
+
+    const isVerificationResolved = verificationOutcome === 'verified' || verificationOutcome === 'review_required';
 
     if (status === 'error') {
         return (
@@ -140,6 +185,69 @@ export default function SuccessPage() {
                     </div>
                 </div>
 
+                {status === 'processing' ? (
+                    <div className="mb-12 rounded-3xl border border-sky-500/20 bg-sky-500/10 px-6 py-5 text-left">
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-300 mb-2">Finalizing</p>
+                        <p className="text-sm font-medium text-slate-200">We are still finishing the appointment confirmation. This page will update automatically.</p>
+                    </div>
+                ) : null}
+
+                {status === 'confirmed' && !isVerificationResolved ? (
+                    <div className="mb-12 rounded-[32px] border border-white/10 bg-white/5 p-6 md:p-8 text-left">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-11 h-11 rounded-2xl bg-sky-500/15 text-sky-300 flex items-center justify-center">
+                                <ShieldCheck size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-300">Required Next Step</p>
+                                <h2 className="text-2xl font-black text-white">Complete Identity Verification</h2>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-300 font-medium leading-6 mb-6">
+                            Your booking is confirmed. Complete the secure ID check now so our clinical team can continue processing this appointment.
+                        </p>
+                        {verificationError ? (
+                            <div className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200">
+                                {verificationError}
+                            </div>
+                        ) : null}
+                        {!currentUser ? (
+                            <div className="rounded-2xl bg-white px-6 py-12 text-center text-slate-600 font-semibold">
+                                Sign in again to complete identity verification for this appointment.
+                            </div>
+                        ) : verificationProfile.loading ? (
+                            <div className="rounded-2xl bg-white px-6 py-12 text-center text-slate-600 font-semibold">
+                                Loading your secure verification details...
+                            </div>
+                        ) : (
+                            <VouchedVerification
+                                user={currentUser}
+                                firstName={verificationProfile.firstName}
+                                lastName={verificationProfile.lastName}
+                                email={verificationProfile.email}
+                                phone={verificationProfile.phone}
+                                birthDate={verificationProfile.birthDate}
+                                onCompleted={handleVerificationCompleted}
+                                onError={handleVerificationError}
+                            />
+                        )}
+                    </div>
+                ) : null}
+
+                {status === 'confirmed' && verificationOutcome === 'verified' ? (
+                    <div className="mb-12 rounded-3xl border border-emerald-500/20 bg-emerald-500/10 px-6 py-5 text-left">
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300 mb-2">Verification Complete</p>
+                        <p className="text-sm font-medium text-slate-100">Your identity has been verified and attached to this appointment.</p>
+                    </div>
+                ) : null}
+
+                {status === 'confirmed' && verificationOutcome === 'review_required' ? (
+                    <div className="mb-12 rounded-3xl border border-amber-500/20 bg-amber-500/10 px-6 py-5 text-left">
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-200 mb-2">Manual Review Pending</p>
+                        <p className="text-sm font-medium text-slate-100">Your ID check was submitted successfully and is pending manual review. Our team will continue processing your appointment.</p>
+                    </div>
+                ) : null}
+
                 <div className="space-y-4">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Outreach Protocol</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -154,12 +262,21 @@ export default function SuccessPage() {
                     </div>
                 </div>
 
-                <button
-                    onClick={() => router.push('/patient')}
-                    className="w-full mt-12 bg-white dark:bg-slate-800 text-navy py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-white/5"
-                >
-                    Return to Dashboard <ArrowRight size={18} />
-                </button>
+                {status === 'confirmed' && isVerificationResolved ? (
+                    <button
+                        onClick={() => router.push('/patient')}
+                        className="w-full mt-12 bg-white dark:bg-slate-800 text-navy py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-white/5"
+                    >
+                        Return to Dashboard <ArrowRight size={18} />
+                    </button>
+                ) : !currentUser ? (
+                    <button
+                        onClick={() => router.push('/patient')}
+                        className="w-full mt-12 bg-white dark:bg-slate-800 text-navy py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-white/5"
+                    >
+                        Sign In to Verify <ArrowRight size={18} />
+                    </button>
+                ) : null}
 
                 <div className="mt-8 flex items-center justify-center gap-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                     <span className="flex items-center gap-1"><Phone size={12} /> Support</span>

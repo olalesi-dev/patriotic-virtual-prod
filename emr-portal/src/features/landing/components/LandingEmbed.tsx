@@ -440,7 +440,7 @@ export function LandingEmbed() {
   // Added Modals state
   const [consultModalOpen, setConsultModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register" | "verify">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [initialService, setInitialService] = useState<string | null>(null);
   const [initialConsultStep, setInitialConsultStep] = useState(1);
   const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
