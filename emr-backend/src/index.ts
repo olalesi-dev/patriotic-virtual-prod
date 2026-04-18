@@ -11,30 +11,14 @@ import patientRoutes from './routes/patients';
 import notificationRoutes from './routes/notifications';
 import dosespotRoutes from './routes/dosespot';
 import vouchedRoutes from './routes/vouched';
+import consultationRoutes from './routes/consultations';
+import paymentRoutes from './routes/payments';
+import webhookRoutes from './routes/webhooks';
 import { logger } from './utils/logger';
 import { generateSSOUrl } from './utils/dosespot';
 import { ensureDoseSpotPatientForUid } from './services/dosespot-patients';
 import { assertDoseSpotWebhookRuntimeConfig } from './services/dosespot-push';
-import * as admin from 'firebase-admin';
-
-// Initialize firebase admin if not already
-if (!admin.apps.length) {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-    if (projectId && clientEmail && privateKey) {
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                projectId,
-                clientEmail,
-                privateKey
-            })
-        });
-    } else {
-        admin.initializeApp();
-    }
-}
+import { admin } from './config/firebase';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -42,12 +26,26 @@ const PORT = process.env.PORT || 8080;
 // Security & Metrics
 app.use(helmet());
 
+function normalizeOrigin(value?: string | null): string | null {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+
+    try {
+        return new URL(trimmed).origin;
+    } catch {
+        return null;
+    }
+}
+
 const allowedOrigins = [
     'https://patriotic-virtual-emr.web.app',
     'https://patriotictelehealth.com',
     'http://localhost:3000',
+    'http://localhost:3001',
     'http://localhost:5173',
-];
+    normalizeOrigin(process.env.FRONTEND_URL),
+    normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL),
+].filter((value): value is string => Boolean(value));
 
 app.use(cors({
     origin: allowedOrigins,
@@ -75,6 +73,13 @@ app.use('/api/v1/dosespot', dosespotRoutes);
 
 // Vouched Webhook (Public)
 app.use('/api/v1/vouched', vouchedRoutes);
+
+// Patient intake and payments (Protected by Firebase token, but not Postgres-backed staff context)
+app.use('/api/v1/consultations', verifyFirebaseToken, consultationRoutes);
+app.use('/api/v1/payments', verifyFirebaseToken, paymentRoutes);
+
+// Payment webhooks (Public)
+app.use('/api/v1/webhooks', webhookRoutes);
 
 // DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
 app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
