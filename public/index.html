@@ -7986,14 +7986,18 @@
 
       <!-- TAB SWITCHER -->
       <div
-        style="display:flex;gap:8px;justify-content:center;margin-bottom:28px;background:var(--bg-tertiary);border-radius:12px;padding:6px;">
+        style="display:flex;gap:8px;justify-content:center;margin-bottom:28px;background:var(--bg-tertiary);border-radius:12px;padding:6px;flex-wrap:wrap;">
         <button id="aboutTab1" onclick="switchAboutTab(1)"
-          style="flex:1;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:var(--blue);color:#fff;">
+          style="flex:1;min-width:200px;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;background:var(--blue);color:#fff;">
           Dr. Olalesi Osunsade, MD, DABR
         </button>
         <button id="aboutTab2" onclick="switchAboutTab(2)"
-          style="flex:1;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:transparent;color:var(--txt-sub);">
+          style="flex:1;min-width:200px;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;background:transparent;color:var(--txt-sub);">
           Alvaro Berrios, MS, FNP-BC
+        </button>
+        <button id="aboutTab3" onclick="switchAboutTab(3)"
+          style="flex:1;min-width:200px;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;background:transparent;color:var(--txt-sub);">
+          L. Lue Winston, APRN
         </button>
       </div>
 
@@ -8123,6 +8127,63 @@
               Throughout his career, Alvaro has established programs designed to address the healthcare needs of
               uninsured patients,
               ensuring that quality care is accessible to all — regardless of insurance status.
+            </p>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- PROFILE: L. LUE WINSTON -->
+      <div id="aboutProfile3" style="display:none;gap:24px;flex-direction:column;align-items:center;text-align:center;">
+        <div style="width:200px;height:200px;border-radius:50%;overflow:hidden;border:3px solid var(--blue);">
+          <img src="assets/l_lue_winston.jpg" style="width:100%;height:100%;object-fit:cover" alt="L. Lue Winston" />
+        </div>
+        <div>
+          <h2 style="margin-bottom:8px">La Donna L. Lue Winston, MSN, APRN, SCRN</h2>
+          <div
+            style="font-size:14px;color:var(--txt-sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;">
+            Adult-Gerontology Acute Care Nurse Practitioner
+          </div>
+          <p
+            style="font-size:15px;line-height:1.7;color:var(--txt-sub);margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto;">
+            Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;text-align:left;width:100%;">
+            <div style="background:var(--bg-tertiary);padding:20px;border-radius:12px;">
+              <h3 style="font-size:15px;color:var(--txt-main);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                🎓 Education</h3>
+              <ul style="list-style:none;font-size:13px;color:var(--txt-sub);line-height:1.6;">
+                <li style="margin-bottom:6px"><b>Post Master's APRN:</b> Nova Southeastern University</li>
+                <li style="margin-bottom:6px"><b>MS in Nursing Ed:</b> Phoenix University</li>
+                <li style="margin-bottom:6px"><b>BS in Biology:</b> Nova Southeastern University</li>
+              </ul>
+            </div>
+            <div style="background:var(--bg-tertiary);padding:20px;border-radius:12px;">
+              <h3 style="font-size:15px;color:var(--txt-main);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                🩺 Areas of Expertise</h3>
+              <ul style="list-style:none;font-size:13px;color:var(--txt-sub);line-height:1.6;">
+                <li style="margin-bottom:6px">Acute Care · Critical Care</li>
+                <li style="margin-bottom:6px">Stroke & Neurological Care</li>
+                <li style="margin-bottom:6px">Quality Assurance & Compliance</li>
+              </ul>
+            </div>
+          </div>
+          <div
+            style="margin-top:24px;width:100%;text-align:left;background:var(--bg-tertiary);padding:20px;border-radius:12px;">
+            <h3 style="font-size:15px;color:var(--txt-main);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+              🤝 Leadership & Affiliations</h3>
+            <p style="font-size:13px;color:var(--txt-sub);line-height:1.6;margin-bottom:8px;">
+              <b>President:</b> Broward County Chapter of AACN (2022-2023, 2025-2026)<br/>
+              <b>Board Member:</b> Miami VHA APRN Council Board<br/>
+              <b>Stroke Coordinator:</b> Miami Veterans Health Administration
+            </p>
+          </div>
+          <div
+            style="margin-top:24px;width:100%;text-align:left;background:var(--bg-tertiary);padding:20px;border-radius:12px;">
+            <h3 style="font-size:15px;color:var(--txt-main);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+              🌱 Community Impact</h3>
+            <p style="font-size:13px;color:var(--txt-sub);line-height:1.6;">
+              La Donna is deeply committed to community health, actively participating in breast cancer walks, food drives, and conducting stroke health screenings. She also serves as clinical adjunct faculty, educating future nurses.
             </p>
           </div>
         </div>
@@ -12510,25 +12571,16 @@
       document.getElementById("aboutModal").classList.remove("active");
     }
     function switchAboutTab(tab) {
-      const p1 = document.getElementById("aboutProfile1");
-      const p2 = document.getElementById("aboutProfile2");
-      const t1 = document.getElementById("aboutTab1");
-      const t2 = document.getElementById("aboutTab2");
-      if (tab === 1) {
-        p1.style.display = "flex";
-        p2.style.display = "none";
-        t1.style.background = "var(--blue)";
-        t1.style.color = "#fff";
-        t2.style.background = "transparent";
-        t2.style.color = "var(--g500)";
-      } else {
-        p1.style.display = "none";
-        p2.style.display = "flex";
-        t2.style.background = "var(--blue)";
-        t2.style.color = "#fff";
-        t1.style.background = "transparent";
-        t1.style.color = "var(--g500)";
-      }
+      const tabs = [1, 2, 3];
+      tabs.forEach(t => {
+        const p = document.getElementById('aboutProfile' + t);
+        const btn = document.getElementById('aboutTab' + t);
+        if(p) p.style.display = t === tab ? "flex" : "none";
+        if(btn) {
+          btn.style.background = t === tab ? "var(--blue)" : "transparent";
+          btn.style.color = t === tab ? "#fff" : "var(--txt-sub)";
+        }
+      });
     }
     /* --- LANGUAGE TOGGLE --- */
     const i18n = {
