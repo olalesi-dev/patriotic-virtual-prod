@@ -107,8 +107,8 @@ const SERVICES = [
     {
         icon: <Bot className="w-6 h-6" />,
         color: "bg-violet-100 text-violet-600",
-        title: "AI Health Assistant",
-        description: "AI-powered health education, symptom guidance & care navigation. Not a substitute for professional medical advice.",
+        title: "Care Navigation Support",
+        description: "Administrative guidance and care navigation to help you manage your telehealth journey. Not a substitute for professional medical advice.",
         price: "$29",
         unit: "/ visit",
         category: "imaging"
@@ -117,7 +117,7 @@ const SERVICES = [
         icon: <Smartphone className="w-6 h-6" />,
         color: "bg-sky-100 text-sky-600",
         title: "Digital Health Platform",
-        description: "Monthly access to digital health tools, educational content & AI-powered navigation features. No clinical services.",
+        description: "Monthly access to digital health tools, educational content & navigation features. No clinical services.",
         price: "$19",
         unit: "/ mo",
         category: "imaging"
@@ -126,7 +126,7 @@ const SERVICES = [
         icon: <Trophy className="w-6 h-6" />,
         color: "bg-amber-100 text-amber-700 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100",
         title: "All Access — Elite",
-        description: "Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.",
+        description: "Everything: telehealth visits, specialty programs, priority radiology reviews, and priority scheduling.",
         price: "$199",
         unit: "/ mo",
         highlight: true,
@@ -136,7 +136,7 @@ const SERVICES = [
         icon: <Star className="w-6 h-6" />,
         color: "bg-indigo-100 text-indigo-700",
         title: "All Access — Plus",
-        description: "Telehealth visits, AI health assistant, AI imaging tools, and priority scheduling in one subscription.",
+        description: "Telehealth visits, care navigation support, and priority scheduling in one subscription.",
         price: "$149",
         unit: "/ mo",
         category: "plans"
@@ -145,7 +145,7 @@ const SERVICES = [
         icon: <Target className="w-6 h-6" />,
         color: "bg-blue-100 text-blue-700",
         title: "All Access — Core",
-        description: "General telehealth, AI health assistant, AI imaging tools & scheduling. Great starter membership.",
+        description: "General telehealth, care navigation support, and scheduling. Great starter membership.",
         price: "$99",
         unit: "/ mo",
         category: "plans"
@@ -172,7 +172,7 @@ const SERVICES = [
         icon: <Lightbulb className="w-6 h-6" />,
         color: "bg-yellow-100 text-yellow-700",
         title: "Telehealth Basic",
-        description: "AI + limited visits for general telehealth. Digital support & care navigation for non-emergency concerns.",
+        description: "Limited visits for general telehealth. Digital support & care navigation for non-emergency concerns.",
         price: "$29",
         unit: "/ mo",
         category: "plans"

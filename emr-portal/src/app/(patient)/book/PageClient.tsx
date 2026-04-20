@@ -33,13 +33,13 @@ const SERVICES = [
 
     // ─── AI & Digital ──────────────────────────────────────────────────────────
     { id: 'ai-imaging', k: 'ai_imaging', name: 'AI-Powered Imaging Analysis', desc: 'Physician-supervised AI interpretation of reports. Educational tools to help you understand findings.', icon: '🔬', price: 99, duration: 'Report', tab: 'ai' },
-    { id: 'ai-assistant', k: 'ai_assistant', name: 'AI Health Assistant', desc: 'AI-powered health education, symptom guidance & care navigation. Not a substitute for professional medical advice.', icon: '🤖', price: 29, duration: 'Access', tab: 'ai' },
+    { id: 'ai-assistant', k: 'ai_assistant', name: 'Care Navigation Support', desc: 'Administrative guidance and care navigation to help you manage your telehealth journey. Not a substitute for professional medical advice.', icon: '💬', price: 29, duration: 'Access', tab: 'ai' },
     { id: 'digital-platform', k: 'digital_platform', name: 'Digital Health Platform', desc: 'Monthly access to digital health tools, educational content & AI-powered navigation features. No clinical services.', icon: '📱', price: 19, duration: '/mo', tab: 'ai' },
 
     // ─── Memberships ───────────────────────────────────────────────────────────
-    { id: 'membership-elite', k: 'membership_elite', name: 'All Access — Elite', desc: 'Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.', icon: '🏆', price: 199, duration: '/mo', tab: 'memberships' },
-    { id: 'membership-plus', k: 'membership_plus', name: 'All Access — Plus', desc: 'Telehealth visits, AI health assistant, AI imaging tools, and priority scheduling in one subscription.', icon: '⭐', price: 149, duration: '/mo', tab: 'memberships' },
-    { id: 'membership-core', k: 'membership_core', name: 'All Access — Core', desc: 'General telehealth, AI health assistant, AI imaging tools & scheduling. Great starter membership.', icon: '🎯', price: 99, duration: '/mo', tab: 'memberships' },
+    { id: 'membership-elite', k: 'membership_elite', name: 'All Access — Elite', desc: 'Everything: telehealth visits, specialty programs, priority radiology reviews, and priority scheduling.', icon: '🏆', price: 199, duration: '/mo', tab: 'memberships' },
+    { id: 'membership-plus', k: 'membership_plus', name: 'All Access — Plus', desc: 'Telehealth visits, care navigation support, and priority scheduling in one subscription.', icon: '⭐', price: 149, duration: '/mo', tab: 'memberships' },
+    { id: 'membership-core', k: 'membership_core', name: 'All Access — Core', desc: 'General telehealth, care navigation support, and priority scheduling. Great starter membership.', icon: '🎯', price: 99, duration: '/mo', tab: 'memberships' },
     { id: 'telehealth-premium', k: 'telehealth_premium', name: 'Telehealth Premium', desc: 'Unlimited/priority access to general telehealth for non-emergency concerns, clinician visits & digital support.', icon: '⚕️', price: 99, duration: '/mo', tab: 'memberships' },
     { id: 'telehealth-standard', k: 'telehealth_standard', name: 'Telehealth Standard', desc: '1 visit/month to general telehealth for non-emergency medical concerns, plus clinician visits & digital support.', icon: '📋', price: 59, duration: '/mo', tab: 'memberships' },
     { id: 'telehealth-basic', k: 'telehealth_basic', name: 'Telehealth Basic', desc: 'AI + limited visits for general telehealth. Digital support & care navigation for non-emergency concerns.', icon: '💡', price: 29, duration: '/mo', tab: 'memberships' },

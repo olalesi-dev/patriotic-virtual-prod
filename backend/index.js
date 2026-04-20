@@ -1169,7 +1169,7 @@ const CATALOG = {
     'diagnostic_single': { name: 'Single Study Read', amount: 7500 },
     'diagnostic_second': { name: 'Diagnostic Second Opinion', amount: 25000 },
     // Subscription tiers
-    'ai_assistant': { name: 'AI Health Assistant', amount: 2900, interval: 'month' },
+    'ai_assistant': { name: 'Care Navigation Support', amount: 2900, interval: 'month' },
     'digital_platform': { name: 'Digital Health Platform', amount: 1900, interval: 'month' },
     'membership_elite': { name: 'All Access — Elite', amount: 19900, interval: 'month' },
     'membership_plus': { name: 'All Access — Plus', amount: 14900, interval: 'month' },

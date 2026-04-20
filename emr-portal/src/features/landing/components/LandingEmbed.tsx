@@ -69,8 +69,8 @@ const POPULAR_SERVICES: ServiceCard[] = [
       es: "Acceso Total — Elite",
     },
     description: {
-      en: "Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.",
-      es: "Todo incluido: visitas de telesalud, programas especializados, herramientas de IA para la salud, imágenes con IA y programación prioritaria.",
+      en: "Everything: telehealth visits, specialty programs, priority radiology reviews, and priority scheduling.",
+      es: "Todo incluido: visitas de telesalud, programas especializados, revisiones de radiología prioritarias y programación prioritaria.",
     },
   },
   {
@@ -311,8 +311,8 @@ const SAFETY_ICON_BACKGROUNDS = [
 ] as const;
 const PROTOCOL_PILL_ICONS = ["🛡", "📋", "⚕️", "🔒"] as const;
 const MARQUEE_ITEMS = [
-  { icon: "🤖", label: "AI Health Assistant" },
-  { icon: "🔬", label: "AI-Powered Imaging" },
+  { icon: "📋", label: "Care Navigation Support" },
+  { icon: "🔬", label: "Advanced Radiology Review" },
   { icon: "📱", label: "Digital Health Platform" },
   { icon: "🌴", label: "Available in Florida" },
   { icon: "🩺", label: "General Telehealth" },
@@ -346,9 +346,9 @@ const TESTIMONIALS = [
     initials: "JD",
     avatarClass: "ta3",
     quote:
-      '"The AI flagged something on my chest X-ray, then the radiologist confirmed it and walked me through next steps. Protocol-driven and professional."',
+      '"The physician noticed something on my chest X-ray, confirmed the diagnosis, and walked me through next steps. Protocol-driven and professional."',
     name: "James D.",
-    details: "AI + Radiologist · Orlando, FL",
+    details: "Radiology Review · Orlando, FL",
   },
 ] as const;
 
