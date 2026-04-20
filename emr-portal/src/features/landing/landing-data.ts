@@ -327,8 +327,8 @@ export const HERO_SERVICES: LandingService[] = [
             es: 'Acceso Total - Elite',
         },
         description: {
-            en: 'Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.',
-            es: 'Todo incluido: visitas de telesalud, programas especializados, herramientas de IA para la salud, imagenes con IA y programacion prioritaria.',
+            en: 'Everything: telehealth visits, specialty programs, priority radiology reviews, and priority scheduling.',
+            es: 'Todo incluido: visitas de telesalud, programas especializados, revisiones de radiologia prioritarias y programacion prioritaria.',
         },
     },
     {
@@ -358,8 +358,8 @@ export const PROTOCOL_METRICS = [
 ] as const;
 
 export const MARQUEE_ITEMS = [
-    { label: 'AI Health Assistant', icon: Brain },
-    { label: 'AI-Powered Imaging', icon: ScanSearch },
+    { label: 'Care Navigation Support', icon: ClipboardCheck },
+    { label: 'Advanced Radiology Review', icon: ScanSearch },
     { label: 'Digital Health Platform', icon: MonitorSmartphone },
     { label: 'Available in Florida', icon: MapPinned },
     { label: 'General Telehealth', icon: Stethoscope },
@@ -461,9 +461,9 @@ export const TESTIMONIALS = [
     {
         initials: 'JD',
         quote:
-            'The AI flagged something on my chest X-ray, then the radiologist confirmed it and walked me through next steps. Protocol-driven and professional.',
+            'The physician noticed something on my chest X-ray, confirmed the diagnosis, and walked me through next steps. Protocol-driven and professional.',
         name: 'James D.',
-        details: 'AI + Radiologist - Orlando, FL',
+        details: 'Radiology Review - Orlando, FL',
     },
 ] as const;
 
