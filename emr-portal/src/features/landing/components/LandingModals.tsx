@@ -56,7 +56,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   showToast,
 }) => {
   const [consultStep, setConsultStep] = useState(initialConsultStep);
-  const [selSvc, setSelSvc] = useState<string | null>(initialService);
+  const [selSvc, setSelSvc] = useState<string | null>(initialService || "membership_elite");
   const [intake, setIntake] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -648,7 +648,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               )}
               <div className="rg" id="svcSel">
                 {svcs
-                  .filter((s) => (initialService ? (s.k === initialService || s.k === "general_visit") : true))
+                  .filter((s) => (initialService ? (s.k === initialService || s.k === "weight_loss" || s.k === "membership_elite") : true))
                   .map((s) => (
                   <div
                     key={s.k}

@@ -9007,18 +9007,19 @@
     stripe: "prod_TsnZ1goCbeavNz",
     priceId: "PRICE_ID_WEIGHT_LOSS",
   },
-  */
+*/
   {
-    id: "general-visit",
-    k: "general_visit",
-    name: "General Health Visit",
-    desc: "Virtual visits for non-emergent health concerns — medication management, wellness checks, health advice. Convenient care from home.",
+    id: "weight-loss",
+    k: "weight_loss",
+    name: "Rx Weight Management",
+    desc: "Comprehensive medical weight loss evaluation and personalized titration plan. Convenient care from home.",
     icon: "🩺",
     ic: "teal",
     c: "teal",
-    price: 79,
-    cat: ["popular", "clinical"], stripe: "prod_Tsna4xzySPbKT0",
-    priceId: "PRICE_ID_GENERAL_VISIT",
+    price: 129,
+    cat: ["popular", "clinical"], 
+    stripe: "prod_TsnZ1goCbeavNz",
+    priceId: "PRICE_ID_WEIGHT_LOSS",
   },
   {
     id: "membership-elite",
@@ -10445,13 +10446,13 @@
     function openConsultation() {
       if (!user) return openModal("register");
       intake = {};
-      selSvc = selSvc || null;
+      selSvc = selSvc || "membership_elite";
       if (!selSvc) window._initialSvcClick = null;
       ["cS1", "cS2", "cS3", "cS4"].forEach((id) =>
         document.getElementById(id).classList.add("hidden"),
       );
       document.getElementById("cS1").classList.remove("hidden");
-      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => (s.k === window._initialSvcClick || s.k === "general_visit")) : svcs;
+      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => (s.k === window._initialSvcClick || s.k === "weight_loss" || s.k === "membership_elite")) : svcs;
       document.getElementById("svcSel").innerHTML = clinicalSvcs
         .map(
           (s) =>
