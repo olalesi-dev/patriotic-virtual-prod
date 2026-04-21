@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { VisitRoom } from '@/components/telehealth/VisitRoom';
+import { SoapNoteModal } from '@/components/telehealth/SoapNoteModal';
 
 // Simulate API Response for now (until backend is fully CORS enabled for local dev)
 const MOCK_SESSION = {
@@ -17,6 +18,9 @@ export default function TelehealthPage() {
     const appointmentId = searchParams.get('appointmentId');
     const [session, setSession] = useState<typeof MOCK_SESSION | null>(null);
 
+    const [showSoapModal, setShowSoapModal] = useState(false);
+    const [rawTranscript, setRawTranscript] = useState('');
+
     useEffect(() => {
         // In real implementation:
         // fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/telehealth/${appointmentId}`)
@@ -26,6 +30,11 @@ export default function TelehealthPage() {
         // For demo:
         setTimeout(() => setSession(MOCK_SESSION), 1000);
     }, [appointmentId]);
+
+    const handleEndVisit = (transcript: string) => {
+        setRawTranscript(transcript);
+        setShowSoapModal(true);
+    };
 
     if (!session) {
         return (
@@ -39,11 +48,27 @@ export default function TelehealthPage() {
     }
 
     return (
-        <VisitRoom
-            role="provider" // Hardcoded for demo
-            providerName={session.providerName}
-            patientName={session.patientName}
-            videoLink={session.joinLink}
-        />
+        <>
+            <VisitRoom
+                role="provider" // Hardcoded for demo
+                providerName={session.providerName}
+                patientName={session.patientName}
+                videoLink={session.joinLink}
+                onEndVisit={handleEndVisit}
+            />
+            
+            {showSoapModal && (
+                <SoapNoteModal
+                    appointmentId={appointmentId || 'demo-appt-id'}
+                    rawTranscript={rawTranscript}
+                    onClose={() => setShowSoapModal(false)}
+                    onSave={(note) => {
+                        setShowSoapModal(false);
+                        // Optionally redirect back to dashboard or patient chart
+                        window.location.href = '/dashboard';
+                    }}
+                />
+            )}
+        </>
     );
 }
