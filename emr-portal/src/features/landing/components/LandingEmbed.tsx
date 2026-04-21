@@ -385,7 +385,10 @@ function PaymentStatusHandler({
   onSuccess,
   onCancel,
 }: {
-  onSuccess: (sessionId: string | null, consultationId: string | null) => void | Promise<void>;
+  onSuccess: (
+    sessionId: string | null,
+    consultationId: string | null,
+  ) => void | Promise<void>;
   onCancel: () => void;
 }) {
   const router = useRouter();
@@ -417,7 +420,15 @@ function PaymentStatusHandler({
     }
 
     router.replace(cleanedUrl, { scroll: false });
-  }, [cleanedUrl, consultationId, onCancel, onSuccess, paymentStatus, router, sessionId]);
+  }, [
+    cleanedUrl,
+    consultationId,
+    onCancel,
+    onSuccess,
+    paymentStatus,
+    router,
+    sessionId,
+  ]);
 
   return null;
 }
@@ -440,21 +451,28 @@ export function LandingEmbed() {
   // Added Modals state
   const [consultModalOpen, setConsultModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register" | "verify">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register" | "verify">(
+    "login",
+  );
   const [initialService, setInitialService] = useState<string | null>(null);
   const [initialConsultStep, setInitialConsultStep] = useState(1);
-  const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
+  const [authInitiator, setAuthInitiator] = useState<
+    "header_login" | "header_get_started" | "service_card"
+  >("header_login");
 
   const copy = COPY[locale];
 
-  const handlePaymentSuccess = async (sessionId: string | null, consultationId: string | null) => {
+  const handlePaymentSuccess = async (
+    sessionId: string | null,
+    consultationId: string | null,
+  ) => {
     if (auth.currentUser && sessionId && consultationId) {
       try {
         const token = await auth.currentUser.getIdToken();
-        await apiFetchJson('/api/v1/payments/confirm-telehealth-session', {
-          method: 'POST',
+        await apiFetchJson("/api/v1/payments/confirm-telehealth-session", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: {
@@ -463,7 +481,7 @@ export function LandingEmbed() {
           },
         });
       } catch (error) {
-        console.error('Failed to confirm telehealth checkout session:', error);
+        console.error("Failed to confirm telehealth checkout session:", error);
       }
     }
 
@@ -832,10 +850,7 @@ export function LandingEmbed() {
               playsInline
               preload="auto"
             >
-              <source
-                src="/assets/pick2.mp4"
-                type="video/mp4"
-              />
+              <source src="/assets/pick2.mp4" type="video/mp4" />
             </video>
             <div className="hero-video-overlay" />
             <div className="hero-video-glow" />
@@ -848,16 +863,45 @@ export function LandingEmbed() {
                   <div className="bdot" />
                   <span>{copy.hero.badge}</span>
                 </div>
-                <div className="hero-badge" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#00d9a3', marginLeft: '8px' }}>
-                  <span>{locale === "en" ? "Currently accepting patients in Florida." : "Actualmente aceptamos pacientes en Florida."}</span>
+                <div
+                  className="hero-badge"
+                  style={{
+                    background: "rgba(16, 185, 129, 0.08)",
+                    borderColor: "rgba(16, 185, 129, 0.3)",
+                    color: "#00d9a3",
+                    marginLeft: "8px",
+                  }}
+                >
+                  <span>
+                    {locale === "en"
+                      ? "Currently accepting patients in Florida."
+                      : "Actualmente aceptamos pacientes en Florida."}
+                  </span>
                 </div>
-                <div className="hero-badge" style={{ background: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.3)', color: '#fde68a', marginLeft: '8px' }}>
-                  <span>{locale === "en" ? "No Controlled Substances Prescribed" : "No Se Prescriben Sustancias Controladas"}</span>
+                <div
+                  className="hero-badge"
+                  style={{
+                    background: "rgba(245, 158, 11, 0.08)",
+                    borderColor: "rgba(245, 158, 11, 0.3)",
+                    color: "#fde68a",
+                    marginLeft: "8px",
+                  }}
+                >
+                  <span>
+                    {locale === "en"
+                      ? "No Controlled Substances Prescribed"
+                      : "No Se Prescriben Sustancias Controladas"}
+                  </span>
                 </div>
                 <h1 dangerouslySetInnerHTML={{ __html: copy.hero.titleHtml }} />
                 <p className="hero-sub">{copy.hero.subtitle}</p>
-                <p className="hero-sub" style={{ fontSize: "0.85em", color: "var(--g400)" }}>
-                  Powered by RadiantLogiq, an AI-driven clinical platform for decision support and workflow optimization. RadiantLogiq is a member of the NVIDIA Inception program.
+                <p
+                  className="hero-sub"
+                  style={{ fontSize: "0.85em", color: "var(--g400)" }}
+                >
+                  Powered by RadiantLogiq, an AI-driven clinical platform for
+                  decision support and workflow optimization. RadiantLogiq is a
+                  member of the NVIDIA Inception program.
                 </p>
                 <div className="hero-ctas">
                   <button
@@ -870,14 +914,27 @@ export function LandingEmbed() {
                 </div>
                 <p
                   className="hero-sub"
-                  style={{ fontSize: "0.85em", color: "#fcd34d", marginTop: "12px" }}
+                  style={{
+                    fontSize: "0.85em",
+                    color: "#fcd34d",
+                    marginTop: "12px",
+                  }}
                 >
                   {locale === "en"
                     ? "For medical emergencies, call 911. This platform does not treat acute or serious conditions."
                     : "Para emergencias medicas, llame al 911. Esta plataforma no trata condiciones agudas o graves."}
                 </p>
-                <div style={{ marginTop: "16px", fontSize: "0.9em", color: "var(--g400)", textAlign: "center", maxWidth: "560px" }}>
-                  Our platform integrates advanced clinical software and AI to support efficient, high-quality care delivery.
+                <div
+                  style={{
+                    marginTop: "16px",
+                    fontSize: "0.9em",
+                    color: "var(--g400)",
+                    textAlign: "center",
+                    maxWidth: "560px",
+                  }}
+                >
+                  Our platform integrates advanced clinical software and AI to
+                  support efficient, high-quality care delivery.
                 </div>
 
                 <div
@@ -983,7 +1040,13 @@ export function LandingEmbed() {
                   </div>
                   <h3>{copy.hero.servicesHeading}</h3>
                   <p>{copy.hero.servicesSub}</p>
-                  <p style={{ fontSize: "12px", color: "var(--g400)", marginTop: "8px" }}>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--g400)",
+                      marginTop: "8px",
+                    }}
+                  >
                     {locale === "en"
                       ? "For medical emergencies, call 911. This platform does not treat acute or serious conditions."
                       : "Para emergencias medicas, llame al 911. Esta plataforma no trata condiciones agudas o graves."}
@@ -1020,7 +1083,13 @@ export function LandingEmbed() {
                     ))}
                   </div>
                 </div>
-                <p style={{ fontSize: "12px", color: "var(--g400)", marginTop: "12px" }}>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--g400)",
+                    marginTop: "12px",
+                  }}
+                >
                   {locale === "en"
                     ? "*Results vary by individual. Weight loss outcomes depend on adherence to treatment plan, lifestyle modifications, and physician-determined eligibility. Not all patients are candidates for GLP-1 therapy."
                     : "*Los resultados varian segun cada persona. Los resultados de perdida de peso dependen de la adherencia al plan de tratamiento, las modificaciones del estilo de vida y la elegibilidad determinada por el medico. No todos los pacientes son candidatos para la terapia con GLP-1."}
@@ -1151,7 +1220,9 @@ export function LandingEmbed() {
               {NON_PRESCRIBE_REASONS.map((reason, index) => (
                 <div className="step" key={reason}>
                   <div className="step-acc" />
-                  <div className="step-num">{String(index + 1).padStart(2, "0")}</div>
+                  <div className="step-num">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
                   <p>
                     {locale === "en"
                       ? reason
@@ -1193,7 +1264,9 @@ export function LandingEmbed() {
               {CLINICAL_SAFETY_MODEL.map((item, index) => (
                 <div className="step" key={item}>
                   <div className="step-acc" />
-                  <div className="step-num">{String(index + 1).padStart(2, "0")}</div>
+                  <div className="step-num">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
                   <p>
                     {locale === "en"
                       ? item
@@ -1231,7 +1304,12 @@ export function LandingEmbed() {
               Powered by RadiantLogiq
             </h2>
             <p className="sec-sub" style={techSectionStyles.subtitle}>
-              Patriotic Virtual Telehealth is powered by RadiantLogiq, a physician-founded clinical platform designed to enhance care delivery through workflow optimization and intelligent data processing. RadiantLogiq supports scalable telehealth operations today, with ongoing development of advanced clinical decision support tools for healthcare providers.
+              Patriotic Virtual Telehealth is powered by RadiantLogiq, a
+              physician-founded clinical platform designed to enhance care
+              delivery through workflow optimization and intelligent data
+              processing. RadiantLogiq supports scalable telehealth operations
+              today, with ongoing development of advanced clinical decision
+              support tools for healthcare providers.
             </p>
             <div style={techSectionStyles.card}>
               <div aria-hidden="true" style={techSectionStyles.iconBadge}>
@@ -1242,12 +1320,16 @@ export function LandingEmbed() {
                   Secure Medication Management
                 </h3>
                 <p style={techSectionStyles.cardText}>
-                  We utilize a secure, integrated e-prescribing platform (DoseSpot) to support safe, compliant, and efficient medication management.
+                  We utilize a secure, integrated e-prescribing platform
+                  (DoseSpot) to support safe, compliant, and efficient
+                  medication management.
                 </p>
               </div>
             </div>
             <p style={techSectionStyles.footnote}>
-              * For providers and health systems, RadiantLogiq is being developed to support workflow optimization and clinical decision support.
+              * For providers and health systems, RadiantLogiq is being
+              developed to support workflow optimization and clinical decision
+              support.
             </p>
           </div>
         </section>
@@ -1303,11 +1385,23 @@ export function LandingEmbed() {
                   <h3>AI-Powered Analysis</h3>
                   <p className="rd">
                     Physician-supervised AI interpretation of your radiology
-                    reports. We help explain 
-                    complex findings in plain English.
+                    reports. We help explain complex findings in plain English.
                   </p>
-                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
-                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#b45309",
+                      background: "#fef3c7",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>
+                      ⚠️
+                    </span>{" "}
+                    For Educational Purposes Only. Not a diagnostic service.
                   </div>
                   <div className="rpt" style={{ marginTop: "20px" }}>
                     $99 <span>/ analysis</span>
@@ -1328,8 +1422,21 @@ export function LandingEmbed() {
                     translate medical jargon into clear, understandable
                     language.
                   </p>
-                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
-                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#b45309",
+                      background: "#fef3c7",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>
+                      ⚠️
+                    </span>{" "}
+                    For Educational Purposes Only. Not a diagnostic service.
                   </div>
                   <div className="rpt" style={{ marginTop: "20px" }}>
                     $149 <span>/ report</span>
@@ -1349,8 +1456,21 @@ export function LandingEmbed() {
                     A complete educational over-read of your actual images
                     (X-Ray, CT, MRI) by a board-certified radiologist.
                   </p>
-                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
-                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#b45309",
+                      background: "#fef3c7",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>
+                      ⚠️
+                    </span>{" "}
+                    For Educational Purposes Only. Not a diagnostic service.
                   </div>
                   <div className="rpt" style={{ marginTop: "20px" }}>
                     $249 <span>/ study</span>
@@ -1396,8 +1516,21 @@ export function LandingEmbed() {
                     video consultation to discuss findings directly with Dr.
                     Olalesi Osunsade, MD.
                   </p>
-                  <div style={{ marginTop: "12px", fontSize: "12px", fontWeight: 600, color: "#b45309", background: "#fef3c7", padding: "8px 12px", borderRadius: "6px" }}>
-                    <span style={{ fontSize: "14px", marginRight: "4px" }}>⚠️</span> For Educational Purposes Only. Not a diagnostic service.
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#b45309",
+                      background: "#fef3c7",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", marginRight: "4px" }}>
+                      ⚠️
+                    </span>{" "}
+                    For Educational Purposes Only. Not a diagnostic service.
                   </div>
                   <div className="rpt" style={{ marginTop: "20px" }}>
                     $449 <span>/ consult</span>
@@ -1608,11 +1741,7 @@ export function LandingEmbed() {
 
               <div className="footer-col">
                 <h4>{copy.footer.support}</h4>
-                <a
-                  href="/faq"
-                >
-                  {copy.footer.faq}
-                </a>
+                <a href="/faq">{copy.footer.faq}</a>
                 <a
                   href="#"
                   onClick={(event) => {
@@ -1624,19 +1753,26 @@ export function LandingEmbed() {
                 >
                   {copy.footer.contact}
                 </a>
-                <a
-                  href="/terms"
-                >
-                  Terms of Service
+                <a href="/terms">Terms of Service</a>
+                <a href="/privacy-policy">{copy.footer.privacy}</a>
+                <a href="/npp" target="_blank">
+                  Notice of Privacy Practices
                 </a>
-                <a
-                  href="/privacy-policy"
-                >
-                  {copy.footer.privacy}
+                <a href="/telehealth-consent" target="_blank">
+                  Telehealth Consent
                 </a>
-                <a href="/npp" target="_blank">Notice of Privacy Practices</a>
-                <a href="/telehealth-consent" target="_blank">Telehealth Consent</a>
-                <span style={{ color: '#9ca3af', fontSize: '14px', marginTop: '12px', display: 'block' }}>📞 (321) 204-0902<br/>📍 176 NW 25th St, Miami, FL 33127</span>
+                <span
+                  style={{
+                    color: "#9ca3af",
+                    fontSize: "14px",
+                    marginTop: "12px",
+                    display: "block",
+                  }}
+                >
+                  📞 (321) 204-0902
+                  <br />
+                  📍 176 NW 25th St, Miami, FL 33127
+                </span>
               </div>
             </div>
 
@@ -1649,17 +1785,38 @@ export function LandingEmbed() {
                 borderTop: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              <p style={{ margin: 0, color: "#cbd5e1", fontSize: "13px", lineHeight: 1.6 }}>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#cbd5e1",
+                  fontSize: "13px",
+                  lineHeight: 1.6,
+                }}
+              >
                 {locale === "en"
                   ? "For medical emergencies, call 911. This platform does not treat acute or serious conditions."
                   : "Para emergencias medicas, llame al 911. Esta plataforma no trata condiciones agudas o graves."}
               </p>
-              <p style={{ margin: 0, color: "#cbd5e1", fontSize: "13px", lineHeight: 1.6 }}>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#cbd5e1",
+                  fontSize: "13px",
+                  lineHeight: 1.6,
+                }}
+              >
                 {locale === "en"
                   ? "All treatments are prescribed, when appropriate, by board-certified physicians licensed in applicable states."
                   : "Todos los tratamientos se prescriben, cuando es apropiado, por medicos certificados con licencia en los estados correspondientes."}
               </p>
-              <p style={{ margin: 0, color: "#cbd5e1", fontSize: "13px", lineHeight: 1.6 }}>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#cbd5e1",
+                  fontSize: "13px",
+                  lineHeight: 1.6,
+                }}
+              >
                 Pharmacy Partner: Strive Pharmacy (LegitScript Certified)
               </p>
             </div>
@@ -1668,21 +1825,72 @@ export function LandingEmbed() {
               <span>{copy.footer.copy}</span>
               <span>{copy.footer.badges}</span>
             </div>
-            
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginTop: "24px", paddingTop: "24px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <img src="/assets/nvidia-inception.jpg" alt="NVIDIA Inception Program member badge" style={{ maxHeight: "30px", width: "auto" }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <span style={{ fontSize: "12px", color: "#e5e7eb", fontWeight: 500 }}>Powered by RadiantLogiq</span>
-                  <span style={{ fontSize: "12px", color: "#9ca3af" }}>Member, NVIDIA Inception Program</span>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "16px",
+                marginTop: "24px",
+                paddingTop: "24px",
+                borderTop: "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
+                <img
+                  src="/assets/nvidia-inception.jpg"
+                  alt="NVIDIA Inception Program member badge"
+                  style={{ maxHeight: "30px", width: "auto" }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#e5e7eb",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Powered by RadiantLogiq
+                  </span>
+                  <span style={{ fontSize: "12px", color: "#9ca3af" }}>
+                    Member, NVIDIA Inception Program
+                  </span>
                 </div>
               </div>
-              <p style={{ fontSize: "10px", color: "#6b7280", maxWidth: "600px", margin: 0, textAlign: "right" }}>
-                © 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries.
+              <p
+                style={{
+                  fontSize: "10px",
+                  color: "#6b7280",
+                  maxWidth: "600px",
+                  margin: 0,
+                  textAlign: "right",
+                }}
+              >
+                © 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are
+                trademarks and/or registered trademarks of NVIDIA Corporation in
+                the U.S. and other countries.
               </p>
             </div>
 
-            <p style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', maxWidth: '48rem', margin: '2rem auto 0' }}>
+            <p
+              style={{
+                fontSize: "0.75rem",
+                color: "#9ca3af",
+                textAlign: "center",
+                maxWidth: "48rem",
+                margin: "2rem auto 0",
+              }}
+            >
               {locale === "en"
                 ? "All treatments require review and approval by a licensed physician. Prescriptions are issued only when clinically appropriate."
                 : "Todos los tratamientos requieren revision y aprobacion por un medico con licencia. Las recetas se emiten solo cuando son clinicamente apropiadas."}
@@ -1740,8 +1948,17 @@ export function LandingEmbed() {
                 borderRadius: "12px",
               }}
             >
-              <p style={{ fontSize: "14px", color: "var(--navy)", margin: 0, fontWeight: 500 }}>
-                Built by a physician-led team, RadiantLogiq is designed to improve efficiency and scalability in modern healthcare delivery.
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "var(--navy)",
+                  margin: 0,
+                  fontWeight: 500,
+                }}
+              >
+                Built by a physician-led team, RadiantLogiq is designed to
+                improve efficiency and scalability in modern healthcare
+                delivery.
               </p>
             </div>
 
@@ -1969,10 +2186,17 @@ export function LandingEmbed() {
                       lineHeight: 1.6,
                     }}
                   >
-                    We believe exceptional care is built on strong collaboration.
-                    That&apos;s why we proudly partner with Strive Pharmacy
-                    (LegitScript-certified and NABP-accredited) and Empower
-                    Pharmacy as our compounding pharmacy partners. Our licensed providers exclusively review and approve all prescriptions before securely transmitting them to these accredited pharmacies, ensuring you receive the highest quality, most reliable medications when appropriate for your personalized treatment plan. Together, these partnerships help us deliver safe, coordinated, and compassionate virtual care you can trust.
+                    We believe exceptional care is built on strong
+                    collaboration. That&apos;s why we proudly partner with
+                    Strive Pharmacy (LegitScript-certified and NABP-accredited)
+                    and Empower Pharmacy as our compounding pharmacy partners.
+                    Our licensed providers exclusively review and approve all
+                    prescriptions before securely transmitting them to these
+                    accredited pharmacies, ensuring you receive the highest
+                    quality, most reliable medications when appropriate for your
+                    personalized treatment plan. Together, these partnerships
+                    help us deliver safe, coordinated, and compassionate virtual
+                    care you can trust.
                   </p>
                 </div>
               </div>
@@ -2283,9 +2507,9 @@ export function LandingEmbed() {
                 you acknowledge potential side effects including nausea,
                 vomiting, and risk of thyroid C-cell tumors. You confirm you do
                 not have a personal or family history of Medullary Thyroid
-                Carcinoma (MTC) or MEN 2 syndrome. All treatments require
-                review and approval by a licensed physician. Prescriptions are
-                issued only when clinically appropriate.
+                Carcinoma (MTC) or MEN 2 syndrome. All treatments require review
+                and approval by a licensed physician. Prescriptions are issued
+                only when clinically appropriate.
               </p>
 
               <h4 style={{ color: "white", marginBottom: 6 }}>
@@ -2373,7 +2597,9 @@ export function LandingEmbed() {
             setInitialConsultStep(1);
             router.push("/");
           } else {
-            setInitialConsultStep(authInitiator === "service_card" && initialService ? 2 : 1);
+            setInitialConsultStep(
+              authInitiator === "service_card" && initialService ? 2 : 1,
+            );
             setConsultModalOpen(true);
           }
         }}
