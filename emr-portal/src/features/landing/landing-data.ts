@@ -301,18 +301,18 @@ export const HERO_SERVICES: LandingService[] = [
         },
     },
     {
-        id: 'general-health',
-        key: 'general_visit',
+        id: 'weight-loss',
+        key: 'weight_loss',
         icon: Stethoscope,
         tone: 'emerald',
-        price: 79,
+        price: 129,
         title: {
-            en: 'General Health Visit',
-            es: 'Visita de Salud General',
+            en: 'Rx Weight Management',
+            es: 'Manejo de Peso Rx',
         },
         description: {
-            en: 'Virtual visits for non-emergent health concerns — medication management, wellness checks, and health advice.',
-            es: 'Visitas virtuales para problemas de salud no urgentes — manejo de medicamentos, chequeos de bienestar y consejos de salud.',
+            en: 'Comprehensive medical weight loss evaluation and personalized titration plan. Convenient care from home.',
+            es: 'Evaluacion medica integral de perdida de peso y plan de titulacion personalizado. Atencion conveniente desde casa.',
         },
     },
     {

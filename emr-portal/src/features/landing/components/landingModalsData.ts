@@ -134,21 +134,21 @@ export const svcs = [
     priceId: "",
   },
   {
-    id: "general-visit",
-    k: "general_visit",
-    name: "General Visit",
-    desc: "Virtual visits for non-emergent health concerns — medication management, wellness checks, health advice. Convenient care from home.",
+    id: "weight-loss",
+    k: "weight_loss",
+    name: "Rx Weight Management",
+    desc: "Comprehensive medical weight loss evaluation and personalized titration plan. Convenient care from home.",
     icon: "🩺",
     ic: "teal",
     c: "teal",
-    price: 79,
+    price: 129,
     cat: ["clinical"],
-    stripe: "prod_Tsna4xzySPbKT0",
-    priceId: "PRICE_ID_GENERAL_VISIT",
+    stripe: "prod_TsnZ1goCbeavNz",
+    priceId: "PRICE_ID_WEIGHT_LOSS",
   }
 ];
 export const iQs = {
-      general_visit: [
+      weight_loss: [
         {
           k: "chiefComplaint",
           l: "What brings you in today?",
