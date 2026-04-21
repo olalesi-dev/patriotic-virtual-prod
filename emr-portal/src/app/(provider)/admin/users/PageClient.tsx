@@ -28,7 +28,7 @@ import {
     X,
     XCircle
 } from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { auth, db } from '@/lib/firebase';
 import { apiFetchJson } from '@/lib/api-client';
@@ -46,6 +46,8 @@ import {
     type AdminUpdateUserInput
 } from '@/lib/dosespot-clinician-profile';
 import { syncDoseSpotClinician } from '@/lib/dosespot-clinician-sync';
+import { ensureDoseSpotPatientLink } from '@/lib/dosespot-patient-sync';
+import { shouldUsePatientsCollection } from '@/lib/user-record-scope';
 
 interface UserData {
     uid: string;
@@ -79,10 +81,14 @@ interface UserData {
     epcsRequested?: boolean;
     active?: boolean;
     doseSpotClinicianId?: string;
+    doseSpotPatientId?: string;
     doseSpot?: {
         synced?: boolean;
         registrationStatus?: string | null;
+        syncStatus?: string | null;
         lastSyncError?: string | null;
+        lastError?: string | null;
+        candidatePatientIds?: number[];
     };
 }
 
@@ -96,7 +102,86 @@ function isProviderLike(role: string | null | undefined): boolean {
     return ['provider', 'doctor', 'clinician'].includes((role ?? '').trim().toLowerCase());
 }
 
+function isPatientLike(role: string | null | undefined): boolean {
+    return (role ?? '').trim().toLowerCase() === 'patient';
+}
+
+function isDoseSpotClinicianSynced(user: Pick<UserData, 'doseSpotClinicianId' | 'doseSpot'>): boolean {
+    const clinicianId = (user.doseSpotClinicianId ?? '').trim();
+    return user.doseSpot?.synced === true || clinicianId.length > 0;
+}
+
+function isDoseSpotPatientSynced(user: Pick<UserData, 'doseSpotPatientId' | 'doseSpot'>): boolean {
+    const patientId = (user.doseSpotPatientId ?? '').trim();
+    const lastError = (user.doseSpot?.lastError ?? '').trim();
+    return user.doseSpot?.syncStatus === 'ready' || (patientId.length > 0 && lastError.length === 0);
+}
+
+function formatDoseSpotFieldList(fields: string[]): string {
+    const labels: Record<string, string> = {
+        firstName: 'first name',
+        lastName: 'last name',
+        dateOfBirth: 'date of birth',
+        address1: 'address',
+        city: 'city',
+        state: 'state',
+        zipCode: 'ZIP code',
+        primaryPhone: 'phone'
+    };
+
+    return fields.map((field) => labels[field] ?? field).join(', ');
+}
+
+function getPatientDoseSpotIssueMessage(result: {
+    lastError?: string | null;
+    missingFields: string[];
+    candidatePatientIds: number[];
+    message: string;
+}): string {
+    if (result.lastError) {
+        return result.lastError;
+    }
+
+    if (result.missingFields.length > 0) {
+        return `Missing DoseSpot fields: ${formatDoseSpotFieldList(result.missingFields)}`;
+    }
+
+    if (result.candidatePatientIds.length > 0) {
+        return `${result.message} Matches: ${result.candidatePatientIds.join(', ')}`;
+    }
+
+    return result.message;
+}
+
+function getPatientDoseSpotStatusLabel(user: UserData): string {
+    const syncStatus = user.doseSpot?.syncStatus ?? null;
+    if (syncStatus === 'ready' || user.doseSpotPatientId) {
+        return 'Synced';
+    }
+    if (syncStatus === 'blocked') {
+        return 'Blocked';
+    }
+    if (syncStatus === 'ambiguous_match') {
+        return 'Needs review';
+    }
+    if (syncStatus === 'pending_retry') {
+        return 'Retry needed';
+    }
+    return 'Not synced';
+}
+
 function mergeFirestoreProfile(base: UserData, source: Record<string, unknown>): UserData {
+    const doseSpotSource = typeof source.doseSpot === 'object' && source.doseSpot !== null
+        ? source.doseSpot as {
+            synced?: unknown;
+            registrationStatus?: unknown;
+            syncStatus?: unknown;
+            lastSyncError?: unknown;
+            lastError?: unknown;
+            candidatePatientIds?: unknown;
+        }
+        : null;
+
     return {
         ...base,
         phone: typeof source.phone === 'string' ? source.phone : (base.phone ?? ''),
@@ -123,19 +208,45 @@ function mergeFirestoreProfile(base: UserData, source: Record<string, unknown>):
         epcsRequested: typeof source.epcsRequested === 'boolean' ? source.epcsRequested : true,
         active: typeof source.active === 'boolean' ? source.active : !base.disabled,
         doseSpotClinicianId: source.doseSpotClinicianId != null ? String(source.doseSpotClinicianId) : (base.doseSpotClinicianId ?? ''),
-        doseSpot: typeof source.doseSpot === 'object' && source.doseSpot !== null
+        doseSpotPatientId: source.doseSpotPatientId != null ? String(source.doseSpotPatientId) : (base.doseSpotPatientId ?? ''),
+        doseSpot: doseSpotSource
             ? {
-                synced: typeof (source.doseSpot as { synced?: unknown }).synced === 'boolean'
-                    ? (source.doseSpot as { synced?: boolean }).synced
-                    : false,
-                registrationStatus: typeof (source.doseSpot as { registrationStatus?: unknown }).registrationStatus === 'string'
-                    ? (source.doseSpot as { registrationStatus?: string }).registrationStatus ?? null
-                    : null,
-                lastSyncError: typeof (source.doseSpot as { lastSyncError?: unknown }).lastSyncError === 'string'
-                    ? (source.doseSpot as { lastSyncError?: string }).lastSyncError ?? null
-                    : null
+                synced: typeof doseSpotSource.synced === 'boolean'
+                    ? doseSpotSource.synced
+                    : (base.doseSpot?.synced ?? false),
+                registrationStatus: typeof doseSpotSource.registrationStatus === 'string'
+                    ? doseSpotSource.registrationStatus ?? null
+                    : (base.doseSpot?.registrationStatus ?? null),
+                syncStatus: typeof doseSpotSource.syncStatus === 'string'
+                    ? doseSpotSource.syncStatus ?? null
+                    : (base.doseSpot?.syncStatus ?? null),
+                lastSyncError: typeof doseSpotSource.lastSyncError === 'string'
+                    ? doseSpotSource.lastSyncError ?? null
+                    : (base.doseSpot?.lastSyncError ?? null),
+                lastError: typeof doseSpotSource.lastError === 'string'
+                    ? doseSpotSource.lastError ?? null
+                    : (base.doseSpot?.lastError ?? null),
+                candidatePatientIds: Array.isArray(doseSpotSource.candidatePatientIds)
+                    ? doseSpotSource.candidatePatientIds
+                        .map((value) => {
+                            if (typeof value === 'number' && Number.isFinite(value)) return value;
+                            if (typeof value === 'string') {
+                                const parsed = Number.parseInt(value, 10);
+                                return Number.isFinite(parsed) ? parsed : null;
+                            }
+                            return null;
+                        })
+                        .filter((value): value is number => value !== null)
+                    : (base.doseSpot?.candidatePatientIds ?? [])
             }
-            : (base.doseSpot ?? { synced: false, registrationStatus: null, lastSyncError: null })
+            : (base.doseSpot ?? {
+                synced: false,
+                registrationStatus: null,
+                syncStatus: null,
+                lastSyncError: null,
+                lastError: null,
+                candidatePatientIds: []
+            })
     };
 }
 
@@ -326,9 +437,50 @@ export default function UserManagementPage() {
         }
     });
 
+    const syncPatientMutation = useMutation({
+        mutationFn: async (patientUid: string) => {
+            if (!auth.currentUser) {
+                throw new Error('Please sign in again to sync DoseSpot patients.');
+            }
+
+            return ensureDoseSpotPatientLink(auth.currentUser, {
+                patientUid,
+                updateExisting: true
+            });
+        },
+        onSuccess: (result) => {
+            setSelectedUser((current) => current && current.uid === result.patientUid
+                ? {
+                    ...current,
+                    doseSpotPatientId: result.doseSpotPatientId ? String(result.doseSpotPatientId) : '',
+                    doseSpot: {
+                        ...(current.doseSpot ?? {}),
+                        syncStatus: result.syncStatus,
+                        lastError: result.lastError ?? null,
+                        candidatePatientIds: result.candidatePatientIds
+                    }
+                }
+                : current);
+            void queryClient.invalidateQueries({ queryKey: usersQueryKey });
+
+            if (result.syncStatus === 'ready') {
+                toast.success(result.message);
+                return;
+            }
+
+            toast.error(getPatientDoseSpotIssueMessage(result));
+        },
+        onError: (error) => {
+            const message = error instanceof Error ? error.message : 'DoseSpot patient sync failed.';
+            toast.error(message);
+        }
+    });
+
     const users = usersQuery.data ?? [];
     const loading = usersQuery.isLoading;
     const effectiveError = createError ?? (usersQuery.error instanceof Error ? usersQuery.error.message : null);
+    const selectedProviderDoseSpotSynced = selectedUser ? isDoseSpotClinicianSynced(selectedUser) : false;
+    const selectedPatientDoseSpotSynced = selectedUser ? isDoseSpotPatientSynced(selectedUser) : false;
 
     const handleSelectUser = async (user: UserData) => {
         setSelectedUser(user);
@@ -338,13 +490,15 @@ export default function UserManagementPage() {
         try {
             const [userSnap, patientSnap] = await Promise.all([
                 getDoc(doc(db, 'users', user.uid)),
-                getDoc(doc(db, 'patients', user.uid))
+                shouldUsePatientsCollection(user.role)
+                    ? getDoc(doc(db, 'patients', user.uid))
+                    : Promise.resolve(null)
             ]);
 
             const merged = mergeFirestoreProfile(
                 user,
                 {
-                    ...(patientSnap.exists() ? patientSnap.data() : {}),
+                    ...((patientSnap && patientSnap.exists()) ? patientSnap.data() : {}),
                     ...(userSnap.exists() ? userSnap.data() : {})
                 }
             );
@@ -415,10 +569,14 @@ export default function UserManagementPage() {
                         epcsRequested: values.epcsRequested,
                         active: values.active,
                         doseSpotClinicianId: '',
+                        doseSpotPatientId: '',
                         doseSpot: {
                             synced: false,
                             registrationStatus: null,
-                            lastSyncError: null
+                            syncStatus: null,
+                            lastSyncError: null,
+                            lastError: null,
+                            candidatePatientIds: []
                         }
                     },
                     ...items
@@ -473,10 +631,19 @@ export default function UserManagementPage() {
 
         setSavingPhone(true);
         try {
-            await Promise.all([
-                setDoc(doc(db, 'users', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true }),
-                setDoc(doc(db, 'patients', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true })
-            ]);
+            const writes = [
+                setDoc(doc(db, 'users', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true })
+            ];
+
+            if (shouldUsePatientsCollection(selectedUser.role)) {
+                writes.push(
+                    setDoc(doc(db, 'patients', selectedUser.uid), { phone: editPhone, updatedAt: new Date() }, { merge: true })
+                );
+            } else {
+                writes.push(deleteDoc(doc(db, 'patients', selectedUser.uid)));
+            }
+
+            await Promise.all(writes);
             setSelectedUser((current) => current ? { ...current, phone: editPhone } : current);
             setIsEditingPhone(false);
             toast.success('Phone number updated.');
@@ -820,7 +987,7 @@ export default function UserManagementPage() {
                                 <>
                                     <DetailField
                                         label="DoseSpot Sync"
-                                        value={selectedUser.doseSpot?.synced
+                                        value={selectedProviderDoseSpotSynced
                                             ? <span className="flex items-center gap-1 text-xs font-black text-emerald-500"><CheckCircle2 className="h-3.5 w-3.5" /> Synced</span>
                                             : <span className="text-xs font-black text-amber-500">Not synced</span>}
                                     />
@@ -840,18 +1007,59 @@ export default function UserManagementPage() {
                                 </>
                             )}
 
+                            {isPatientLike(selectedUser.role) && (
+                                <>
+                                    <DetailField
+                                        label="DoseSpot Sync"
+                                        value={selectedUser.doseSpot?.syncStatus === 'ready' || selectedUser.doseSpotPatientId
+                                            ? <span className="flex items-center gap-1 text-xs font-black text-emerald-500"><CheckCircle2 className="h-3.5 w-3.5" /> {getPatientDoseSpotStatusLabel(selectedUser)}</span>
+                                            : selectedUser.doseSpot?.syncStatus === 'blocked'
+                                                ? <span className="flex items-center gap-1 text-xs font-black text-red-500"><XCircle className="h-3.5 w-3.5" /> {getPatientDoseSpotStatusLabel(selectedUser)}</span>
+                                                : <span className="text-xs font-black text-amber-500">{getPatientDoseSpotStatusLabel(selectedUser)}</span>}
+                                    />
+                                    <DetailField
+                                        label="DoseSpot Patient ID"
+                                        value={<span className="text-xs font-mono text-slate-600 dark:text-slate-300">{selectedUser.doseSpotPatientId || 'Not linked'}</span>}
+                                    />
+                                    {selectedUser.doseSpot?.candidatePatientIds && selectedUser.doseSpot.candidatePatientIds.length > 0 && (
+                                        <DetailField
+                                            label="Candidate Matches"
+                                            value={<span className="text-xs font-mono text-slate-600 dark:text-slate-300">{selectedUser.doseSpot.candidatePatientIds.join(', ')}</span>}
+                                        />
+                                    )}
+                                    {selectedUser.doseSpot?.lastError && (
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+                                            {selectedUser.doseSpot.lastError}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
                             <DetailField label="UID" value={<span className="break-all font-mono text-[10px] text-slate-400">{selectedUser.uid}</span>} />
                         </div>
 
                         <div className="flex flex-col gap-2 px-5 pb-5">
-                            {isProviderLike(selectedUser.role) && (
+                            {isProviderLike(selectedUser.role) && !selectedProviderDoseSpotSynced && (
                                 <button
                                     onClick={() => void syncClinicianMutation.mutateAsync(selectedUser.uid)}
-                                    disabled={syncClinicianMutation.isPending || selectedUser.doseSpot?.synced === true}
-                                    title={selectedUser.doseSpot?.synced ? 'Provider already synced to DoseSpot' : 'Sync to DoseSpot'}
+                                    disabled={syncClinicianMutation.isPending}
+                                    title="Sync to DoseSpot"
                                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 py-2.5 text-xs font-black text-sky-700 transition-all hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {syncClinicianMutation.isPending && syncClinicianMutation.variables === selectedUser.uid
+                                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        : <RefreshCw className="h-3.5 w-3.5" />}
+                                    Sync to DoseSpot
+                                </button>
+                            )}
+                            {isPatientLike(selectedUser.role) && !selectedPatientDoseSpotSynced && (
+                                <button
+                                    onClick={() => void syncPatientMutation.mutateAsync(selectedUser.uid)}
+                                    disabled={syncPatientMutation.isPending}
+                                    title="Sync patient demographics to DoseSpot"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 py-2.5 text-xs font-black text-sky-700 transition-all hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {syncPatientMutation.isPending && syncPatientMutation.variables === selectedUser.uid
                                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                         : <RefreshCw className="h-3.5 w-3.5" />}
                                     Sync to DoseSpot
@@ -904,7 +1112,12 @@ export default function UserManagementPage() {
                                     {editError}
                                 </div>
                             )}
-                            <UserFormFields form={editForm} isCreate={false} showProviderFields={editRole === 'provider'} />
+                            <UserFormFields
+                                form={editForm}
+                                isCreate={false}
+                                showProviderFields={editRole === 'provider'}
+                                showDoseSpotAddressFields={editRole === 'provider' || editRole === 'patient'}
+                            />
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 rounded-xl py-2.5 font-bold text-slate-600 transition-all hover:bg-slate-100 dark:text-slate-300">
                                     Cancel
@@ -944,7 +1157,12 @@ export default function UserManagementPage() {
                                     {effectiveError}
                                 </div>
                             )}
-                            <UserFormFields form={createForm} isCreate showProviderFields={createRole === 'provider'} />
+                            <UserFormFields
+                                form={createForm}
+                                isCreate
+                                showProviderFields={createRole === 'provider'}
+                                showDoseSpotAddressFields={createRole === 'provider' || createRole === 'patient'}
+                            />
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 rounded-xl py-2.5 font-bold text-slate-600 transition-all hover:bg-slate-100 dark:text-slate-300">
                                     Cancel
@@ -1155,11 +1373,13 @@ function getRoleBadge(role: string) {
 function UserFormFields({
     form,
     isCreate,
-    showProviderFields
+    showProviderFields,
+    showDoseSpotAddressFields
 }: {
     form: any;
     isCreate: boolean;
     showProviderFields: boolean;
+    showDoseSpotAddressFields: boolean;
 }) {
     const { register, formState: { errors } } = form;
 
@@ -1189,6 +1409,22 @@ function UserFormFields({
                 </SelectField>
             </div>
 
+            {showDoseSpotAddressFields && (
+                <section className="space-y-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+                    <div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white">DoseSpot Patient Demographics</h4>
+                        <p className="mt-1 text-xs text-slate-500">These address fields are required before a patient can be synced to DoseSpot.</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <TextField label="Address Line 1" placeholder="539 Main St." error={errors.address1?.message} className="md:col-span-2" {...register('address1')} />
+                        <TextField label="Address Line 2" placeholder="Suite 204" error={errors.address2?.message} {...register('address2')} />
+                        <TextField label="City" placeholder="Dedham" error={errors.city?.message} {...register('city')} />
+                        <TextField label="State" placeholder="MA" error={errors.state?.message} {...register('state')} />
+                        <TextField label="ZIP Code" placeholder="02026" error={errors.zipCode?.message} {...register('zipCode')} />
+                    </div>
+                </section>
+            )}
+
             {showProviderFields && (
                 <>
                     <section className="space-y-4 rounded-2xl border border-sky-100 bg-sky-50/60 p-4 dark:border-sky-900/60 dark:bg-sky-950/20">
@@ -1200,11 +1436,6 @@ function UserFormFields({
                             <TextField label="Prefix" placeholder="Dr." error={errors.prefix?.message} {...register('prefix')} />
                             <TextField label="Middle Name" placeholder="Marie" error={errors.middleName?.message} {...register('middleName')} />
                             <TextField label="Suffix" placeholder="MD" error={errors.suffix?.message} {...register('suffix')} />
-                            <TextField label="Address Line 1" placeholder="539 Main St." error={errors.address1?.message} className="md:col-span-2" {...register('address1')} />
-                            <TextField label="Address Line 2" placeholder="Suite 204" error={errors.address2?.message} {...register('address2')} />
-                            <TextField label="City" placeholder="Dedham" error={errors.city?.message} {...register('city')} />
-                            <TextField label="State" placeholder="MA" error={errors.state?.message} {...register('state')} />
-                            <TextField label="ZIP Code" placeholder="02026" error={errors.zipCode?.message} {...register('zipCode')} />
                             <SelectField label="Primary Phone Type" error={errors.primaryPhoneType?.message} {...register('primaryPhoneType')}>
                                 {DOSESPOT_PHONE_TYPES.map((option) => (
                                     <option key={option} value={option}>{formatDoseSpotEnumLabel(option)}</option>

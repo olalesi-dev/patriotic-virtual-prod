@@ -10,7 +10,7 @@ import {
     Calendar, Video, User, LayoutDashboard, Settings,
     Plus, Briefcase, MessageSquare, CreditCard, Users, ChevronLeft, LogOut, ShoppingBag,
     Pill, Microscope, Scan, Bot, BarChart, ShieldCheck, ClipboardList, Activity, Clock, Database, DatabaseZap, ShieldAlert, Megaphone,
-    ChevronDown, ChevronRight, Puzzle, Key, Network, Share2, Sparkles
+    ChevronDown, ChevronRight, Puzzle, Key, Network, Share2, Sparkles, Search, Star
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { ProviderNotificationBell } from '@/components/common/ProviderNotificationBell';
@@ -32,25 +32,41 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [bookingNote, setBookingNote] = useState('');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [favorites, setFavorites] = useState<string[]>([]);
     const [activeUser, setActiveUser] = useState<FirebaseUser | null>(auth.currentUser);
 
     const [unreadInbox, setUnreadInbox] = useState(0);
     const [unreadWaitlist, setUnreadWaitlist] = useState(0);
 
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-        'Clinical': true, 'CRM': true, 'Social': true, 'Orders & Rx': true,
+        'Favorites': true, 'Clinical': true, 'CRM': true, 'Social': true, 'Orders & Rx': true,
         'Services': true, 'Specialty Modules': true, 'AI Tools': true,
         'Analytics': true, 'Admin': true, 'Integrations': true
     });
 
     React.useEffect(() => {
         try {
+            const savedFaves = localStorage.getItem('nav_favorites');
+            if (savedFaves) {
+                setFavorites(JSON.parse(savedFaves));
+            }
             const saved = localStorage.getItem('nav_expanded');
             if (saved) {
                 setExpandedSections(JSON.parse(saved));
             }
         } catch (e) { }
     }, []);
+
+    const toggleFavorite = (e: React.MouseEvent, href: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setFavorites(prev => {
+            const newFaves = prev.includes(href) ? prev.filter(h => h !== href) : [...prev, href];
+            localStorage.setItem('nav_favorites', JSON.stringify(newFaves));
+            return newFaves;
+        });
+    };
 
     const toggleSection = (section: string) => {
         setExpandedSections(prev => {
@@ -257,6 +273,109 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             .join(' / ');
     })();
 
+    const allMenuGroups = [
+        {
+            label: "Clinical",
+            items: [
+                { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', active: pathname === '/dashboard' },
+                { href: '/calendar', icon: Calendar, label: 'Calendar', active: pathname.startsWith('/calendar') },
+                { href: '/patients', icon: User, label: 'Patients', active: pathname.startsWith('/patients') },
+                { href: '/team', icon: Users, label: 'Team', active: pathname.startsWith('/team') },
+                { href: '/inbox', icon: MessageSquare, label: 'Inbox / Messages', badge: unreadInbox > 0 ? unreadInbox.toString() : undefined, active: pathname.startsWith('/inbox') },
+                { href: '/waitlist', icon: Clock, label: 'Patient Waitlist', badge: unreadWaitlist > 0 ? unreadWaitlist.toString() : undefined, active: pathname.startsWith('/waitlist') },
+            ]
+        },
+        {
+            label: "CRM",
+            items: [
+                { href: '/crm', icon: Database, label: 'CRM Dashboard', active: pathname === '/crm' },
+                { href: '/crm/patients', icon: User, label: 'Patients', active: pathname.startsWith('/crm/patients') },
+                { href: '/crm/facilities', icon: Briefcase, label: 'Facilities', active: pathname.startsWith('/crm/facilities') },
+                { href: '/crm/vendors', icon: Users, label: 'Vendors', active: pathname.startsWith('/crm/vendors') },
+                { href: '/crm/campaigns', icon: BarChart, label: 'Campaigns', active: pathname.startsWith('/crm/campaigns') },
+                { href: '/crm/social', icon: Share2, label: 'Social Media Hub', active: pathname.startsWith('/crm/social') },
+                { href: '/crm/grants', icon: ClipboardList, label: 'Grant Proposals', active: pathname.startsWith('/crm/grants') },
+                { href: '/crm/timesheets', icon: Clock, label: 'Time Sheets', active: pathname.startsWith('/crm/timesheets') }
+            ]
+        },
+        {
+            label: "Social",
+            items: [
+                { href: '/community', icon: Users, label: 'Community Feed', active: pathname.startsWith('/community') }
+            ]
+        },
+        {
+            label: "Orders & Rx",
+            items: [
+                { href: '/orders/erx', icon: Pill, label: 'eRx / Prescriptions', active: pathname === '/orders/erx' },
+                { href: '/orders/labs', icon: Microscope, label: 'Lab Orders', active: pathname === '/orders/labs' },
+                { href: '/orders/imaging', icon: Scan, label: 'Imaging Orders', active: pathname === '/orders/imaging' },
+                { href: '/orders/pacs', icon: Scan, label: 'PACS', active: pathname === '/orders/pacs' },
+            ]
+        },
+        {
+            label: "Services",
+            items: [
+                { href: '/services', icon: Briefcase, label: 'Services Catalog', active: pathname === '/services' },
+                { href: '/book', icon: Video, label: 'Booking', active: pathname === '/book' },
+                { href: '/billing', icon: CreditCard, label: 'Billing', active: pathname === '/billing' },
+            ]
+        },
+        {
+            label: "Specialty Modules",
+            items: SPECIALTY_MODULES.filter(m => enabledModules.includes(m.id)).map(module => ({
+                href: `/modules/${module.id}/${module.pages[0].id}`, 
+                icon: module.icon, 
+                label: module.name, 
+                active: pathname.startsWith(`/modules/${module.id}`) 
+            }))
+        },
+        {
+            label: "AI Tools",
+            items: [
+                { href: '/ai/queue', icon: Bot, label: 'AI Action Queue', active: pathname === '/ai/queue' },
+                { href: '/protocols', icon: ClipboardList, label: 'Protocols', active: pathname === '/protocols' },
+            ]
+        },
+        {
+            label: "Analytics",
+            items: [
+                { href: '/analytics/clinical', icon: Activity, label: 'Clinical Dashboard', active: pathname === '/analytics/clinical' },
+                { href: '/analytics/business', icon: BarChart, label: 'Business Dashboard', active: pathname === '/analytics/business' },
+                { href: '/analytics/google', icon: Activity, label: 'Google Analytics', active: pathname === '/analytics/google' },
+            ]
+        },
+        {
+            label: "Admin",
+            items: [
+                { href: '/admin/global-settings', icon: ShieldAlert, label: 'Global Sys Settings', active: pathname === '/admin/global-settings' },
+                { href: '/settings', icon: Settings, label: 'Settings', active: pathname === '/settings' },
+                { href: '/admin/modules', icon: Activity, label: 'Specialty Modules', active: pathname === '/admin/modules' },
+                { href: '/admin/community-moderation', icon: ShieldAlert, label: 'Community Moderation', active: pathname === '/admin/community-moderation' },
+                { href: '/admin/store', icon: ShoppingBag, label: 'Store Management', active: pathname === '/admin/store' },
+                { href: '/admin/communications', icon: Megaphone, label: 'Communications', active: pathname === '/admin/communications' },
+                { href: '/admin/users', icon: Users, label: 'User Management', active: pathname === '/admin/users' },
+                { href: '/admin/audit', icon: ShieldCheck, label: 'Audit Log', active: pathname === '/admin/audit' },
+            ]
+        },
+        {
+            label: "Integrations",
+            items: [
+                { href: '/admin/integrations', icon: Network, label: 'Integrations Hub', active: pathname === '/admin/integrations' },
+                { href: '/admin/integrations/erx-readiness', icon: ShieldCheck, label: 'eRx Readiness', active: pathname === '/admin/integrations/erx-readiness' },
+                { href: '/admin/integrations/doxy', icon: Video, label: 'Doxy.me', active: pathname === '/admin/integrations/doxy' },
+                { href: '/admin/integrations/radiantlogiq', icon: DatabaseZap, label: 'RadiantLogiq', active: pathname === '/admin/integrations/radiantlogiq' },
+                { href: '/admin/integrations/powerscribe', icon: Activity, label: 'PowerScribe 360', active: pathname === '/admin/integrations/powerscribe' },
+                { href: '/admin/integrations/radai', icon: Bot, label: 'Rad AI', active: pathname === '/admin/integrations/radai' },
+                { href: '/admin/integrations/plugins', icon: Puzzle, label: 'Plugins & Extensions', active: pathname === '/admin/integrations/plugins' },
+                { href: '/admin/integrations/apis', icon: Key, label: 'API Keys', active: pathname === '/admin/integrations/apis' },
+            ]
+        }
+    ].filter(g => g.items.length > 0);
+
+    const allMenuItems = allMenuGroups.flatMap(g => g.items);
+    const favoriteItems = favorites.map(href => allMenuItems.find(i => i.href === href)).filter(Boolean) as typeof allMenuItems;
+
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 font-sans text-slate-900 dark:text-white dark:text-slate-100">
 
@@ -304,103 +423,69 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                         </div>
                     )}
 
+                    {/* Module Search */}
+                    {!isSidebarCollapsed && (
+                        <div className="px-4 mb-3">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sidebar-muted" />
+                                <input
+                                    type="text"
+                                    placeholder="Search modules..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-sidebar-active/30 border border-sidebar-active/50 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-sidebar-muted focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand transition-all"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <div className={!isSidebarCollapsed ? "px-3 space-y-4" : "px-2 space-y-4"}>
-
-                        {/* CLINICAL */}
-                        <CollapsibleGroup label="Clinical" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Clinical']} onToggle={() => toggleSection('Clinical')}>
-                            <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" active={pathname === '/dashboard'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/calendar" icon={Calendar} label="Calendar" active={pathname.startsWith('/calendar')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/patients" icon={User} label="Patients" active={pathname.startsWith('/patients')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/team" icon={Users} label="Team" active={pathname.startsWith('/team')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/inbox" icon={MessageSquare} label="Inbox / Messages" badge={unreadInbox > 0 ? unreadInbox.toString() : undefined} active={pathname.startsWith('/inbox')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/waitlist" icon={Clock} label="Patient Waitlist" badge={unreadWaitlist > 0 ? unreadWaitlist.toString() : undefined} active={pathname.startsWith('/waitlist')} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* CRM */}
-                        <CollapsibleGroup label="CRM" collapsed={isSidebarCollapsed} isExpanded={expandedSections['CRM']} onToggle={() => toggleSection('CRM')}>
-                            <NavItem href="/crm" icon={Database} label="CRM Dashboard" active={pathname === '/crm'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/crm/patients" icon={User} label="Patients" active={pathname.startsWith('/crm/patients')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/crm/facilities" icon={Briefcase} label="Facilities" active={pathname.startsWith('/crm/facilities')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/crm/vendors" icon={Users} label="Vendors" active={pathname.startsWith('/crm/vendors')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/crm/campaigns" icon={BarChart} label="Campaigns" active={pathname.startsWith('/crm/campaigns')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/crm/social" icon={Share2} label="Social Media Hub" active={pathname.startsWith('/crm/social')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/crm/grants" icon={ClipboardList} label="Grant Proposals" active={pathname.startsWith('/crm/grants')} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/crm/timesheets" icon={Clock} label="Time Sheets" active={pathname.startsWith('/crm/timesheets')} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* COMMUNITY */}
-                        <CollapsibleGroup label="Social" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Social']} onToggle={() => toggleSection('Social')}>
-                            <NavItem href="/community" icon={Users} label="Community Feed" active={pathname.startsWith('/community')} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* ORDERS & Rx */}
-                        <CollapsibleGroup label="Orders & Rx" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Orders & Rx']} onToggle={() => toggleSection('Orders & Rx')}>
-                            <NavItem href="/orders/erx" icon={Pill} label="eRx / Prescriptions" active={pathname === '/orders/erx'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/orders/labs" icon={Microscope} label="Lab Orders" active={pathname === '/orders/labs'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/orders/imaging" icon={Scan} label="Imaging Orders" active={pathname === '/orders/imaging'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/orders/pacs" icon={Scan} label="PACS" active={pathname === '/orders/pacs'} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* SERVICES */}
-                        <CollapsibleGroup label="Services" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Services']} onToggle={() => toggleSection('Services')}>
-                            <NavItem href="/services" icon={Briefcase} label="Services Catalog" active={pathname === '/services'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/book" icon={Video} label="Booking" active={pathname === '/book'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/billing" icon={CreditCard} label="Billing" active={pathname === '/billing'} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* SPECIALTY MODULES (DYNAMIC) */}
-                        {enabledModules.length > 0 && (
-                            <CollapsibleGroup label="Specialty Modules" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Specialty Modules']} onToggle={() => toggleSection('Specialty Modules')}>
-                                {SPECIALTY_MODULES.filter(m => enabledModules.includes(m.id)).map(module => (
+                        {searchQuery ? (
+                            <div className="space-y-1 mt-2">
+                                {allMenuItems.filter(i => i.label.toLowerCase().includes(searchQuery.toLowerCase())).map(item => (
                                     <NavItem 
-                                        key={module.id} 
-                                        href={`/modules/${module.id}/${module.pages[0].id}`} 
-                                        icon={module.icon} 
-                                        label={module.name} 
-                                        active={pathname.startsWith(`/modules/${module.id}`)} 
+                                        key={`search-${item.href}`} 
+                                        {...item} 
                                         collapsed={isSidebarCollapsed} 
+                                        isFavorite={favorites.includes(item.href)} 
+                                        onToggleFavorite={toggleFavorite} 
                                     />
                                 ))}
-                            </CollapsibleGroup>
+                                {allMenuItems.filter(i => i.label.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                                    <div className="text-center py-4 text-xs text-sidebar-muted">No modules found</div>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                {favoriteItems.length > 0 && (
+                                    <CollapsibleGroup label="Favorites" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Favorites'] ?? true} onToggle={() => toggleSection('Favorites')}>
+                                        {favoriteItems.map(item => (
+                                            <NavItem 
+                                                key={`fav-${item.href}`} 
+                                                {...item} 
+                                                collapsed={isSidebarCollapsed} 
+                                                isFavorite={true} 
+                                                onToggleFavorite={toggleFavorite} 
+                                            />
+                                        ))}
+                                    </CollapsibleGroup>
+                                )}
+
+                                {allMenuGroups.map(group => (
+                                    <CollapsibleGroup key={group.label} label={group.label} collapsed={isSidebarCollapsed} isExpanded={expandedSections[group.label]} onToggle={() => toggleSection(group.label)}>
+                                        {group.items.map(item => (
+                                            <NavItem 
+                                                key={`nav-${item.href}`} 
+                                                {...item} 
+                                                collapsed={isSidebarCollapsed} 
+                                                isFavorite={favorites.includes(item.href)} 
+                                                onToggleFavorite={toggleFavorite} 
+                                            />
+                                        ))}
+                                    </CollapsibleGroup>
+                                ))}
+                            </>
                         )}
-
-                        {/* AI TOOLS */}
-                        <CollapsibleGroup label="AI Tools" collapsed={isSidebarCollapsed} isExpanded={expandedSections['AI Tools']} onToggle={() => toggleSection('AI Tools')}>
-                            <NavItem href="/ai/queue" icon={Bot} label="AI Action Queue" active={pathname === '/ai/queue'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/protocols" icon={ClipboardList} label="Protocols" active={pathname === '/protocols'} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* ANALYTICS */}
-                        <CollapsibleGroup label="Analytics" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Analytics']} onToggle={() => toggleSection('Analytics')}>
-                            <NavItem href="/analytics/clinical" icon={Activity} label="Clinical Dashboard" active={pathname === '/analytics/clinical'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/analytics/business" icon={BarChart} label="Business Dashboard" active={pathname === '/analytics/business'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/analytics/google" icon={Activity} label="Google Analytics" active={pathname === '/analytics/google'} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* ADMIN */}
-                        <CollapsibleGroup label="Admin" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Admin']} onToggle={() => toggleSection('Admin')}>
-                            <NavItem href="/admin/global-settings" icon={ShieldAlert} label="Global Sys Settings" active={pathname === '/admin/global-settings'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/modules" icon={Activity} label="Specialty Modules" active={pathname === '/admin/modules'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/community-moderation" icon={ShieldAlert} label="Community Moderation" active={pathname === '/admin/community-moderation'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/store" icon={ShoppingBag} label="Store Management" active={pathname === '/admin/store'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/communications" icon={Megaphone} label="Communications" active={pathname === '/admin/communications'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname === '/admin/users'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/audit" icon={ShieldCheck} label="Audit Log" active={pathname === '/admin/audit'} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
-                        {/* INTEGRATIONS HUB */}
-                        <CollapsibleGroup label="Integrations" collapsed={isSidebarCollapsed} isExpanded={expandedSections['Integrations']} onToggle={() => toggleSection('Integrations')}>
-                            <NavItem href="/admin/integrations" icon={Network} label="Integrations Hub" active={pathname === '/admin/integrations'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/integrations/erx-readiness" icon={ShieldCheck} label="eRx Readiness" active={pathname === '/admin/integrations/erx-readiness'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/integrations/doxy" icon={Video} label="Doxy.me" active={pathname === '/admin/integrations/doxy'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/integrations/radiantlogiq" icon={DatabaseZap} label="RadiantLogiq" active={pathname === '/admin/integrations/radiantlogiq'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/integrations/powerscribe" icon={Activity} label="PowerScribe 360" active={pathname === '/admin/integrations/powerscribe'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/integrations/radai" icon={Bot} label="Rad AI" active={pathname === '/admin/integrations/radai'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/integrations/plugins" icon={Puzzle} label="Plugins & Extensions" active={pathname === '/admin/integrations/plugins'} collapsed={isSidebarCollapsed} />
-                            <NavItem href="/admin/integrations/apis" icon={Key} label="API Keys" active={pathname === '/admin/integrations/apis'} collapsed={isSidebarCollapsed} />
-                        </CollapsibleGroup>
-
                     </div>
                 </nav>
 
@@ -588,33 +673,45 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     );
 }
 
-function NavItem({ href, icon: Icon, label, active, badge, collapsed }: any) {
+function NavItem({ href, icon: Icon, label, active, badge, collapsed, isFavorite, onToggleFavorite }: any) {
     return (
         <Link
             href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-all group relative overflow-hidden ${active
+            className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg mb-1 transition-all group relative overflow-hidden ${active
                 ? 'bg-sidebar-active text-sidebar-foreground font-medium shadow-inner shadow-black/20'
                 : 'text-sidebar-muted font-medium hover:bg-sidebar-hover hover:text-sidebar-foreground'
                 } ${collapsed ? 'justify-center' : ''}`}
             title={collapsed ? label : ''}
         >
-            {active && !collapsed && <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand rounded-r-full"></div>}
+            {active && !collapsed && <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand rounded-r-full z-20"></div>}
 
-            <Icon className={`w-5 h-5 relative z-10 transition-colors shrink-0 ${active ? 'text-white' : 'group-hover:text-white'}`} />
+            <div className="flex items-center gap-3 min-w-0 flex-1 relative z-10">
+                <Icon className={`w-5 h-5 transition-colors shrink-0 ${active ? 'text-white' : 'group-hover:text-white'} ${isFavorite && !collapsed && !active ? 'text-amber-400 group-hover:text-amber-300' : ''}`} />
 
-            {!collapsed && (
-                <>
-                    <span className="flex-1 relative z-10 whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
-                    {badge && (
-                        <span className="bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md relative z-10 shadow-sm">
-                            {badge}
-                        </span>
-                    )}
-                </>
-            )}
+                {!collapsed && (
+                    <>
+                        <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{label}</span>
+                        {badge && (
+                            <span className="bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm shrink-0">
+                                {badge}
+                            </span>
+                        )}
+                    </>
+                )}
+            </div>
 
             {collapsed && badge && (
                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-indigo-500 border border-sidebar rounded-full z-20"></span>
+            )}
+            
+            {!collapsed && onToggleFavorite && (
+                <div 
+                    onClick={(e) => onToggleFavorite(e, href)}
+                    className={`shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors z-20 ${isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                    title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                >
+                    <Star className={`w-4 h-4 ${isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400 hover:text-amber-400'}`} />
+                </div>
             )}
         </Link>
     )

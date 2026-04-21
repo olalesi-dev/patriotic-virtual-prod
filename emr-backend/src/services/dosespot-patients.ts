@@ -32,6 +32,7 @@ export interface EnsureDoseSpotPatientResult {
     candidatePatientIds: number[];
     matchSource: string | null;
     message: string;
+    lastError?: string | null;
 }
 
 export interface DeleteDoseSpotPatientResult {
@@ -146,6 +147,24 @@ export interface DeleteDoseSpotPatientOptions {
     deactivateAllExactMatches?: boolean;
 }
 
+export function resolveDoseSpotPatientOperationClinicianId(onBehalfOfClinicianId?: number): number | undefined {
+    const explicitClinicianId = asNumber(onBehalfOfClinicianId);
+    if (explicitClinicianId && explicitClinicianId > 0) {
+        return explicitClinicianId;
+    }
+
+    const configuredClinicianId = asNumber(process.env.DOSESPOT_DEFAULT_CLINICIAN_ID);
+    if (configuredClinicianId && configuredClinicianId > 0) {
+        return configuredClinicianId;
+    }
+
+    return undefined;
+}
+
+export function getDoseSpotPatientClinicianContextError(): string {
+    return 'DoseSpot patient operations require a clinician ID. Set DOSESPOT_DEFAULT_CLINICIAN_ID for patient self-service flows or pass the logged-in provider\'s doseSpotClinicianId.';
+}
+
 interface DoseSpotPatientGateway {
     searchPatients(
         params: {
@@ -191,6 +210,10 @@ function isDoseSpotAuthorizationConfigError(error: unknown): boolean {
         message.includes('onbehalfofuser validation failed') ||
         message.includes('authorization has been denied')
     );
+}
+
+function isDoseSpotOnBehalfValidationError(error: unknown): boolean {
+    return toErrorMessage(error).toLowerCase().includes('onbehalfofuser validation failed');
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -486,21 +509,7 @@ async function withPatientManagementAuthFallback<T>(
     operation: string,
     action: (effectiveOnBehalfOfClinicianId?: number) => Promise<T>
 ): Promise<T> {
-    try {
-        return await action(onBehalfOfClinicianId);
-    } catch (error) {
-        if (!onBehalfOfClinicianId || !isDoseSpotAuthorizationConfigError(error)) {
-            throw error;
-        }
-
-        logger.warn('[DoseSpot Patient Sync] Retrying patient-management request without OnBehalfOf clinician context', {
-            operation,
-            onBehalfOfClinicianId,
-            error: toErrorMessage(error)
-        });
-
-        return action(undefined);
-    }
+    return action(onBehalfOfClinicianId);
 }
 
 const defaultGateway: DoseSpotPatientGateway = {
@@ -609,6 +618,10 @@ async function persistPreferredPharmacySyncState(
     doseSpotPatientId: number,
     outcome: PreferredPharmacySyncOutcome
 ): Promise<void> {
+    if (admin.apps.length === 0) {
+        return;
+    }
+
     const now = new Date();
     const patientPatch: Record<string, unknown> = {
         'doseSpot.preferredPharmacySync.status': outcome.status,
@@ -651,6 +664,7 @@ async function syncPreferredPharmacyForDoseSpotPatient(
     options: EnsureDoseSpotPatientOptions,
     gateway: DoseSpotPatientGateway
 ): Promise<PreferredPharmacySyncOutcome> {
+    const effectiveOnBehalfOfClinicianId = resolveDoseSpotPatientOperationClinicianId(options.onBehalfOfClinicianId);
     const pharmacyId = source.preferredPharmacyDoseSpotId;
     if (!pharmacyId) {
         return {
@@ -672,6 +686,16 @@ async function syncPreferredPharmacyForDoseSpotPatient(
         };
     }
 
+    if (!effectiveOnBehalfOfClinicianId) {
+        return {
+            status: 'blocked',
+            attempted: false,
+            pharmacyId,
+            message: getDoseSpotPatientClinicianContextError(),
+            errorMessage: getDoseSpotPatientClinicianContextError()
+        };
+    }
+
     try {
         await gateway.addPatientPharmacy(
             doseSpotPatientId,
@@ -679,7 +703,7 @@ async function syncPreferredPharmacyForDoseSpotPatient(
                 pharmacyId,
                 setAsPrimary: true
             },
-            options.onBehalfOfClinicianId
+            effectiveOnBehalfOfClinicianId
         );
 
         return {
@@ -858,7 +882,10 @@ async function finalizeResult(
         candidatePatientIds: result.candidatePatientIds
     });
 
-    return result;
+    return {
+        ...result,
+        lastError
+    };
 }
 
 async function finalizeReadyResultWithPreferredPharmacy(
@@ -901,6 +928,8 @@ async function ensureDoseSpotPatientWithSource(
     gateway: DoseSpotPatientGateway = defaultGateway,
     persistHandler: PersistSyncStateHandler = persistSyncState
 ): Promise<EnsureDoseSpotPatientResult> {
+    const effectiveOnBehalfOfClinicianId = resolveDoseSpotPatientOperationClinicianId(options.onBehalfOfClinicianId);
+
     if (source.existingDoseSpotPatientId) {
         if (options.updateExisting) {
             const blockingFields = writeBlockingMissingFields(source);
@@ -923,12 +952,30 @@ async function ensureDoseSpotPatientWithSource(
                 );
             }
 
+            if (!effectiveOnBehalfOfClinicianId) {
+                return finalizeResult(
+                    source,
+                    {
+                        status: 'blocked',
+                        syncStatus: 'blocked',
+                        patientUid: source.patientUid,
+                        doseSpotPatientId: source.existingDoseSpotPatientId,
+                        missingFields: [],
+                        candidatePatientIds: [],
+                        matchSource: 'existing_link',
+                        message: getDoseSpotPatientClinicianContextError()
+                    },
+                    getDoseSpotPatientClinicianContextError(),
+                    persistHandler
+                );
+            }
+
             const payload = buildDoseSpotPayload(source);
             try {
                 const updatedId = await gateway.editPatient(
                     source.existingDoseSpotPatientId,
                     payload,
-                    options.onBehalfOfClinicianId
+                    effectiveOnBehalfOfClinicianId
                 );
 
                 return finalizeReadyResultWithPreferredPharmacy(
@@ -1010,12 +1057,30 @@ async function ensureDoseSpotPatientWithSource(
         }, null, persistHandler);
     }
 
+    if (!effectiveOnBehalfOfClinicianId) {
+        return finalizeResult(
+            source,
+            {
+                status: 'blocked',
+                syncStatus: 'blocked',
+                patientUid: source.patientUid,
+                doseSpotPatientId: null,
+                missingFields: [],
+                candidatePatientIds: [],
+                matchSource: null,
+                message: getDoseSpotPatientClinicianContextError()
+            },
+            getDoseSpotPatientClinicianContextError(),
+            persistHandler
+        );
+    }
+
     try {
         const searchResults = await gateway.searchPatients({
             firstName: source.firstName!,
             lastName: source.lastName!,
             dateOfBirth: source.dateOfBirth!
-        }, options.onBehalfOfClinicianId);
+        }, effectiveOnBehalfOfClinicianId);
 
         const match = chooseSearchMatch(searchResults, source);
         if (match.chosenPatientId) {
@@ -1102,7 +1167,7 @@ async function ensureDoseSpotPatientWithSource(
     const payload = buildDoseSpotPayload(source);
 
     try {
-        const createdPatientId = await gateway.addPatient(payload, options.onBehalfOfClinicianId);
+        const createdPatientId = await gateway.addPatient(payload, effectiveOnBehalfOfClinicianId);
         return finalizeReadyResultWithPreferredPharmacy(
             source,
             buildReadyResult(source, 'created_new', createdPatientId, 'created'),
@@ -1168,7 +1233,8 @@ export async function ensureDoseSpotPatientForUid(
             missingFields: ['patientRecord'],
             candidatePatientIds: [],
             matchSource: null,
-            message: 'Local patient record was not found.'
+            message: 'Local patient record was not found.',
+            lastError: null
         };
     }
 
@@ -1181,6 +1247,17 @@ async function deleteDoseSpotPatientWithSource(
     gateway: DoseSpotPatientGateway = defaultGateway,
     clearPersistedStateHandler: (patientUid: string) => Promise<void> = clearPersistedSyncState
 ): Promise<DeleteDoseSpotPatientResult> {
+    const effectiveOnBehalfOfClinicianId = resolveDoseSpotPatientOperationClinicianId(options.onBehalfOfClinicianId);
+    if (!effectiveOnBehalfOfClinicianId) {
+        return {
+            status: 'blocked',
+            patientUid: source.patientUid,
+            deletedPatientIds: [],
+            candidatePatientIds: [],
+            message: getDoseSpotPatientClinicianContextError()
+        };
+    }
+
     const explicitCandidateIds = Array.from(new Set(
         (options.candidatePatientIds ?? [])
             .map((value) => asNumber(value))
@@ -1193,12 +1270,12 @@ async function deleteDoseSpotPatientWithSource(
     if (explicitCandidateIds.length > 0) {
         candidatePatientIds = explicitCandidateIds;
         const records = await Promise.all(
-            explicitCandidateIds.map((patientId) => gateway.getPatient(patientId, options.onBehalfOfClinicianId))
+            explicitCandidateIds.map((patientId) => gateway.getPatient(patientId, effectiveOnBehalfOfClinicianId))
         );
         targetRecords = records.filter((record): record is DoseSpotPatientRecord => record !== null);
     } else if (source.existingDoseSpotPatientId) {
         candidatePatientIds = [source.existingDoseSpotPatientId];
-        const record = await gateway.getPatient(source.existingDoseSpotPatientId, options.onBehalfOfClinicianId);
+        const record = await gateway.getPatient(source.existingDoseSpotPatientId, effectiveOnBehalfOfClinicianId);
         targetRecords = record ? [record] : [];
     } else {
         const blockingFields = blockingMissingFields(source);
@@ -1216,7 +1293,7 @@ async function deleteDoseSpotPatientWithSource(
             firstName: source.firstName!,
             lastName: source.lastName!,
             dateOfBirth: source.dateOfBirth!
-        }, options.onBehalfOfClinicianId);
+        }, effectiveOnBehalfOfClinicianId);
 
         const exactMatches = chooseExactMatchRecords(searchResults, source);
         candidatePatientIds = exactMatches
@@ -1266,7 +1343,7 @@ async function deleteDoseSpotPatientWithSource(
         }
 
         const payload = buildDoseSpotEditPayloadFromRecord(record, false);
-        await gateway.editPatient(patientId, payload, options.onBehalfOfClinicianId);
+        await gateway.editPatient(patientId, payload, effectiveOnBehalfOfClinicianId);
         deletedPatientIds.push(patientId);
     }
 
@@ -1328,10 +1405,12 @@ export const doseSpotPatientTestables = {
     deleteDoseSpotPatientWithSource,
     ensureDoseSpotPatientWithSource,
     formatDateOnly,
+    getDoseSpotPatientClinicianContextError,
     normalizeGender,
     normalizeMatchCandidates,
     normalizePhone,
     normalizeZip,
+    resolveDoseSpotPatientOperationClinicianId,
     recommendedMissingFields,
     writeBlockingMissingFields,
     recordsMatchExactly,

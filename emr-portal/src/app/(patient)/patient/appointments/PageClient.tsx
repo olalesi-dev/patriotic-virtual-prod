@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { svcs, iQs } from '@/lib/catalog';
 import { apiFetchJson } from '@/lib/api-client';
+import { getApiUrl } from '@/lib/api-origin';
 import { auth, db } from '@/lib/firebase';
 import {
     collection,
@@ -138,7 +139,7 @@ export default function AppointmentsPage() {
                 'Authorization': `Bearer ${token}`
             };
 
-            const consultation = await apiFetchJson<{ id: string }>('/api/v1/consultations', {
+            const consultation = await apiFetchJson<{ id: string }>(getApiUrl('/api/v1/consultations'), {
                 method: 'POST',
                 headers: baseHeaders,
                 body: {
@@ -148,7 +149,7 @@ export default function AppointmentsPage() {
                 }
             });
 
-            return apiFetchJson<{ url: string }>('/api/v1/payments/create-checkout-session', {
+            return apiFetchJson<{ url: string }>(getApiUrl('/api/v1/payments/create-checkout-session'), {
                 method: 'POST',
                 headers: baseHeaders,
                 body: {

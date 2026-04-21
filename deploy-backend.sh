@@ -5,7 +5,7 @@ SERVICE_NAME="${CLOUD_RUN_SERVICE:-patriotic-virtual-backend}"
 SOURCE_DIR="${BACKEND_SOURCE_DIR:-emr-backend}"
 PROJECT_ID="${GCP_PROJECT_ID:-patriotic-virtual-prod}"
 REGION="${GCP_REGION:-us-central1}"
-ENV_FILE="${BACKEND_ENV_FILE:-${SOURCE_DIR}/.env}"
+ENV_FILE="${BACKEND_ENV_FILE:-${SOURCE_DIR}/.env.production}"
 ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-true}"
 RESERVED_ENV_REGEX='^(PORT|K_SERVICE|K_REVISION|K_CONFIGURATION)='
 VALID_ENV_REGEX='^[A-Za-z_][A-Za-z0-9_]*='
@@ -44,6 +44,15 @@ cleanup() {
     fi
 }
 trap cleanup EXIT
+
+if [ -n "${SANITIZED_ENV_FILE}" ] && [ -f "${SANITIZED_ENV_FILE}" ]; then
+    for required_var in STRIPE_SECRET_KEY FRONTEND_URL; do
+        if ! grep -q "^${required_var}=" "${SANITIZED_ENV_FILE}"; then
+            echo "❌ Required backend env var missing from ${ENV_FILE}: ${required_var}"
+            exit 1
+        fi
+    done
+fi
 
 DEPLOY_ARGS=(
   --source "${SOURCE_DIR}"

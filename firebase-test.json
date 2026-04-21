@@ -1,0 +1,63 @@
+{
+  "hosting": [
+    {
+      "public": "public",
+      "site": "patriotic-virtual-test",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+
+        {
+          "source": "/sitemap.xml",
+          "destination": "/sitemap.xml"
+        },
+        {
+          "source": "/privacy",
+          "destination": "/privacy/index.html"
+        },
+        {
+          "source": "/terms",
+          "destination": "/terms/index.html"
+        },
+        {
+          "source": "/refund",
+          "destination": "/refund/index.html"
+        },
+        {
+          "source": "/contact",
+          "destination": "/contact/index.html"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "emr-portal",
+      "site": "patriotic-virtual-test-emr",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "frameworksBackend": {
+        "region": "us-central1"
+      }
+    }
+  ]
+}

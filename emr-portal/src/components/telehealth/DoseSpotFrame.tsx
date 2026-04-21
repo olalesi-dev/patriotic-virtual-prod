@@ -88,6 +88,9 @@ export function DoseSpotFrame({
         const missingFieldsText = syncState.missingFields.length > 0
             ? `Missing fields: ${syncState.missingFields.join(', ')}.`
             : null;
+        const detailedErrorText = syncState.lastError && syncState.lastError !== syncState.message
+            ? syncState.lastError
+            : null;
 
         return (
             <div
@@ -103,6 +106,11 @@ export function DoseSpotFrame({
                         <p className="text-sm font-semibold text-slate-700">
                             {syncState.message}
                         </p>
+                        {detailedErrorText && (
+                            <p className="rounded-xl border border-amber-200 bg-white/80 px-3 py-2 text-left text-sm text-amber-800">
+                                {detailedErrorText}
+                            </p>
+                        )}
                         {missingFieldsText && (
                             <p className="text-sm text-slate-600">{missingFieldsText}</p>
                         )}
