@@ -1,18 +1,85 @@
 
-import React, { useState } from 'react';
-import { Camera, Mic, Settings, UserCheck, Clock, ShieldCheck, Video } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Camera, Mic, Settings, UserCheck, Clock, ShieldCheck, Video, Bot, StopCircle } from 'lucide-react';
+
+function useSpeechRecognition() {
+    const [isListening, setIsListening] = useState(false);
+    const [transcript, setTranscript] = useState('');
+    const recognitionRef = useRef<any>(null);
+
+    useEffect(() => {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = true;
+            recognitionRef.current.interimResults = true;
+            
+            recognitionRef.current.onresult = (event: any) => {
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcriptPiece = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        setTranscript(prev => prev + transcriptPiece + ' ');
+                    }
+                }
+            };
+
+            recognitionRef.current.onerror = (event: any) => {
+                console.error('Speech recognition error', event.error);
+                if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+                    setIsListening(false);
+                }
+            };
+            
+            recognitionRef.current.onend = () => {
+                // If it stops automatically, but we expect it to be listening, we can restart it.
+                // For simplicity, we just set isListening to false here.
+                setIsListening(false);
+            }
+        }
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
+
+    const startListening = () => {
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.start();
+                setIsListening(true);
+            } catch (e) {
+                console.error(e);
+            }
+        } else {
+            console.warn('SpeechRecognition not supported in this browser.');
+            alert('Speech Recognition is not supported in this browser. Please use Chrome or Safari.');
+        }
+    };
+
+    const stopListening = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        }
+    };
+
+    return { isListening, startListening, stopListening, transcript, setTranscript };
+}
 
 interface VisitRoomProps {
     role: 'patient' | 'provider';
     patientName: string;
     providerName: string;
     videoLink?: string; // e.g. Doxy.me link
+    onEndVisit?: (transcript: string) => void;
 }
 
-export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, providerName, videoLink }) => {
+export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, providerName, videoLink, onEndVisit }) => {
     const [status, setStatus] = useState<'waiting' | 'ready' | 'connected'>('waiting');
     const [cameraOn, setCameraOn] = useState(true);
     const [micOn, setMicOn] = useState(true);
+    const { isListening, startListening, stopListening, transcript } = useSpeechRecognition();
 
     /* --- PATIENT WAITING ROOM --- */
     if (role === 'patient' && status === 'waiting') {
@@ -120,11 +187,43 @@ export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, provide
                 {/* Main Stage */}
                 <div className="flex-1 flex flex-col relative bg-slate-900">
                     {status === 'connected' && videoLink ? (
-                        <iframe
-                            src={videoLink}
-                            allow="camera; microphone; fullscreen; display-capture"
-                            className="w-full h-full border-none"
-                        />
+                        <>
+                            <iframe
+                                src={videoLink}
+                                allow="camera; microphone; fullscreen; display-capture"
+                                className="flex-1 w-full border-none"
+                            />
+                            {/* Provider Controls Footer */}
+                            <div className="h-20 bg-slate-800 border-t border-slate-700 flex items-center justify-between px-6 shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <button 
+                                        onClick={isListening ? stopListening : startListening}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${
+                                            isListening ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                                        }`}
+                                    >
+                                        <Bot className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
+                                        {isListening ? 'AI Scribe Active' : 'Enable AI Scribe'}
+                                    </button>
+                                    
+                                    {isListening && (
+                                        <div className="text-xs text-slate-400 max-w-md truncate">
+                                            {transcript ? `"...${transcript.slice(-50)}"` : 'Listening...'}
+                                        </div>
+                                    )}
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        stopListening();
+                                        onEndVisit?.(transcript);
+                                    }}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all"
+                                >
+                                    <StopCircle className="w-5 h-5" />
+                                    End Visit
+                                </button>
+                            </div>
+                        </>
                     ) : (
                         <div className="flex-1 flex items-center justify-center text-slate-500 flex-col">
                             <UserCheck className="w-16 h-16 mb-4 opacity-20" />

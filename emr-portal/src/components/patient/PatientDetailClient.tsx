@@ -1258,7 +1258,7 @@ function EncounterSection({ patient }: { patient: PatientDetailRecord }) {
                                 <div className="text-xs font-semibold text-slate-500">
                                     {formatDateValue(encounter.date)} • {encounter.provider} • {encounter.type}
                                 </div>
-                                {encounter.notes && <div className="mt-2 text-xs text-slate-500">{encounter.notes}</div>}
+                                {encounter.notes && <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700 whitespace-pre-wrap font-medium">{encounter.notes}</div>}
                             </div>
                             <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">{encounter.status}</span>
                         </div>
