@@ -124,7 +124,7 @@ function ScheduleModal({
                 providerName: actualProviderName,
                 providerId: actualProviderId,
                 meetingUrl: entry.meetingUrl,
-                notes: notes || undefined,
+                notes: notes,
                 updatedAt: serverTimestamp(),
             };
 

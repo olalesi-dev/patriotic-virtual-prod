@@ -98,6 +98,10 @@ function getObjectBody(req: Request): Record<string, unknown> {
         : {};
 }
 
+function getErrorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
+}
+
 async function resolveDoseSpotRequester(uid: string, tokenRole: unknown) {
     const firestore = admin.firestore();
     const [userDoc, patientDoc] = await Promise.all([
@@ -595,17 +599,19 @@ router.post('/patients/ensure', verifyFirebaseToken, async (req: Request, res: R
         }
 
         const result = await ensureDoseSpotPatientForUid(requestedPatientUid, {
-            updateExisting
+            updateExisting,
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
         });
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to ensure DoseSpot patient link.');
         logger.error('[DoseSpot Patient Sync] Ensure route failed', {
             requesterUid,
             requestedPatientUid,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to ensure DoseSpot patient link' });
+        return res.status(500).json({ error: message });
     }
 });
 
@@ -657,12 +663,13 @@ router.post('/patients/:patientUid/preferred-pharmacy/sync', verifyFirebaseToken
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to sync DoseSpot preferred pharmacy.');
         logger.error('[DoseSpot Patient Sync] Preferred pharmacy sync route failed', {
             requesterUid,
             requestedPatientUid,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to sync DoseSpot preferred pharmacy.' });
+        return res.status(500).json({ error: message });
     }
 });
 
@@ -694,17 +701,19 @@ router.post('/patients/delete', verifyFirebaseToken, async (req: Request, res: R
 
         const result = await deleteDoseSpotPatientForUid(requestedPatientUid, {
             candidatePatientIds,
-            deactivateAllExactMatches
+            deactivateAllExactMatches,
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
         });
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to delete DoseSpot patient link.');
         logger.error('[DoseSpot Patient Delete] Delete route failed', {
             requesterUid,
             requestedPatientUid,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to delete DoseSpot patient link' });
+        return res.status(500).json({ error: message });
     }
 });
 
@@ -728,17 +737,19 @@ router.get('/patients/:patientUid/medication-history', verifyFirebaseToken, asyn
         const result = await fetchDoseSpotMedicationHistoryForPatientUid(requestedPatientUid, {
             start: typeof req.query.start === 'string' ? req.query.start : undefined,
             end: typeof req.query.end === 'string' ? req.query.end : undefined,
-            pageNumber: parsePositiveInt(req.query.pageNumber)
+            pageNumber: parsePositiveInt(req.query.pageNumber),
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
         });
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to load DoseSpot medication history.');
         logger.error('[DoseSpot Workflow] Failed to load medication history', {
             requesterUid,
             requestedPatientUid,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to load DoseSpot medication history.' });
+        return res.status(500).json({ error: message });
     }
 });
 
@@ -759,16 +770,19 @@ router.post('/patients/:patientUid/medication-history/consent', verifyFirebaseTo
             return res.status(403).json({ error: 'Not authorized to update DoseSpot workflows for another patient.' });
         }
 
-        const result = await logDoseSpotMedicationHistoryConsentForPatientUid(requestedPatientUid);
+        const result = await logDoseSpotMedicationHistoryConsentForPatientUid(requestedPatientUid, {
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
+        });
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to log DoseSpot medication-history consent.');
         logger.error('[DoseSpot Workflow] Failed to log medication history consent', {
             requesterUid,
             requestedPatientUid,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to log DoseSpot medication-history consent.' });
+        return res.status(500).json({ error: message });
     }
 });
 
@@ -799,17 +813,19 @@ router.get('/patients/:patientUid/prescriptions', verifyFirebaseToken, async (re
             endDate: typeof req.query.endDate === 'string' ? req.query.endDate : undefined,
             pageNumber: parsePositiveInt(req.query.pageNumber),
             statusClass,
-            prescriptionStatus: typeof req.query.prescriptionStatus === 'string' ? req.query.prescriptionStatus : undefined
+            prescriptionStatus: typeof req.query.prescriptionStatus === 'string' ? req.query.prescriptionStatus : undefined,
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
         });
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to load DoseSpot prescription summary.');
         logger.error('[DoseSpot Workflow] Failed to load prescription summary', {
             requesterUid,
             requestedPatientUid,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to load DoseSpot prescription summary.' });
+        return res.status(500).json({ error: message });
     }
 });
 
@@ -832,17 +848,19 @@ router.get('/queues/refills', verifyFirebaseToken, async (req: Request, res: Res
         const result = await fetchDoseSpotPendingRefillsQueue({
             clinicId: parseClinicScope(req.query.clinicId),
             patientUid: requestedPatientUid,
-            pageNumber: parsePositiveInt(req.query.pageNumber)
+            pageNumber: parsePositiveInt(req.query.pageNumber),
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
         });
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to load DoseSpot refill queue.');
         logger.error('[DoseSpot Workflow] Failed to load pending refill queue', {
             requesterUid,
             requestedPatientUid: requestedPatientUid ?? null,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to load DoseSpot refill queue.' });
+        return res.status(500).json({ error: message });
     }
 });
 
@@ -865,17 +883,19 @@ router.get('/queues/rxchanges', verifyFirebaseToken, async (req: Request, res: R
         const result = await fetchDoseSpotPendingRxChangesQueue({
             clinicId: parseClinicScope(req.query.clinicId),
             patientUid: requestedPatientUid,
-            pageNumber: parsePositiveInt(req.query.pageNumber)
+            pageNumber: parsePositiveInt(req.query.pageNumber),
+            onBehalfOfClinicianId: requester.doseSpotClinicianId ?? undefined
         });
 
         return res.status(200).json(result);
     } catch (error) {
+        const message = getErrorMessage(error, 'Failed to load DoseSpot RxChange queue.');
         logger.error('[DoseSpot Workflow] Failed to load pending RxChange queue', {
             requesterUid,
             requestedPatientUid: requestedPatientUid ?? null,
-            error: error instanceof Error ? error.message : String(error)
+            error: message
         });
-        return res.status(500).json({ error: 'Failed to load DoseSpot RxChange queue.' });
+        return res.status(500).json({ error: message });
     }
 });
 

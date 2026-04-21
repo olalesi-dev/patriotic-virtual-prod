@@ -832,7 +832,6 @@ function buildDoseSpotClinicianPayload(
     const prefix = findFirstString(source, ['prefix']);
     const suffix = findFirstString(source, ['suffix']);
     const dateOfBirth = toOptionalIsoDateOnly(source.dateOfBirth ?? source.dob);
-    const email = findFirstString(source, ['email']);
     const address1 = findFirstString(source, ['address1', 'address']);
     const address2 = findFirstString(source, ['address2']);
     const city = findFirstString(source, ['city']);
@@ -878,7 +877,6 @@ function buildDoseSpotClinicianPayload(
         MiddleName: middleName,
         LastName: lastName,
         DateOfBirth: dateOfBirth,
-        Email: email,
         Address1: address1,
         Address2: address2,
         City: city,
@@ -888,7 +886,6 @@ function buildDoseSpotClinicianPayload(
         PrimaryPhoneType: primaryPhoneType,
         PrimaryFax: primaryFax,
         DEANumber: deaNumber,
-        DEANumbers: buildClinicScopedRecord('DEANumber', deaNumber, stateLicenseState),
         MedicalLicenseNumbers: buildClinicScopedRecord('LicenseNumber', stateLicenseNumber, stateLicenseState),
         NPINumber: npiNumber,
         ClinicianRoleType: clinicianRoleTypes.length > 0 ? clinicianRoleTypes : ['PrescribingClinician'],
@@ -1310,6 +1307,7 @@ export async function applyDoseSpotClinicianWebhookEvent(
 }
 
 export const doseSpotClinicianTestables = {
+    buildDoseSpotClinicianPayload,
     deriveReadinessStatus,
     normalizeDisclaimer,
     normalizeIdpQuestions,

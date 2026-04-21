@@ -50,6 +50,40 @@ jobs:
       - name: Pre-install global dependencies
         run: npm install -g firebase-tools esbuild
 
+      - name: Validate EMR frontend public env
+        run: |
+          node - <<'NODE'
+          const apiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+          const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
+
+          function assertAbsoluteHttps(name, value) {
+            if (!value) {
+              throw new Error(`${name} is missing`);
+            }
+
+            let url;
+            try {
+              url = new URL(value);
+            } catch {
+              throw new Error(`${name} must be an absolute URL, got: ${value}`);
+            }
+
+            if (url.protocol !== 'https:') {
+              throw new Error(`${name} must use https in production, got: ${value}`);
+            }
+
+            if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+              throw new Error(`${name} must not point to localhost in production, got: ${value}`);
+            }
+          }
+
+          assertAbsoluteHttps('NEXT_PUBLIC_API_URL', apiUrl);
+          assertAbsoluteHttps('NEXT_PUBLIC_APP_URL', appUrl);
+          NODE
+        env:
+          NEXT_PUBLIC_API_URL: '${{ secrets.NEXT_PUBLIC_API_URL }}'
+          NEXT_PUBLIC_APP_URL: '${{ secrets.NEXT_PUBLIC_APP_URL }}'
+
       - name: Deploy to Firebase EMR
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -67,8 +101,14 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}'
           NEXT_PUBLIC_FIREBASE_APP_ID: '${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}'
           NEXT_PUBLIC_FIREBASE_VAPID_KEY: '${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}'
+          NEXT_PUBLIC_API_URL: '${{ secrets.NEXT_PUBLIC_API_URL }}'
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: '${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}'
           STRIPE_SECRET_KEY: '${{ secrets.STRIPE_SECRET_KEY }}'
-          NEXT_PUBLIC_APP_URL: 'https://patriotic-virtual-emr.web.app'
+          NEXT_PUBLIC_APP_URL: '${{ secrets.NEXT_PUBLIC_APP_URL }}'
+          DOSESPOT_BACKEND_URL: '${{ secrets.DOSESPOT_BACKEND_URL }}'
+          NEXT_PUBLIC_VOUCHED_PUBLIC_KEY: '${{ secrets.NEXT_PUBLIC_VOUCHED_PUBLIC_KEY }}'
+          NEXT_PUBLIC_VOUCHED_WEBHOOK_ORIGIN: '${{ secrets.NEXT_PUBLIC_VOUCHED_WEBHOOK_ORIGIN }}'
+
 
       - name: Deploy to Firebase Landing
         uses: FirebaseExtended/action-hosting-deploy@v0

@@ -3,5 +3,6 @@ declare namespace Express {
     interface Request {
         user?: any;
         appUser?: any;
+        rawBody?: string;
     }
 }

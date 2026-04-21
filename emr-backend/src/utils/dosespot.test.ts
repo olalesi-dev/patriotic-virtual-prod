@@ -7,6 +7,7 @@ test('generateSSOUrl includes resolved PatientId after local patient sync resolu
     process.env.DOSESPOT_CLINIC_ID = '1007159';
     process.env.DOSESPOT_CLINIC_KEY = 'HPHH63FJA79VHFQQ5S4UR2K9JMVTF2N9';
     process.env.DOSESPOT_BASE_URL = 'https://my.staging.dosespot.com';
+    process.env.DOSESPOT_DEFAULT_CLINICIAN_ID = '3088396';
 
     const ensureResult = await doseSpotPatientTestables.ensureDoseSpotPatientWithSource(
         {
@@ -87,6 +88,43 @@ test('getDoseSpotAccessToken fetches a fresh DoseSpot token for every REST reque
         assert.equal(first, 'token-1');
         assert.equal(second, 'token-2');
         assert.equal(callCount, 2);
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
+
+test('getDoseSpotAccessToken authenticates directly as the clinician id for provider REST calls', async () => {
+    process.env.DOSESPOT_CLINIC_ID = '1007159';
+    process.env.DOSESPOT_CLINIC_KEY = 'HPHH63FJA79VHFQQ5S4UR2K9JMVTF2N9';
+    process.env.DOSESPOT_USER_ID = '3088396';
+    process.env.DOSESPOT_BASE_URL = 'https://my.staging.dosespot.com';
+    process.env.DOSESPOT_SUBSCRIPTION_KEY = 'subscription-key';
+
+    const originalFetch = global.fetch;
+    let capturedBody = '';
+
+    global.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+        capturedBody = String(init?.body ?? '');
+
+        return new Response(
+            JSON.stringify({
+                access_token: 'clinician-token',
+                expires_in: 300
+            }),
+            {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            }
+        );
+    }) as typeof fetch;
+
+    try {
+        const token = await getDoseSpotAccessToken(3088821);
+
+        assert.equal(token, 'clinician-token');
+        assert.match(capturedBody, /username=3088821/);
+        assert.doesNotMatch(capturedBody, /acr_values=/);
+        assert.doesNotMatch(capturedBody, /OnBehalfOfUserId=/);
     } finally {
         global.fetch = originalFetch;
     }

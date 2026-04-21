@@ -26,6 +26,7 @@ export interface DoseSpotPatientEnsureResponse {
     candidatePatientIds: number[];
     matchSource: string | null;
     message: string;
+    lastError?: string | null;
 }
 
 export type DoseSpotPatientDeleteStatus =
@@ -51,6 +52,7 @@ export interface DoseSpotSsoUrlResponse {
     candidatePatientIds: number[];
     matchSource: string | null;
     message: string;
+    lastError?: string | null;
     ssoUrl?: string;
 }
 

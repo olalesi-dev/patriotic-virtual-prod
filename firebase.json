@@ -16,14 +16,7 @@
             "region": "us-central1"
           }
         },
-        {
-          "source": "/weight-loss",
-          "destination": "/weight-loss/index.html"
-        },
-        {
-          "source": "/weight-loss/**",
-          "destination": "/weight-loss/index.html"
-        },
+
         {
           "source": "/sitemap.xml",
           "destination": "/sitemap.xml"

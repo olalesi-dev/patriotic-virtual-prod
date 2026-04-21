@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense, useMemo } from "react";
+import { useEffect, useRef, useState, Suspense, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { apiFetchJson } from "@/lib/api-client";
+import { getApiUrl } from "@/lib/api-origin";
 import { auth, db } from "@/lib/firebase";
 import { LandingModals } from "./LandingModals";
 
@@ -68,8 +69,8 @@ const POPULAR_SERVICES: ServiceCard[] = [
       es: "Acceso Total — Elite",
     },
     description: {
-      en: "Everything: telehealth visits, specialty programs, AI health tools, AI imaging, and priority scheduling.",
-      es: "Todo incluido: visitas de telesalud, programas especializados, herramientas de IA para la salud, imágenes con IA y programación prioritaria.",
+      en: "Everything: telehealth visits, specialty programs, priority radiology reviews, and priority scheduling.",
+      es: "Todo incluido: visitas de telesalud, programas especializados, revisiones de radiología prioritarias y programación prioritaria.",
     },
   },
   {
@@ -310,8 +311,8 @@ const SAFETY_ICON_BACKGROUNDS = [
 ] as const;
 const PROTOCOL_PILL_ICONS = ["🛡", "📋", "⚕️", "🔒"] as const;
 const MARQUEE_ITEMS = [
-  { icon: "🤖", label: "AI Health Assistant" },
-  { icon: "🔬", label: "AI-Powered Imaging" },
+  { icon: "📋", label: "Care Navigation Support" },
+  { icon: "🔬", label: "Advanced Radiology Review" },
   { icon: "📱", label: "Digital Health Platform" },
   { icon: "🌴", label: "Available in Florida" },
   { icon: "🩺", label: "General Telehealth" },
@@ -345,9 +346,9 @@ const TESTIMONIALS = [
     initials: "JD",
     avatarClass: "ta3",
     quote:
-      '"The AI flagged something on my chest X-ray, then the radiologist confirmed it and walked me through next steps. Protocol-driven and professional."',
+      '"The physician noticed something on my chest X-ray, confirmed the diagnosis, and walked me through next steps. Protocol-driven and professional."',
     name: "James D.",
-    details: "AI + Radiologist · Orlando, FL",
+    details: "Radiology Review · Orlando, FL",
   },
 ] as const;
 
@@ -384,12 +385,14 @@ function getAboutTabStyle(isActive: boolean) {
 function PaymentStatusHandler({
   onSuccess,
   onCancel,
+  ready,
 }: {
   onSuccess: (
     sessionId: string | null,
     consultationId: string | null,
-  ) => void | Promise<void>;
+  ) => boolean | Promise<boolean>;
   onCancel: () => void;
+  ready: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -398,36 +401,68 @@ function PaymentStatusHandler({
   const paymentStatus = searchParams?.get("payment") ?? null;
   const sessionId = searchParams?.get("session_id") ?? null;
   const consultationId = searchParams?.get("consultationId") ?? null;
+  const replaceUrlWithoutNavigation = useCallback((url: string) => {
+    if (typeof window !== "undefined") {
+      window.history.replaceState(window.history.state, "", url);
+      return;
+    }
+
+    router.replace(url, { scroll: false });
+  }, [router]);
   const cleanedUrl = useMemo(() => {
     if (!searchParams) return pathname;
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.delete("payment");
+    nextParams.delete("session_id");
+    nextParams.delete("consultationId");
+    const query = nextParams.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }, [pathname, searchParams]);
+  const successModalUrl = useMemo(() => {
+    const nextParams = new URLSearchParams(searchParams?.toString() ?? "");
+    nextParams.delete("payment");
+    nextParams.delete("session_id");
+    nextParams.delete("consultationId");
+    nextParams.set("modal", "consult");
+    nextParams.set("consultStep", "4");
     const query = nextParams.toString();
     return query ? `${pathname}?${query}` : pathname;
   }, [pathname, searchParams]);
 
   useEffect(() => {
-    if (!paymentStatus || handledStatusRef.current === paymentStatus) {
+    if (!ready || !paymentStatus || handledStatusRef.current === paymentStatus) {
       return;
     }
 
     handledStatusRef.current = paymentStatus;
 
-    if (paymentStatus === "success") {
-      void onSuccess(sessionId, consultationId);
-    } else if (paymentStatus === "cancelled") {
-      onCancel();
-    }
+    void (async () => {
+      if (paymentStatus === "success") {
+        const confirmed = await onSuccess(sessionId, consultationId);
+        if (!confirmed) {
+          return;
+        }
+        replaceUrlWithoutNavigation(successModalUrl);
+        return;
+      }
 
-    router.replace(cleanedUrl, { scroll: false });
+      if (paymentStatus === "cancelled") {
+        onCancel();
+        return;
+      }
+
+      replaceUrlWithoutNavigation(cleanedUrl);
+    })();
   }, [
     cleanedUrl,
     consultationId,
     onCancel,
     onSuccess,
     paymentStatus,
-    router,
+    ready,
+    replaceUrlWithoutNavigation,
     sessionId,
+    successModalUrl,
   ]);
 
   return null;
@@ -435,14 +470,17 @@ function PaymentStatusHandler({
 
 export function LandingEmbed() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [locale, setLocale] = useState<LandingLocale>("en");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [consentOpen, setConsentOpen] = useState(false);
-  const [aboutTab, setAboutTab] = useState<1 | 2>(1);
+  const [aboutTab, setAboutTab] = useState<1 | 2 | 3>(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [dashboardHref, setDashboardHref] = useState("/dashboard");
   const [toastMessage, setToastMessage] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
@@ -451,45 +489,141 @@ export function LandingEmbed() {
   // Added Modals state
   const [consultModalOpen, setConsultModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register" | "verify">(
-    "login",
-  );
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [initialService, setInitialService] = useState<string | null>(null);
   const [initialConsultStep, setInitialConsultStep] = useState(1);
-  const [authInitiator, setAuthInitiator] = useState<
-    "header_login" | "header_get_started" | "service_card"
-  >("header_login");
+  const [authInitiator, setAuthInitiator] = useState<"header_login" | "header_get_started" | "service_card">("header_login");
+  const urlModal = searchParams?.get("modal") ?? null;
+  const urlConsultService = searchParams?.get("consultService") ?? null;
+  const urlConsultStep = useMemo(() => {
+    const rawStep = searchParams?.get("consultStep") ?? "";
+    const parsed = Number.parseInt(rawStep, 10);
+    if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 5) {
+      return parsed;
+    }
+    return 1;
+  }, [searchParams]);
 
   const copy = COPY[locale];
 
-  const handlePaymentSuccess = async (
-    sessionId: string | null,
-    consultationId: string | null,
-  ) => {
-    if (auth.currentUser && sessionId && consultationId) {
-      try {
-        const token = await auth.currentUser.getIdToken();
-        await apiFetchJson("/api/v1/payments/confirm-telehealth-session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: {
-            sessionId,
-            consultationId,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to confirm telehealth checkout session:", error);
+  const replaceLandingUrl = (mutate: (params: URLSearchParams) => void) => {
+    const currentUrl = typeof window !== "undefined"
+      ? new URL(window.location.href)
+      : new URL(`${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`, "https://patriotic-virtual-emr.web.app");
+    const nextParams = new URLSearchParams(currentUrl.search);
+    mutate(nextParams);
+    const query = nextParams.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+
+    if (typeof window !== "undefined") {
+      window.history.replaceState(window.history.state, "", nextUrl);
+      return;
+    }
+
+    router.replace(nextUrl, { scroll: false });
+  };
+
+  const syncConsultModalUrl = (options: {
+    open: boolean;
+    step?: number;
+    service?: string | null;
+  }) => {
+    const nextStep = options.step ?? 1;
+    const nextService = options.service ?? null;
+
+    setConsultModalOpen(options.open);
+    setInitialConsultStep(nextStep);
+    setInitialService(nextService);
+
+    replaceLandingUrl((params) => {
+      if (options.open) {
+        params.set("modal", "consult");
+        params.set("consultStep", String(nextStep));
+        if (nextService) {
+          params.set("consultService", nextService);
+        } else {
+          params.delete("consultService");
+        }
+        return;
       }
+
+      if (params.get("modal") === "consult") {
+        params.delete("modal");
+      }
+      params.delete("consultStep");
+      params.delete("consultService");
+    });
+  };
+
+  const getPendingConsultationId = () => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return window.sessionStorage.getItem("pendingConsultationId")
+      || window.localStorage.getItem("pendingConsultationId");
+  };
+
+  const clearPendingConsultationId = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.sessionStorage.removeItem("pendingConsultationId");
+    window.localStorage.removeItem("pendingConsultationId");
+  };
+
+  useEffect(() => {
+    const shouldOpenConsult = urlModal === "consult";
+    setConsultModalOpen((current) => current === shouldOpenConsult ? current : shouldOpenConsult);
+    setInitialConsultStep((current) => current === urlConsultStep ? current : urlConsultStep);
+    setInitialService((current) => current === urlConsultService ? current : urlConsultService);
+  }, [urlConsultService, urlConsultStep, urlModal]);
+
+  const handlePaymentSuccess = async (sessionId: string | null, consultationId: string | null) => {
+    const resolvedConsultationId = consultationId || getPendingConsultationId();
+
+    if (!sessionId || !resolvedConsultationId) {
+      console.error('Missing Stripe return details after checkout.', { sessionId, consultationId: resolvedConsultationId });
+      showToast("We couldn't finalize the checkout return. Please contact support if you were charged.");
+      return false;
+    }
+
+    if (!auth.currentUser) {
+      showToast("Sign in again to finish confirming your payment.");
+      setAuthInitiator("header_login");
+      setAuthMode("login");
+      setAuthModalOpen(true);
+      return false;
+    }
+
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await apiFetchJson(getApiUrl('/api/v1/payments/confirm-telehealth-session'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: {
+          sessionId,
+          consultationId: resolvedConsultationId,
+        },
+      });
+      clearPendingConsultationId();
+    } catch (error) {
+      console.error('Failed to confirm telehealth checkout session:', error);
+      showToast("Your payment succeeded, but we couldn't finalize the consultation automatically. Please contact support.");
+      return false;
     }
 
     setInitialConsultStep(4);
     setConsultModalOpen(true);
+    return true;
   };
 
   const handlePaymentCancel = () => {
+    clearPendingConsultationId();
     showToast("Payment was cancelled.");
     router.push("/");
   };
@@ -550,11 +684,13 @@ export function LandingEmbed() {
       if (!user) {
         setIsAuthenticated(false);
         setDashboardHref("/dashboard");
+        setAuthReady(true);
         return;
       }
 
       setIsAuthenticated(true);
       setDashboardHref("/dashboard");
+      setAuthReady(true);
 
       try {
         const patientDoc = await getDoc(doc(db, "patients", user.uid));
@@ -625,7 +761,7 @@ export function LandingEmbed() {
       setAuthMode("register");
       setAuthModalOpen(true);
     } else {
-      setConsultModalOpen(true);
+      syncConsultModalUrl({ open: true, step: 1, service: null });
     }
   };
 
@@ -634,7 +770,7 @@ export function LandingEmbed() {
     setInitialService(serviceKey);
     setInitialConsultStep(1);
     setAuthInitiator("service_card");
-    setConsultModalOpen(true);
+    syncConsultModalUrl({ open: true, step: 1, service: serviceKey });
   };
 
   const handleLogout = async () => {
@@ -1937,6 +2073,14 @@ export function LandingEmbed() {
               >
                 Alvaro Berrios, MS, FNP-BC
               </button>
+              <button
+                id="aboutTab3"
+                onClick={() => setAboutTab(3)}
+                style={getAboutTabStyle(aboutTab === 3)}
+                type="button"
+              >
+                L. Lue Winston, APRN
+              </button>
             </div>
 
             <div
@@ -2421,6 +2565,217 @@ export function LandingEmbed() {
                 </div>
               </div>
             </div>
+
+            {/* PROFILE: L. LUE WINSTON */}
+            <div
+              id="aboutProfile3"
+              style={{
+                display: aboutTab === 3 ? "flex" : "none",
+                gap: 24,
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "3px solid var(--blue)",
+                }}
+              >
+                <img
+                  src="/assets/l_lue_winston.jpg"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  alt="L. Lue Winston"
+                />
+              </div>
+              <div>
+                <h2 style={{ marginBottom: 8 }}>
+                  La Donna L. Lue Winston, MSN, APRN, SCRN
+                </h2>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: "var(--g500)",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 20,
+                  }}
+                >
+                  Adult-Gerontology Acute Care Nurse Practitioner
+                </div>
+                <p
+                  style={{
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    color: "var(--g700)",
+                    marginBottom: 24,
+                    maxWidth: 600,
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                >
+                  Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.
+                </p>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 24,
+                    textAlign: "left",
+                    width: "100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "var(--g50)",
+                      padding: 20,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: 15,
+                        color: "var(--navy)",
+                        marginBottom: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      🎓 Education
+                    </h3>
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        fontSize: 13,
+                        color: "var(--g600)",
+                        lineHeight: 1.6,
+                        margin: 0,
+                        padding: 0,
+                      }}
+                    >
+                      <li style={{ marginBottom: 6 }}>
+                        <b>Post Master's APRN:</b> Nova Southeastern University
+                      </li>
+                      <li style={{ marginBottom: 6 }}>
+                        <b>MS in Nursing Ed:</b> Phoenix University
+                      </li>
+                      <li style={{ marginBottom: 6 }}>
+                        <b>BS in Biology:</b> Nova Southeastern University
+                      </li>
+                    </ul>
+                  </div>
+                  <div
+                    style={{
+                      background: "var(--g50)",
+                      padding: 20,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: 15,
+                        color: "var(--navy)",
+                        marginBottom: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      🩺 Areas of Expertise
+                    </h3>
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        fontSize: 13,
+                        color: "var(--g600)",
+                        lineHeight: 1.6,
+                        margin: 0,
+                        padding: 0,
+                      }}
+                    >
+                      <li style={{ marginBottom: 6 }}>Acute Care · Critical Care</li>
+                      <li style={{ marginBottom: 6 }}>Stroke & Neurological Care</li>
+                      <li style={{ marginBottom: 6 }}>Quality Assurance & Compliance</li>
+                    </ul>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    marginTop: 24,
+                    width: "100%",
+                    textAlign: "left",
+                    background: "var(--g50)",
+                    padding: 20,
+                    borderRadius: 12,
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: 15,
+                      color: "var(--navy)",
+                      marginBottom: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    🤝 Leadership & Affiliations
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--g600)",
+                      lineHeight: 1.6,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <b>President:</b> Broward County Chapter of AACN (2022-2023, 2025-2026)
+                    <br />
+                    <b>Board Member:</b> Miami VHA APRN Council Board
+                    <br />
+                    <b>Stroke Coordinator:</b> Miami Veterans Health Administration
+                  </p>
+                </div>
+                <div
+                  style={{
+                    marginTop: 24,
+                    width: "100%",
+                    textAlign: "left",
+                    background: "var(--g50)",
+                    padding: 20,
+                    borderRadius: 12,
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: 15,
+                      color: "var(--navy)",
+                      marginBottom: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    🌱 Community Impact
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--g600)",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    La Donna is deeply committed to community health, actively participating in breast cancer walks, food drives, and conducting stroke health screenings. She also serves as clinical adjunct faculty, educating future nurses.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -2584,6 +2939,17 @@ export function LandingEmbed() {
       <LandingModals
         consultModalOpen={consultModalOpen}
         setConsultModalOpen={setConsultModalOpen}
+        onConsultClose={() => syncConsultModalUrl({ open: false })}
+        onConsultStepChange={(step) => syncConsultModalUrl({
+          open: true,
+          step,
+          service: initialService,
+        })}
+        onConsultServiceChange={(service) => syncConsultModalUrl({
+          open: true,
+          step: initialConsultStep,
+          service,
+        })}
         authModalOpen={authModalOpen}
         setAuthModalOpen={setAuthModalOpen}
         isAuthenticated={isAuthenticated}
@@ -2621,6 +2987,7 @@ export function LandingEmbed() {
         <PaymentStatusHandler
           onSuccess={handlePaymentSuccess}
           onCancel={handlePaymentCancel}
+          ready={authReady}
         />
       </Suspense>
     </>

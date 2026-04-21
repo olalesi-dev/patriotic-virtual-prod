@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
-import "@/features/landing/landing.css";
-import LandingEmbed from "@/features/landing/components/LandingEmbed";
-import { buildPageMetadata } from "@/lib/metadata";
+import { Suspense } from 'react';
+import type { Metadata } from 'next';
+import '@/features/landing/landing.css';
+import LandingEmbed from '@/features/landing/components/LandingEmbed';
+import { buildPageMetadata } from '@/lib/metadata';
 
 export const metadata: Metadata = {
   ...buildPageMetadata(
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <LandingEmbed />;
+    return (
+        <Suspense fallback={null}>
+            <LandingEmbed />
+        </Suspense>
+    );
 }
