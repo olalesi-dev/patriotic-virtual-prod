@@ -84,10 +84,33 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     };
 
     // Form State
-    const [patient, setPatient] = useState('John Doe');
+    const [patient, setPatient] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [time, setTime] = useState('10:00');
     const [type, setType] = useState('video');
+
+    const usersQuery = useQuery({
+        queryKey: ['admin-users-patients'],
+        queryFn: async () => {
+            const data = await apiFetchJson<{
+                success?: boolean;
+                users?: any[];
+                error?: string;
+            }>('/api/admin/users', {
+                method: 'GET',
+                cache: 'no-store'
+            });
+            if (!data.success || !data.users) return [];
+            return data.users.filter((u: any) => u.role?.toLowerCase() === 'patient' || !u.role);
+        }
+    });
+    const patients = usersQuery.data || [];
+
+    React.useEffect(() => {
+        if (patients.length > 0 && !patient) {
+            setPatient(patients[0].uid || patients[0].displayName);
+        }
+    }, [patients, patient]);
 
     const router = useRouter();
     const sidebarWidth = isSidebarCollapsed ? 80 : 256;
@@ -283,6 +306,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 { href: '/team', icon: Users, label: 'Team', active: pathname.startsWith('/team') },
                 { href: '/inbox', icon: MessageSquare, label: 'Inbox / Messages', badge: unreadInbox > 0 ? unreadInbox.toString() : undefined, active: pathname.startsWith('/inbox') },
                 { href: '/waitlist', icon: Clock, label: 'Patient Waitlist', badge: unreadWaitlist > 0 ? unreadWaitlist.toString() : undefined, active: pathname.startsWith('/waitlist') },
+                { href: '/waiting-room', icon: Video, label: 'Waiting Room', active: pathname === '/waiting-room' },
             ]
         },
         {
@@ -591,9 +615,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                         onChange={(e) => setPatient(e.target.value)}
                                         className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
                                     >
-                                        <option value="John Doe">John Doe</option>
-                                        <option value="Sarah Connor">Sarah Connor</option>
-                                        <option value="Michael Brown">Michael Brown</option>
+                                        {usersQuery.isLoading ? (
+                                            <option value="">Loading patients...</option>
+                                        ) : patients.length === 0 ? (
+                                            <option value="">No patients found</option>
+                                        ) : (
+                                            patients.map((p: any) => (
+                                                <option key={p.uid} value={p.uid || p.displayName}>
+                                                    {p.displayName || p.email}
+                                                </option>
+                                            ))
+                                        )}
                                     </select>
                                 </div>
 
