@@ -148,32 +148,7 @@ export const svcs = [
   }
 ];
 export const iQs = {
-      weight_loss: [
-        {
-          k: "chiefComplaint",
-          l: "What brings you in today?",
-          t: "i",
-          p: "Describe your concerns",
-        },
-        {
-          k: "symptomDuration",
-          l: "How long have you had these concerns?",
-          t: "i",
-          p: "e.g. 3 days, 2 weeks",
-        },
-        {
-          k: "currentMedications",
-          l: "Current medications?",
-          t: "i",
-          p: "List all medications",
-        },
-        {
-          k: "allergies",
-          l: "Drug allergies?",
-          t: "i",
-          p: 'List allergies or "None"',
-        },
-      ],
+
       weight_loss: [
         {
           k: "currentWeight",
