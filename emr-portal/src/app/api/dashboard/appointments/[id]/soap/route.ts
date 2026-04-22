@@ -5,6 +5,7 @@ import { requireAuthenticatedUser, ensureProviderAccess } from '@/lib/server-aut
 export async function POST(request: Request, { params }: { params: { id: string } }) {
     const { user, errorResponse } = await requireAuthenticatedUser(request, { resolveRole: true });
     if (errorResponse) return errorResponse;
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     
     const providerAccessError = ensureProviderAccess(user);
     if (providerAccessError) return providerAccessError;
