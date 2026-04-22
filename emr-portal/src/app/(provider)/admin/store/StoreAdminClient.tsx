@@ -386,7 +386,7 @@ function ProductEditorModal({ product, onClose }: { product: ShopProduct | null,
                                         try {
                                             const { storage } = await import('@/lib/firebase');
                                             const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-                                            const newUrls: string[] = [];
+                                            const newUrls: any[] = [];
                                             for (const file of files) {
                                                 const fileRef = ref(storage, `shop_images/${Date.now()}_${file.name}`);
                                                 await uploadBytes(fileRef, file);

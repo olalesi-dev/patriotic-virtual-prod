@@ -9,13 +9,7 @@
         "**/node_modules/**"
       ],
       "rewrites": [
-        {
-          "source": "/api/v1/**",
-          "run": {
-            "serviceId": "patriotic-virtual-backend",
-            "region": "us-central1"
-          }
-        },
+
 
         {
           "source": "/sitemap.xml",
@@ -92,34 +86,7 @@
         "**/node_modules/**"
       ],
       "rewrites": [
-        {
-          "source": "/api/v1/dosespot/**",
-          "run": {
-            "serviceId": "patriotic-virtual-backend",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "/api/v1/emr/**",
-          "run": {
-            "serviceId": "patriotic-virtual-backend",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "/api/v1/auth/**",
-          "run": {
-            "serviceId": "patriotic-virtual-backend",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "/api/v1/webhooks/**",
-          "run": {
-            "serviceId": "patriotic-virtual-backend",
-            "region": "us-central1"
-          }
-        }
+
       ],
       "frameworksBackend": {
         "region": "us-central1"
