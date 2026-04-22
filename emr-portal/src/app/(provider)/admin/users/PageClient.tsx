@@ -54,6 +54,8 @@ interface UserData {
     email: string;
     displayName: string;
     role: string;
+    roles?: string[];
+    personaGroupId?: string | null;
     disabled: boolean;
     creationTime: string;
     lastSignInTime: string;
@@ -207,6 +209,8 @@ function mergeFirestoreProfile(base: UserData, source: Record<string, unknown>):
         pdmpRoleType: normalizeDoseSpotPdmpRoleType(typeof source.pdmpRoleType === 'string' ? source.pdmpRoleType : ''),
         epcsRequested: typeof source.epcsRequested === 'boolean' ? source.epcsRequested : true,
         active: typeof source.active === 'boolean' ? source.active : !base.disabled,
+        roles: Array.isArray(source.roles) ? source.roles : (base.roles ?? []),
+        personaGroupId: typeof source.personaGroupId === 'string' ? source.personaGroupId : (base.personaGroupId ?? null),
         doseSpotClinicianId: source.doseSpotClinicianId != null ? String(source.doseSpotClinicianId) : (base.doseSpotClinicianId ?? ''),
         doseSpotPatientId: source.doseSpotPatientId != null ? String(source.doseSpotPatientId) : (base.doseSpotPatientId ?? ''),
         doseSpot: doseSpotSource
@@ -260,6 +264,8 @@ function mapUserToEditValues(user: UserData): AdminUpdateUserInput {
         dob: user.dob ?? '',
         sex: (user.sex as AdminUpdateUserInput['sex']) ?? '',
         role: (user.role as AdminUpdateUserInput['role']) ?? 'patient',
+        roles: user.roles?.length ? user.roles : [user.role || 'patient'],
+        personaGroupId: user.personaGroupId || null,
         prefix: user.prefix ?? '',
         middleName: user.middleName ?? '',
         suffix: user.suffix ?? '',
@@ -283,6 +289,17 @@ function mapUserToEditValues(user: UserData): AdminUpdateUserInput {
 
 export default function UserManagementPage() {
     const queryClient = useQueryClient();
+    const [personaGroups, setPersonaGroups] = useState<any[]>([]);
+    const [systemRoles, setSystemRoles] = useState<string[]>(['patient', 'provider', 'admin', 'staff', 'radiologist']);
+    
+    React.useEffect(() => {
+        import('firebase/firestore').then(({ collection, onSnapshot }) => {
+            return onSnapshot(collection(db, 'personaGroups'), (snap) => {
+                setPersonaGroups(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            });
+        });
+    }, []);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<string | null>(null);
     const [sortCol, setSortCol] = useState<'name' | 'role' | 'created' | 'login'>('created');
@@ -860,7 +877,7 @@ export default function UserManagementPage() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
+                                            <td className="px-6 py-4">{getRoleBadges(user)}</td>
                                             <td className="px-6 py-4">
                                                 {user.disabled ? (
                                                     <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-tight text-red-500"><XCircle className="h-3.5 w-3.5" /> Disabled</span>
@@ -937,7 +954,7 @@ export default function UserManagementPage() {
                         </div>
 
                         <div className="space-y-4 p-5">
-                            <DetailField label="Role" value={getRoleBadge(selectedUser.role)} />
+                            <DetailField label="Roles" value={getRoleBadges(selectedUser)} />
                             <DetailField label="Status" value={selectedUser.disabled
                                 ? <span className="flex items-center gap-1 text-xs font-black text-red-500"><XCircle className="h-3.5 w-3.5" /> Disabled</span>
                                 : <span className="flex items-center gap-1 text-xs font-black text-emerald-500"><CheckCircle2 className="h-3.5 w-3.5" /> Active</span>} />
@@ -1117,6 +1134,8 @@ export default function UserManagementPage() {
                                 isCreate={false}
                                 showProviderFields={editRole === 'provider'}
                                 showDoseSpotAddressFields={editRole === 'provider' || editRole === 'patient'}
+                                personaGroups={personaGroups}
+                                systemRoles={systemRoles}
                             />
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 rounded-xl py-2.5 font-bold text-slate-600 transition-all hover:bg-slate-100 dark:text-slate-300">
@@ -1162,6 +1181,8 @@ export default function UserManagementPage() {
                                 isCreate
                                 showProviderFields={createRole === 'provider'}
                                 showDoseSpotAddressFields={createRole === 'provider' || createRole === 'patient'}
+                                personaGroups={personaGroups}
+                                systemRoles={systemRoles}
                             />
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 rounded-xl py-2.5 font-bold text-slate-600 transition-all hover:bg-slate-100 dark:text-slate-300">
@@ -1355,31 +1376,49 @@ function ActionDialog({
     );
 }
 
-function getRoleBadge(role: string) {
-    switch (role?.toLowerCase()) {
-        case 'admin':
-        case 'systems admin':
-            return <span className="rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Admin</span>;
-        case 'staff':
-            return <span className="rounded-full border border-cyan-200 bg-cyan-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:border-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">Staff</span>;
-        case 'doctor':
-        case 'provider':
-            return <span className="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Provider</span>;
-        default:
-            return <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Patient</span>;
-    }
+function getRoleBadges(user: UserData) {
+    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role || 'patient'];
+    return (
+        <div className="flex flex-wrap gap-1">
+            {user.personaGroupId && (
+                <span title="Inherits roles from Persona Group" className="rounded-full border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 flex items-center gap-1">
+                    <Users className="w-3 h-3" /> Group
+                </span>
+            )}
+            {roles.map((role, i) => {
+                switch (role?.toLowerCase()) {
+                    case 'admin':
+                    case 'systems admin':
+                        return <span key={i} className="rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Admin</span>;
+                    case 'staff':
+                        return <span key={i} className="rounded-full border border-cyan-200 bg-cyan-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:border-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">Staff</span>;
+                    case 'doctor':
+                    case 'provider':
+                        return <span key={i} className="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Provider</span>;
+                    case 'patient':
+                        return <span key={i} className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Patient</span>;
+                    default:
+                        return <span key={i} className="rounded-full border border-orange-200 bg-orange-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-orange-700 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-300">{role}</span>;
+                }
+            })}
+        </div>
+    );
 }
 
 function UserFormFields({
     form,
     isCreate,
     showProviderFields,
-    showDoseSpotAddressFields
+    showDoseSpotAddressFields,
+    personaGroups = [],
+    systemRoles = []
 }: {
     form: any;
     isCreate: boolean;
     showProviderFields: boolean;
     showDoseSpotAddressFields: boolean;
+    personaGroups?: any[];
+    systemRoles?: string[];
 }) {
     const { register, formState: { errors } } = form;
 
@@ -1401,12 +1440,25 @@ function UserFormFields({
                 {isCreate && (
                     <TextField label="Initial Password" type="password" placeholder="Minimum 8 characters" error={(errors as { password?: { message?: string } }).password?.message} icon={<Key className="h-4 w-4 text-slate-400" />} {...register('password' as 'password')} />
                 )}
-                <SelectField label="Access Role" error={errors.role?.message} {...register('role')}>
+                <SelectField label="Legacy Primary Role" error={errors.role?.message} {...register('role')}>
                     <option value="patient">Patient</option>
                     <option value="provider">Provider (Doctor)</option>
                     <option value="admin">Systems Administrator</option>
                     <option value="staff">Staff</option>
                 </SelectField>
+                <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+                    <SelectField label="Persona Group" error={errors.personaGroupId?.message} {...register('personaGroupId')}>
+                        <option value="">-- No Persona Group (Direct Roles Only) --</option>
+                        {personaGroups.map(pg => (
+                            <option key={pg.id} value={pg.id}>{pg.name} ({pg.roles?.join(', ')})</option>
+                        ))}
+                    </SelectField>
+                    <SelectField multiple label="Direct Access Roles (Hold Ctrl to select multiple)" error={errors.roles?.message} className="row-span-2" style={{ height: 'auto' }} {...register('roles')}>
+                        {systemRoles.map(role => (
+                            <option key={role} value={role}>{role}</option>
+                        ))}
+                    </SelectField>
+                </div>
             </div>
 
             {showDoseSpotAddressFields && (

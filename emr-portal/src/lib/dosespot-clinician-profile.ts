@@ -87,6 +87,8 @@ const baseAdminUserFields = z.object({
     dob: dateField,
     sex: sexField,
     role: z.enum(ADMIN_USER_ROLES),
+    roles: z.array(z.string()).default([]),
+    personaGroupId: z.string().nullable().default(null),
     ...providerDoseSpotFieldsSchema.shape
 });
 
@@ -163,7 +165,9 @@ export function createAdminUserFormDefaults(): AdminCreateUserInput {
         clinicianSpecialtyType: '',
         pdmpRoleType: '',
         epcsRequested: true,
-        active: true
+        active: true,
+        roles: ['patient'],
+        personaGroupId: null
     };
 }
 
@@ -219,6 +223,8 @@ export function buildAdminUserProfileFields(
         zip: input.zipCode || '',
         zipCode: input.zipCode || '',
         role: input.role,
+        roles: input.roles.length > 0 ? input.roles : [input.role],
+        personaGroupId: input.personaGroupId,
         status: options.disabled ? 'disabled' : (input.active === false ? 'inactive' : 'active'),
         updatedAt: now
     };

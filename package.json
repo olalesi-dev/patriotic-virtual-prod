@@ -3,6 +3,6 @@
     "landing": "node scripts/serve-landing.js"
   },
   "dependencies": {
-    "firebase-admin": "^13.6.1"
+    "firebase-admin": "^13.8.0"
   }
 }

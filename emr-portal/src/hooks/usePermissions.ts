@@ -1,6 +1,6 @@
-import { auth } from '@/lib/firebase';
+import { useUserProfile } from './useUserProfile';
 
-export type UserRole = 'Admin' | 'Provider' | 'Staff' | 'Radiologist' | 'Patient';
+export type UserRole = 'Admin' | 'Provider' | 'Staff' | 'Radiologist' | 'Patient' | string;
 
 export interface Permissions {
     canSignNotes: boolean;
@@ -11,7 +11,7 @@ export interface Permissions {
     canPrescribe: boolean;
 }
 
-const ROLE_PERMISSIONS: Record<UserRole, Permissions> = {
+const ROLE_PERMISSIONS: Record<string, Permissions> = {
     Admin: {
         canSignNotes: true,
         canViewPHI: true,
@@ -54,17 +54,34 @@ const ROLE_PERMISSIONS: Record<UserRole, Permissions> = {
     },
 };
 
-export function usePermissions() {
-    const user = auth.currentUser;
+const DEFAULT_PERMISSIONS: Permissions = ROLE_PERMISSIONS['Patient'];
 
-    // In a real app, the role would be in the ID Token custom claims
-    // For demo/dev, we use localStorage or a simple mock
-    const role: UserRole = (typeof window !== 'undefined' ? localStorage.getItem('user_role') : 'Provider') as UserRole || 'Provider';
+export function usePermissions() {
+    const profile = useUserProfile();
+
+    // In cases where profile is loading or unauthenticated, we fallback to Patient
+    const roles = profile.effectiveRoles && profile.effectiveRoles.length > 0 ? profile.effectiveRoles : ['Patient'];
+
+    const unionPermissions: Permissions = { ...DEFAULT_PERMISSIONS };
+
+    roles.forEach(roleName => {
+        // Find a matching role ignoring case
+        const matchedKey = Object.keys(ROLE_PERMISSIONS).find(k => k.toLowerCase() === roleName.toLowerCase());
+        const perms = matchedKey ? ROLE_PERMISSIONS[matchedKey] : null;
+        if (perms) {
+            unionPermissions.canSignNotes = unionPermissions.canSignNotes || perms.canSignNotes;
+            unionPermissions.canViewPHI = unionPermissions.canViewPHI || perms.canViewPHI;
+            unionPermissions.canEditPHI = unionPermissions.canEditPHI || perms.canEditPHI;
+            unionPermissions.canAccessAudit = unionPermissions.canAccessAudit || perms.canAccessAudit;
+            unionPermissions.canManageUsers = unionPermissions.canManageUsers || perms.canManageUsers;
+            unionPermissions.canPrescribe = unionPermissions.canPrescribe || perms.canPrescribe;
+        }
+    });
 
     return {
-        role,
-        permissions: ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS['Staff'],
-        isProvider: role === 'Provider' || role === 'Admin',
-        isAdmin: role === 'Admin'
+        role: roles[0] || 'Patient',
+        permissions: unionPermissions,
+        isProvider: roles.some(r => ['provider', 'admin', 'clinician'].includes(r.toLowerCase())),
+        isAdmin: roles.some(r => r.toLowerCase() === 'admin')
     };
 }
