@@ -16,6 +16,9 @@ export interface UserProfile {
     uid: string;
     authenticated: boolean;
     referralCode?: string;
+    roles: string[];
+    personaGroupId: string | null;
+    effectiveRoles: string[];
 }
 
 /** Resolves a user-friendly display name with multiple fallbacks — never returns "Unknown" */
@@ -48,6 +51,9 @@ const INITIAL_STATE: UserProfile = {
     sourceCollection: null,
     uid: '',
     authenticated: false,
+    roles: [],
+    personaGroupId: null,
+    effectiveRoles: [],
 };
 
 export const useUserProfile = () => {
@@ -79,11 +85,29 @@ export const useUserProfile = () => {
                 const displayName = resolveName(profileData, user);
 
                 let normalizedRole: NormalizedRole = 'patient';
-                if (profileData) {
-                    const role = profileData.role?.toLowerCase() || '';
-                    if (['provider', 'clinician', 'admin', 'staff'].includes(role)) {
-                        normalizedRole = 'provider';
-                    }
+                
+                let personaGroupRoles: string[] = [];
+                let personaGroupId = profileData?.personaGroupId || null;
+                
+                if (personaGroupId) {
+                    try {
+                        const pgDoc = await getDoc(doc(db, 'personaGroups', personaGroupId));
+                        if (pgDoc.exists()) {
+                            personaGroupRoles = pgDoc.data().roles || [];
+                        }
+                    } catch (e) {}
+                }
+
+                let directRoles: string[] = Array.isArray(profileData?.roles) ? profileData.roles : [];
+                // Backward compatibility: If no roles array but single role exists, convert
+                if (directRoles.length === 0 && profileData?.role) {
+                    directRoles = [profileData.role];
+                }
+
+                const effectiveRoles = Array.from(new Set([...directRoles, ...personaGroupRoles]));
+
+                if (effectiveRoles.some(r => ['provider', 'clinician', 'admin', 'staff'].includes(r.toLowerCase()))) {
+                    normalizedRole = 'provider';
                 }
 
                 const initials = displayName
@@ -108,6 +132,7 @@ export const useUserProfile = () => {
                             lastName: nameParts.slice(1).join(' ') || '',
                             email: user.email || '',
                             role: profileData?.role || 'patient',
+                            roles: directRoles.length ? directRoles : ['Patient'],
                             updatedAt: st(),
                         }, { merge: true });
                     } catch (healErr) { /* silent — best-effort */ }
@@ -124,6 +149,9 @@ export const useUserProfile = () => {
                     uid: user.uid,
                     authenticated: true,
                     referralCode: profileData?.referralCode,
+                    roles: directRoles,
+                    personaGroupId,
+                    effectiveRoles,
                 });
             } catch (error) {
                 console.error('Error fetching user profile:', error);
@@ -141,6 +169,9 @@ export const useUserProfile = () => {
                     sourceCollection: null,
                     uid: user.uid,
                     authenticated: true,
+                    roles: [],
+                    personaGroupId: null,
+                    effectiveRoles: [],
                 });
             }
         });

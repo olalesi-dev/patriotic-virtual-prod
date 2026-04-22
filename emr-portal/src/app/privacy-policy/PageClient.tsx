@@ -88,14 +88,37 @@ export default function PrivacyPage() {
                         </section>
 
                         {/* 6. Data Usage for AI */}
-                        <section>
+                        <section id="ai-transparency" className="scroll-mt-8">
                             <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
                                 <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center text-[#0EA5E9]">
                                     <Activity className="w-5 h-5" />
                                 </div>
-                                6. Data Usage for AI & Analytics
+                                6. Use of Artificial Intelligence Tools in Your Care
                             </h2>
-                            <p>By utilizing this platform, you expressly acknowledge and consent to the collection, aggregation, and anonymization of your de-identified health data and usage patterns. This information may be utilized for the purposes of internal analytics, quality improvement, and the training, validation, or enhancement of artificial intelligence and machine learning models, strictly in accordance with applicable laws and regulations ensuring patient privacy and data security.</p>
+                            <details className="group border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-800">
+                                <summary className="cursor-pointer p-5 font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex justify-between items-center">
+                                    View our AI Data Anonymization and Privacy Policies
+                                    <span className="transition-transform group-open:rotate-180">▼</span>
+                                </summary>
+                                <div className="p-6 space-y-6 text-sm text-slate-600 dark:text-slate-300">
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">A. How AI Tools Are Used</h3>
+                                        <p>AI tools used by Patriotic Virtual Telehealth, including our proprietary clinical decision support platform, function strictly as decision support aids for our licensed providers. These tools help inform clinical recommendations related to medication management, dosing, and care optimization. AI-generated outputs are never used as a substitute for provider judgment — every clinical decision is made by a licensed, board-certified physician or qualified healthcare provider.</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">B. Your PHI and AI Data Anonymization</h3>
+                                        <p>Patriotic Virtual Telehealth does not use your identifiable Protected Health Information (PHI) to train any AI model. Where patient data informs quality assurance or system improvement processes, it is fully anonymized and de-identified in strict accordance with HIPAA Safe Harbor standards prior to any such use. This anonymization process removes all direct and indirect identifiers, ensuring that no individual patient can be identified from any data used in these processes.</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">C. Your Consent and Your Rights</h3>
+                                        <p>Your PHI is only used in connection with AI-supported healthcare operations pursuant to your informed consent, as documented at the time of onboarding. You have the right to request more information about how AI tools are used in your care at any time by contacting us at <a href="mailto:privacy@patrioticvirtualtelehealth.com" className="text-[#0EA5E9] hover:underline">privacy@patrioticvirtualtelehealth.com</a>. You also retain all rights afforded to you under HIPAA, including the right to access, amend, and request restrictions on the use of your PHI.</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">D. Questions</h3>
+                                        <p>If you have any questions regarding our use of AI tools or your privacy rights, please contact our Privacy Officer directly at <a href="mailto:privacy@patrioticvirtualtelehealth.com" className="text-[#0EA5E9] hover:underline">privacy@patrioticvirtualtelehealth.com</a>.</p>
+                                    </div>
+                                </div>
+                            </details>
                         </section>
 
                         {/* 7. SMS Notifications */}

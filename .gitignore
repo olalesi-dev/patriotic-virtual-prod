@@ -22,6 +22,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 backend/env.yaml
+backend-service.yaml
+backend-service-utf8.yaml
 
 google-services-account.json
 dosespot-docs

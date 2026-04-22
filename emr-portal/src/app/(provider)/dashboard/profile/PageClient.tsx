@@ -191,6 +191,8 @@ export default function ProviderProfilePage() {
                 dob: data.dateOfBirth,
                 sex: data.gender as AdminUpdateUserInput['sex'],
                 role: 'provider',
+                roles: userProfile.roles || ['provider'],
+                personaGroupId: userProfile.personaGroupId || null,
                 prefix: data.prefix,
                 middleName: data.middleName,
                 suffix: data.suffix,
