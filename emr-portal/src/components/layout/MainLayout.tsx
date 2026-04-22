@@ -24,6 +24,7 @@ import { UserIdentityMenu } from '@/components/common/UserIdentityMenu';
 import { apiFetchJson } from '@/lib/api-client';
 import { PatientDetailResponse } from '@/lib/patient-registry-types';
 import { usePracticeModules, initializeModulesListener } from '@/hooks/usePracticeModules';
+import { initializeModuleAccessListener } from '@/hooks/useModuleAccess';
 import { SPECIALTY_MODULES } from '@/lib/module-registry';
 import { db } from '@/lib/firebase';
 
@@ -224,10 +225,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         });
 
         const unsubModules = initializeModulesListener();
+        const unsubModuleAccess = initializeModuleAccessListener();
 
         return () => {
             unsubscribe();
             unsubModules();
+            unsubModuleAccess();
             unsubInbox();
             unsubWaitlist();
         };

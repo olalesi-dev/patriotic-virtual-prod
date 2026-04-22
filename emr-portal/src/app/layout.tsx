@@ -5,7 +5,7 @@ import { Inter } from 'next/font/google';
 import { RootLayoutClient } from '@/components/providers/RootLayoutClient';
 import { CookieBanner } from '@/components/common/CookieBanner';
 import { buildAppMetadata } from '@/lib/metadata';
-import { GoogleAnalytics } from '@/components/common/GoogleAnalytics';
+import GoogleAnalytics from '@/components/common/GoogleAnalytics';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,7 +22,7 @@ export default function RootLayout({
                 <link rel="icon" href="/favicon.ico" sizes="any" />
             </head>
             <body className={`${inter.className} bg-slate-50 dark:bg-slate-900/50 text-navy antialiased min-h-screen`}>
-                <GoogleAnalytics gaId="G-FY48JCRQ4D" />
+                <GoogleAnalytics />
                 <RootLayoutClient>{children}</RootLayoutClient>
                 <CookieBanner />
             </body>
