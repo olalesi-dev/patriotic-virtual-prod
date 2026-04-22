@@ -7165,6 +7165,339 @@
       color: #808080;
     }
 
+    @keyframes lp-section-rise {
+      0% {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes lp-card-fade {
+      0% {
+        opacity: 0;
+        filter: blur(10px);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+      }
+    }
+
+    @keyframes lp-icon-float {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-4px);
+      }
+    }
+
+    @keyframes lp-cta-pan {
+      0%,
+      100% {
+        background-position: 50% 50%;
+      }
+      50% {
+        background-position: 53% 47%;
+      }
+    }
+
+    #landingPage .lp-trust-strip,
+    #landingPage .lp-section,
+    #landingPage .lp-facility-strip,
+    #landingPage .lp-cta,
+    #landingPage .lp-footer {
+      overflow: clip;
+    }
+
+    #landingPage .lp-section-header,
+    #landingPage .lp-radiology-intro,
+    #landingPage .lp-innovation-logo,
+    #landingPage .lp-innovation-copy,
+    #landingPage .lp-cta-box,
+    #landingPage .lp-footer-brand,
+    #landingPage .lp-footer-column {
+      opacity: 0;
+      animation: lp-section-rise 0.82s var(--ease-b) both;
+    }
+
+    #landingPage .lp-section-header,
+    #landingPage .lp-radiology-intro,
+    #landingPage .lp-footer-brand {
+      animation-delay: 0.08s;
+    }
+
+    #landingPage .lp-innovation-logo,
+    #landingPage .lp-innovation-copy,
+    #landingPage .lp-cta-box,
+    #landingPage .lp-footer-column {
+      animation-delay: 0.16s;
+    }
+
+    #landingPage .lp-service-cards > *,
+    #landingPage .lp-trust-strip .lp-container > *,
+    #landingPage .lp-protocol-column > *,
+    #landingPage .lp-innovation-card,
+    #landingPage .lp-steps-grid > *,
+    #landingPage .lp-radiology-grid > *,
+    #landingPage .lp-facility-grid > *,
+    #landingPage .lp-providers-grid > *,
+    #landingPage .lp-testimonials-grid > *,
+    #landingPage .lp-footer-top > * {
+      opacity: 0;
+      animation: lp-card-fade 0.92s var(--ease) both;
+    }
+
+    #landingPage .lp-service-cards > *:nth-child(1),
+    #landingPage .lp-trust-strip .lp-container > *:nth-child(1),
+    #landingPage .lp-protocol-column > *:nth-child(1),
+    #landingPage .lp-steps-grid > *:nth-child(1),
+    #landingPage .lp-radiology-grid > *:nth-child(1),
+    #landingPage .lp-facility-grid > *:nth-child(1),
+    #landingPage .lp-providers-grid > *:nth-child(1),
+    #landingPage .lp-testimonials-grid > *:nth-child(1),
+    #landingPage .lp-footer-top > *:nth-child(1) {
+      animation-delay: 0.12s;
+    }
+
+    #landingPage .lp-service-cards > *:nth-child(2),
+    #landingPage .lp-trust-strip .lp-container > *:nth-child(2),
+    #landingPage .lp-protocol-column > *:nth-child(2),
+    #landingPage .lp-steps-grid > *:nth-child(2),
+    #landingPage .lp-radiology-grid > *:nth-child(2),
+    #landingPage .lp-facility-grid > *:nth-child(2),
+    #landingPage .lp-providers-grid > *:nth-child(2),
+    #landingPage .lp-testimonials-grid > *:nth-child(2),
+    #landingPage .lp-footer-top > *:nth-child(2),
+    #landingPage .lp-innovation-card {
+      animation-delay: 0.2s;
+    }
+
+    #landingPage .lp-service-cards > *:nth-child(3),
+    #landingPage .lp-trust-strip .lp-container > *:nth-child(3),
+    #landingPage .lp-steps-grid > *:nth-child(3),
+    #landingPage .lp-radiology-grid > *:nth-child(3),
+    #landingPage .lp-facility-grid > *:nth-child(3),
+    #landingPage .lp-providers-grid > *:nth-child(3),
+    #landingPage .lp-testimonials-grid > *:nth-child(3),
+    #landingPage .lp-footer-top > *:nth-child(3) {
+      animation-delay: 0.28s;
+    }
+
+    #landingPage .lp-trust-strip .lp-container > *:nth-child(4),
+    #landingPage .lp-radiology-grid > *:nth-child(4),
+    #landingPage .lp-footer-top > *:nth-child(4) {
+      animation-delay: 0.36s;
+    }
+
+    #landingPage .lp-steps-grid > *:nth-child(4) {
+      animation-delay: 0.36s;
+    }
+
+    #landingPage .lp-steps-grid > *:nth-child(5) {
+      animation-delay: 0.44s;
+    }
+
+    #landingPage .lp-service-card,
+    #landingPage .lp-trust-item,
+    #landingPage .lp-feature-box,
+    #landingPage .lp-innovation-card,
+    #landingPage .lp-step-card,
+    #landingPage .lp-radiology-card,
+    #landingPage .lp-facility-card,
+    #landingPage .lp-provider-card,
+    #landingPage .lp-testimonial-card,
+    #landingPage .lp-cta-box,
+    #landingPage .lp-hero-cta,
+    #landingPage .lp-cta-btn {
+      transition:
+        transform 0.38s var(--ease-b),
+        box-shadow 0.38s var(--ease),
+        filter 0.38s var(--ease),
+        border-color 0.38s var(--ease),
+        background-color 0.38s var(--ease),
+        color 0.38s var(--ease);
+      will-change: transform, box-shadow;
+    }
+
+    #landingPage .lp-service-card:hover,
+    #landingPage .lp-feature-box:hover,
+    #landingPage .lp-innovation-card:hover,
+    #landingPage .lp-step-card:hover,
+    #landingPage .lp-provider-card:hover,
+    #landingPage .lp-testimonial-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 54px rgba(17, 24, 39, 0.16);
+      filter: saturate(1.03);
+    }
+
+    #landingPage .lp-trust-item:hover {
+      transform: translateY(-4px);
+    }
+
+    #landingPage .lp-radiology-card:hover,
+    #landingPage .lp-facility-card:hover,
+    #landingPage .lp-cta-box:hover {
+      box-shadow: 0 28px 62px rgba(17, 24, 39, 0.18);
+      filter: saturate(1.04);
+    }
+
+    #landingPage .lp-hero-cta:hover,
+    #landingPage .lp-cta-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(30, 63, 171, 0.22);
+    }
+
+    #landingPage .lp-service-card-icon,
+    #landingPage .lp-check-icon,
+    #landingPage .lp-step-number,
+    #landingPage .lp-provider-tag,
+    #landingPage .lp-testimonial-author img {
+      transition: transform 0.32s var(--ease), box-shadow 0.32s var(--ease);
+    }
+
+    #landingPage .lp-service-card:hover .lp-service-card-icon,
+    #landingPage .lp-radiology-card:hover .lp-service-card-icon {
+      transform: translateX(5px) scale(1.05);
+    }
+
+    #landingPage .lp-feature-box:hover .lp-check-icon,
+    #landingPage .lp-trust-item:hover .lp-check-icon,
+    #landingPage .lp-provider-card:hover .lp-provider-tag,
+    #landingPage .lp-testimonial-card:hover .lp-testimonial-author img {
+      transform: translateY(-4px);
+    }
+
+    #landingPage .lp-step-card:hover .lp-step-number {
+      transform: scale(1.06) rotate(-2deg);
+    }
+
+    #landingPage .lp-trust-item .lp-check-icon,
+    #landingPage .lp-provider-tag .lp-check-icon {
+      animation: lp-icon-float 3.6s ease-in-out infinite;
+    }
+
+    #landingPage .lp-trust-item:nth-child(2) .lp-check-icon,
+    #landingPage .lp-provider-card:nth-child(2) .lp-provider-tag .lp-check-icon {
+      animation-delay: 0.25s;
+    }
+
+    #landingPage .lp-trust-item:nth-child(3) .lp-check-icon,
+    #landingPage .lp-provider-card:nth-child(3) .lp-provider-tag .lp-check-icon {
+      animation-delay: 0.5s;
+    }
+
+    #landingPage .lp-trust-item:nth-child(4) .lp-check-icon {
+      animation-delay: 0.75s;
+    }
+
+    #landingPage .lp-cta-shell {
+      animation: lp-cta-pan 18s ease-in-out infinite;
+      background-size: cover;
+    }
+
+    #landingPage .lp-scroll-reveal {
+      --lp-reveal-delay: 0ms;
+      --lp-reveal-offset-x: 0px;
+      --lp-reveal-offset-y: 34px;
+      --lp-reveal-scale: 1;
+      opacity: 1;
+      filter: none;
+      transform: none;
+      animation: none !important;
+      transition:
+        opacity 0.82s var(--ease),
+        transform 0.92s var(--ease-b),
+        filter 0.82s var(--ease);
+      transition-delay: var(--lp-reveal-delay);
+      will-change: opacity, transform, filter;
+    }
+
+    #landingPage .lp-scroll-reveal[data-reveal="left"] {
+      --lp-reveal-offset-x: -42px;
+      --lp-reveal-offset-y: 0px;
+    }
+
+    #landingPage .lp-scroll-reveal[data-reveal="right"] {
+      --lp-reveal-offset-x: 42px;
+      --lp-reveal-offset-y: 0px;
+    }
+
+    #landingPage .lp-scroll-reveal[data-reveal="scale"] {
+      --lp-reveal-offset-y: 18px;
+      --lp-reveal-scale: 0.96;
+    }
+
+    #landingPage .lp-scroll-reveal[data-reveal="soft"] {
+      --lp-reveal-offset-y: 18px;
+    }
+
+    #landingPage.lp-motion-ready .lp-scroll-reveal:not(.lp-in-view) {
+      opacity: 0 !important;
+      filter: blur(10px);
+      transform: translate3d(var(--lp-reveal-offset-x), var(--lp-reveal-offset-y), 0) scale(var(--lp-reveal-scale));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #landingPage .lp-section-header,
+      #landingPage .lp-radiology-intro,
+      #landingPage .lp-innovation-logo,
+      #landingPage .lp-innovation-copy,
+      #landingPage .lp-cta-box,
+      #landingPage .lp-footer-brand,
+      #landingPage .lp-footer-column,
+      #landingPage .lp-service-cards > *,
+      #landingPage .lp-trust-strip .lp-container > *,
+      #landingPage .lp-protocol-column > *,
+      #landingPage .lp-innovation-card,
+      #landingPage .lp-steps-grid > *,
+      #landingPage .lp-radiology-grid > *,
+      #landingPage .lp-facility-grid > *,
+      #landingPage .lp-providers-grid > *,
+      #landingPage .lp-testimonials-grid > *,
+      #landingPage .lp-footer-top > *,
+      #landingPage .lp-trust-item .lp-check-icon,
+      #landingPage .lp-provider-tag .lp-check-icon,
+      #landingPage .lp-cta-shell {
+        animation: none !important;
+        opacity: 1 !important;
+        filter: none !important;
+        transform: none !important;
+      }
+
+      #landingPage .lp-service-card,
+      #landingPage .lp-trust-item,
+      #landingPage .lp-feature-box,
+      #landingPage .lp-innovation-card,
+      #landingPage .lp-step-card,
+      #landingPage .lp-radiology-card,
+      #landingPage .lp-facility-card,
+      #landingPage .lp-provider-card,
+      #landingPage .lp-testimonial-card,
+      #landingPage .lp-cta-box,
+      #landingPage .lp-hero-cta,
+      #landingPage .lp-cta-btn,
+      #landingPage .lp-service-card-icon,
+      #landingPage .lp-check-icon,
+      #landingPage .lp-step-number,
+      #landingPage .lp-provider-tag,
+      #landingPage .lp-testimonial-author img,
+      #landingPage .lp-scroll-reveal {
+        transition: none !important;
+      }
+
+      #landingPage.lp-motion-ready .lp-scroll-reveal:not(.lp-in-view) {
+        opacity: 1 !important;
+        filter: none !important;
+        transform: none !important;
+      }
+    }
+
     #landingPage .lp-protocol-grid {
       display: grid;
       grid-template-columns: 1fr 493px 1fr;
@@ -7545,6 +7878,24 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 32px;
+    }
+
+    #landingPage .lp-provider-card--centered {
+      grid-column: 1 / -1;
+      width: 100%;
+      max-width: calc((100% - 32px) / 2);
+      justify-self: center;
+    }
+
+    #providers .provider-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    #providers .provider-card--centered {
+      grid-column: 1 / -1;
+      width: 100%;
+      max-width: calc((100% - 24px) / 2);
+      justify-self: center;
     }
 
     #landingPage .lp-provider-card {
@@ -8170,6 +8521,20 @@
       #landingPage .lp-provider-card img {
         max-height: 320px;
       }
+
+      #landingPage .lp-provider-card--centered {
+        grid-column: auto;
+        max-width: none;
+      }
+
+      #providers .provider-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      #providers .provider-card--centered {
+        grid-column: auto;
+        max-width: none;
+      }
     }
 
     @media (max-width: 767px) {
@@ -8422,7 +8787,7 @@
         <div class="lp-service-cards lp-section-anchor" id="services">
           <button class="lp-service-card lp-service-card--gradient" type="button" onclick="startSvc('general_visit')">
             <div class="lp-service-card-header">
-              <h2 class="lp-service-card-title" data-i18n="svc-general_visit-name">General Health Visit</h2>
+              <h2 class="lp-service-card-title" data-i18n="svc-general_visit-name">RX Weight Loss</h2>
               <span class="lp-service-card-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M6 12h12M12 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -8433,8 +8798,8 @@
               <img src="landing-page-demo/assets/general-health.png" alt="General health visit illustration" />
             </div>
             <div class="lp-service-card-copy">
-              <p data-i18n="svc-general_visit-desc">Virtual visits for non-emergent health concerns - medication management, wellness checks, health advice. Convenient care from home.</p>
-              <div class="lp-service-card-price"><strong>$79</strong> / visit</div>
+              <p data-i18n="svc-general_visit-desc">Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.</p>
+              <div class="lp-service-card-price"><strong>$449</strong> / visit</div>
             </div>
           </button>
 
@@ -8810,6 +9175,28 @@
                   <div class="lp-provider-role" data-i18n="provider-2-role">Nurse Practitioner</div>
                 </div>
                 <p data-i18n="provider-2-body">Board Certified - Family Nurse Practitioner (ANCC), dedicated to comprehensive primary care, evaluation, and medical weight management at Patriotic Virtual Telehealth.<br />Licensed in: FL, CA</p>
+              </div>
+              <div class="lp-provider-tag">
+                <span class="lp-check-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"></circle>
+                    <path d="m8 12.5 2.6 2.6 5.4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+                <span data-i18n="provider-license-tag">Active Florida Medical License</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="lp-provider-card lp-provider-card--centered">
+            <img src="/assets/l_lue_winston.jpg" alt="La Donna L. Lue Winston" />
+            <div class="lp-provider-card-body">
+              <div class="lp-provider-card-copy">
+                <div>
+                  <h3>La Donna L. Lue Winston, MSN, APRN, SCRN</h3>
+                  <div class="lp-provider-role" data-i18n="provider-3-role">Nurse Practitioner</div>
+                </div>
+                <p data-i18n="provider-3-body">Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.</p>
               </div>
               <div class="lp-provider-tag">
                 <span class="lp-check-icon" aria-hidden="true">
@@ -9515,7 +9902,7 @@
         <h2 class="sec-title theme-text">Transparent & Dedicated Care From Our Licensed Medical Providers</h2>
         <p class="sec-sub">Get to know the specific medical professionals evaluating your health.</p>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 40px;">
+        <div class="provider-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 40px;">
           <div class="provider-card theme-panel" style="padding: 32px; border: 1px solid var(--border-soft); border-radius: 12px;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
               <img src="assets/dr_osunsade_new.jpg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="Dr. Osunsade" />
@@ -9540,6 +9927,19 @@
             <p style="font-size: 14px; color: var(--g200); line-height: 1.6;">Board Certified — Family Nurse Practitioner (ANCC®), dedicated to comprehensive primary care, evaluation, and medical weight management at Patriotic Virtual Telehealth.<br>Licensed in: FL, CA</p>
             <div style="margin-top: 20px; padding: 8px 12px; background: rgba(16, 185, 129, 0.1); color: rgb(4, 120, 87); font-size: 12px; font-weight: 600; border-radius: 6px; display: inline-block;">
               ✓ Active Florida Medical License
+            </div>
+          </div>
+          <div class="provider-card theme-panel provider-card--centered" style="padding: 32px; border: 1px solid var(--border-soft); border-radius: 12px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+              <img src="assets/l_lue_winston.jpg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="La Donna L. Lue Winston" />
+              <div>
+                <h3 style="margin: 0; font-size: 18px; color: var(--txt-main);">La Donna L. Lue Winston, MSN, APRN, SCRN</h3>
+                <div style="font-size: 14px; color: var(--g500);">Nurse Practitioner</div>
+              </div>
+            </div>
+            <p style="font-size: 14px; color: var(--g200); line-height: 1.6;">Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.</p>
+            <div style="margin-top: 20px; padding: 8px 12px; background: rgba(16, 185, 129, 0.1); color: rgb(4, 120, 87); font-size: 12px; font-weight: 600; border-radius: 6px; display: inline-block;">
+              Active Florida Medical License
             </div>
           </div>
         </div>
@@ -11485,6 +11885,8 @@
       "provider-1-body": "Board Certified - Diagnostic Radiology &amp; Interventional Radiology (ABMS), providing medical oversight and direct patient care at Patriotic Virtual Telehealth.<br />Licensed in: FL, MI, DC, CA, MD, OH, NY, WI",
       "provider-2-role": "Nurse Practitioner",
       "provider-2-body": "Board Certified - Family Nurse Practitioner (ANCC), dedicated to comprehensive primary care, evaluation, and medical weight management at Patriotic Virtual Telehealth.<br />Licensed in: FL, CA",
+      "provider-3-role": "Nurse Practitioner",
+      "provider-3-body": "Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.",
       "provider-license-tag": "Active Florida Medical License",
       "testimonial-1-quote": "\"Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right.\"",
       "testimonial-1-detail": "Weight Loss &middot; Jacksonville, FL",
@@ -11579,6 +11981,8 @@
       "provider-1-body": "Certificado en Radiologia Diagnostica e Intervencionista (ABMS), brinda supervision medica y atencion directa al paciente en Patriotic Virtual Telehealth.<br />Licencias en: FL, MI, DC, CA, MD, OH, NY, WI",
       "provider-2-role": "Enfermero Practicante",
       "provider-2-body": "Certificado como Family Nurse Practitioner (ANCC), dedicado a la atencion primaria integral, evaluacion y manejo medico del peso en Patriotic Virtual Telehealth.<br />Licencias en: FL, CA",
+      "provider-3-role": "Enfermera Practicante",
+      "provider-3-body": "Enfermera Practicante de Cuidados Agudos en Adultos y Gerontologia certificada (AGACNP-BC) y enfermera certificada en stroke, con mas de 15 anos de experiencia en enfermeria. La Donna se dedica a la practica basada en evidencia, a mejorar los resultados de los pacientes mediante planes de atencion integrales y a brindar orientacion clinica experta en cuidados criticos y programas de stroke.",
       "provider-license-tag": "Licencia Medica Activa en Florida",
       "testimonial-1-quote": "\"Recibi mi receta en 24 horas. He bajado 35 libras y sigo avanzando. La evaluacion de seguridad me hizo sentir que realmente les importa hacerlo bien.\"",
       "testimonial-1-detail": "Perdida de Peso &middot; Jacksonville, FL",
@@ -15867,6 +16271,121 @@
     (function () {
       const saved = localStorage.getItem("theme");
       setTheme(saved === "dark" ? "dark" : "light", false);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      function initLandingScrollReveal() {
+        const page = document.getElementById("landingPage");
+        if (!page || page.dataset.scrollRevealInit === "true") return;
+        page.dataset.scrollRevealInit = "true";
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          return;
+        }
+
+        const revealNodes = [];
+
+        function addReveal(node, effect, delayMs) {
+          if (!node || node.classList.contains("lp-scroll-reveal")) return;
+          node.classList.add("lp-scroll-reveal");
+          node.dataset.reveal = effect;
+          node.style.setProperty("--lp-reveal-delay", delayMs + "ms");
+          revealNodes.push(node);
+        }
+
+        function addRevealGroup(selector, effect, staggerMs) {
+          page.querySelectorAll(selector).forEach(function (node, index) {
+            addReveal(node, effect, index * staggerMs);
+          });
+        }
+
+        const providersGrid = page.querySelector(".lp-providers-grid");
+        if (providersGrid) {
+          const providerSection = providersGrid.closest("section");
+          if (providerSection) {
+            addReveal(providerSection.querySelector(".lp-section-header"), "up", 0);
+          }
+        }
+
+        addReveal(page.querySelector(".lp-section-header--split"), "up", 0);
+        addRevealGroup(".lp-protocol-column:first-child > *", "left", 90);
+        addReveal(page.querySelector(".lp-protocol-image"), "scale", 120);
+        addRevealGroup(".lp-protocol-column:last-child > *", "right", 90);
+
+        addReveal(page.querySelector(".lp-innovation-logo"), "left", 0);
+        addReveal(page.querySelector(".lp-innovation-copy"), "right", 120);
+
+        addReveal(page.querySelector("#how-it-works .lp-section-header"), "up", 0);
+        addRevealGroup("#how-it-works .lp-steps-grid > *", "up", 80);
+
+        addReveal(page.querySelector("#radiology .lp-radiology-intro"), "left", 0);
+        addRevealGroup("#radiology .lp-radiology-grid > *", "up", 90);
+
+        addReveal(page.querySelector("#clinicians .lp-section-header"), "up", 0);
+        addRevealGroup("#clinicians .lp-facility-grid > *", "up", 90);
+
+        addRevealGroup(".lp-providers-grid > *", "soft", 90);
+
+        addReveal(page.querySelector("#testimonials .lp-section-header"), "up", 0);
+        addRevealGroup("#testimonials .lp-testimonials-grid > *", "soft", 90);
+
+        addReveal(page.querySelector(".lp-cta-box"), "scale", 0);
+        addReveal(page.querySelector(".lp-footer-brand"), "left", 0);
+        addRevealGroup(".lp-footer-column", "up", 90);
+
+        if (!revealNodes.length) return;
+
+        function isInView(node) {
+          const rect = node.getBoundingClientRect();
+          const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+          return rect.top < viewportHeight * 0.9 && rect.bottom > viewportHeight * 0.08;
+        }
+
+        revealNodes.forEach(function (node) {
+          if (isInView(node)) {
+            node.classList.add("lp-in-view");
+          }
+        });
+
+        if (!("IntersectionObserver" in window)) {
+          revealNodes.forEach(function (node) {
+            node.classList.add("lp-in-view");
+          });
+          return;
+        }
+
+        const observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting || entry.intersectionRatio > 0.18) {
+                entry.target.classList.add("lp-in-view");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          {
+            rootMargin: "0px 0px -12% 0px",
+            threshold: [0.12, 0.24, 0.36],
+          }
+        );
+
+        window.requestAnimationFrame(function () {
+          page.classList.add("lp-motion-ready");
+          revealNodes.forEach(function (node) {
+            if (!node.classList.contains("lp-in-view")) {
+              observer.observe(node);
+            }
+          });
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initLandingScrollReveal, { once: true });
+      } else {
+        initLandingScrollReveal();
+      }
     })();
   </script>
   
