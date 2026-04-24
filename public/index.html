@@ -12030,6 +12030,19 @@
       fbUser = null;
 
     const svcs = [
+  {
+    id: "general-visit",
+    k: "telehealth_standard",
+    name: "General Telehealth Visit",
+    desc: "Speak with a provider for general medical concerns, prescription refills, or minor urgent care needs.",
+    icon: "🩺",
+    ic: "emerald",
+    c: "emerald",
+    price: 49,
+    cat: ["clinical"],
+    stripe: "",
+    priceId: "",
+  },
 /*
   {
     id: "weight-loss",
@@ -13519,7 +13532,7 @@
         document.getElementById(id).classList.add("hidden"),
       );
       document.getElementById("cS1").classList.remove("hidden");
-      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => (s.k === window._initialSvcClick || s.k === "weight_loss" || s.k === "membership_elite")) : svcs;
+      const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => (s.k === window._initialSvcClick || s.k === "telehealth_standard")) : svcs;
       document.getElementById("svcSel").innerHTML = clinicalSvcs
         .map(
           (s) =>
