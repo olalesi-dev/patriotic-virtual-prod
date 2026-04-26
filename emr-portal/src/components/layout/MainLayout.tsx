@@ -306,6 +306,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', active: pathname === '/dashboard' },
                 { href: '/calendar', icon: Calendar, label: 'Calendar', active: pathname.startsWith('/calendar') },
                 { href: '/patients', icon: User, label: 'Patients', active: pathname.startsWith('/patients') },
+                { href: '/soap', icon: ClipboardList, label: 'SOAP Notes', active: pathname.startsWith('/soap') },
                 { href: '/team', icon: Users, label: 'Team', active: pathname.startsWith('/team') },
                 { href: '/inbox', icon: MessageSquare, label: 'Inbox / Messages', badge: unreadInbox > 0 ? unreadInbox.toString() : undefined, active: pathname.startsWith('/inbox') },
                 { href: '/waitlist', icon: Clock, label: 'Patient Waitlist', badge: unreadWaitlist > 0 ? unreadWaitlist.toString() : undefined, active: pathname.startsWith('/waitlist') },
