@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import { admin, firestore } from '../config/firebase';
 
 const DEFAULT_MEETING_URL = 'https://PVT.doxy.me/patrioticvirtualtelehealth';
@@ -114,7 +113,7 @@ export async function completeTelehealthConsultationPayment(args: {
     return consultationData;
 }
 
-export function buildStripeLineItem(serviceKey: string): Stripe.Checkout.SessionCreateParams.LineItem {
+export function buildStripeLineItem(serviceKey: string) {
     const item = CONSULTATION_CATALOG[serviceKey];
     if (!item) {
         throw new Error(`Invalid service: ${serviceKey}`);
@@ -127,7 +126,7 @@ export function buildStripeLineItem(serviceKey: string): Stripe.Checkout.Session
             product_data: { name: item.name },
             unit_amount: item.amount,
             ...(item.interval ? {
-                recurring: { interval: item.interval as Stripe.Price.Recurring.Interval },
+                recurring: { interval: item.interval as 'day' | 'week' | 'month' | 'year' },
             } : {}),
         },
     };

@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import type Stripe from 'stripe';
 import { firestore } from '../config/firebase';
 import { isStripeConfigured, stripe } from '../config/stripe';
 import {
@@ -78,7 +77,7 @@ router.post('/create-checkout-session', async (req, res) => {
         const lineItem = buildStripeLineItem(serviceKey);
         const item = CONSULTATION_CATALOG[serviceKey];
 
-        const sessionConfig: Stripe.Checkout.SessionCreateParams = {
+        const sessionConfig = {
             payment_method_types: ['card'],
             allow_promotion_codes: true,
             line_items: [lineItem],
@@ -101,10 +100,10 @@ router.post('/create-checkout-session', async (req, res) => {
                 consultationId,
                 uid,
             },
-            billing_address_collection: 'required',
+            billing_address_collection: 'required' as const,
         };
 
-        const session = await stripeClient.checkout.sessions.create(sessionConfig);
+        const session = await stripeClient.checkout.sessions.create(sessionConfig as never);
         return res.json({ sessionId: session.id, url: session.url });
     } catch (error) {
         logger.error('Checkout session error', { error });

@@ -14,9 +14,11 @@ import {
     XCircle
 } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+import { ProviderRescheduleModal } from '@/components/provider/ProviderRescheduleModal';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { apiFetchJson } from '@/lib/api-client';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { formatDateForInput, formatTimeForInput } from '@/lib/provider-appointment-actions';
 
 type DashboardStatusKey =
     | 'upcoming'
@@ -148,6 +150,8 @@ export default function DashboardClient() {
     const { user: activeUser, isReady } = useAuthUser();
     const [activeTab, setActiveTab] = React.useState<DashboardTab>('Waitlist');
     const [selectedAppointmentId, setSelectedAppointmentId] = React.useState<string | null>(null);
+    const [rescheduleAppointmentId, setRescheduleAppointmentId] = React.useState<string | null>(null);
+    const [rescheduleError, setRescheduleError] = React.useState<string | null>(null);
 
     const dashboardQueryKey = React.useMemo(
         () => ['provider-dashboard', activeUser?.uid ?? 'anonymous'] as const,
@@ -256,6 +260,58 @@ export default function DashboardClient() {
         }
     });
 
+    const rescheduleMutation = useMutation({
+        mutationFn: async ({
+            appointmentId,
+            date,
+            time,
+            previousDate,
+            previousTime,
+        }: {
+            appointmentId: string;
+            date: string;
+            time: string;
+            previousDate: string;
+            previousTime: string;
+        }) => {
+            if (!activeUser) {
+                throw new Error('Please sign in again to reschedule appointments.');
+            }
+
+            const payload = await apiFetchJson<{
+                success?: boolean;
+                appointment?: { id: string; startAt?: string | null };
+                error?: string;
+            }>(`/api/dashboard/appointments/${appointmentId}`, {
+                method: 'PATCH',
+                user: activeUser,
+                body: {
+                    action: 'reschedule',
+                    date,
+                    time,
+                    previousDate,
+                    previousTime,
+                }
+            });
+
+            if (!payload.success) {
+                throw new Error(payload.error || 'Failed to reschedule appointment.');
+            }
+
+            return payload.appointment ?? { id: appointmentId };
+        },
+        onSuccess: () => {
+            setRescheduleError(null);
+            setRescheduleAppointmentId(null);
+        },
+        onError: (error) => {
+            setRescheduleError(error instanceof Error ? error.message : 'Failed to reschedule appointment.');
+        },
+        onSettled: () => {
+            void queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+        }
+    });
+
     const providerName = dashboardQuery.data?.providerName ?? activeUser?.displayName ?? 'Provider';
     const appointments = React.useMemo(
         () => dashboardQuery.data?.appointments ?? [],
@@ -271,6 +327,7 @@ export default function DashboardClient() {
     );
     const unreadMessageCount = dashboardQuery.data?.unreadMessageCount ?? 0;
     const selectedAppointment = appointments.find((appointment) => appointment.id === selectedAppointmentId) ?? null;
+    const rescheduleAppointment = appointments.find((appointment) => appointment.id === rescheduleAppointmentId) ?? null;
     const loading = !isReady || dashboardQuery.isLoading;
     const refreshing = dashboardQuery.isFetching && !dashboardQuery.isLoading;
     const mutatingAppointmentId = updateStatusMutation.variables?.appointmentId ?? null;
@@ -305,12 +362,48 @@ export default function DashboardClient() {
         await updateStatusMutation.mutateAsync({ appointmentId, nextStatus });
     }, [updateStatusMutation]);
 
+    const handleOpenReschedule = React.useCallback((appointmentId: string) => {
+        setRescheduleError(null);
+        setRescheduleAppointmentId(appointmentId);
+    }, []);
+
+    const handleConfirmCancel = React.useCallback(async (appointmentId: string) => {
+        if (!window.confirm('Cancel this appointment?')) {
+            return;
+        }
+
+        await handleUpdateStatus(appointmentId, 'cancelled');
+    }, [handleUpdateStatus]);
+
     if (loading) {
         return <DashboardSkeleton />;
     }
 
     return (
         <div className="space-y-8 pb-8">
+            <ProviderRescheduleModal
+                open={Boolean(rescheduleAppointment)}
+                appointmentLabel={rescheduleAppointment ? `${rescheduleAppointment.patient} • ${rescheduleAppointment.type}` : 'Appointment'}
+                initialDateTime={rescheduleAppointment?.startAt ?? null}
+                submitting={rescheduleMutation.isPending}
+                error={rescheduleError}
+                onClose={() => {
+                    if (rescheduleMutation.isPending) return;
+                    setRescheduleAppointmentId(null);
+                    setRescheduleError(null);
+                }}
+                onSubmit={async ({ date, time }) => {
+                    if (!rescheduleAppointment) return;
+                    await rescheduleMutation.mutateAsync({
+                        appointmentId: rescheduleAppointment.id,
+                        date,
+                        time,
+                        previousDate: formatDateForInput(rescheduleAppointment.startAt),
+                        previousTime: formatTimeForInput(rescheduleAppointment.startAt),
+                    });
+                }}
+            />
+
             <section className="rounded-3xl border border-indigo-100 dark:border-slate-700 bg-gradient-to-br from-indigo-50 via-white to-sky-50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-800 p-8 shadow-sm">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-2xl space-y-3">
@@ -606,6 +699,11 @@ export default function DashboardClient() {
                                 {selectedAppointment.statusKey !== 'waitlist' && selectedAppointment.statusKey !== 'completed' && selectedAppointment.statusKey !== 'cancelled' && (
                                     <>
                                         <StatusActionButton
+                                            label="Reschedule"
+                                            onClick={() => handleOpenReschedule(selectedAppointment.id)}
+                                            loading={rescheduleMutation.isPending && rescheduleAppointmentId === selectedAppointment.id}
+                                        />
+                                        <StatusActionButton
                                             label="Confirm"
                                             onClick={() => handleUpdateStatus(selectedAppointment.id, 'confirmed')}
                                             loading={mutatingAppointmentId === selectedAppointment.id}
@@ -621,8 +719,8 @@ export default function DashboardClient() {
                                             loading={mutatingAppointmentId === selectedAppointment.id}
                                         />
                                         <StatusActionButton
-                                            label="Cancel"
-                                            onClick={() => handleUpdateStatus(selectedAppointment.id, 'cancelled')}
+                                            label="Cancel Appointment"
+                                            onClick={() => handleConfirmCancel(selectedAppointment.id)}
                                             loading={mutatingAppointmentId === selectedAppointment.id}
                                             destructive
                                         />
