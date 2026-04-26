@@ -41,7 +41,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
             description: 'Telehealth Consultation (AI Scribe)',
             notes: `[SOAP Note]\n${soapNote}`,
             providerId: user.uid,
-            providerName: user.name || 'Provider',
+            providerName: (user as any).displayName || (user as any).name || 'Provider',
             createdAt: new Date()
         });
 
