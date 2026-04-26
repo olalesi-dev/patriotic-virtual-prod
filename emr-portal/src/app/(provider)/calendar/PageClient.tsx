@@ -617,6 +617,23 @@ export default function CalendarPage() {
         try {
             await updateDoc(doc(db, 'appointments', id), { status, updatedAt: Timestamp.now() });
             if (selectedAppt?.id === id) setSelectedAppt((prev: any) => ({ ...prev, status }));
+
+            if (status === 'cancelled') {
+                try {
+                    const { auth } = await import('@/lib/firebase');
+                    const tok = await auth.currentUser?.getIdToken();
+                    await fetch('/api/notifications/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+                        body: JSON.stringify({
+                            type: 'appointment_cancelled',
+                            appointmentId: id
+                        })
+                    });
+                } catch (err) {
+                    console.error("Notification error:", err);
+                }
+            }
             showToast(`Status updated to "${STATUS_CONFIG[status]?.label}"`);
         } catch (e) { showToast('Failed to update status.'); }
     };
@@ -638,6 +655,11 @@ export default function CalendarPage() {
         const newTime = `${hour.toString().padStart(2, '0')}:${minuteOffset.toString().padStart(2, '0')}`;
         const newDate = format(day, 'yyyy-MM-dd');
         const newStart = new Date(`${newDate}T${newTime}:00`);
+        const previousStart = getApptDate(draggedAppt);
+        const previousDate = previousStart ? format(previousStart, 'yyyy-MM-dd') : draggedAppt.date;
+        const previousTime = previousStart
+            ? format(previousStart, 'HH:mm')
+            : (typeof draggedAppt.time === 'string' ? draggedAppt.time : undefined);
 
         try {
             await updateDoc(doc(db, 'appointments', draggedAppt.id), {
@@ -655,7 +677,9 @@ export default function CalendarPage() {
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
                     body: JSON.stringify({
                         type: 'appointment_rescheduled',
-                        appointmentId: draggedAppt.id
+                        appointmentId: draggedAppt.id,
+                        previousDate,
+                        previousTime
                     })
                 });
             } catch (err) {

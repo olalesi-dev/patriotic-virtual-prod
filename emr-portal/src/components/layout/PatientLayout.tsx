@@ -285,13 +285,15 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
                                                 className="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors group">
                                                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm ${notification.type === 'message_received' ? 'bg-indigo-50 text-indigo-500' :
                                                     notification.type === 'appointment_booked' ? 'bg-emerald-50 text-emerald-600' :
-                                                        notification.type === 'appointment_cancelled' || notification.type === 'appointment_rescheduled' ? 'bg-amber-50 text-amber-500' :
-                                                            'bg-sky-50 text-sky-500'
+                                                        notification.type === 'appointment_reminder' ? 'bg-sky-50 text-sky-500' :
+                                                            notification.type === 'appointment_cancelled' || notification.type === 'appointment_rescheduled' ? 'bg-amber-50 text-amber-500' :
+                                                                'bg-sky-50 text-sky-500'
                                                     }`}>
                                                     {notification.type === 'message_received' && <MessageSquare className="w-4 h-4" />}
                                                     {notification.type === 'appointment_booked' && <CheckCircle2 className="w-4 h-4" />}
+                                                    {notification.type === 'appointment_reminder' && <Clock className="w-4 h-4" />}
                                                     {(notification.type === 'appointment_cancelled' || notification.type === 'appointment_rescheduled') && <Clock className="w-4 h-4" />}
-                                                    {notification.type !== 'message_received' && notification.type !== 'appointment_booked' && notification.type !== 'appointment_cancelled' && notification.type !== 'appointment_rescheduled' && <ShieldCheck className="w-4 h-4" />}
+                                                    {notification.type !== 'message_received' && notification.type !== 'appointment_booked' && notification.type !== 'appointment_reminder' && notification.type !== 'appointment_cancelled' && notification.type !== 'appointment_rescheduled' && <ShieldCheck className="w-4 h-4" />}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight mb-0.5">{notification.title}</p>

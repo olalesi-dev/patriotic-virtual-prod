@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { sendBackendNotification } from '@/lib/backend-notifications';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { sendMessage } from '@/lib/server-messaging';
 import { requireAuthenticatedUser } from '@/lib/server-auth';
@@ -50,6 +51,37 @@ export async function POST(request: Request) {
         }
 
         const result = await sendMessage(db, user, parsedBody.data);
+        try {
+            const authorizationHeader = request.headers.get('authorization') ?? '';
+            const topicKey = result.notificationContext.recipientType === 'patient'
+                ? 'SECURE_MESSAGE_RECEIVED_PATIENT'
+                : 'NEW_SECURE_MESSAGE_PROVIDER';
+            await sendBackendNotification(authorizationHeader, {
+                topicKey,
+                entityId: result.threadId,
+                recipientIds: [result.notificationContext.recipientId],
+                dedupeKey: `secure-message:${result.messageId}`,
+                templateData: {
+                    actorName: result.notificationContext.actorName,
+                    threadId: result.notificationContext.threadId,
+                    threadType: result.notificationContext.threadType,
+                    patientId: result.notificationContext.patientId,
+                    providerId: result.notificationContext.providerId,
+                    teamId: result.notificationContext.teamId,
+                    teamName: result.notificationContext.teamName,
+                    portalLink: result.notificationContext.recipientType === 'patient' ? '/patient/messages' : '/inbox',
+                },
+                metadata: {
+                    messageId: result.messageId,
+                    threadId: result.threadId,
+                },
+                actorId: result.notificationContext.actorId,
+                actorName: result.notificationContext.actorName,
+                source: 'messages',
+            });
+        } catch (notificationError) {
+            console.warn('Secure message notification enqueue failed after message persistence.', notificationError);
+        }
         return NextResponse.json(result);
     } catch (error: unknown) {
         const rawMessage = error instanceof Error ? error.message : 'Unexpected server error.';

@@ -1,6 +1,7 @@
 import type { User as FirebaseUser } from 'firebase/auth';
 import { sendEmailVerification, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { getApiUrl } from '@/lib/api-origin';
 import { logAuditEvent } from '@/lib/audit';
 import { syncDoseSpotPatientBestEffort } from '@/lib/dosespot-patient-sync';
 import { db } from '@/lib/firebase';
@@ -144,6 +145,49 @@ export function validatePatientRegistration(
     };
 }
 
+async function triggerPatientWelcomeNotification(
+    user: FirebaseUser,
+    registration: ValidatedPatientRegistration,
+): Promise<void> {
+    const authToken = await user.getIdToken();
+    const portalBaseUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://patriotictelehealth.com');
+
+    const response = await fetch(getApiUrl('/api/v1/notifications/notify'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+            topicKey: 'PATIENT_WELCOME',
+            entityId: user.uid,
+            recipientIds: [user.uid],
+            dedupeKey: `patient-welcome:${user.uid}`,
+            templateData: {
+                first_name: registration.firstName,
+                platform_name: 'Patriotic Telehealth',
+                support_email: 'support@patriotictelehealth.com',
+                firstName: registration.firstName,
+                platformName: 'Patriotic Telehealth',
+                supportEmail: 'support@patriotictelehealth.com',
+            },
+            metadata: {
+                role: 'patient',
+            },
+            channels: ['email', 'in_app'],
+            actorName: 'Patriotic Telehealth',
+            source: 'signup',
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Patient welcome notification failed with status ${response.status}.`);
+    }
+}
+
 export async function finalizePatientRegistration(
     user: FirebaseUser,
     registration: ValidatedPatientRegistration,
@@ -231,4 +275,10 @@ export async function finalizePatientRegistration(
         patientUid: user.uid,
         updateExisting: doseSpotUpdateExisting
     });
+
+    if (options.auditAction === 'ACCOUNT_CREATED') {
+        void triggerPatientWelcomeNotification(user, registration).catch((error) => {
+            console.warn('Patient welcome notification failed:', error);
+        });
+    }
 }
