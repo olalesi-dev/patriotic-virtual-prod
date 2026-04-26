@@ -53,6 +53,7 @@ import { format, isAfter, subMinutes, addMinutes, isBefore, addDays } from 'date
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
 const Calendar = dynamic(() => import('react-calendar'), {
     ssr: false,
     loading: () => <div className="h-[300px] flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-3xl animate-pulse">Loading selector...</div>
@@ -288,8 +289,8 @@ export default function AppointmentsPage() {
                     paymentStatus: raw.paymentStatus,
                     reason: raw.serviceKey || raw.reason || 'Consultation',
                     type: 'Telehealth',
-                    date: raw.scheduledAt || raw.createdAt,
-                    scheduledAt: raw.scheduledAt || null,
+                    date: raw.startTime || raw.scheduledAt || raw.date || raw.createdAt,
+                    scheduledAt: raw.startTime || raw.scheduledAt || raw.date || null,
                     providerName: raw.providerName || 'Patriotic Provider',
                     providerId: raw.providerId || '',
                     intakeAnswers: raw.intake || {},
@@ -349,8 +350,8 @@ export default function AppointmentsPage() {
                         status: normalizedStatus as Appointment['status'],
                         reason: raw.serviceKey || raw.reason || 'Consultation',
                         type: 'Telehealth',
-                        date: raw.scheduledAt || raw.date || raw.createdAt,
-                        scheduledAt: raw.scheduledAt || null,
+                        date: raw.startTime || raw.scheduledAt || raw.date || raw.createdAt,
+                        scheduledAt: raw.startTime || raw.scheduledAt || raw.date || null,
                         providerName: raw.providerName || 'Patriotic Provider',
                         providerId: raw.providerId || '',
                         intakeAnswers: raw.intakeAnswers || {},
@@ -386,7 +387,7 @@ export default function AppointmentsPage() {
 
                     // The top-level doc's ID IS the consultation ID (set during Stripe webhook)
                     const consultationId = raw.consultationId || d.id;
-                    const scheduledAt = raw.scheduledAt || raw.startTime || null;
+                    const scheduledAt = raw.startTime || raw.scheduledAt || null;
 
                     return {
                         ...raw,
@@ -535,9 +536,7 @@ export default function AppointmentsPage() {
     };
 
     // FIX: Guard against undefined date before calling toDate()
-    const isJoinable = (apptDate: any) => {
-        return true; // testing: bypass 15 min check
-    };
+    const isJoinable = (apptDate: any) => isTelehealthJoinAvailable(apptDate);
 
     const canCancel = (apptDate: any) => {
         const date = toSafeDate(apptDate);
@@ -717,16 +716,10 @@ export default function AppointmentsPage() {
                                         ) : (
                                             <div className="flex flex-col gap-2">
                                                 <button
-                                                    onClick={() => setActiveVideoCall({url: appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth', apptId: appt.id, role: 'patient', intakeAnswers: appt.intakeAnswers})}
-                                                    className="w-full md:w-52 bg-sky-50 dark:bg-sky-900/30 text-[#0EA5E9] dark:text-sky-400 border border-sky-100 dark:border-sky-800 py-3.5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-sky-100 transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    <Video className="w-4 h-4" /> Start Video Call
-                                                </button>
-                                                <button
                                                     onClick={() => setIntakeDetail(appt)}
                                                     className="w-full md:w-52 bg-white dark:bg-slate-800 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 dark:border-slate-700 py-3 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                                                 >
-                                                    View Intake
+                                                    Join Available 1 Hour Before
                                                 </button>
                                             </div>
                                         )}

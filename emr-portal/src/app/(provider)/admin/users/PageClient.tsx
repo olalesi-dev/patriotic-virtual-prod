@@ -353,7 +353,8 @@ export default function UserManagementPage() {
                 error?: string;
             }>('/api/admin/users', {
                 method: 'GET',
-                cache: 'no-store'
+                cache: 'no-store',
+                user: auth.currentUser,
             });
 
             if (!data.success || !data.users) {
@@ -368,7 +369,8 @@ export default function UserManagementPage() {
         mutationFn: ({ uid, body }: { uid: string; body: Record<string, unknown> }) => (
             apiFetchJson<{ success?: boolean; error?: string }>(`/api/admin/users/${uid}`, {
                 method: 'PATCH',
-                body
+                body,
+                user: auth.currentUser,
             })
         ),
         onSettled: () => {
@@ -389,7 +391,8 @@ export default function UserManagementPage() {
             };
         }>('/api/admin/users', {
             method: 'POST',
-            body
+            body,
+            user: auth.currentUser,
         }),
         onSettled: () => {
             void queryClient.invalidateQueries({ queryKey: usersQueryKey });
@@ -398,7 +401,8 @@ export default function UserManagementPage() {
 
     const deleteUserMutation = useMutation({
         mutationFn: (uid: string) => apiFetchJson<{ success?: boolean; error?: string }>(`/api/admin/users/${uid}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            user: auth.currentUser,
         }),
         onSettled: () => {
             void queryClient.invalidateQueries({ queryKey: usersQueryKey });
@@ -411,7 +415,8 @@ export default function UserManagementPage() {
             error?: string;
             link?: string;
         }>(`/api/admin/users/${uid}/reset`, {
-            method: 'POST'
+            method: 'POST',
+            user: auth.currentUser,
         })
     });
 

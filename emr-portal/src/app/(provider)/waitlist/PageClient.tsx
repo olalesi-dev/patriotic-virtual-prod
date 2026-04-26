@@ -162,6 +162,41 @@ function ScheduleModal({
                 serviceKey: entry.serviceKey,
             }, { merge: true });
 
+            try {
+                const authToken = await user.getIdToken();
+                const notificationResponse = await fetch('/api/notifications/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        type: 'appointment_booked',
+                        appointmentId: entry.id,
+                    }),
+                });
+
+                if (!notificationResponse.ok) {
+                    const errorText = await notificationResponse.text();
+                    console.error('Waitlist scheduling notification failed', {
+                        appointmentId: entry.id,
+                        status: notificationResponse.status,
+                        body: errorText,
+                    });
+                    toast.warning('Appointment scheduled, but the notification/email handoff failed.');
+                } else {
+                    console.info('Waitlist scheduling notification queued', {
+                        appointmentId: entry.id,
+                    });
+                }
+            } catch (notificationError) {
+                console.error('Waitlist scheduling notification request failed', {
+                    appointmentId: entry.id,
+                    error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+                });
+                toast.warning('Appointment scheduled, but the notification/email request failed.');
+            }
+
             toast.success(`Appointment scheduled for ${format(scheduledAt, 'MMM d, yyyy')} at ${formatTime(selectedTime)}`);
             onScheduled();
             onClose();
