@@ -842,6 +842,7 @@ export default function WaitlistPage() {
                                     </button>
                                     <button
                                         onClick={() => {
+                                            localStorage.setItem('doxy_opened', 'true');
                                             // Doxy's provider auth (Frontegg) cannot authenticate inside an iframe
                                             // due to third-party cookie restrictions. Open in new tab instead.
                                             window.open('https://doxy.me/sign-in', '_blank', 'noopener,noreferrer');
