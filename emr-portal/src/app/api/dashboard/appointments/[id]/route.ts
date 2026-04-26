@@ -152,6 +152,25 @@ export async function PATCH(
 
         await batch.commit();
 
+        if (newStatus === 'cancelled') {
+            try {
+                await fetch(new URL('/api/notifications/send', request.url), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: request.headers.get('authorization') ?? ''
+                    },
+                    body: JSON.stringify({
+                        type: 'appointment_cancelled',
+                        appointmentId
+                    }),
+                    cache: 'no-store'
+                });
+            } catch (error) {
+                console.error('Dashboard appointment cancellation notification failed:', error);
+            }
+        }
+
         return NextResponse.json({
             success: true,
             appointment: {

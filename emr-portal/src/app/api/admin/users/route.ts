@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth, db } from '@/lib/firebase-admin';
+import { sendBackendNotification, sendBackendTemplateEmail } from '@/lib/backend-notifications';
 import {
     adminCreateUserSchema,
     buildAdminUserProfileFields
@@ -7,6 +8,13 @@ import {
 import { shouldUsePatientsCollection } from '@/lib/user-record-scope';
 
 export const dynamic = 'force-dynamic';
+
+function buildRoleLabel(role: string): string {
+    if (role === 'provider') return 'Provider';
+    if (role === 'admin') return 'Admin';
+    if (role === 'staff') return 'Staff';
+    return 'Patient';
+}
 
 async function triggerBackgroundDoseSpotSync(clinicianUid: string) {
     const backendUrl = (
@@ -130,6 +138,65 @@ export async function POST(request: Request) {
             void triggerBackgroundDoseSpotSync(userRecord.uid);
         }
 
+        const authorizationHeader = request.headers.get('authorization') ?? '';
+        const portalBaseUrl = new URL(request.url).origin;
+        const roleLabel = buildRoleLabel(payload.role);
+        const welcomeTemplateData = {
+            first_name: payload.firstName,
+            platform_name: 'Patriotic Telehealth',
+            role: payload.role,
+            email: payload.email,
+            temporary_password: payload.password,
+            login_url: new URL('/login', portalBaseUrl).toString(),
+            support_email: 'support@patriotictelehealth.com',
+            firstName: payload.firstName,
+            platformName: 'Patriotic Telehealth',
+            loginEmail: payload.email,
+            login_email: payload.email,
+            password: payload.password,
+            temporaryPassword: payload.password,
+            loginUrl: new URL('/login', portalBaseUrl).toString(),
+            supportEmail: 'support@patriotictelehealth.com'
+        };
+
+        let notificationWarning: string | null = null;
+        if (authorizationHeader) {
+            try {
+                await Promise.all([
+                    sendBackendTemplateEmail(authorizationHeader, {
+                        templateKey: 'staff_welcome',
+                        toEmail: payload.email,
+                        templateData: welcomeTemplateData
+                    }),
+                    sendBackendNotification(authorizationHeader, {
+                        topicKey: 'STAFF_ACCOUNT_CREATED',
+                        entityId: userRecord.uid,
+                        recipientIds: [userRecord.uid],
+                        dedupeKey: `staff-account-created:${userRecord.uid}`,
+                        channels: ['in_app'],
+                        templateData: {
+                            roleLabel,
+                            portalLink: new URL('/login', portalBaseUrl).toString()
+                        },
+                        metadata: {
+                            role: payload.role
+                        },
+                        actorId: null,
+                        actorName: 'Patriotic Telehealth',
+                        source: 'admin_users'
+                    })
+                ]);
+            } catch (error) {
+                notificationWarning = error instanceof Error ? error.message : 'Failed to deliver welcome notification.';
+                console.error('[Admin Users] Welcome notification failed', {
+                    uid: userRecord.uid,
+                    error: notificationWarning
+                });
+            }
+        } else {
+            notificationWarning = 'Authorization header missing. Welcome email was not sent.';
+        }
+
         return NextResponse.json({
             success: true,
             message: 'User created successfully',
@@ -140,7 +207,8 @@ export async function POST(request: Request) {
                 displayName: userRecord.displayName,
                 role: payload.role,
                 syncQueued: payload.role === 'provider'
-            }
+            },
+            notificationWarning
         });
     } catch (error: any) {
         console.error('Error creating user:', error);

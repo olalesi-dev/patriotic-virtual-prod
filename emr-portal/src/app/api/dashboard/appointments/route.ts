@@ -176,6 +176,23 @@ export async function POST(request: Request) {
 
         await batch.commit();
 
+        try {
+            await fetch(new URL('/api/notifications/send', request.url), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: request.headers.get('authorization') ?? ''
+                },
+                body: JSON.stringify({
+                    type: 'appointment_booked',
+                    appointmentId: appointmentRef.id
+                }),
+                cache: 'no-store'
+            });
+        } catch (error) {
+            console.error('Dashboard appointment notification failed:', error);
+        }
+
         return NextResponse.json({
             success: true,
             appointment: {

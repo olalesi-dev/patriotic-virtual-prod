@@ -1,7 +1,6 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import type { AuthenticatedUser } from '@/lib/server-auth';
 import { loadProviderScopedPatientSummary } from '@/lib/server-patients';
-import { createNotification } from '@/lib/server-notifications';
 import { normalizeRole } from '@/lib/server-auth';
 import { buildTeamRepairPatch, mapTeamSnapshot } from '@/lib/server-teams';
 
@@ -56,6 +55,18 @@ interface SendMessageResult {
     threadId: string;
     messageId: string;
     threadType: MessageThreadType;
+    notificationContext: {
+        recipientId: string;
+        recipientType: MessageRecipientType;
+        actorId: string;
+        actorName: string;
+        threadId: string;
+        threadType: MessageThreadType;
+        patientId: string | null;
+        providerId: string | null;
+        teamId: string | null;
+        teamName: string | null;
+    };
 }
 
 function asNonEmptyString(value: unknown): string | null {
@@ -511,31 +522,22 @@ export async function sendMessage(
 
     await firestore.collection('threads').doc(context.threadId).set(updatePayload, { merge: true });
 
-    const recipientRoleLabel = context.recipientType === 'patient' ? 'Patient' : 'Provider';
-    await createNotification({
-        recipientId: context.recipientId,
-        actorId: actor.uid,
-        actorName,
-        type: 'message_received',
-        title: `New message from ${actorName}`,
-        body: toMessagePreview(body, input.attachment),
-        href: context.recipientType === 'patient' ? '/patient/messages' : '/inbox',
-        metadata: {
-            threadId: context.threadId,
-            threadType: context.threadType,
-            recipientRole: recipientRoleLabel.toLowerCase(),
-            patientId: context.patientId,
-            providerId: context.providerId,
-            teamId: context.teamId,
-            teamName: context.teamName
-        },
-        priority: 'medium'
-    });
-
     return {
         success: true,
         threadId: context.threadId,
         messageId: messageRef.id,
-        threadType: context.threadType
+        threadType: context.threadType,
+        notificationContext: {
+            recipientId: context.recipientId,
+            recipientType: context.recipientType,
+            actorId: actor.uid,
+            actorName,
+            threadId: context.threadId,
+            threadType: context.threadType,
+            patientId: context.patientId,
+            providerId: context.providerId,
+            teamId: context.teamId,
+            teamName: context.teamName,
+        }
     };
 }
