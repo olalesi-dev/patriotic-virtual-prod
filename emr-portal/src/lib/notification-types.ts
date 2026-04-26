@@ -1,8 +1,11 @@
 export type AppNotificationType =
+    | 'account_created'
+    | 'appointment_request'
     | 'team_invite'
     | 'team_invite_response'
     | 'message_received'
     | 'appointment_booked'
+    | 'appointment_reminder'
     | 'appointment_rescheduled'
     | 'appointment_cancelled'
     | 'dosespot_rx_counts'

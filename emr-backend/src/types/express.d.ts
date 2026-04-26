@@ -4,5 +4,6 @@ declare namespace Express {
         user?: any;
         appUser?: any;
         rawBody?: string;
+        rawBodyBuffer?: Buffer;
     }
 }

@@ -13,7 +13,9 @@ import {
     startOfMonth, endOfMonth, startOfDay, endOfDay, addMonths, subMonths, isWithinInterval
 } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { ProviderRescheduleModal } from '@/components/provider/ProviderRescheduleModal';
 import { db } from '@/lib/firebase';
+import { formatDateForInput, formatTimeForInput, validateFutureAppointmentInput } from '@/lib/provider-appointment-actions';
 import {
     collection, onSnapshot, query, orderBy, addDoc, getDocs,
     limit, where, updateDoc, doc, Timestamp, getDoc
@@ -62,6 +64,7 @@ function toSafeDate(value: any): Date | null {
 
 // Get the best Date for an appointment, preferring startTime (Timestamp) over date+time strings
 function getApptDate(appt: any): Date | null {
+    if (!appt || typeof appt !== 'object') return null;
     // 1. Use Firestore Timestamp startTime if available (most reliable)
     if (appt.startTime?.toDate) return appt.startTime.toDate();
     // 2. Combine date string + time string
@@ -219,10 +222,12 @@ function AppointmentCard({
 
 // â”€â”€â”€ SLIDE-OUT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-function SlideOutPanel({ appt, onClose, onStatusChange }: {
+function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCancelAppointment }: {
     appt: any | null;
     onClose: () => void;
     onStatusChange: (id: string, status: string) => void;
+    onOpenReschedule: (appt: any) => void;
+    onCancelAppointment: (appt: any) => void;
 }) {
     const [intakeData, setIntakeData] = useState<Record<string, any> | null>(null);
     const [intakeLoading, setIntakeLoading] = useState(false);
@@ -462,10 +467,21 @@ function SlideOutPanel({ appt, onClose, onStatusChange }: {
                         <button className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors text-slate-600 dark:text-slate-300">
                             <MessageSquare size={13} /> Message
                         </button>
-                        <button className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors text-slate-600 dark:text-slate-300">
+                        <button
+                            onClick={() => onOpenReschedule(appt)}
+                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors text-slate-600 dark:text-slate-300"
+                        >
                             <RefreshCw size={13} /> Reschedule
                         </button>
                     </div>
+                    {appt.status !== 'completed' && appt.status !== 'cancelled' && (
+                        <button
+                            onClick={() => onCancelAppointment(appt)}
+                            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-rose-100 text-rose-500 hover:bg-rose-50 transition-colors"
+                        >
+                            <X size={13} /> Cancel Appointment
+                        </button>
+                    )}
                     <button className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-red-100 text-red-500 hover:bg-red-50 transition-colors">
                         <UserX size={13} /> Mark No-Show
                     </button>
@@ -503,6 +519,9 @@ export default function CalendarPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [patients, setPatients] = useState<any[]>([]);
     const [selectedAppt, setSelectedAppt] = useState<any | null>(null);
+    const [rescheduleAppt, setRescheduleAppt] = useState<any | null>(null);
+    const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+    const [rescheduleSaving, setRescheduleSaving] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [draggedAppt, setDraggedAppt] = useState<any | null>(null);
@@ -514,6 +533,26 @@ export default function CalendarPage() {
     const showToast = (msg: string) => {
         setToast(msg);
         setTimeout(() => setToast(null), 3000);
+    };
+
+    const callAppointmentUpdate = async (appointmentId: string, body: Record<string, unknown>) => {
+        const { auth } = await import('@/lib/firebase');
+        const token = await auth.currentUser?.getIdToken();
+        const response = await fetch(`/api/dashboard/appointments/${appointmentId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.success === false) {
+            throw new Error(payload?.error || 'Appointment update failed.');
+        }
+
+        return payload;
     };
 
     // â”€â”€â”€ REALTIME SYNC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -615,10 +654,70 @@ export default function CalendarPage() {
 
     const handleStatusChange = async (id: string, status: string) => {
         try {
-            await updateDoc(doc(db, 'appointments', id), { status, updatedAt: Timestamp.now() });
+            await callAppointmentUpdate(id, {
+                action: 'status',
+                status,
+            });
             if (selectedAppt?.id === id) setSelectedAppt((prev: any) => ({ ...prev, status }));
             showToast(`Status updated to "${STATUS_CONFIG[status]?.label}"`);
         } catch (e) { showToast('Failed to update status.'); }
+    };
+
+    const openRescheduleModal = (appt: any) => {
+        setRescheduleError(null);
+        setRescheduleAppt(appt);
+    };
+
+    const handleCancelAppointment = async (appt: any) => {
+        if (!window.confirm('Cancel this appointment?')) {
+            return;
+        }
+
+        await handleStatusChange(appt.id, 'cancelled');
+    };
+
+    const handleConfirmReschedule = async ({ date, time }: { date: string; time: string }) => {
+        if (!rescheduleAppt) return;
+
+        const validationError = validateFutureAppointmentInput(date, time);
+        if (validationError) {
+            setRescheduleError(validationError);
+            return;
+        }
+
+        setRescheduleSaving(true);
+        setRescheduleError(null);
+
+        try {
+            const previousStart = getApptDate(rescheduleAppt);
+            const previousDate = previousStart ? format(previousStart, 'yyyy-MM-dd') : rescheduleAppt.date;
+            const previousTime = previousStart ? format(previousStart, 'HH:mm') : rescheduleAppt.time;
+
+            await callAppointmentUpdate(rescheduleAppt.id, {
+                action: 'reschedule',
+                date,
+                time,
+                previousDate,
+                previousTime,
+            });
+
+            if (selectedAppt?.id === rescheduleAppt.id) {
+                const nextStart = new Date(`${date}T${time}:00`);
+                setSelectedAppt((prev: any) => ({
+                    ...prev,
+                    date,
+                    time,
+                    startTime: Timestamp.fromDate(nextStart),
+                }));
+            }
+
+            showToast(`Appointment rescheduled to ${format(new Date(`${date}T${time}:00`), 'EEE MMM d')} at ${time}`);
+            setRescheduleAppt(null);
+        } catch (error) {
+            setRescheduleError(error instanceof Error ? error.message : 'Reschedule failed.');
+        } finally {
+            setRescheduleSaving(false);
+        }
     };
 
     // â”€â”€â”€ DRAG & DROP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -638,29 +737,25 @@ export default function CalendarPage() {
         const newTime = `${hour.toString().padStart(2, '0')}:${minuteOffset.toString().padStart(2, '0')}`;
         const newDate = format(day, 'yyyy-MM-dd');
         const newStart = new Date(`${newDate}T${newTime}:00`);
+        if (newStart.getTime() < Date.now()) {
+            showToast('Appointments cannot be moved into the past.');
+            setDraggedAppt(null);
+            return;
+        }
+        const previousStart = getApptDate(draggedAppt);
+        const previousDate = previousStart ? format(previousStart, 'yyyy-MM-dd') : draggedAppt.date;
+        const previousTime = previousStart
+            ? format(previousStart, 'HH:mm')
+            : (typeof draggedAppt.time === 'string' ? draggedAppt.time : undefined);
 
         try {
-            await updateDoc(doc(db, 'appointments', draggedAppt.id), {
-                date: newDate, time: newTime,
-                startTime: Timestamp.fromDate(newStart),
-                updatedAt: Timestamp.now()
+            await callAppointmentUpdate(draggedAppt.id, {
+                action: 'reschedule',
+                date: newDate,
+                time: newTime,
+                previousDate,
+                previousTime,
             });
-
-            // TRIGGER BACKEND NOTIFICATION
-            try {
-                const { auth } = await import('@/lib/firebase');
-                const tok = await auth.currentUser?.getIdToken();
-                await fetch('/api/notifications/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
-                    body: JSON.stringify({
-                        type: 'appointment_rescheduled',
-                        appointmentId: draggedAppt.id
-                    })
-                });
-            } catch (err) {
-                console.error("Notification error:", err);
-            }
 
             showToast(`Appointment rescheduled to ${format(day, 'EEE MMM d')} at ${newTime}`);
         } catch (e) { showToast('Reschedule failed.'); }
@@ -744,6 +839,19 @@ export default function CalendarPage() {
 
     return (
         <div className="flex h-[calc(100vh-6rem)] bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden font-sans relative">
+            <ProviderRescheduleModal
+                open={Boolean(rescheduleAppt)}
+                appointmentLabel={rescheduleAppt ? `${getPatientLabel(rescheduleAppt).name} • ${rescheduleAppt.service || rescheduleAppt.type || 'Consultation'}` : 'Appointment'}
+                initialDateTime={getApptDate(rescheduleAppt)}
+                submitting={rescheduleSaving}
+                error={rescheduleError}
+                onClose={() => {
+                    if (rescheduleSaving) return;
+                    setRescheduleAppt(null);
+                    setRescheduleError(null);
+                }}
+                onSubmit={handleConfirmReschedule}
+            />
 
             {toast && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-300 flex items-center gap-2">
@@ -751,7 +859,13 @@ export default function CalendarPage() {
                 </div>
             )}
 
-            <SlideOutPanel appt={selectedAppt} onClose={() => setSelectedAppt(null)} onStatusChange={handleStatusChange} />
+            <SlideOutPanel
+                appt={selectedAppt}
+                onClose={() => setSelectedAppt(null)}
+                onStatusChange={handleStatusChange}
+                onOpenReschedule={openRescheduleModal}
+                onCancelAppointment={handleCancelAppointment}
+            />
 
             {isModalOpen && (
                 <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200 p-4">

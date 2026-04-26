@@ -51,6 +51,43 @@ function formatDisplayTime(startAt: Date): string {
     }).format(startAt);
 }
 
+function dispatchAppointmentNotificationInBackground(
+    request: Request,
+    payload: Record<string, unknown>,
+    logContext: string,
+): void {
+    const url = new URL('/api/notifications/send', request.url);
+
+    void fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: request.headers.get('authorization') ?? ''
+        },
+        body: JSON.stringify(payload),
+        cache: 'no-store'
+    })
+        .then(async (response) => {
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`${logContext} notification failed`, {
+                    status: response.status,
+                    body: errorText,
+                    payload,
+                });
+                return;
+            }
+
+            console.info(`${logContext} notification queued`, payload);
+        })
+        .catch((error) => {
+            console.error(`${logContext} notification request failed`, {
+                error: error instanceof Error ? error.message : String(error),
+                payload,
+            });
+        });
+}
+
 export async function POST(request: Request) {
     const { user, errorResponse } = await requireAuthenticatedUser(request, { resolveRole: false });
     if (errorResponse) return errorResponse;
@@ -175,6 +212,15 @@ export async function POST(request: Request) {
         }, { merge: true });
 
         await batch.commit();
+
+        dispatchAppointmentNotificationInBackground(
+            request,
+            {
+                type: 'appointment_booked',
+                appointmentId: appointmentRef.id,
+            },
+            'Dashboard appointment create',
+        );
 
         return NextResponse.json({
             success: true,

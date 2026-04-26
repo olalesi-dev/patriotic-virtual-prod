@@ -9,6 +9,8 @@ import healthRoutes from './routes/health';
 import appointmentRoutes from './routes/appointments';
 import patientRoutes from './routes/patients';
 import notificationRoutes from './routes/notifications';
+import notificationWorkerRoutes from './routes/notification-worker';
+import notificationV1Routes from './routes/notifications-v1';
 import dosespotRoutes from './routes/dosespot';
 import vouchedRoutes from './routes/vouched';
 import consultationRoutes from './routes/consultations';
@@ -59,6 +61,7 @@ app.use(morgan('combined'));
 app.use(express.json({
     verify: (req, _res, buf) => {
         (req as typeof req & { rawBody?: string }).rawBody = buf.toString('utf8');
+        (req as typeof req & { rawBodyBuffer?: Buffer }).rawBodyBuffer = Buffer.from(buf);
     },
 }));
 
@@ -80,6 +83,8 @@ app.use('/api/v1/payments', verifyFirebaseToken, paymentRoutes);
 
 // Payment webhooks (Public)
 app.use('/api/v1/webhooks', webhookRoutes);
+app.use('/api/v1/notifications', notificationWorkerRoutes);
+app.use('/api/v1/notifications', verifyFirebaseToken, notificationV1Routes);
 
 // DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
 app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
