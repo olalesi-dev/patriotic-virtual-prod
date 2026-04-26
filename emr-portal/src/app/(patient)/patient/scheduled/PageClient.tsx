@@ -14,6 +14,7 @@ import {
 import { format, isAfter, isBefore, addMinutes, subMinutes, formatDistanceToNow, isPast } from 'date-fns';
 import { toast } from 'sonner';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
+import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
 
 /* ─── helpers ──────────────────────────────────────────────── */
 function toDate(v: any): Date | null {
@@ -105,7 +106,7 @@ export default function ScheduledAppointmentsPage() {
 
             const mapConsult = (d: any): Appt => {
                 const raw = d.data();
-                const scheduledAt = toDate(raw.scheduledAt);
+                const scheduledAt = toDate(raw.startTime) ?? toDate(raw.scheduledAt) ?? toDate(raw.date);
                 return {
                     id: d.id,
                     consultationId: d.id,
@@ -147,7 +148,7 @@ export default function ScheduledAppointmentsPage() {
                 snap => {
                     subData = snap.docs.map(d => {
                         const raw = d.data();
-                        const scheduledAt = toDate(raw.scheduledAt) ?? toDate(raw.date);
+                        const scheduledAt = toDate(raw.startTime) ?? toDate(raw.scheduledAt) ?? toDate(raw.date);
                         return {
                             id: d.id,
                             consultationId: raw.consultationId || d.id,
@@ -171,7 +172,7 @@ export default function ScheduledAppointmentsPage() {
                 snap => {
                     topData = snap.docs.map(d => {
                         const raw = d.data();
-                        const scheduledAt = toDate(raw.scheduledAt) ?? toDate(raw.startTime) ?? toDate(raw.date);
+                        const scheduledAt = toDate(raw.startTime) ?? toDate(raw.scheduledAt) ?? toDate(raw.date);
                         return {
                             id: d.id,
                             consultationId: raw.consultationId || d.id,
@@ -198,9 +199,7 @@ export default function ScheduledAppointmentsPage() {
         };
     }, []);
 
-    const isJoinable = (d: Date | null) => {
-        return true; // testing: bypass 15 min check
-    };
+    const isJoinable = (d: Date | null) => isTelehealthJoinAvailable(d);
 
     const fmtService = (key: string) =>
         key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -229,7 +228,7 @@ export default function ScheduledAppointmentsPage() {
                             Your Schedule
                         </h1>
                         <p className="mt-2 text-sky-100 text-sm font-medium max-w-md">
-                            All your confirmed telehealth appointments in one place. Join your visit up to 15 minutes early.
+                            All your confirmed telehealth appointments in one place. Join becomes available 1 hour before your visit.
                         </p>
                     </div>
                     <div className="flex gap-4">

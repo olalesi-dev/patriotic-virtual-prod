@@ -34,6 +34,7 @@ import { format, isSameDay, isAfter, subMinutes, addMinutes } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
 
 // --- Types ---
 interface Appointment {
@@ -174,8 +175,8 @@ export default function PatientDashboard() {
                             type: 'Telehealth',
                             status: rawStatus === 'waitlist' ? 'PENDING_SCHEDULING' :
                                 rawStatus === 'scheduled' ? 'scheduled' : 'PENDING_SCHEDULING',
-                            // Use scheduledAt if available, fall back to createdAt
-                            date: raw.scheduledAt || raw.createdAt,
+                            // Prefer actual appointment timing fields before the creation timestamp.
+                            date: raw.scheduledAt || raw.startTime || raw.date || raw.createdAt,
                             meetingUrl: raw.meetingUrl,
                         } as Appointment;
                     })
@@ -198,7 +199,8 @@ export default function PatientDashboard() {
                         providerName: raw.providerName || 'Patriotic Provider',
                         type: raw.type || 'Telehealth',
                         status: rawStatus === 'waitlist' ? 'PENDING_SCHEDULING' : (rawStatus || 'PENDING_SCHEDULING'),
-                        date: raw.scheduledAt || raw.createdAt || raw.date,
+                        scheduledAt: raw.scheduledAt || raw.date || null,
+                        date: raw.startTime || raw.scheduledAt || raw.date || raw.createdAt,
                         meetingUrl: raw.meetingUrl,
                     } as Appointment;
                 });
@@ -264,9 +266,7 @@ export default function PatientDashboard() {
         return isNaN(d.getTime()) ? null : d;
     };
 
-    const isJoinable = (apptDate: any) => {
-        return true; // testing: bypass 15 min time check
-    };
+    const isJoinable = (apptDate: any) => isTelehealthJoinAvailable(apptDate);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();

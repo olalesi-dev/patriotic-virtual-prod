@@ -164,18 +164,23 @@ export async function PATCH(
         const patientAppointmentsRef = patientId
             ? db.collection('patients').doc(patientId).collection('appointments')
             : null;
+        const consultationRef = db.collection('consultations').doc(appointmentId);
         const patientAppointmentIds = new Set<string>();
 
         if (patientAppointmentsRef) {
-            const [appointmentByIdSnap, appointmentByGlobalIdSnap] = await Promise.all([
+            const [appointmentByIdSnap, appointmentByGlobalIdSnap, appointmentByConsultationIdSnap] = await Promise.all([
                 patientAppointmentsRef.doc(appointmentId).get(),
-                patientAppointmentsRef.where('globalAppointmentId', '==', appointmentId).get()
+                patientAppointmentsRef.where('globalAppointmentId', '==', appointmentId).get(),
+                patientAppointmentsRef.where('consultationId', '==', appointmentId).get(),
             ]);
 
             if (appointmentByIdSnap.exists) {
                 patientAppointmentIds.add(appointmentByIdSnap.id);
             }
             appointmentByGlobalIdSnap.docs.forEach((patientDoc) => {
+                patientAppointmentIds.add(patientDoc.id);
+            });
+            appointmentByConsultationIdSnap.docs.forEach((patientDoc) => {
                 patientAppointmentIds.add(patientDoc.id);
             });
         }
@@ -210,13 +215,23 @@ export async function PATCH(
             batch.update(appointmentRef, {
                 date: normalizedAction.date,
                 time: normalizedAction.time,
+                scheduledAt: Timestamp.fromDate(nextStart),
                 startTime: Timestamp.fromDate(nextStart),
                 updatedAt: now,
             });
 
+            batch.set(consultationRef, {
+                date: normalizedAction.date,
+                time: normalizedAction.time,
+                scheduledAt: Timestamp.fromDate(nextStart),
+                startTime: Timestamp.fromDate(nextStart),
+                updatedAt: now,
+            }, { merge: true });
+
             if (patientAppointmentsRef && patientAppointmentIds.size > 0) {
                 patientAppointmentIds.forEach((patientAppointmentId) => {
                     batch.update(patientAppointmentsRef.doc(patientAppointmentId), {
+                        scheduledAt: Timestamp.fromDate(nextStart),
                         date: Timestamp.fromDate(nextStart),
                         startTime: Timestamp.fromDate(nextStart),
                         updatedAt: now,

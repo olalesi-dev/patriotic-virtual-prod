@@ -13,9 +13,11 @@ import {
     startOfMonth, endOfMonth, startOfDay, endOfDay, addMonths, subMonths, isWithinInterval
 } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { ProviderConfirmDialog } from '@/components/provider/ProviderConfirmDialog';
 import { ProviderRescheduleModal } from '@/components/provider/ProviderRescheduleModal';
 import { db } from '@/lib/firebase';
 import { formatDateForInput, formatTimeForInput, validateFutureAppointmentInput } from '@/lib/provider-appointment-actions';
+import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
 import {
     collection, onSnapshot, query, orderBy, addDoc, getDocs,
     limit, where, updateDoc, doc, Timestamp, getDoc
@@ -96,11 +98,7 @@ function getStatusConfig(status: string) {
 function isJoinActive(appt: any): boolean {
     const type = (appt.type || '').toLowerCase();
     if (type !== 'video' && type !== 'telehealth') return false;
-    const apptTime = getApptDate(appt);
-    if (!apptTime) return false;
-    const now = new Date();
-    const diffMs = apptTime.getTime() - now.getTime();
-    return diffMs <= 10 * 60 * 1000 && diffMs > -60 * 60 * 1000;
+    return isTelehealthJoinAvailable(getApptDate(appt));
 }
 
 function getPatientLabel(appt: any) {
@@ -184,16 +182,13 @@ function AppointmentCard({
                 )}
             </div>
 
-            {isVideo && (
-                <div className="mt-1.5" title={joinActive ? 'Join Telehealth Visit' : 'Available 10 min before appointment'}>
+            {isVideo && joinActive && (
+                <div className="mt-1.5" title="Join Telehealth Visit">
                     <button
                         onClick={(e) => { e.stopPropagation(); if (joinActive) alert('Joining...'); }}
-                        disabled={!joinActive}
-                        className={`w-full text-[9px] font-black rounded-lg py-1 transition-all ${joinActive
-                            ? 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-300'
-                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                        className="w-full text-[9px] font-black rounded-lg py-1 transition-all bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-300"
                     >
-                        {joinActive ? 'Join Now' : 'Locked'}
+                        Join Now
                     </button>
                 </div>
             )}
@@ -454,13 +449,13 @@ function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCanc
                     {isVideo && (
                         <button
                             disabled={!joinActive}
-                            title={joinActive ? undefined : 'Available 10 min before appointment'}
+                            title={joinActive ? undefined : 'Available 1 hour before appointment'}
                             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all ${joinActive
                                 ? 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-200'
                                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
                         >
                             <Video size={16} />
-                            {joinActive ? 'Start Telehealth Visit' : 'Join Available 10 Min Before'}
+                            {joinActive ? 'Start Telehealth Visit' : 'Join Available 1 Hour Before'}
                         </button>
                     )}
                     <div className="grid grid-cols-2 gap-2">
@@ -520,6 +515,8 @@ export default function CalendarPage() {
     const [patients, setPatients] = useState<any[]>([]);
     const [selectedAppt, setSelectedAppt] = useState<any | null>(null);
     const [rescheduleAppt, setRescheduleAppt] = useState<any | null>(null);
+    const [cancelAppt, setCancelAppt] = useState<any | null>(null);
+    const [cancelSaving, setCancelSaving] = useState(false);
     const [rescheduleError, setRescheduleError] = useState<string | null>(null);
     const [rescheduleSaving, setRescheduleSaving] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
@@ -668,12 +665,22 @@ export default function CalendarPage() {
         setRescheduleAppt(appt);
     };
 
-    const handleCancelAppointment = async (appt: any) => {
-        if (!window.confirm('Cancel this appointment?')) {
-            return;
-        }
+    const openCancelDialog = (appt: any) => {
+        setCancelAppt(appt);
+    };
 
-        await handleStatusChange(appt.id, 'cancelled');
+    const handleCancelAppointment = async () => {
+        if (!cancelAppt) return;
+        setCancelSaving(true);
+        try {
+            await handleStatusChange(cancelAppt.id, 'cancelled');
+            if (selectedAppt?.id === cancelAppt.id) {
+                setSelectedAppt(null);
+            }
+            setCancelAppt(null);
+        } finally {
+            setCancelSaving(false);
+        }
     };
 
     const handleConfirmReschedule = async ({ date, time }: { date: string; time: string }) => {
@@ -839,6 +846,21 @@ export default function CalendarPage() {
 
     return (
         <div className="flex h-[calc(100vh-6rem)] bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 shadow-sm overflow-hidden font-sans relative">
+            <ProviderConfirmDialog
+                open={Boolean(cancelAppt)}
+                title="Cancel Appointment"
+                description={cancelAppt
+                    ? `This will cancel ${getPatientLabel(cancelAppt).name}'s appointment. This action will notify participants and cannot be undone from this dialog.`
+                    : 'This will cancel the selected appointment.'}
+                confirming={cancelSaving}
+                confirmLabel="Proceed"
+                cancelLabel="Cancel"
+                onClose={() => {
+                    if (cancelSaving) return;
+                    setCancelAppt(null);
+                }}
+                onConfirm={handleCancelAppointment}
+            />
             <ProviderRescheduleModal
                 open={Boolean(rescheduleAppt)}
                 appointmentLabel={rescheduleAppt ? `${getPatientLabel(rescheduleAppt).name} • ${rescheduleAppt.service || rescheduleAppt.type || 'Consultation'}` : 'Appointment'}
@@ -864,7 +886,7 @@ export default function CalendarPage() {
                 onClose={() => setSelectedAppt(null)}
                 onStatusChange={handleStatusChange}
                 onOpenReschedule={openRescheduleModal}
-                onCancelAppointment={handleCancelAppointment}
+                onCancelAppointment={openCancelDialog}
             />
 
             {isModalOpen && (

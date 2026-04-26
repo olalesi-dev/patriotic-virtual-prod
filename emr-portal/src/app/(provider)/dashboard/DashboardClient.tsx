@@ -14,11 +14,13 @@ import {
     XCircle
 } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+import { ProviderConfirmDialog } from '@/components/provider/ProviderConfirmDialog';
 import { ProviderRescheduleModal } from '@/components/provider/ProviderRescheduleModal';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { apiFetchJson } from '@/lib/api-client';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { formatDateForInput, formatTimeForInput } from '@/lib/provider-appointment-actions';
+import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
 
 type DashboardStatusKey =
     | 'upcoming'
@@ -122,6 +124,10 @@ function getJoinUrl(meetingUrl: string | null): string | null {
     return meetingUrl.includes('doxy.me') ? 'https://doxy.me/sign-in' : meetingUrl;
 }
 
+function canShowJoinAction(startAt: string | null): boolean {
+    return isTelehealthJoinAvailable(startAt);
+}
+
 function getStatusTone(statusKey: DashboardStatusKey) {
     if (statusKey === 'checked_in') {
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -151,6 +157,7 @@ export default function DashboardClient() {
     const [activeTab, setActiveTab] = React.useState<DashboardTab>('Waitlist');
     const [selectedAppointmentId, setSelectedAppointmentId] = React.useState<string | null>(null);
     const [rescheduleAppointmentId, setRescheduleAppointmentId] = React.useState<string | null>(null);
+    const [cancelAppointmentId, setCancelAppointmentId] = React.useState<string | null>(null);
     const [rescheduleError, setRescheduleError] = React.useState<string | null>(null);
 
     const dashboardQueryKey = React.useMemo(
@@ -328,6 +335,7 @@ export default function DashboardClient() {
     const unreadMessageCount = dashboardQuery.data?.unreadMessageCount ?? 0;
     const selectedAppointment = appointments.find((appointment) => appointment.id === selectedAppointmentId) ?? null;
     const rescheduleAppointment = appointments.find((appointment) => appointment.id === rescheduleAppointmentId) ?? null;
+    const cancelAppointment = appointments.find((appointment) => appointment.id === cancelAppointmentId) ?? null;
     const loading = !isReady || dashboardQuery.isLoading;
     const refreshing = dashboardQuery.isFetching && !dashboardQuery.isLoading;
     const mutatingAppointmentId = updateStatusMutation.variables?.appointmentId ?? null;
@@ -367,13 +375,14 @@ export default function DashboardClient() {
         setRescheduleAppointmentId(appointmentId);
     }, []);
 
-    const handleConfirmCancel = React.useCallback(async (appointmentId: string) => {
-        if (!window.confirm('Cancel this appointment?')) {
-            return;
+    const handleConfirmCancel = React.useCallback(async () => {
+        if (!cancelAppointmentId) return;
+        await handleUpdateStatus(cancelAppointmentId, 'cancelled');
+        setCancelAppointmentId(null);
+        if (selectedAppointmentId === cancelAppointmentId) {
+            setSelectedAppointmentId(null);
         }
-
-        await handleUpdateStatus(appointmentId, 'cancelled');
-    }, [handleUpdateStatus]);
+    }, [cancelAppointmentId, handleUpdateStatus, selectedAppointmentId]);
 
     if (loading) {
         return <DashboardSkeleton />;
@@ -381,6 +390,21 @@ export default function DashboardClient() {
 
     return (
         <div className="space-y-8 pb-8">
+            <ProviderConfirmDialog
+                open={Boolean(cancelAppointment)}
+                title="Cancel Appointment"
+                description={cancelAppointment
+                    ? `This will cancel ${cancelAppointment.patient}'s appointment. This action will notify participants and cannot be undone from this dialog.`
+                    : 'This will cancel the selected appointment.'}
+                confirming={mutatingAppointmentId === cancelAppointmentId}
+                confirmLabel="Proceed"
+                cancelLabel="Cancel"
+                onClose={() => {
+                    if (mutatingAppointmentId === cancelAppointmentId) return;
+                    setCancelAppointmentId(null);
+                }}
+                onConfirm={handleConfirmCancel}
+            />
             <ProviderRescheduleModal
                 open={Boolean(rescheduleAppointment)}
                 appointmentLabel={rescheduleAppointment ? `${rescheduleAppointment.patient} • ${rescheduleAppointment.type}` : 'Appointment'}
@@ -503,7 +527,7 @@ export default function DashboardClient() {
                                         </div>
 
                                         <div className="flex flex-wrap items-center gap-2">
-                                            {appointment.statusKey !== 'waitlist' && getJoinUrl(appointment.meetingUrl) && (
+                                            {appointment.statusKey !== 'waitlist' && getJoinUrl(appointment.meetingUrl) && canShowJoinAction(appointment.startAt) && (
                                                 <button
                                                     type="button"
                                                     onClick={(event) => {
@@ -675,7 +699,7 @@ export default function DashboardClient() {
                             />
 
                             <div className="flex flex-wrap gap-3">
-                                {selectedAppointment.statusKey !== 'waitlist' && getJoinUrl(selectedAppointment.meetingUrl) && (
+                                {selectedAppointment.statusKey !== 'waitlist' && getJoinUrl(selectedAppointment.meetingUrl) && canShowJoinAction(selectedAppointment.startAt) && (
                                     <button
                                         type="button"
                                         onClick={() => handleJoin(selectedAppointment)}
@@ -720,7 +744,7 @@ export default function DashboardClient() {
                                         />
                                         <StatusActionButton
                                             label="Cancel Appointment"
-                                            onClick={() => handleConfirmCancel(selectedAppointment.id)}
+                                            onClick={() => setCancelAppointmentId(selectedAppointment.id)}
                                             loading={mutatingAppointmentId === selectedAppointment.id}
                                             destructive
                                         />

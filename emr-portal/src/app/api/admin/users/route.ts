@@ -16,6 +16,23 @@ function buildRoleLabel(role: string): string {
     return 'Patient';
 }
 
+function resolvePortalBaseUrl(request: Request): string {
+    const envBaseUrl = (
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_BASE_URL
+    )?.trim();
+
+    if (envBaseUrl) {
+        try {
+            return new URL(envBaseUrl).toString().replace(/\/$/, '');
+        } catch {
+            // Fall back to the request origin if the configured URL is invalid.
+        }
+    }
+
+    return new URL(request.url).origin;
+}
+
 async function triggerBackgroundDoseSpotSync(clinicianUid: string) {
     const backendUrl = (
         process.env.DOSESPOT_BACKEND_URL ||
@@ -139,7 +156,7 @@ export async function POST(request: Request) {
         }
 
         const authorizationHeader = request.headers.get('authorization') ?? '';
-        const portalBaseUrl = new URL(request.url).origin;
+        const portalBaseUrl = resolvePortalBaseUrl(request);
         const roleLabel = buildRoleLabel(payload.role);
         const welcomeTemplateData = {
             first_name: payload.firstName,

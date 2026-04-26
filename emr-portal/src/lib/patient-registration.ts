@@ -277,8 +277,10 @@ export async function finalizePatientRegistration(
     });
 
     if (options.auditAction === 'ACCOUNT_CREATED') {
-        void triggerPatientWelcomeNotification(user, registration).catch((error) => {
+        try {
+            await triggerPatientWelcomeNotification(user, registration);
+        } catch (error) {
             console.warn('Patient welcome notification failed:', error);
-        });
+        }
     }
 }

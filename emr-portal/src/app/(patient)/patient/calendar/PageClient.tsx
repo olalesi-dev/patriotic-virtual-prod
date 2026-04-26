@@ -13,6 +13,7 @@ import {
 } from 'date-fns';
 import { auth, db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
 
 // --- CONSTANTS ---
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7 AM → 7 PM
@@ -58,10 +59,7 @@ function getStatusConf(status: string) {
 }
 
 function isJoinActive(appt: any): boolean {
-    const apptTime = getApptDate(appt);
-    if (!apptTime) return false;
-    const now = new Date();
-    return isAfter(now, subMinutes(apptTime, 15)) && isBefore(now, addMinutes(apptTime, 60));
+    return isTelehealthJoinAvailable(getApptDate(appt));
 }
 
 function normalizeStatus(raw: string): string {
@@ -190,18 +188,21 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
                 {/* Footer */}
                 <div className="p-6 border-t border-slate-100 dark:border-slate-700">
                     {appt.status === 'scheduled' && (
-                        <a
-                            href={meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-xs uppercase tracking-widest font-black transition-all ${joinActive
-                                ? 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-xl shadow-sky-200 hover:scale-[1.02] active:scale-95'
-                                : 'bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-sm'
-                                }`}
-                        >
-                            <Video size={16} />
-                            {joinActive ? 'Join Telehealth Visit' : 'Enter Waiting Room'}
-                        </a>
+                        joinActive ? (
+                            <a
+                                href={meetingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-xs uppercase tracking-widest font-black transition-all bg-[#0EA5E9] text-white hover:bg-sky-500 shadow-xl shadow-sky-200 hover:scale-[1.02] active:scale-95"
+                            >
+                                <Video size={16} />
+                                Join Telehealth Visit
+                            </a>
+                        ) : (
+                            <div className="w-full text-center py-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl text-xs uppercase tracking-widest font-black text-slate-400 border border-slate-200 dark:border-slate-700">
+                                Join Available 1 Hour Before
+                            </div>
+                        )
                     )}
                     {appt.status === 'PENDING_SCHEDULING' && (
                         <div className="w-full text-center py-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl text-xs uppercase tracking-widest font-black text-slate-400 border border-slate-200 dark:border-slate-700">
@@ -261,7 +262,7 @@ export default function PatientCalendarPage() {
             const mapConsult = (d: any) => {
                 const raw = d.data();
                 // scheduledAt is a Firestore Timestamp written by the provider‐schedule endpoint
-                const apptDate = resolveDate(raw.scheduledAt) ?? resolveDate(raw.date) ?? null;
+                const apptDate = resolveDate(raw.startTime) ?? resolveDate(raw.scheduledAt) ?? resolveDate(raw.date) ?? null;
                 return {
                     id: d.id,
                     consultationId: d.id,
@@ -295,7 +296,7 @@ export default function PatientCalendarPage() {
                 snap => {
                     subApptData = snap.docs.map(d => {
                         const raw = d.data();
-                        const apptDate = resolveDate(raw.scheduledAt) ?? resolveDate(raw.date) ?? null;
+                        const apptDate = resolveDate(raw.startTime) ?? resolveDate(raw.scheduledAt) ?? resolveDate(raw.date) ?? null;
                         return {
                             id: d.id,
                             consultationId: raw.consultationId,
@@ -317,7 +318,7 @@ export default function PatientCalendarPage() {
                 snap => {
                     const topData = snap.docs.map(d => {
                         const raw = d.data();
-                        const apptDate = resolveDate(raw.scheduledAt) ?? resolveDate(raw.startTime) ?? resolveDate(raw.date) ?? null;
+                        const apptDate = resolveDate(raw.startTime) ?? resolveDate(raw.scheduledAt) ?? resolveDate(raw.date) ?? null;
                         const consultationId = raw.consultationId || d.id;
                         return {
                             id: d.id,
