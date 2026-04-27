@@ -12022,7 +12022,8 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const API = ""; // Relative path via Firebase Hosting Rewrite (Solves CORS & Org Policy)
+    // Fallback to Next.js API URL if available, otherwise absolute Cloud Run backend
+    const API = "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app";
     const ACTIVE_STATES = ["FL"];
     const COMING_STATES = ["IN", "VA"];
     let token = null,
