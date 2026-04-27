@@ -14,6 +14,7 @@ const doseSpotBackendUrl = (process.env.DOSESPOT_BACKEND_URL || 'https://patriot
 
 const connectSrc = [
     "'self'",
+    'blob:',
     'https://*.googleapis.com',
     'https://*.firebaseio.com',
     'https://accounts.google.com',
@@ -23,6 +24,10 @@ const connectSrc = [
     'https://www.google.com/recaptcha/',
     'https://www.recaptcha.net/recaptcha/',
     'https://api.stripe.com',
+    'https://*.speech.microsoft.com',
+    'wss://*.speech.microsoft.com',
+    'https://*.microsoft.com',
+    'https://pacs.patriotictelehealth.com',
     'https://*.vouched.id',
     apiOrigin,
     doseSpotPublicOrigin,
@@ -31,10 +36,12 @@ const connectSrc = [
 
 const frameSrc = [
     "'self'",
+    'https://pacs.patriotictelehealth.com',
     'https://*.stripe.com',
     'https://*.firebaseapp.com',
     'https://accounts.google.com',
     'https://www.google.com/recaptcha/',
+    'https://patriotictelehealth.cloudflareaccess.com',
     'https://www.recaptcha.net/recaptcha/',
     'https://doxy.me',
     'https://my.dosespot.com',
