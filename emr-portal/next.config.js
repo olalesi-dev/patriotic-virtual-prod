@@ -8,6 +8,8 @@ function getOriginFromEnv(url) {
 }
 
 const apiOrigin = getOriginFromEnv(process.env.NEXT_PUBLIC_API_URL?.trim());
+const doseSpotPublicOrigin = getOriginFromEnv(process.env.NEXT_PUBLIC_DOSESPOT_BACKEND_URL?.trim());
+const doseSpotBackendOrigin = getOriginFromEnv(process.env.DOSESPOT_BACKEND_URL?.trim());
 const doseSpotBackendUrl = (process.env.DOSESPOT_BACKEND_URL || 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app').trim();
 
 const connectSrc = [
@@ -23,6 +25,8 @@ const connectSrc = [
     'https://api.stripe.com',
     'https://*.vouched.id',
     apiOrigin,
+    doseSpotPublicOrigin,
+    doseSpotBackendOrigin,
 ].filter(Boolean).join(' ');
 
 const frameSrc = [
