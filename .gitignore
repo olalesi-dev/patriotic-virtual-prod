@@ -27,4 +27,4 @@ backend-service-utf8.yaml
 
 google-services-account.json
 dosespot-docs
-.agents
+.agents.worktrees/
