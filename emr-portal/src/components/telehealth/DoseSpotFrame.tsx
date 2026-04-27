@@ -7,6 +7,26 @@ import { apiFetchJson } from '@/lib/api-client';
 import { getDoseSpotApiUrl } from '@/lib/dosespot-client';
 import type { DoseSpotSsoUrlResponse } from '@/lib/dosespot-patient-sync';
 
+const inFlightSsoRequests = new Map<string, Promise<DoseSpotSsoUrlResponse>>();
+
+function fetchDoseSpotSsoUrlDeduped(
+    userUid: string,
+    requestUrl: string,
+    user: NonNullable<typeof auth.currentUser>
+): Promise<DoseSpotSsoUrlResponse> {
+    const requestKey = `${userUid}:${requestUrl}`;
+    const existingRequest = inFlightSsoRequests.get(requestKey);
+    if (existingRequest) return existingRequest;
+
+    const requestPromise = apiFetchJson<DoseSpotSsoUrlResponse>(requestUrl, { user })
+        .finally(() => {
+            inFlightSsoRequests.delete(requestKey);
+        });
+
+    inFlightSsoRequests.set(requestKey, requestPromise);
+    return requestPromise;
+}
+
 interface DoseSpotFrameProps {
     /** Resolve patient context from our internal patient UID */
     patientUid?: string;
@@ -50,9 +70,8 @@ export function DoseSpotFrame({
             setError(null);
 
             const queryStr = buildQueryString();
-            const data = await apiFetchJson<DoseSpotSsoUrlResponse>(getDoseSpotApiUrl(`/api/v1/dosespot/sso-url${queryStr}`), {
-                user
-            });
+            const requestUrl = getDoseSpotApiUrl(`/api/v1/dosespot/sso-url${queryStr}`);
+            const data = await fetchDoseSpotSsoUrlDeduped(user.uid, requestUrl, user);
 
             setSyncState(data);
 
