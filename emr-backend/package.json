@@ -7,6 +7,7 @@
         "build": "tsc",
         "start": "node dist/index.js",
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+        "dev:prod-env": "PORT=8080 DOTENV_CONFIG_PATH=.env.production npm run dev",
         "lint": "eslint src/**/*.ts",
         "migrate": "node scripts/migrate.js",
         "test:sendgrid-smoke": "npm run build && node dist/scripts/sendgrid-notification-smoke.js",
