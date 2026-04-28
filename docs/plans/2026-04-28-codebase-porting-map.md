@@ -226,7 +226,9 @@ High touch:
 
 ### 0. Commit The Current Rebuild Infrastructure Slice
 
-Commit the new SendGrid/queue/auth/env work before continuing. It is already verified independently.
+Status: done in commit `1cb9d8a` (`feat(rebuild): checkpoint backend migration foundation`).
+
+The new SendGrid/queue/auth/env work is committed and verified independently.
 
 Relevant rebuild files:
 
@@ -251,20 +253,26 @@ Why first: small files, good tests, low coupling.
 
 ### 2. Finish Vouched
 
-Current rebuild already has:
+Status: done in commit `0ee501e` (`fix(api): complete vouched webhook parity`).
+
+Current rebuild has:
 
 - `apps/api/src/modules/vouched/model.ts`
+- `apps/api/src/modules/vouched/helpers.ts`
+- `apps/api/src/modules/vouched/parser.ts`
 - `apps/api/src/modules/vouched/service.ts`
 - `apps/api/src/modules/vouched/vouched.controller.ts`
 - `packages/db/src/identity-verifications.ts`
 
-Next checks:
+Completed checks:
 
-- Compare old `services/vouched.ts` uid correlation and audit behavior against new `processVouchedJob`.
-- Decide whether verification mirrors into `patients` table or only `identity_verifications`.
-- Add webhook raw body handling if current Elysia path does not preserve the exact body for HMAC.
+- Webhook reads raw request text before parsing for HMAC validation.
+- Webhook fetches the canonical Vouched job by id before persistence.
+- Correlation supports `patientId`, old uid property names, and `patient:<id>` internal ids from request parameters/properties.
+- Processing is idempotent by `provider = vouched` + `jobId`, updates `patients`, and links appointments when `appointmentId` is present.
+- Tests cover schema validation, raw-body parser, signature/status/correlation helpers, canonical job fetch, and unsigned webhook rejection.
 
-Why next: already partially ported and smaller than notifications/DoseSpot.
+Remaining gap: the old Firestore service wrote audit log entries for Vouched result changes. Rebuild audit persistence should be added after the audit event model is finalized.
 
 ### 3. Notification Core Without Full Delivery Status
 
@@ -427,7 +435,7 @@ Only start after auth + backend routes needed for login are stable:
 |---|---|---|
 | Express bootstrap | `apps/api/src/index.ts`, `apps/api/src/setup.ts` | Already replaced by Elysia setup. |
 | Firebase auth middleware | `packages/auth`, `apps/api/src/modules/auth` | Do not port Firebase auth wholesale unless compatibility is required. |
-| Vouched | `apps/api/src/modules/vouched`, `packages/db/src/identity-verifications.ts` | Already partially ported. Finish parity checks. |
+| Vouched | `apps/api/src/modules/vouched`, `packages/db/src/identity-verifications.ts` | Webhook parity completed; audit event write still depends on final audit model. |
 | SendGrid direct email | `packages/email` | Basic welcome sender already implemented. Expand templates as needed. |
 | Cloud Tasks notification queue | `packages/queue` | Replaced by BullMQ/Valkey. |
 | Notification domain | new `packages/notifications` or `apps/api/src/modules/notifications` | Prefer package if worker will run separately. |
@@ -475,7 +483,7 @@ Still needed before later ports:
 - The old notification repository is Firestore-centric. Do not copy it into the rebuild unchanged.
 - Old DoseSpot processing uses both Firestore and Cloud Tasks. The rebuild should use Postgres + BullMQ/Valkey.
 - Old `index.ts` has inline DoseSpot routes mixed with route modules. In Elysia, split those into dedicated controllers.
-- Vouched signature verification needs raw request body. Verify the Elysia controller preserves raw bytes before considering it production-equivalent.
+- Vouched signature verification now reads the raw request text before JSON parsing in `apps/api/src/modules/vouched/vouched.controller.ts`.
 - Better Auth warning in tests about `BETTER_AUTH_URL` is expected until that env is set.
 - `bun` is available at `/home/zeus/.bun/bin/bun`; Turbo needs `/home/zeus/.bun/bin` on `PATH`.
 
@@ -489,6 +497,7 @@ Known passing after the SendGrid/queue/auth slice:
 SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/email
 SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/queue
 SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/auth packages/env
+SKIP_ENV_VALIDATION=true PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun test apps/api/src/modules/vouched/*.test.ts
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run typecheck
 ```
 
@@ -498,4 +507,5 @@ Targeted lint passed for:
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/email lint
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/queue lint
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/auth lint
+PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bunx oxlint apps/api/src/modules/vouched --deny-warnings
 ```
