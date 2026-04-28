@@ -276,12 +276,15 @@ Remaining gap: the old Firestore service wrote audit log entries for Vouched res
 
 ### 3. Notification Core Without Full Delivery Status
 
+Status: done in the notification core checkpoint (`feat(notifications): add shared notification core`).
+
 The new base exists:
 
 - `packages/email/*`
 - `packages/queue/*`
+- `packages/notifications/src/*`
 
-Port next:
+Ported:
 
 - `modules/notifications/types.ts`
 - `registry.ts`
@@ -291,20 +294,28 @@ Port next:
 - `policies/phi.policy.ts`
 - `policies/retry.policy.ts`
 
-Target destination:
+Rebuild destination:
 
-- `packages/notifications/src/*` if shared by API/workers.
-- Or `apps/api/src/modules/notifications/*` if API-only.
+- `packages/notifications/src/types.ts`
+- `packages/notifications/src/registry.ts`
+- `packages/notifications/src/topics/*`
+- `packages/notifications/src/template-data.ts`
+- `packages/notifications/src/links.ts`
+- `packages/notifications/src/policies/*`
 
-Do not port Firestore repository directly. First design the Postgres tables:
+Completed checks:
 
-- notification messages
-- notification deliveries
-- notification events
-- user notification preferences
-- in-app notifications
+- Registry defines every topic from the old topic list exactly once.
+- Topic copy/sender/channel parity is covered for welcome, secure message, priority queue, and appointment reminders.
+- Dedupe keys are order-independent for recipients/channels and respect explicit keys.
+- PHI policy blocks SMS for PHI-bearing topics.
+- Retry policy keeps priority-based backoff values.
+- Link and template-date helpers are covered by tests.
 
-Why now: notification types/registry are pure logic and unlock payments/reminders.
+Remaining gaps before worker/API port:
+
+- Do not port the old Firestore repository directly. First design the Postgres tables for notification messages, notification deliveries, notification events, user notification preferences, and in-app notifications.
+- `packages/email` still only supports welcome templates. Add the full notification template mapping before dispatching email deliveries.
 
 ### 4. Notification Dispatch Worker
 
@@ -498,6 +509,7 @@ SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/email
 SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/queue
 SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/auth packages/env
 SKIP_ENV_VALIDATION=true PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun test apps/api/src/modules/vouched/*.test.ts
+PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun test packages/notifications
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run typecheck
 ```
 
@@ -508,4 +520,5 @@ PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/e
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/queue lint
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/auth lint
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bunx oxlint apps/api/src/modules/vouched --deny-warnings
+PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bunx oxlint packages/notifications --deny-warnings
 ```
