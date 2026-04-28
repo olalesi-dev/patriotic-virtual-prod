@@ -1,0 +1,30 @@
+{
+  "name": "@workspace/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "oxlint --fix --deny-warnings",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio",
+    "db:migrate": "bun run src/migrate.ts",
+    "db:seed": "bun run src/seed.ts",
+    "test": "SKIP_ENV_VALIDATION=true bun test",
+    "generate": "drizzle-kit generate",
+    "push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@paralleldrive/cuid2": "catalog:db",
+    "@workspace/env": "workspace:*",
+    "drizzle-orm": "catalog:db",
+    "postgres": "catalog:db"
+  },
+  "devDependencies": {
+    "bun-types": "catalog:dev",
+    "drizzle-kit": "catalog:db",
+    "oxlint": "catalog:dev",
+    "typescript": "catalog:dev"
+  }
+}
