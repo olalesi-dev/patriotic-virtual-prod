@@ -321,31 +321,13 @@ export function LandingShowcase({
 
   const testimonials: TestimonialCard[] = [
     {
-      name: "Marcus R.",
+      name: "Coming Soon",
       role: isSpanish
-        ? "Paciente de manejo del peso"
-        : "Weight management patient",
+        ? "Patriotic Virtual Telehealth"
+        : "Patriotic Virtual Telehealth",
       quote: isSpanish
-        ? "El proceso se sintio ordenado, rapido y mucho mas claro de lo que esperaba."
-        : "The whole process felt organized, quick, and much clearer than I expected.",
-    },
-    {
-      name: "Sarah K.",
-      role: isSpanish
-        ? "Consulta de imagenes por video"
-        : "Imaging video consult",
-      quote: isSpanish
-        ? "Poder revisar mis imagenes con un especialista en linea marco una gran diferencia."
-        : "Being able to review my imaging with a specialist online made a huge difference.",
-    },
-    {
-      name: "James D.",
-      role: isSpanish
-        ? "Paciente de telesalud"
-        : "Telehealth patient",
-      quote: isSpanish
-        ? "La experiencia se siente actual, no como un portal medico desordenado."
-        : "The experience feels current, not like a cluttered medical portal.",
+        ? "¡Las experiencias y reseñas reales de pacientes llegarán pronto! Vuelve más tarde para escuchar a nuestra comunidad."
+        : "Real patient experiences and reviews are coming soon! Check back later to hear from our community.",
     },
   ];
 
