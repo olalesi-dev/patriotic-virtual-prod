@@ -15,6 +15,8 @@ export const EnvSchema = Type.Object({
       { default: 'development' },
     ),
   ),
+  VOUCHED_PRIVATE_KEY: Type.Optional(Type.String()),
+  VOUCHED_SIGNATURE_KEY: Type.Optional(Type.String()),
 });
 
 export type Env = Static<typeof EnvSchema>;
