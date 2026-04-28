@@ -3,18 +3,34 @@ import postgres from 'postgres';
 import { env } from '@workspace/env';
 import * as schema from './schema';
 import * as identitySchema from './identity-verifications';
+import * as notificationSchema from './notifications';
+import * as notificationEventSchema from './notification-events';
 
-export async function seedDatabase() {
+export const seedDatabase = async () => {
   if (!env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not defined');
   }
 
   console.log('Connecting to database...');
   const connection = postgres(env.DATABASE_URL, { max: 1 });
-  const db = drizzle(connection, { schema: { ...schema, ...identitySchema } });
+  const db = drizzle(connection, {
+    schema: {
+      ...schema,
+      ...identitySchema,
+      ...notificationSchema,
+      ...notificationEventSchema,
+    },
+  });
 
   try {
     console.log('Clearing existing data...');
+    await db.delete(notificationEventSchema.notificationEvents);
+    await db.delete(notificationSchema.inAppNotifications);
+    await db.delete(notificationSchema.notificationDeliveries);
+    await db.delete(notificationSchema.notificationRecipients);
+    await db.delete(notificationSchema.notificationMessages);
+    await db.delete(notificationEventSchema.userPushTokens);
+    await db.delete(notificationEventSchema.userNotificationPreferences);
     await db.delete(identitySchema.identityVerifications);
     await db.delete(schema.auditLogs);
     await db.delete(schema.appointments);
@@ -52,11 +68,16 @@ export async function seedDatabase() {
       email: `${role.name.toLowerCase()}@example.com`,
       name: `${role.name} User`,
       emailVerified: true,
+      phone: role.name === 'Patient' ? '+15555550100' : undefined,
       roleId: role.id,
       organizationId: defaultOrg.id,
     }));
 
-    await db.insert(schema.users).values(usersToInsert);
+    const insertedUsers = await db.insert(schema.users).values(usersToInsert).returning();
+    const patientUser = insertedUsers.find((user) => user.email === 'patient@example.com');
+    const providerUser = insertedUsers.find(
+      (user) => user.email === 'provider@example.com',
+    );
 
     console.log('Seeding patient and provider...');
     const [patient] = await db
@@ -64,6 +85,8 @@ export async function seedDatabase() {
       .values({
         firstName: 'Patient',
         lastName: 'User',
+        phone: '+15555550100',
+        userId: patientUser?.id,
         organizationId: defaultOrg.id,
       })
       .returning();
@@ -74,6 +97,7 @@ export async function seedDatabase() {
         firstName: 'Provider',
         lastName: 'User',
         npi: '1234567890',
+        userId: providerUser?.id,
         organizationId: defaultOrg.id,
       })
       .returning();
@@ -82,7 +106,7 @@ export async function seedDatabase() {
     await db.insert(schema.appointments).values({
       patientId: patient.id,
       providerId: provider.id,
-      scheduledTime: new Date(Date.now() + 86400000), // Tomorrow
+      scheduledTime: new Date(Date.now() + 86_400_000),
     });
 
     console.log('Seeding completed successfully.');
@@ -92,12 +116,12 @@ export async function seedDatabase() {
   } finally {
     await connection.end();
   }
-}
+};
 
 if (import.meta.main) {
-  seedDatabase().catch((err) => {
+  seedDatabase().catch((error) => {
     console.error('Seeding script failed');
-    console.error(err);
+    console.error(error);
     process.exit(1);
   });
 }

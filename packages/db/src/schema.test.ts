@@ -11,6 +11,12 @@ describe('Database Schema', () => {
     expect(schema.appointments).toBeDefined();
   });
 
+  test('should include auth profile contact links for notifications', () => {
+    expect(schema.users.phone).toBeDefined();
+    expect(schema.patients.userId).toBeDefined();
+    expect(schema.providers.userId).toBeDefined();
+  });
+
   test('should include audit log table with new columns', () => {
     expect(schema.auditLogs).toBeDefined();
     expect(schema.auditLogs.summary).toBeDefined();

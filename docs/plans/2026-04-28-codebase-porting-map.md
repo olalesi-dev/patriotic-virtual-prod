@@ -314,10 +314,12 @@ Completed checks:
 
 Remaining gaps before worker/API port:
 
-- Do not port the old Firestore repository directly. First design the Postgres tables for notification messages, notification deliveries, notification events, user notification preferences, and in-app notifications.
+- Postgres notification tables are designed and implemented. See `docs/plans/2026-04-28-notification-postgres-schema.md`.
 - `packages/email` still only supports welcome templates. Add the full notification template mapping before dispatching email deliveries.
 
 ### 4. Notification Dispatch Worker
+
+Status: not started. The database schema prerequisite is complete.
 
 Port:
 
@@ -331,7 +333,14 @@ Port:
 Replace:
 
 - old `modules/notifications/queue.ts` Cloud Tasks with `packages/queue`.
-- old Firestore repository with Postgres/Drizzle repository.
+- old Firestore repository with a Postgres/Drizzle repository using:
+  - `notification_messages`
+  - `notification_recipients`
+  - `notification_deliveries`
+  - `notification_events`
+  - `user_notification_preferences`
+  - `in_app_notifications`
+  - `user_push_tokens`
 
 Keep explicit tests for:
 
@@ -450,6 +459,7 @@ Only start after auth + backend routes needed for login are stable:
 | SendGrid direct email | `packages/email` | Basic welcome sender already implemented. Expand templates as needed. |
 | Cloud Tasks notification queue | `packages/queue` | Replaced by BullMQ/Valkey. |
 | Notification domain | new `packages/notifications` or `apps/api/src/modules/notifications` | Prefer package if worker will run separately. |
+| Notification persistence | `packages/db/src/notifications.ts`, `packages/db/src/notification-events.ts` | Normalized Postgres schema completed; implement Drizzle repository next. |
 | Stripe payments | `apps/api/src/modules/payments` plus DB schema | Needs consultation/payment tables. |
 | Consultations | `apps/api/src/modules/consultations` plus DB schema | Replace Firestore writes. |
 | DoseSpot REST/helpers | `packages/dosespot` or `apps/api/src/modules/dosespot` | Package is cleaner because API and worker paths will share it. |
@@ -510,6 +520,7 @@ SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/queue
 SKIP_ENV_VALIDATION=true /home/zeus/.bun/bin/bun test packages/auth packages/env
 SKIP_ENV_VALIDATION=true PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun test apps/api/src/modules/vouched/*.test.ts
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun test packages/notifications
+SKIP_ENV_VALIDATION=true PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun test packages/db
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run typecheck
 ```
 
@@ -521,4 +532,5 @@ PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/q
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bun run --filter @workspace/auth lint
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bunx oxlint apps/api/src/modules/vouched --deny-warnings
 PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bunx oxlint packages/notifications --deny-warnings
+PATH=/home/zeus/.bun/bin:$PATH /home/zeus/.bun/bin/bunx oxlint packages/db --deny-warnings
 ```

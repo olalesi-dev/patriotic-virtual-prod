@@ -3,7 +3,7 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
 import { env } from '@workspace/env';
 
-export async function runMigrate() {
+export const runMigrate = async () => {
   if (!env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not defined');
   }
@@ -18,12 +18,12 @@ export async function runMigrate() {
   console.log(`Migrations completed in ${end - start}ms`);
 
   await connection.end();
-}
+};
 
 if (import.meta.main) {
-  runMigrate().catch((err) => {
+  runMigrate().catch((error) => {
     console.error('Migration failed');
-    console.error(err);
+    console.error(error);
     process.exit(1);
   });
 }
