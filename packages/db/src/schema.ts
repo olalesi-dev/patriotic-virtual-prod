@@ -1,70 +1,112 @@
-import { createId } from "@paralleldrive/cuid2";
-import { pgTable, text, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { createId } from '@paralleldrive/cuid2';
+import { pgTable, text, timestamp, jsonb, boolean } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const generateId = () => createId();
 
-export const roles = pgTable("roles", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  name: text("name").notNull().unique(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const roles = pgTable('roles', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  name: text('name').notNull().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
-export const organizations = pgTable("organizations", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  name: text("name").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const organizations = pgTable('organizations', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  name: text('name').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
-export const users = pgTable("users", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  email: text("email").notNull().unique(),
-  name: text("name").notNull(),
-  emailVerified: boolean("emailVerified").notNull().default(false),
-  image: text("image"),
-  roleId: text("role_id").references(() => roles.id),
-  organizationId: text("organization_id").references(() => organizations.id),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+export const users = pgTable('users', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  email: text('email').notNull().unique(),
+  name: text('name').notNull(),
+  emailVerified: boolean('emailVerified').notNull().default(false),
+  image: text('image'),
+  roleId: text('role_id').references(() => roles.id),
+  organizationId: text('organization_id').references(() => organizations.id),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
-export const patients = pgTable("patients", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  organizationId: text("organization_id").notNull().references(() => organizations.id),
-  isIdentityVerified: boolean("is_identity_verified").default(false).notNull(),
-  latestVerificationId: text("latest_verification_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const patients = pgTable('patients', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  isIdentityVerified: boolean('is_identity_verified').default(false).notNull(),
+  latestVerificationId: text('latest_verification_id'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
-export const providers = pgTable("providers", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  npi: text("npi").unique(),
-  organizationId: text("organization_id").notNull().references(() => organizations.id),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const providers = pgTable('providers', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  npi: text('npi').unique(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
-export const appointments = pgTable("appointments", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  patientId: text("patient_id").notNull().references(() => patients.id),
-  providerId: text("provider_id").notNull().references(() => providers.id),
-  scheduledTime: timestamp("scheduled_time", { withTimezone: true }).notNull(),
-  verificationId: text("verification_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const appointments = pgTable('appointments', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  patientId: text('patient_id')
+    .notNull()
+    .references(() => patients.id),
+  providerId: text('provider_id')
+    .notNull()
+    .references(() => providers.id),
+  scheduledTime: timestamp('scheduled_time', { withTimezone: true }).notNull(),
+  verificationId: text('verification_id'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
-export const auditLogs = pgTable("audit_logs", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  tableName: text("table_name").notNull(),
-  recordId: text("record_id").notNull(),
-  action: text("action").notNull(),
-  oldData: jsonb("old_data"),
-  newData: jsonb("new_data"),
-  hash: text("hash"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const auditLogs = pgTable('audit_logs', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  tableName: text('table_name').notNull(),
+  recordId: text('record_id').notNull(),
+  action: text('action').notNull(),
+  summary: text('summary').notNull(),
+  actorRole: text('actor_role'),
+  organizationId: text('organization_id').references(() => organizations.id),
+  details: jsonb('details'),
+  oldData: jsonb('old_data'),
+  newData: jsonb('new_data'),
+  hash: text('hash'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const auditTriggerSQL = sql`
