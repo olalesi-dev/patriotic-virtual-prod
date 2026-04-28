@@ -1,0 +1,29 @@
+{
+  "name": "@workspace/ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "oxlint --fix --deny-warnings",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@workspace/common": "workspace:*",
+    "clsx": "2.1.1",
+    "react": "catalog:web",
+    "react-dom": "catalog:web",
+    "tailwind-merge": "3.5.0",
+    "tailwindcss": "catalog:web"
+  },
+  "devDependencies": {
+    "@testing-library/react": "16.3.2",
+    "@types/jsdom": "28.0.1",
+    "@types/react": "catalog:dev",
+    "@types/react-dom": "catalog:dev",
+    "jsdom": "29.1.0",
+    "oxlint": "catalog:dev",
+    "typescript": "catalog:dev"
+  }
+}
