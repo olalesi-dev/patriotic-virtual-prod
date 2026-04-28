@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import { Elysia, t } from 'elysia';
 
 export const VouchedWebhookPayload = t.Object({
@@ -11,13 +12,16 @@ export const VouchedWebhookPayload = t.Object({
             t.Array(
               t.Object({
                 name: t.String(),
-                value: t.String()
-              })
-            )
-          )
+                value: t.String(),
+              }),
+            ),
+          ),
+        ),
+        parameters: t.Optional(
+          t.Nullable(t.Record(t.String(), t.Unknown())),
         )
-      })
-    )
+      }),
+    ),
   ),
   result: t.Optional(
     t.Nullable(
@@ -25,14 +29,14 @@ export const VouchedWebhookPayload = t.Object({
         success: t.Optional(t.Nullable(t.Boolean())),
         warnings: t.Optional(t.Nullable(t.Boolean())),
         error: t.Optional(
-          t.Nullable(t.Union([t.Record(t.String(), t.Unknown()), t.String()]))
-        )
-      })
-    )
+          t.Nullable(t.Union([t.Record(t.String(), t.Unknown()), t.String()])),
+        ),
+      }),
+    ),
   ),
-  errors: t.Optional(t.Nullable(t.Array(t.Unknown())))
+  errors: t.Optional(t.Nullable(t.Array(t.Unknown()))),
 });
 
 export const vouchedModel = new Elysia({ name: 'vouched.model' }).model({
-  vouchedPayload: VouchedWebhookPayload
+  vouchedPayload: VouchedWebhookPayload,
 });

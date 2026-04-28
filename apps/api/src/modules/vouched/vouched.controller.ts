@@ -1,20 +1,16 @@
 import { Elysia } from 'elysia';
+import { extractVouchedCorrelation, verifyVouchedSignature } from './helpers';
 import { vouchedModel } from './model';
-import { verifyVouchedSignature, processVouchedJob } from './service';
+import { parseVouchedWebhookBody } from './parser';
+import { fetchVouchedJob, processVouchedJob } from './service';
 
 export const vouchedController = new Elysia({ prefix: '/v1/vouched' })
   .use(vouchedModel)
   .post(
     '/webhook',
-    async ({ request, body, headers, set }) => {
+    async ({ request, headers, set }) => {
       const signature = headers['x-signature'];
-      if (!signature) {
-        set.status = 401;
-        return { success: false, error: 'Missing signature' };
-      }
-
-      // Clone request to get raw body for signature verification
-      const rawBody = await request.clone().text();
+      const rawBody = await request.text();
 
       if (!verifyVouchedSignature(rawBody, signature)) {
         set.status = 401;
@@ -22,19 +18,38 @@ export const vouchedController = new Elysia({ prefix: '/v1/vouched' })
       }
 
       try {
-        await processVouchedJob(body);
-        return { success: true };
+        const webhookPayload = parseVouchedWebhookBody(rawBody);
+        const job = await fetchVouchedJob(webhookPayload.id);
+        const correlation = extractVouchedCorrelation(job);
+
+        if (!correlation.patientId) {
+          set.status = 202;
+          return {
+            accepted: true,
+            jobId: job.id,
+            matched: false,
+          };
+        }
+
+        const verification = await processVouchedJob(job);
+        return {
+          success: true,
+          data: {
+            id: verification.id,
+            status: verification.status,
+            verified: verification.status === 'verified',
+          },
+        };
       } catch (error) {
-        const message = (error as Error).message;
-        set.status = 400;
+        const { message } = error as Error;
+        set.status = message.includes('payload') ? 400 : 500;
         return { success: false, error: message };
       }
     },
     {
-      body: 'vouchedPayload',
       detail: {
         summary: 'Vouched Webhook Handler',
-        tags: ['Vouched']
-      }
-    }
+        tags: ['Vouched'],
+      },
+    },
   );

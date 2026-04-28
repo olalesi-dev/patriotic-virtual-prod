@@ -1,53 +1,36 @@
-import { describe, it, expect } from 'bun:test';
-import type { Static } from 'elysia';
-import type { VouchedWebhookPayload } from './model';
-import {
-  verifyVouchedSignature,
-  deriveVerificationStatus
-} from './service';
-describe('Vouched Service', () => {
-  describe('verifyVouchedSignature', () => {
-    it('should return false if keys are missing', () => {
-      // Assuming env is mocked or empty in test
-      expect(verifyVouchedSignature('body', 'sig')).toBe(false);
-    });
-  });
+import { describe, expect, it } from 'bun:test';
+import { fetchVouchedJob } from './service';
 
-  describe('deriveVerificationStatus', () => {
-    it('should return verified for success with no warnings', () => {
-      const payload = {
-        id: '123',
+describe('Vouched service', () => {
+  describe('fetchVouchedJob', () => {
+    it('fetches the canonical Vouched job by id', async () => {
+      const requests: { url: string; apiKey: string | null }[] = [];
+      const fetcher = async (url: string, init?: RequestInit) => {
+        const headers = new Headers(init?.headers);
+        requests.push({
+          apiKey: headers.get('X-Api-Key'),
+          url: String(url),
+        });
+
+        return Response.json({
+          id: 'job_123',
+          status: 'completed',
+        });
+      };
+
+      await expect(
+        fetchVouchedJob('job_123', { apiKey: 'private_key', fetcher }),
+      ).resolves.toMatchObject({
+        id: 'job_123',
         status: 'completed',
-        result: { success: true, warnings: false }
-      } as unknown as Static<typeof VouchedWebhookPayload>;
-      expect(deriveVerificationStatus(payload)).toBe('verified');
-    });
+      });
 
-    it('should return review_required for success with warnings', () => {
-      const payload = {
-        id: '123',
-        status: 'completed',
-        result: { success: true, warnings: true }
-      } as unknown as Static<typeof VouchedWebhookPayload>;
-      expect(deriveVerificationStatus(payload)).toBe('review_required');
-    });
-
-    it('should return pending for active status', () => {
-      const payload = {
-        id: '123',
-        status: 'active',
-        result: { success: false, warnings: false }
-      } as unknown as Static<typeof VouchedWebhookPayload>;
-      expect(deriveVerificationStatus(payload)).toBe('pending');
-    });
-
-    it('should return failed for other cases', () => {
-      const payload = {
-        id: '123',
-        status: 'completed',
-        result: { success: false, warnings: false }
-      } as unknown as Static<typeof VouchedWebhookPayload>;
-      expect(deriveVerificationStatus(payload)).toBe('failed');
+      expect(requests).toEqual([
+        {
+          apiKey: 'private_key',
+          url: 'https://verify.vouched.id/api/jobs/job_123',
+        },
+      ]);
     });
   });
 });

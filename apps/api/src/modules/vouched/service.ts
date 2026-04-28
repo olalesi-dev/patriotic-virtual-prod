@@ -1,86 +1,109 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+/* eslint-disable unicorn/no-null */
+import { and, eq } from 'drizzle-orm';
 import { env } from '@workspace/env';
-import { db } from '../../db';
 import * as schema from '@workspace/db';
-import type { Static } from 'elysia';
-import type { VouchedWebhookPayload } from './model';
-import { eq } from 'drizzle-orm';
+import { db } from '../../db';
+import {
+  deriveVerificationStatus,
+  extractVouchedCorrelation,
+  extractVouchedWarningMessage,
+  type VouchedPayload,
+} from './helpers';
 
-export type VouchedStatus = 'verified' | 'failed' | 'review_required' | 'pending';
+export interface FetchVouchedJobOptions {
+  apiKey?: string;
+  fetcher?: (url: string, init?: RequestInit) => Promise<Response>;
+}
 
-export const verifyVouchedSignature = (rawBody: string, signatureHeader: string): boolean => {
-  const key = env.VOUCHED_SIGNATURE_KEY || env.VOUCHED_PRIVATE_KEY || '';
-  if (!key) return false;
-
-  const hmac = createHmac('sha1', key);
-  hmac.update(rawBody, 'utf8');
-  const digest = hmac.digest('base64');
-
-  try {
-    return timingSafeEqual(Buffer.from(digest), Buffer.from(signatureHeader));
-  } catch {
-    return false;
+export const fetchVouchedJob = async (
+  jobId: string,
+  options: FetchVouchedJobOptions = {},
+): Promise<VouchedPayload> => {
+  const apiKey = options.apiKey ?? env.VOUCHED_PRIVATE_KEY;
+  if (!apiKey) {
+    throw new Error('VOUCHED_PRIVATE_KEY is not configured');
   }
+
+  const response = await (options.fetcher ?? fetch)(
+    `https://verify.vouched.id/api/jobs/${encodeURIComponent(jobId)}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Vouched job ${jobId}: ${response.status}`);
+  }
+
+  const payload = (await response.json()) as VouchedPayload;
+  if (!payload.id || !payload.status) {
+    throw new Error('Vouched job response is missing id or status');
+  }
+
+  return payload;
 };
 
-const extractProperty = (
-  properties: { name: string; value: string }[] | undefined | null,
-  name: string
-): string | null => {
-  if (!properties) return null;
-  const prop = properties.find((p) => p.name === name);
-  return prop?.value || null;
-};
-
-export const deriveVerificationStatus = (
-  payload: Static<typeof VouchedWebhookPayload>
-): VouchedStatus => {
-  const isSuccessful = payload.result?.success ?? false;
-  const hasWarnings = payload.result?.warnings ?? false;
-  const status = payload.status.toLowerCase();
-
-  if (isSuccessful && !hasWarnings) return 'verified';
-  if (isSuccessful && hasWarnings) return 'review_required';
-  if (status === 'active') return 'pending';
-  return 'failed';
-};
-
-export const processVouchedJob = async (
-  payload: Static<typeof VouchedWebhookPayload>
-) => {
-  const patientId = extractProperty(payload.request?.properties, 'patientId');
-  const appointmentId = extractProperty(payload.request?.properties, 'appointmentId');
+export const processVouchedJob = async (payload: VouchedPayload) => {
+  const { patientId, appointmentId } = extractVouchedCorrelation(payload);
   const status = deriveVerificationStatus(payload);
+  const verifiedAt = status === 'verified' ? new Date() : null;
+  const warningMessage = extractVouchedWarningMessage(payload);
+  const failureReason =
+    status === 'verified'
+      ? null
+      : warningMessage ?? 'Identity verification did not complete successfully.';
 
   if (!patientId) {
     throw new Error('Missing patientId in Vouched payload properties');
   }
 
   return await db.transaction(async (tx) => {
-    const [verification] = await tx
-      .insert(schema.identityVerifications)
-      .values({
-        patientId,
-        appointmentId,
-        jobId: payload.id,
-        status,
-        provider: 'vouched',
-        verifiedAt: status === 'verified' ? new Date() : null,
-        failureReason: typeof payload.result?.error === 'string'
-          ? payload.result.error
-          : JSON.stringify(payload.result?.error)
-      })
-      .returning();
+    const [existing] = await tx
+      .select()
+      .from(schema.identityVerifications)
+      .where(
+        and(
+          eq(schema.identityVerifications.provider, 'vouched'),
+          eq(schema.identityVerifications.jobId, payload.id),
+        ),
+      )
+      .limit(1);
 
-    if (status === 'verified') {
-      await tx
-        .update(schema.patients)
-        .set({
-          isIdentityVerified: true,
-          latestVerificationId: verification.id,
-        })
-        .where(eq(schema.patients.id, patientId));
-    }
+    const [verification] = existing
+      ? await tx
+          .update(schema.identityVerifications)
+          .set({
+            patientId,
+            appointmentId,
+            status,
+            verifiedAt,
+            failureReason,
+          })
+          .where(eq(schema.identityVerifications.id, existing.id))
+          .returning()
+      : await tx
+          .insert(schema.identityVerifications)
+          .values({
+            patientId,
+            appointmentId,
+            jobId: payload.id,
+            status,
+            provider: 'vouched',
+            verifiedAt,
+            failureReason,
+          })
+          .returning();
+
+    await tx
+      .update(schema.patients)
+      .set({
+        isIdentityVerified: status === 'verified',
+        latestVerificationId: verification.id,
+      })
+      .where(eq(schema.patients.id, patientId));
 
     if (appointmentId) {
       await tx

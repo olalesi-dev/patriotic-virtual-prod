@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'bun:test';
-import { VouchedWebhookPayload } from './model';
 import { Value } from '@sinclair/typebox/value';
+import { describe, expect, it } from 'bun:test';
+import { VouchedWebhookPayload } from './model';
 
 describe('VouchedWebhookPayload schema', () => {
   const schema = VouchedWebhookPayload;
+  const check = Value.Check;
 
   it('validates a complete payload', () => {
     const payload = {
@@ -11,39 +12,42 @@ describe('VouchedWebhookPayload schema', () => {
       status: 'completed',
       request: {
         properties: [
-          { name: 'document', value: 'front' }
-        ]
+          { name: 'document', value: 'front' },
+        ],
+        parameters: {
+          internalId: 'patient:pat_123',
+        },
       },
       result: {
         success: true,
         warnings: false,
-        error: 'none'
+        error: 'none',
       },
-      errors: []
+      errors: [],
     };
-    expect(Value.Check(schema, payload)).toBe(true);
+    expect(check(schema, payload)).toBe(true);
   });
 
   it('fails if id is missing', () => {
     const payload = {
-      status: 'completed'
+      status: 'completed',
     };
-    expect(Value.Check(schema, payload)).toBe(false);
+    expect(check(schema, payload)).toBe(false);
   });
 
   it('fails if status is missing', () => {
     const payload = {
-      id: 'test-id'
+      id: 'test-id',
     };
-    expect(Value.Check(schema, payload)).toBe(false);
+    expect(check(schema, payload)).toBe(false);
   });
 
   it('allows missing optional fields', () => {
     const payload = {
       id: 'test-id',
-      status: 'completed'
+      status: 'completed',
     };
-    expect(Value.Check(schema, payload)).toBe(true);
+    expect(check(schema, payload)).toBe(true);
   });
 
   it('validates error as object', () => {
@@ -53,10 +57,10 @@ describe('VouchedWebhookPayload schema', () => {
       result: {
         error: {
           code: '123',
-          message: 'failed to read'
-        }
-      }
+          message: 'failed to read',
+        },
+      },
     };
-    expect(Value.Check(schema, payload)).toBe(true);
+    expect(check(schema, payload)).toBe(true);
   });
 });
