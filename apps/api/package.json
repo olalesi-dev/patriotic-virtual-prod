@@ -1,0 +1,38 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outdir=dist",
+    "lint": "oxlint --fix --deny-warnings",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bogeychan/elysia-logger": "catalog:api",
+    "@chneau/elysia-compression": "catalog:api",
+    "@elysiajs/cors": "catalog:api",
+    "@elysiajs/openapi": "catalog:api",
+    "@sinclair/typebox": "catalog:api",
+    "@workspace/auth": "workspace:*",
+    "@workspace/common": "workspace:*",
+    "@workspace/db": "workspace:*",
+    "@workspace/env": "workspace:*",
+    "elysia": "catalog:api",
+    "elysia-circuit-breaker": "catalog:api",
+    "elysia-helmet": "catalog:api",
+    "elysia-http-exception": "catalog:api",
+    "elysia-ip": "catalog:api",
+    "elysia-rate-limit": "catalog:api",
+    "elysia-request-id": "catalog:api",
+    "elysia-xss": "catalog:api",
+    "pino": "catalog:api",
+    "pino-roll": "catalog:api"
+  },
+  "devDependencies": {
+    "bun-types": "catalog:dev",
+    "oxlint": "catalog:dev",
+    "pino-pretty": "catalog:dev",
+    "typescript": "catalog:dev"
+  }
+}
