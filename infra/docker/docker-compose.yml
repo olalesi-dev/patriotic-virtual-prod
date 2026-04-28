@@ -1,0 +1,95 @@
+version: '3.8'
+
+networks:
+  patriotic-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  bun_cache:
+
+services:
+  postgres:
+    image: postgres:18.3-alpine
+    container_name: patriotic-postgres
+    env_file:
+      - ../../.env
+    environment:
+      POSTGRES_DB: patriotic
+      POSTGRES_USER: postgres
+      # Fallback in case it's not defined in .env
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d patriotic']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - patriotic-network
+
+  redis:
+    image: valkey/valkey:8.0
+    container_name: patriotic-redis
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - patriotic-network
+
+  api:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+    container_name: patriotic-api
+    env_file:
+      - ../../.env
+    environment:
+      # Docker-specific networking overrides for local dev
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/patriotic
+      REDIS_URL: redis://redis:6379
+      PORT: 48903
+    ports:
+      - '48903:48903'
+    volumes:
+      - ../../:/app
+      - bun_cache:/root/.bun/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "bun install && bun run --filter @workspace/db db:migrate && bun run --filter @workspace/db db:seed && bun run --filter api dev"
+    networks:
+      - patriotic-network
+
+  admin:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+    container_name: patriotic-admin
+    env_file:
+      - ../../.env
+    environment:
+      # Docker-specific networking overrides for local dev
+      API_URL: http://api:48903
+      PORT: 52305
+    ports:
+      - '52305:52305'
+    volumes:
+      - ../../:/app
+      - bun_cache:/root/.bun/cache
+    depends_on:
+      api:
+        condition: service_started
+    command: sh -c "bun install && bun run --filter admin dev"
+    networks:
+      - patriotic-network

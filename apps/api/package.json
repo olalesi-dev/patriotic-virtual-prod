@@ -18,6 +18,8 @@
     "@workspace/common": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/env": "workspace:*",
+    "drizzle-orm": "catalog:db",
+    "postgres": "catalog:db",
     "elysia": "catalog:api",
     "elysia-helmet": "3.1.0",
     "elysia-http-exception": "catalog:api",

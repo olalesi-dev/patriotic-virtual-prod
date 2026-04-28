@@ -1,7 +1,7 @@
-import { JSDOM } from "jsdom";
+import { JSDOM } from 'jsdom';
 
-const dom = new JSDOM("<!doctype html><html><body></body></html>", {
-  url: "http://localhost/",
+const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+  url: 'http://localhost/',
 });
 
 globalThis.window = dom.window as any;

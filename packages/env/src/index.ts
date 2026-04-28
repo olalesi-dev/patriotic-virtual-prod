@@ -17,6 +17,17 @@ export const EnvSchema = Type.Object({
   ),
   VOUCHED_PRIVATE_KEY: Type.Optional(Type.String()),
   VOUCHED_SIGNATURE_KEY: Type.Optional(Type.String()),
+  SENDGRID_API_KEY: Type.Optional(Type.String()),
+  SENDGRID_DEFAULT_FROM_EMAIL: Type.Optional(Type.String()),
+  SENDGRID_DEFAULT_REPLY_TO_EMAIL: Type.Optional(Type.String()),
+  SENDGRID_TEMPLATE_PATIENT_WELCOME: Type.Optional(Type.String()),
+  SENDGRID_TEMPLATE_STAFF_WELCOME: Type.Optional(Type.String()),
+  EMAIL_DEBUG_LOGS: Type.Optional(Type.String()),
+  REDIS_URL: Type.Optional(Type.String()),
+  NOTIFICATION_QUEUE_NAME: Type.Optional(
+    Type.String({ default: 'notifications' }),
+  ),
+  QUEUE_INLINE_FALLBACK: Type.Optional(Type.String()),
 });
 
 export type Env = Static<typeof EnvSchema>;

@@ -1,0 +1,47 @@
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { twoFactor, admin } from 'better-auth/plugins';
+import { env } from '@workspace/env';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import * as schema from '@workspace/db';
+import { sendWelcomeEmailForCreatedUser } from './email-hooks';
+
+const connection = postgres(
+  env.DATABASE_URL?.trim()
+    ? env.DATABASE_URL
+    : 'postgres://dummy:dummy@localhost/dummy',
+);
+const db = drizzle(connection, { schema });
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: 'pg',
+    schema: {
+      user: schema.users,
+      session: schema.sessions,
+      account: schema.accounts,
+      verification: schema.verifications,
+      twoFactor: schema.twoFactors,
+    },
+  }),
+  emailAndPassword: {
+    enabled: true,
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || 'mock-id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'mock-secret',
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          await sendWelcomeEmailForCreatedUser(user);
+        },
+      },
+    },
+  },
+  plugins: [twoFactor(), admin()],
+});

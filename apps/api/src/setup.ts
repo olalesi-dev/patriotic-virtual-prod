@@ -10,6 +10,8 @@ import { env } from '@workspace/env';
 import { loggerConfig } from './utils/logger';
 import { compression } from './plugins/compression';
 import { circuitBreakerPlugin } from './plugins/circuit-breaker';
+import { authMacro } from './modules/auth/macro';
+import { auditMacro } from './modules/audit/macro';
 
 export const setupApp = new Elysia({ name: 'setup' })
   .use(logger(loggerConfig))
@@ -18,7 +20,9 @@ export const setupApp = new Elysia({ name: 'setup' })
   .use(helmet())
   .use(
     cors({
-      origin: env.CORS_ORIGIN ? env.CORS_ORIGIN.split(',') : ['http://localhost:52305'],
+      origin: env.CORS_ORIGIN
+        ? env.CORS_ORIGIN.split(',')
+        : ['http://localhost:52305'],
       credentials: true,
       allowedHeaders: ['Content-Type', 'Authorization'],
     }),
@@ -27,6 +31,8 @@ export const setupApp = new Elysia({ name: 'setup' })
   .use(compression())
   .use(circuitBreakerPlugin())
   .use(xss())
+  .use(authMacro)
+  .use(auditMacro)
   .onError({ as: 'global' }, ({ code, error, log, set, request }) => {
     let statusCode = 500;
     let message = 'Internal Server Error';

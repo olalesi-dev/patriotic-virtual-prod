@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { identityVerifications } from "./identity-verifications";
+import { expect, test } from 'bun:test';
+import { identityVerifications } from './identity-verifications';
 
-test("identityVerifications table has correct structure", () => {
+test('identityVerifications table has correct structure', () => {
   expect(identityVerifications).toBeDefined();
   expect(identityVerifications.id).toBeDefined();
   expect(identityVerifications.patientId).toBeDefined();
