@@ -170,6 +170,15 @@ export const patients = pgTable(
   (table) => [
     index('patients_organization_id_idx').on(table.organizationId),
     index('patients_dosespot_id_idx').on(table.doseSpotPatientId),
+    index('patients_name_trgm_idx').using(
+      'gist',
+      table.firstName.op('gist_trgm_ops'),
+      table.lastName.op('gist_trgm_ops'),
+    ),
+    index('patients_email_trgm_idx').using(
+      'gist',
+      table.email.op('gist_trgm_ops'),
+    ),
   ],
 );
 
@@ -241,9 +250,9 @@ export const appointments = pgTable(
       .$defaultFn(() => generateId()),
     patientId: text('patient_id')
       .notNull()
-      .references(() => patients.id),
-    providerId: text('provider_id').references(() => providers.id),
-    consultationId: text('consultation_id').references(() => consultations.id),
+      .references(() => patients.id, { onDelete: 'cascade' }),
+    providerId: text('provider_id').references(() => providers.id, { onDelete: 'set null' }),
+    consultationId: text('consultation_id').references(() => consultations.id, { onDelete: 'set null' }),
     type: text('type').default('Telehealth').notNull(),
     status: text('status').default('pending_scheduling').notNull(),
     reason: text('reason'),
@@ -296,6 +305,7 @@ export const auditLogs = pgTable(
     index('audit_logs_organization_id_idx').on(table.organizationId),
     index('audit_logs_actor_id_idx').on(table.actorId),
     index('audit_logs_record_idx').on(table.tableName, table.recordId),
+    index('audit_logs_details_gin_idx').using('gin', table.details),
   ],
 );
 
@@ -324,6 +334,7 @@ export const dosespotWebhookEvents = pgTable(
   (table) => [
     index('dosespot_webhook_events_status_idx').on(table.status),
     index('dosespot_webhook_events_event_type_idx').on(table.eventType),
+    index('dosespot_webhook_events_payload_gin_idx').using('gin', table.payload),
   ],
 );
 
@@ -336,10 +347,10 @@ export const prescriptions = pgTable(
     doseSpotPrescriptionId: integer('dosespot_prescription_id').unique(),
     patientId: text('patient_id')
       .notNull()
-      .references(() => patients.id),
+      .references(() => patients.id, { onDelete: 'cascade' }),
     providerId: text('provider_id')
       .notNull()
-      .references(() => providers.id),
+      .references(() => providers.id, { onDelete: 'set null' }),
     medicationName: text('medication_name').notNull(),
     dosage: text('dosage'),
     quantity: text('quantity'),
@@ -371,10 +382,10 @@ export const soapNotes = pgTable(
       .references(() => appointments.id, { onDelete: 'cascade' }),
     patientId: text('patient_id')
       .notNull()
-      .references(() => patients.id),
+      .references(() => patients.id, { onDelete: 'cascade' }),
     providerId: text('provider_id')
       .notNull()
-      .references(() => providers.id),
+      .references(() => providers.id, { onDelete: 'set null' }),
     subjective: text('subjective'),
     objective: text('objective'),
     assessment: text('assessment'),
@@ -711,10 +722,10 @@ export const imagingOrders = pgTable(
       .references(() => organizations.id),
     patientId: text('patient_id')
       .notNull()
-      .references(() => patients.id),
+      .references(() => patients.id, { onDelete: 'cascade' }),
     providerId: text('provider_id')
       .notNull()
-      .references(() => providers.id),
+      .references(() => providers.id, { onDelete: 'set null' }),
     type: text('type').notNull(),
     status: text('status').default('Ordered').notNull(),
     notes: text('notes'),
@@ -1189,6 +1200,7 @@ export const aiActionItems = pgTable(
 
 export const auditTriggerSQL = sql`
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE OR REPLACE FUNCTION audit_log_trigger()
 RETURNS TRIGGER AS $$
