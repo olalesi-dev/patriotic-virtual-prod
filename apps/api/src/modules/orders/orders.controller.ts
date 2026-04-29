@@ -3,6 +3,7 @@ import { authMacro } from '../auth/macro';
 import { db } from '../../db';
 import * as schema from '@workspace/db';
 import { eq, and, desc } from 'drizzle-orm';
+import { env } from '@workspace/env';
 
 export const ordersController = new Elysia({ prefix: '/orders' })
   .use(authMacro)
@@ -70,5 +71,35 @@ export const ordersController = new Elysia({ prefix: '/orders' })
       type: t.String(),
       notes: t.Optional(t.String()),
     }),
-    detail: { summary: 'Create Imaging Order', tags: ['Orders'] }
-  });
+    detail: { summary: 'Create Imaging Order', tags: ['Orders'] },
+  })
+  // PACS
+  .get(
+    '/pacs/studies',
+    async ({ set }) => {
+      if (!env.DICOM_BASE_URL) {
+        set.status = 503;
+        return { error: 'PACS service not configured' };
+      }
+
+      try {
+        const res = await fetch(`${env.DICOM_BASE_URL}/studies`, {
+          headers: {
+            'CF-Access-Client-Id': env.CF_ACCESS_CLIENT_ID!,
+            'CF-Access-Client-Secret': env.CF_ACCESS_CLIENT_SECRET!,
+            Accept: 'application/json',
+          },
+        });
+
+        return await res.json();
+      } catch (error: any) {
+        set.status = 500;
+        return { error: error.message };
+      }
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['patients:read'],
+      detail: { summary: 'List DICOM Studies', tags: ['Orders'] },
+    },
+  );
