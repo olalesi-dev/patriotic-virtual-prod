@@ -755,6 +755,104 @@ export const socialPosts = pgTable(
   (table) => [index('social_posts_org_idx').on(table.organizationId)],
 );
 
+export const communityProfiles = pgTable('community_profiles', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  displayName: text('display_name').notNull(),
+  avatarUrl: text('avatar_url'),
+  bio: text('bio'),
+  journeyTag: text('journey_tag'),
+  streak: integer('streak').default(0).notNull(),
+  score: integer('score').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const communityPosts = pgTable(
+  'community_posts',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    authorId: text('author_id')
+      .notNull()
+      .references(() => users.id),
+    text: text('text').notNull(),
+    mediaUrl: text('media_url'),
+    mediaType: text('media_type'),
+    likesCount: integer('likes_count').default(0).notNull(),
+    repliesCount: integer('replies_count').default(0).notNull(),
+    isHidden: boolean('hidden').default(false).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('community_posts_org_idx').on(table.organizationId),
+    index('community_posts_author_idx').on(table.authorId),
+  ],
+);
+
+export const communityLikes = pgTable(
+  'community_likes',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    postId: text('post_id')
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex('community_likes_uidx').on(table.userId, table.postId),
+  ],
+);
+
+export const communityReplies = pgTable(
+  'community_replies',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    postId: text('post_id')
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: 'cascade' }),
+    authorId: text('author_id')
+      .notNull()
+      .references(() => users.id),
+    text: text('text').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('community_replies_post_idx').on(table.postId)],
+);
+
+
 export const facilities = pgTable(
   'facilities',
   {
