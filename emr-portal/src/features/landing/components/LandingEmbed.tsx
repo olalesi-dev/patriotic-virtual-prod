@@ -327,28 +327,12 @@ const PROTOCOL_METRICS = [
 ] as const;
 const TESTIMONIALS = [
   {
-    initials: "MR",
+    initials: "PT",
     avatarClass: "ta1",
     quote:
-      '"The intake was thorough, the physician review felt careful, and I understood exactly which treatment options were appropriate for me."',
-    name: "Marcus R.",
-    details: "Weight Management · Jacksonville, FL",
-  },
-  {
-    initials: "SK",
-    avatarClass: "ta2",
-    quote:
-      '"Having an actual radiologist explain my CT findings over video was incredible. Plain English, no jargon. Worth every penny for peace of mind."',
-    name: "Sarah K.",
-    details: "Video Imaging Consult · Tampa, FL",
-  },
-  {
-    initials: "JD",
-    avatarClass: "ta3",
-    quote:
-      '"The physician noticed something on my chest X-ray, confirmed the diagnosis, and walked me through next steps. Protocol-driven and professional."',
-    name: "James D.",
-    details: "Radiology Review · Orlando, FL",
+      '"Real patient experiences and reviews are coming soon! Check back later to hear from our community."',
+    name: "Coming Soon",
+    details: "Patriotic Virtual Telehealth",
   },
 ] as const;
 
