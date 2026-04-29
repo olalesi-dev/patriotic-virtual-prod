@@ -1,0 +1,10 @@
+@import './globals.css';
+
+@layer base {
+  :root {
+    /* Provider specific overrides */
+    --primary: #059669; /* Green */
+    --primary-foreground: #ffffff;
+    --ring: #059669;
+  }
+}

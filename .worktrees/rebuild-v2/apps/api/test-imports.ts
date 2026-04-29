@@ -1,0 +1,16 @@
+import { Elysia } from 'elysia';
+console.log('Elysia loaded');
+import { logger } from '@bogeychan/elysia-logger';
+console.log('logger loaded');
+import { requestID } from 'elysia-requestid';
+console.log('requestID loaded');
+import { ip } from 'elysia-ip';
+console.log('ip loaded');
+import { helmet } from 'elysia-helmet';
+console.log('helmet loaded');
+import { rateLimit } from 'elysia-rate-limit';
+console.log('rateLimit loaded');
+import compress from 'elysia-compress';
+console.log('compress loaded');
+import { elysiaXSS as xss } from 'elysia-xss';
+console.log('xss loaded');

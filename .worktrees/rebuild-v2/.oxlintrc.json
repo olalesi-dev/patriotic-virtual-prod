@@ -1,0 +1,20 @@
+{
+  "categories": {
+    "correctness": "warn",
+    "perf": "warn",
+    "style": "warn",
+    "restriction": "off"
+  },
+  "rules": {
+    "no-magic-numbers": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/no-empty-file": "off",
+    "sort-imports": "off",
+    "max-statements": "off",
+    "no-ternary": "off",
+    "sort-keys": "off",
+    "init-declarations": "off",
+    "@typescript-eslint/parameter-properties": "off",
+    "no-unused-vars": "off"
+  }
+}

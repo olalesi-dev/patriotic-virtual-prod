@@ -1,0 +1,10 @@
+@import './globals.css';
+
+@layer base {
+  :root {
+    /* Patient specific overrides */
+    --primary: #2563eb; /* Blue */
+    --primary-foreground: #ffffff;
+    --ring: #2563eb;
+  }
+}

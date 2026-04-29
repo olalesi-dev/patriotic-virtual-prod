@@ -1,0 +1,10 @@
+[install]
+exact = true
+linker = "isolated"
+linkWorkspacePackages = true
+
+[install.cache]
+dir = ".bun/cache"
+
+[install.catalogs]
+default = true
