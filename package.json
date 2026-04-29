@@ -63,6 +63,9 @@
     "auth": {
       "better-auth": "1.6.9"
     },
+    "payments": {
+      "stripe": "22.1.0"
+    },
     "dev": {
       "turbo": "2.9.6",
       "oxlint": "1.61.0",

@@ -5,3 +5,6 @@ export * from './types';
 export * from './policies/dedupe.policy';
 export * from './policies/phi.policy';
 export * from './policies/retry.policy';
+export * from './service';
+export * from './producers';
+export * from './sendgrid-webhook-security';

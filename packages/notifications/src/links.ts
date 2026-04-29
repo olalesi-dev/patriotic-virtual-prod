@@ -1,4 +1,4 @@
-const defaultFrontendUrl = 'https://patriotictelehealth.com';
+import { DEFAULT_FRONTEND_URL } from '@workspace/common';
 
 export const normalizeOrigin = (value?: string): string | undefined => {
   const trimmed = value?.trim();
@@ -20,7 +20,7 @@ export const buildPortalUrl = (
   const baseUrl =
     normalizeOrigin(source.FRONTEND_URL) ??
     normalizeOrigin(source.NEXT_PUBLIC_APP_URL) ??
-    defaultFrontendUrl;
+    DEFAULT_FRONTEND_URL;
 
   return new URL(path, baseUrl).toString();
 };

@@ -24,6 +24,9 @@ export const seedDatabase = async () => {
 
   try {
     console.log('Clearing existing data...');
+    await db.delete(schema.rolePermissions);
+    await db.delete(schema.permissions);
+    await db.delete(schema.modules);
     await db.delete(notificationEventSchema.notificationEvents);
     await db.delete(notificationSchema.inAppNotifications);
     await db.delete(notificationSchema.notificationDeliveries);
@@ -48,6 +51,110 @@ export const seedDatabase = async () => {
       })
       .returning();
 
+    console.log('Seeding modules and permissions...');
+    const modulesToInsert = [
+      { name: 'Dashboard', key: 'dashboard', sortOrder: 1 },
+      { name: 'Patients', key: 'patients', sortOrder: 2 },
+      { name: 'Appointments', key: 'appointments', sortOrder: 3 },
+      { name: 'Billing', key: 'billing', sortOrder: 4 },
+      { name: 'Admin Center', key: 'admin_center', sortOrder: 5 },
+      { name: 'E-Prescribing', key: 'eprescribing', sortOrder: 6 },
+    ];
+
+    const insertedModules = await db
+      .insert(schema.modules)
+      .values(modulesToInsert)
+      .returning();
+
+    const adminCenterModule = insertedModules.find(
+      (m) => m.key === 'admin_center',
+    )!;
+
+    const subModulesToInsert = [
+      {
+        name: 'Users',
+        key: 'admin:users',
+        parentId: adminCenterModule.id,
+        sortOrder: 1,
+      },
+      {
+        name: 'Roles & Permissions',
+        key: 'admin:roles',
+        parentId: adminCenterModule.id,
+        sortOrder: 2,
+      },
+    ];
+
+    const insertedSubModules = await db
+      .insert(schema.modules)
+      .values(subModulesToInsert)
+      .returning();
+
+    const allModules = [...insertedModules, ...insertedSubModules];
+
+    const permissionsToInsert = [
+      {
+        name: 'View Dashboard',
+        key: 'dashboard:read',
+        moduleId: allModules.find((m) => m.key === 'dashboard')!.id,
+      },
+      {
+        name: 'View Patients',
+        key: 'patients:read',
+        moduleId: allModules.find((m) => m.key === 'patients')!.id,
+      },
+      {
+        name: 'Manage Patients',
+        key: 'patients:write',
+        moduleId: allModules.find((m) => m.key === 'patients')!.id,
+      },
+      {
+        name: 'View Appointments',
+        key: 'appointments:read',
+        moduleId: allModules.find((m) => m.key === 'appointments')!.id,
+      },
+      {
+        name: 'Manage Appointments',
+        key: 'appointments:write',
+        moduleId: allModules.find((m) => m.key === 'appointments')!.id,
+      },
+      {
+        name: 'View Billing',
+        key: 'billing:read',
+        moduleId: allModules.find((m) => m.key === 'billing')!.id,
+      },
+      {
+        name: 'View Users',
+        key: 'admin:users:read',
+        moduleId: allModules.find((m) => m.key === 'admin:users')!.id,
+      },
+      {
+        name: 'Manage Users',
+        key: 'admin:users:write',
+        moduleId: allModules.find((m) => m.key === 'admin:users')!.id,
+      },
+      {
+        name: 'View Roles',
+        key: 'admin:roles:read',
+        moduleId: allModules.find((m) => m.key === 'admin:roles')!.id,
+      },
+      {
+        name: 'Launch DoseSpot',
+        key: 'dosespot:sso',
+        moduleId: allModules.find((m) => m.key === 'eprescribing')!.id,
+      },
+      {
+        name: 'Sync DoseSpot Patients',
+        key: 'dosespot:patients:sync',
+        moduleId: allModules.find((m) => m.key === 'eprescribing')!.id,
+      },
+    ];
+
+    const insertedPermissions = await db
+      .insert(schema.permissions)
+      .values(permissionsToInsert)
+      .returning();
+
     console.log('Seeding roles...');
     const roleNames = [
       'SuperAdmin',
@@ -62,6 +169,47 @@ export const seedDatabase = async () => {
       .insert(schema.roles)
       .values(roleNames.map((name) => ({ name })))
       .returning();
+
+    console.log('Mapping permissions to roles...');
+    const superAdminRole = insertedRoles.find((r) => r.name === 'SuperAdmin')!;
+    const adminRole = insertedRoles.find((r) => r.name === 'Admin')!;
+    const providerRole = insertedRoles.find((r) => r.name === 'Provider')!;
+
+    // SuperAdmin gets everything
+    const superAdminRolePermissions = insertedPermissions.map((p) => ({
+      roleId: superAdminRole.id,
+      permissionId: p.id,
+    }));
+
+    // Admin gets almost everything
+    const adminRolePermissions = insertedPermissions
+      .filter((p) => !p.key.startsWith('admin:roles'))
+      .map((p) => ({
+        roleId: adminRole.id,
+        permissionId: p.id,
+      }));
+
+    // Provider gets patient and appointment access
+    const providerRolePermissions = insertedPermissions
+      .filter(
+        (p) =>
+          p.key.startsWith('patients') ||
+          p.key.startsWith('appointments') ||
+          p.key.startsWith('dashboard') ||
+          p.key.startsWith('dosespot'),
+      )
+      .map((p) => ({
+        roleId: providerRole.id,
+        permissionId: p.id,
+      }));
+
+    await db
+      .insert(schema.rolePermissions)
+      .values([
+        ...superAdminRolePermissions,
+        ...adminRolePermissions,
+        ...providerRolePermissions,
+      ]);
 
     console.log('Seeding users...');
     const usersToInsert = insertedRoles.map((role) => ({

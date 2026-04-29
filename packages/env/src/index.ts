@@ -1,10 +1,16 @@
 import { Type, type Static } from '@sinclair/typebox';
 import { Value } from '@sinclair/typebox/value';
+import {
+  DEFAULT_APP_URL,
+  DEFAULT_CORS_ORIGIN,
+  DEFAULT_NOTIFICATION_QUEUE_NAME,
+  DEFAULT_PORT,
+} from './constants';
 
 export const EnvSchema = Type.Object({
   DATABASE_URL: Type.String({ minLength: 1 }),
-  PORT: Type.Optional(Type.String({ default: '3000' })),
-  CORS_ORIGIN: Type.Optional(Type.String({ default: 'http://localhost:52305' })),
+  PORT: Type.Optional(Type.String({ default: DEFAULT_PORT })),
+  CORS_ORIGIN: Type.Optional(Type.String({ default: DEFAULT_CORS_ORIGIN })),
   NODE_ENV: Type.Optional(
     Type.Union(
       [
@@ -23,9 +29,19 @@ export const EnvSchema = Type.Object({
   SENDGRID_TEMPLATE_PATIENT_WELCOME: Type.Optional(Type.String()),
   SENDGRID_TEMPLATE_STAFF_WELCOME: Type.Optional(Type.String()),
   EMAIL_DEBUG_LOGS: Type.Optional(Type.String()),
+  STRIPE_SECRET_KEY: Type.Optional(Type.String()),
+  STRIPE_WEBHOOK_SECRET: Type.Optional(Type.String()),
+  APP_URL: Type.Optional(Type.String({ default: DEFAULT_APP_URL })),
   REDIS_URL: Type.Optional(Type.String()),
+  DOSESPOT_BASE_URL: Type.Optional(Type.String()),
+  DOSESPOT_CLINIC_ID: Type.Optional(Type.String()),
+  DOSESPOT_CLINIC_KEY: Type.Optional(Type.String()),
+  DOSESPOT_USER_ID: Type.Optional(Type.String()),
+  DOSESPOT_SUBSCRIPTION_KEY: Type.Optional(Type.String()),
+  DOSESPOT_DEFAULT_CLINICIAN_ID: Type.Optional(Type.String()),
+  DOSESPOT_WEBHOOK_SECRET: Type.Optional(Type.String()),
   NOTIFICATION_QUEUE_NAME: Type.Optional(
-    Type.String({ default: 'notifications' }),
+    Type.String({ default: DEFAULT_NOTIFICATION_QUEUE_NAME }),
   ),
   QUEUE_INLINE_FALLBACK: Type.Optional(Type.String()),
 });

@@ -4,6 +4,11 @@ import { healthController } from './modules/health/health.controller';
 import { authController } from './modules/auth/auth.controller';
 import { vouchedController } from './modules/vouched/vouched.controller';
 import { auditController } from './modules/audit/audit.controller';
+import { notificationController } from './modules/notifications/notification.controller';
+import { paymentsController } from './modules/payments/payments.controller';
+import { dosespotController } from './modules/dosespot/dosespot.controller';
+import { consultationsController } from './modules/consultations/consultations.controller';
+import { clinicalController } from './modules/clinical/clinical.controller';
 import { env } from '@workspace/env';
 
 export const app = new Elysia()
@@ -17,7 +22,12 @@ export const app = new Elysia()
       .use(authController)
       .group('/health', (app) => app.use(healthController))
       .use(vouchedController)
-      .use(auditController),
+      .use(auditController)
+      .use(notificationController)
+      .use(paymentsController)
+      .use(dosespotController)
+      .use(consultationsController)
+      .use(clinicalController),
   )
   .listen(env.PORT || 3000);
 

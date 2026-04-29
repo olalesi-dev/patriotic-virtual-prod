@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { generateId, users } from './schema';
 
 export const sessions = pgTable('session', {
@@ -12,6 +13,15 @@ export const sessions = pgTable('session', {
   userId: text('userId')
     .notNull()
     .references(() => users.id),
+  role: text('role'),
+  permissions: jsonb('permissions')
+    .$type<string[]>()
+    .default(sql`'[]'::jsonb`)
+    .notNull(),
+  allowedModules: jsonb('allowedModules')
+    .$type<string[]>()
+    .default(sql`'[]'::jsonb`)
+    .notNull(),
 });
 
 export const accounts = pgTable('account', {

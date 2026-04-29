@@ -6,6 +6,7 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from '@workspace/db';
 import { sendWelcomeEmailForCreatedUser } from './email-hooks';
+import { getUserPermissionsAndModules } from './permissions';
 
 const connection = postgres(
   env.DATABASE_URL?.trim()
@@ -25,6 +26,13 @@ export const auth = betterAuth({
       twoFactor: schema.twoFactors,
     },
   }),
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },
@@ -39,6 +47,22 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           await sendWelcomeEmailForCreatedUser(user);
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          const { role, permissions, allowedModules } =
+            await getUserPermissionsAndModules(db, session.userId);
+          return {
+            data: {
+              ...session,
+              role,
+              permissions,
+              allowedModules,
+            },
+          };
         },
       },
     },

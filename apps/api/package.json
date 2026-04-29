@@ -17,7 +17,10 @@
     "@workspace/auth": "workspace:*",
     "@workspace/common": "workspace:*",
     "@workspace/db": "workspace:*",
+    "@workspace/dosespot": "workspace:*",
     "@workspace/env": "workspace:*",
+    "@workspace/notifications": "workspace:*",
+    "@workspace/queue": "workspace:*",
     "drizzle-orm": "catalog:db",
     "postgres": "catalog:db",
     "elysia": "catalog:api",
@@ -28,7 +31,8 @@
     "elysia-requestid": "1.0.9",
     "elysia-xss": "1.0.4",
     "pino": "10.3.1",
-    "pino-roll": "4.0.0"
+    "pino-roll": "4.0.0",
+    "stripe": "catalog:payments"
   },
   "devDependencies": {
     "bun-types": "catalog:dev",

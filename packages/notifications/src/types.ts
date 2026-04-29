@@ -16,6 +16,7 @@ export const notificationCategories = [
   'clientDocumentation',
   'workspace',
   'communications',
+  'clinical',
 ] as const;
 export type NotificationPreferenceCategory =
   (typeof notificationCategories)[number];
@@ -35,6 +36,8 @@ export const notificationTopics = [
   'NEW_SECURE_MESSAGE_PROVIDER',
   'FAILED_PAYMENT_ALERT_PATIENT',
   'FAILED_PAYMENT_ALERT_ADMIN',
+  'PRESCRIPTION_SENT_PATIENT',
+  'PRESCRIPTION_ERROR_ADMIN',
 ] as const;
 export type NotificationTopicKey = (typeof notificationTopics)[number];
 
@@ -54,6 +57,8 @@ export const notificationTemplateKeys = [
   'secure_message_provider',
   'failed_payment_patient',
   'failed_payment_admin',
+  'prescription_sent_patient',
+  'prescription_error_admin',
 ] as const;
 export type NotificationTemplateKey =
   (typeof notificationTemplateKeys)[number];
@@ -65,7 +70,8 @@ export type InboxNotificationType =
   | 'appointment_rescheduled'
   | 'appointment_cancelled'
   | 'appointment_reminder'
-  | 'message_received';
+  | 'message_received'
+  | 'alert';
 
 export type NotificationDeliveryStatus =
   | 'queued'

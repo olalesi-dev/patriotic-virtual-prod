@@ -26,11 +26,13 @@ export const authMacro = new Elysia({ name: 'auth.macro' }).macro({
   allowedRoles(roles: string[]) {
     return {
       beforeHandle(context: unknown) {
-        const { user } = context as { user?: AuthUser | null };
-        if (!user) {
+        const { session } = context as {
+          session?: (AuthSession & { role?: string }) | null;
+        };
+        if (!session) {
           throw new UnauthorizedException('Unauthorized');
         }
-        if (!user.role || !roles.includes(user.role)) {
+        if (!session.role || !roles.includes(session.role)) {
           throw new ForbiddenException('Forbidden');
         }
       },
@@ -39,23 +41,17 @@ export const authMacro = new Elysia({ name: 'auth.macro' }).macro({
   requirePermissions(permissions: string[]) {
     return {
       beforeHandle(context: unknown) {
-        const { user } = context as {
-          user?: AuthUser | null;
-          permissions?: string[];
+        const { session } = context as {
+          session?: (AuthSession & { permissions?: string[] }) | null;
         };
-        if (!user) {
+        if (!session) {
           throw new UnauthorizedException('Unauthorized');
         }
-        // TODO: In a real implementation, either attach permissions to the user object
-        // During session resolution or perform a DB lookup here.
-        // For now, we assume the user object might have a mocked permissions array.
-        const userPermissions =
-          context && typeof context === 'object' && 'permissions' in context
-            ? (context as { permissions: string[] }).permissions
-            : [];
+
+        const sessionPermissions = session.permissions ?? [];
 
         const hasAllPermissions = permissions.every((permission) =>
-          userPermissions.includes(permission),
+          sessionPermissions.includes(permission),
         );
 
         if (!hasAllPermissions) {

@@ -1,5 +1,5 @@
 {
-  "name": "@workspace/notifications",
+  "name": "@workspace/dosespot",
   "version": "0.1.0",
   "private": true,
   "main": "src/index.ts",
@@ -10,11 +10,7 @@
     "test": "SKIP_ENV_VALIDATION=true bun test"
   },
   "dependencies": {
-    "@workspace/common": "workspace:*",
-    "@workspace/db": "workspace:*",
-    "@workspace/email": "workspace:*",
-    "@workspace/queue": "workspace:*",
-    "drizzle-orm": "catalog:db"
+    "@workspace/env": "workspace:*"
   },
   "devDependencies": {
     "bun-types": "catalog:dev",
