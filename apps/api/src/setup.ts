@@ -27,7 +27,10 @@ export const setupApp = new Elysia({ name: 'setup' })
       allowedHeaders: ['Content-Type', 'Authorization'],
     }),
   )
-  .use(rateLimit())
+  .use(rateLimit({
+    max: 100000, // Very high limit for load testing
+    duration: 60000,
+  }))
   .use(compression())
   .use(circuitBreakerPlugin())
   .use(xss())

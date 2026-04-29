@@ -1,8 +1,6 @@
-import {
-  sendTemplateEmail,
-  type EmailTemplateKey,
-  type SendGridDispatchResult,
-} from '@workspace/email';
+import { sendTemplateEmail } from '@workspace/email/send-template-email';
+import type { SendGridDispatchResult } from '@workspace/email/sendgrid';
+import type { EmailTemplateKey } from '@workspace/email/templates';
 
 export interface CreatedAuthUser {
   id?: string;
@@ -40,13 +38,13 @@ export const selectWelcomeTemplate = (
 export const buildWelcomeTemplateData = (
   user: CreatedAuthUser,
 ): Record<string, unknown> => ({
-    email: user.email ?? '',
-    name: user.name?.trim() || user.email || 'there',
-    loginUrl: process.env.BETTER_AUTH_URL ?? process.env.APP_URL ?? '',
-    supportEmail:
-      process.env.SENDGRID_DEFAULT_REPLY_TO_EMAIL ??
-      'support@patriotictelehealth.com',
-  });
+  email: user.email ?? '',
+  name: user.name?.trim() || user.email || 'there',
+  loginUrl: process.env.BETTER_AUTH_URL ?? process.env.APP_URL ?? '',
+  supportEmail:
+    process.env.SENDGRID_DEFAULT_REPLY_TO_EMAIL ??
+    'support@patriotictelehealth.com',
+});
 
 export const sendWelcomeEmailForCreatedUser = async (
   user: CreatedAuthUser,
@@ -67,7 +65,7 @@ export const sendWelcomeEmailForCreatedUser = async (
   }
 
   try {
-    const sender = options.sender ?? sendTemplateEmail;
+    const sender = (options.sender ?? sendTemplateEmail) as any;
     const result = await sender({
       templateKey,
       toEmail,

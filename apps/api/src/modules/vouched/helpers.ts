@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-null */
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { Static } from 'elysia';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 import type { VouchedWebhookPayload } from './model';
 
 export type VouchedPayload = Static<typeof VouchedWebhookPayload>;

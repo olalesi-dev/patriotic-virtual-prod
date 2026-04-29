@@ -1,4 +1,4 @@
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 import { DEFAULT_APP_URL } from '../constants/links';
 
 const STRIPE_CHECKOUT_SESSION_TOKEN = '{CHECKOUT_SESSION_ID}';

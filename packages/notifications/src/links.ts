@@ -1,4 +1,4 @@
-import { DEFAULT_FRONTEND_URL } from '@workspace/common';
+import { DEFAULT_FRONTEND_URL } from '@workspace/common/constants/links';
 
 export const normalizeOrigin = (value?: string): string | undefined => {
   const trimmed = value?.trim();

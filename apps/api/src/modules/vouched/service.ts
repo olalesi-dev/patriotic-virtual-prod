@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-null */
 import { and, eq } from 'drizzle-orm';
-import { env } from '@workspace/env';
-import * as schema from '@workspace/db';
+import { env } from '@workspace/env/index';
+import * as schema from '@workspace/db/index';
 import { db } from '../../db';
 import {
   deriveVerificationStatus,

@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 import * as schema from './schema';
 import * as identitySchema from './identity-verifications';
 import * as notificationSchema from './notifications';
@@ -52,7 +52,12 @@ export const seedDatabase = async () => {
     const [defaultOrg] = await db
       .insert(schema.organizations)
       .values({
+        id: 'default-org-id',
         name: 'Default Organization',
+      })
+      .onConflictDoUpdate({
+        target: [schema.organizations.id],
+        set: { name: 'Default Organization' },
       })
       .returning();
 

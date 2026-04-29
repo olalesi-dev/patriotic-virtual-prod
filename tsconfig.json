@@ -1,24 +1,6 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
-    "moduleDetection": "force",
-    "ignoreDeprecations": "6.0",
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
-    "types": ["bun-types"],
-    "baseUrl": ".",
-    "paths": {
-      "@workspace/*": ["packages/*/src"]
-    }
-  },
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {},
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "emr-portal", "emr-backend"]
 }

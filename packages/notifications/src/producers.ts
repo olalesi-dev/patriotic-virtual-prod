@@ -1,7 +1,7 @@
 import { buildPortalUrl } from './links';
 import { formatRequestedDate, getPlatformName } from './template-data';
 import type { NotificationService } from './service';
-import { notificationRepository, type Db } from '@workspace/db';
+import { notificationRepository, type Db } from '@workspace/db/index';
 
 function asCurrency(amountInCents: number | null): string {
   if (amountInCents === null) return 'an outstanding balance';

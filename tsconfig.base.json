@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "ignoreDeprecations": "6.0",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "types": ["bun-types"],
+    "baseUrl": ".",
+    "paths": {
+      "@workspace/auth/*": ["packages/auth/src/*"],
+      "@workspace/common/*": ["packages/common/src/*"],
+      "@workspace/db/*": ["packages/db/src/*"],
+      "@workspace/dosespot/*": ["packages/dosespot/src/*"],
+      "@workspace/email/*": ["packages/email/src/*"],
+      "@workspace/env/*": ["packages/env/src/*"],
+      "@workspace/notifications/*": ["packages/notifications/src/*"],
+      "@workspace/queue/*": ["packages/queue/src/*"],
+      "@workspace/ui/*": ["packages/ui/src/*"]
+    }
+  }
+}
