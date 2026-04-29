@@ -18,6 +18,7 @@ import { servicesController } from './modules/services/services.controller';
 import { ordersController } from './modules/orders/orders.controller';
 import { socialsController } from './modules/socials/socials.controller';
 import { crmController } from './modules/crm/crm.controller';
+import { shopController } from './modules/shop/shop.controller';
 import { telehealthController } from './modules/telehealth/telehealth.controller';
 import { env } from '@workspace/env';
 
@@ -47,6 +48,7 @@ export const app = new Elysia()
       .use(ordersController)
       .use(socialsController)
       .use(crmController)
+      .use(shopController)
       .use(telehealthController),
   )
   .listen(env.PORT || 3000);
