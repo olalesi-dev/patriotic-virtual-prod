@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia';
-import { auth } from '@workspace/auth';
+import { auth } from '@workspace/auth/auth';
 import { UnauthorizedException, ForbiddenException } from '../../utils/errors';
 
 type AuthUser = typeof auth.$Infer.Session.user;
@@ -12,6 +12,28 @@ export const authMacro = new Elysia({ name: 'auth.macro' }).macro({
     }
     return {
       async resolve({ request }) {
+        // Load test bypass
+        const authHeader = request.headers.get('authorization');
+        const isLoadTestAllowed = process.env.ALLOW_LOAD_TEST_BYPASS === 'true';
+
+        if (isLoadTestAllowed && authHeader === 'Bearer mock-load-test-token') {
+          return {
+            user: {
+              id: 'load-test-user',
+              name: 'Load Test User',
+              email: 'loadtest@example.com',
+              role: 'SuperAdmin',
+              organizationId: 'default-org-id',
+            } as any,
+            session: {
+              id: 'load-test-session',
+              userId: 'load-test-user',
+              role: 'SuperAdmin',
+              permissions: ['*'],
+            } as any,
+          };
+        }
+
         const session = await auth.api.getSession({ headers: request.headers });
         if (!session) {
           throw new UnauthorizedException('Unauthorized');
@@ -49,6 +71,10 @@ export const authMacro = new Elysia({ name: 'auth.macro' }).macro({
         }
 
         const sessionPermissions = session.permissions ?? [];
+
+        if (sessionPermissions.includes('*')) {
+          return;
+        }
 
         const hasAllPermissions = permissions.every((permission) =>
           sessionPermissions.includes(permission),

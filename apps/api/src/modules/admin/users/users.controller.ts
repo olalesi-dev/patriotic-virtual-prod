@@ -1,17 +1,23 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../../auth/macro';
 import { db } from '../../../db';
-import * as schema from '@workspace/db';
-import { eq, and, ilike, or, desc } from 'drizzle-orm';
+import * as schema from '@workspace/db/schema';
+import { eq, and, ilike, or, desc, asc, type SQL } from 'drizzle-orm';
 
 export const usersController = new Elysia({ prefix: '/users' })
   .use(authMacro)
   .get(
     '/',
     async ({ query, user }) => {
-      const { search, limit = '20', offset = '0' } = query;
+      const { 
+        search, 
+        limit = '20', 
+        offset = '0',
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
+      } = query;
 
-      let whereClause = eq(schema.users.organizationId, user.organizationId!);
+      let whereClause: SQL | undefined = eq(schema.users.organizationId, user.organizationId!);
 
       if (search) {
         whereClause = and(
@@ -20,8 +26,11 @@ export const usersController = new Elysia({ prefix: '/users' })
             ilike(schema.users.name, `%${search}%`),
             ilike(schema.users.email, `%${search}%`)
           )
-        ) as any;
+        );
       }
+
+      const orderColumn = (schema.users as any)[sortBy] || schema.users.createdAt;
+      const orderDirection = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
 
       const items = await db
         .select({
@@ -37,7 +46,7 @@ export const usersController = new Elysia({ prefix: '/users' })
         .where(whereClause)
         .limit(Number(limit))
         .offset(Number(offset))
-        .orderBy(desc(schema.users.createdAt));
+        .orderBy(orderDirection);
 
       return items;
     },
@@ -48,6 +57,8 @@ export const usersController = new Elysia({ prefix: '/users' })
         search: t.Optional(t.String()),
         limit: t.Optional(t.String()),
         offset: t.Optional(t.String()),
+        sortBy: t.Optional(t.String()),
+        sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
       }),
       detail: { summary: 'List Users', tags: ['Admin'] },
     }

@@ -1,26 +1,49 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../../auth/macro';
 import { db } from '../../../db';
-import * as schema from '@workspace/db';
-import { eq, and, gte, lte, or, desc } from 'drizzle-orm';
+import * as schema from '@workspace/db/schema';
+import { eq, and, gte, lte, or, desc, asc, ilike, type SQL } from 'drizzle-orm';
 
 export const appointmentsController = new Elysia({ prefix: '/appointments' })
   .use(authMacro)
   .get(
     '/',
     async ({ query, user }) => {
-      const { start, end, status } = query;
-      let whereClause = eq(schema.patients.organizationId, user.organizationId!);
+      const { 
+        start, 
+        end, 
+        status,
+        search, 
+        limit = '20', 
+        offset = '0', 
+        sortBy = 'scheduledTime', 
+        sortOrder = 'desc' 
+      } = query;
+
+      let whereClause: SQL | undefined = eq(schema.patients.organizationId, user.organizationId!);
 
       if (start) {
-        whereClause = and(whereClause, gte(schema.appointments.scheduledTime, new Date(start))) as any;
+        whereClause = and(whereClause, gte(schema.appointments.scheduledTime, new Date(start)));
       }
       if (end) {
-        whereClause = and(whereClause, lte(schema.appointments.scheduledTime, new Date(end))) as any;
+        whereClause = and(whereClause, lte(schema.appointments.scheduledTime, new Date(end)));
       }
       if (status) {
-        whereClause = and(whereClause, eq(schema.appointments.status, status)) as any;
+        whereClause = and(whereClause, eq(schema.appointments.status, status));
       }
+      if (search) {
+        whereClause = and(
+          whereClause,
+          or(
+            ilike(schema.patients.firstName, `%${search}%`),
+            ilike(schema.patients.lastName, `%${search}%`),
+            ilike(schema.patients.email, `%${search}%`)
+          )
+        );
+      }
+
+      const orderColumn = (schema.appointments as any)[sortBy] || schema.appointments.scheduledTime;
+      const orderDirection = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
 
       const items = await db
         .select({
@@ -32,7 +55,9 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
         .innerJoin(schema.patients, eq(schema.appointments.patientId, schema.patients.id))
         .leftJoin(schema.providers, eq(schema.appointments.providerId, schema.providers.id))
         .where(whereClause)
-        .orderBy(schema.appointments.scheduledTime);
+        .limit(Number(limit))
+        .offset(Number(offset))
+        .orderBy(orderDirection);
 
       return items;
     },
@@ -43,6 +68,11 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
         start: t.Optional(t.String()),
         end: t.Optional(t.String()),
         status: t.Optional(t.String()),
+        search: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+        offset: t.Optional(t.String()),
+        sortBy: t.Optional(t.String()),
+        sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
       }),
       detail: { summary: 'List Appointments (Calendar)', tags: ['Clinical'] },
     }

@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: patriotic_v2
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/patriotic_v2
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+      API_CLUSTER_MODE: "true"
+      WORKER_COUNT: 4
+      NODE_ENV: production
+      SKIP_ENV_VALIDATION: "true"
+      ALLOW_LOAD_TEST_BYPASS: "true"
+      BETTER_AUTH_SECRET: "load-test-secret-at-least-32-chars-long"
+      BETTER_AUTH_URL: "http://api:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  # Container to run migrations and seed the database
+  db-setup:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+      target: builder
+    command: bash -c "bun run --filter @workspace/db db:migrate && bun run --filter @workspace/db db:seed"
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/patriotic_v2
+      SKIP_ENV_VALIDATION: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # k6 load tester
+  k6:
+    image: grafana/k6
+    volumes:
+      - ./load-tests:/scripts
+    environment:
+      BASE_URL: http://api:3000/api
+      AUTH_TOKEN: "mock-load-test-token" # We'll need to handle this in the API for load testing
+    depends_on:
+      api:
+        condition: service_started
+    command: run /scripts/scenarios.js
+    profiles:
+      - load-test

@@ -1,8 +1,8 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../auth/macro';
 import { db } from '../../db';
-import * as schema from '@workspace/db';
-import { eq, and, desc, sql, or } from 'drizzle-orm';
+import * as schema from '@workspace/db/schema';
+import { eq, and, desc, sql, or, asc, ilike, type SQL } from 'drizzle-orm';
 
 export const socialsController = new Elysia({ prefix: '/socials' })
   .use(authMacro)
@@ -100,7 +100,33 @@ export const socialsController = new Elysia({ prefix: '/socials' })
           journeyTag: t.Optional(t.String()),
         })
       })
-      .get('/feed', async ({ user }) => {
+      .get('/feed', async ({ query, user }) => {
+        const { 
+          search, 
+          limit = '20', 
+          offset = '0',
+          sortBy = 'createdAt',
+          sortOrder = 'desc'
+        } = query;
+
+        let whereClause: SQL | undefined = and(
+          eq(schema.communityPosts.organizationId, user.organizationId!),
+          eq(schema.communityPosts.isHidden, false)
+        );
+
+        if (search) {
+          whereClause = and(
+            whereClause,
+            or(
+              ilike(schema.communityPosts.text, `%${search}%`),
+              ilike(schema.users.name, `%${search}%`)
+            )
+          );
+        }
+
+        const orderColumn = (schema.communityPosts as any)[sortBy] || schema.communityPosts.createdAt;
+        const orderDirection = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
+
         return await db
           .select({
             post: schema.communityPosts,
@@ -112,13 +138,18 @@ export const socialsController = new Elysia({ prefix: '/socials' })
           })
           .from(schema.communityPosts)
           .innerJoin(schema.users, eq(schema.communityPosts.authorId, schema.users.id))
-          .where(
-            and(
-              eq(schema.communityPosts.organizationId, user.organizationId!),
-              eq(schema.communityPosts.isHidden, false)
-            )
-          )
-          .orderBy(desc(schema.communityPosts.createdAt));
+          .where(whereClause)
+          .limit(Number(limit))
+          .offset(Number(offset))
+          .orderBy(orderDirection);
+      }, {
+        query: t.Object({
+          search: t.Optional(t.String()),
+          limit: t.Optional(t.String()),
+          offset: t.Optional(t.String()),
+          sortBy: t.Optional(t.String()),
+          sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
+        }),
       })
       .post('/feed', async ({ body, user }) => {
         const [post] = await db

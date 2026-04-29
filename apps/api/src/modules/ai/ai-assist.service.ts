@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 
 export class AiAssistService {
   private genAI: GoogleGenerativeAI | null = null;

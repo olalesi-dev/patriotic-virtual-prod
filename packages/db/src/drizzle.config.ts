@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 
 export default defineConfig({
   schema: './src/index.ts',

@@ -1,4 +1,5 @@
 import { Elysia, t } from 'elysia';
+import { rateLimit } from 'elysia-rate-limit';
 import { authMacro } from '../auth/macro';
 import { AiAssistService } from './ai-assist.service';
 import { AiQueueService } from './ai-queue.service';
@@ -7,6 +8,14 @@ const assistService = new AiAssistService();
 const queueService = new AiQueueService();
 
 export const aiController = new Elysia({ prefix: '/ai' })
+  .use(rateLimit({
+    max: 10,
+    duration: 60000,
+    errorResponse: new Response(JSON.stringify({ error: 'AI rate limit exceeded' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }))
   .use(authMacro)
   .group('/queue', { isSignIn: true }, (app) =>
     app

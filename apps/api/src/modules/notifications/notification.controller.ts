@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { db } from '../../db';
-import { NotificationQueue } from '@workspace/queue';
+import { NotificationQueue } from '@workspace/queue/index';
 import {
   NotificationService,
   getSendGridWebhookSignatureHeaders,
@@ -8,7 +8,7 @@ import {
   isSendGridWebhookVerificationEnabled,
   type DispatchTaskPayload,
   NotificationProducers,
-} from '@workspace/notifications';
+} from '@workspace/notifications/index';
 
 const queue = new NotificationQueue();
 const notificationService = new NotificationService(db, queue);

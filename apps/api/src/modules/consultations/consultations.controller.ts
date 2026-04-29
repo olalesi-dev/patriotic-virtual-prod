@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../auth/macro';
 import { db } from '../../db';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import { createConsultation } from '../payments/consultation-payments.service';
 
 export const consultationsController = new Elysia({
