@@ -669,6 +669,255 @@ export const clinicalProtocols = pgTable(
   (table) => [index('clinical_protocols_org_idx').on(table.organizationId)],
 );
 
+export const services = pgTable(
+  'services',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    description: text('description'),
+    price: integer('price').notNull(),
+    category: text('category').notNull(),
+    status: text('status').default('Active').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('services_org_idx').on(table.organizationId),
+    index('services_category_idx').on(table.category),
+  ],
+);
+
+export const imagingOrders = pgTable(
+  'imaging_orders',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    patientId: text('patient_id')
+      .notNull()
+      .references(() => patients.id),
+    providerId: text('provider_id')
+      .notNull()
+      .references(() => providers.id),
+    type: text('type').notNull(),
+    status: text('status').default('Ordered').notNull(),
+    notes: text('notes'),
+    orderedAt: timestamp('ordered_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('imaging_orders_patient_idx').on(table.patientId),
+    index('imaging_orders_org_idx').on(table.organizationId),
+  ],
+);
+
+export const socialPosts = pgTable(
+  'social_posts',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    text: text('text').notNull(),
+    status: text('status').default('draft').notNull(),
+    authorId: text('author_id')
+      .notNull()
+      .references(() => users.id),
+    platforms: jsonb('platforms').$type<string[]>().default(sql`'[]'::jsonb`),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('social_posts_org_idx').on(table.organizationId)],
+);
+
+export const facilities = pgTable(
+  'facilities',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    type: text('type').notNull(),
+    address: text('address'),
+    city: text('city'),
+    state: text('state'),
+    zipCode: text('zip_code'),
+    phone: text('phone'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('facilities_org_idx').on(table.organizationId)],
+);
+
+export const vendors = pgTable(
+  'vendors',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    contactName: text('contact_name'),
+    email: text('email'),
+    phone: text('phone'),
+    category: text('category'),
+    contractEndDate: timestamp('contract_end_date', { withTimezone: true }),
+    status: text('status').default('Active').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('vendors_org_idx').on(table.organizationId)],
+);
+
+export const campaigns = pgTable(
+  'campaigns',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    type: text('type').notNull(),
+    status: text('status').default('Planning').notNull(),
+    startDate: timestamp('start_date', { withTimezone: true }),
+    endDate: timestamp('end_date', { withTimezone: true }),
+    budget: integer('budget'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('campaigns_org_idx').on(table.organizationId)],
+);
+
+export const grantProposals = pgTable(
+  'grant_proposals',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    title: text('title').notNull(),
+    agency: text('agency').notNull(),
+    amount: integer('amount'),
+    status: text('status').default('Draft').notNull(),
+    deadline: timestamp('deadline', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('grant_proposals_org_idx').on(table.organizationId)],
+);
+
+export const timeSheets = pgTable(
+  'time_sheets',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    date: timestamp('date', { withTimezone: true }).notNull(),
+    hours: integer('hours').notNull(),
+    description: text('description'),
+    status: text('status').default('Submitted').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('time_sheets_user_idx').on(table.userId),
+    index('time_sheets_org_idx').on(table.organizationId),
+  ],
+);
+
+export const complianceDocuments = pgTable(
+  'compliance_documents',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    title: text('title').notNull(),
+    category: text('category').notNull(),
+    status: text('status').default('Draft').notNull(),
+    effectiveDate: timestamp('effective_date', { withTimezone: true }),
+    expirationDate: timestamp('expiration_date', { withTimezone: true }),
+    version: text('version'),
+    parties: jsonb('parties').$type<string[]>().default(sql`'[]'::jsonb`),
+    summary: text('summary'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('compliance_documents_org_idx').on(table.organizationId),
+    index('compliance_documents_category_idx').on(table.category),
+  ],
+);
+
+
 export const vitalLogs = pgTable(
   'vital_logs',
   {

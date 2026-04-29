@@ -32,4 +32,13 @@ export {
   subscriptions,
   aiActionItems,
   clinicalProtocols,
+  services,
+  imagingOrders,
+  socialPosts,
+  facilities,
+  vendors,
+  campaigns,
+  grantProposals,
+  timeSheets,
+  complianceDocuments,
 } from './schema';
