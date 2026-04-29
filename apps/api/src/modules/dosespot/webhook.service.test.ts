@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { DoseSpotWebhookService } from './webhook.service';
-import { dosespotConfig } from '@workspace/dosespot';
+import { dosespotConfig } from '@workspace/dosespot/utils';
 
 describe('DoseSpotWebhookService Helpers', () => {
   it('computeDedupeKey should return deterministic hash of payload', () => {
