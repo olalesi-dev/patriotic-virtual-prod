@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import { auditLogs, organizations } from '@workspace/db';
+import { auditLogs, organizations } from '@workspace/db/schema';
 import { eq, sql } from 'drizzle-orm';
 
 /**

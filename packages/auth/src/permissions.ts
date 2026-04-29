@@ -1,5 +1,5 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 export async function getUserPermissionsAndModules(

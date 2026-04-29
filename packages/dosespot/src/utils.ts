@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { env as globalEnv } from '@workspace/env';
+import { env as globalEnv } from '@workspace/env/index';
 
 export interface DoseSpotConfig {
   clinicId?: string;

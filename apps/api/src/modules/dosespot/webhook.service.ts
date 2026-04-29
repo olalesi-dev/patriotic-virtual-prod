@@ -1,13 +1,12 @@
-import {
-  dosespotRepository,
-  type Db,
-  dosespotWebhookEvents,
-} from '@workspace/db';
-import { env } from '@workspace/env';
+import { dosespotRepository } from '@workspace/db/repositories/dosespot.repository';
+import { dosespotWebhookEvents } from '@workspace/db/schema';
+import type { Db } from '@workspace/db/index';
+import { env } from '@workspace/env/index';
 import { createHash } from 'node:crypto';
-import { getPrescription, dosespotConfig } from '@workspace/dosespot';
+import { getPrescription } from '@workspace/dosespot/api';
+import { dosespotConfig } from '@workspace/dosespot/utils';
 import { eq } from 'drizzle-orm';
-import { NotificationProducers } from '@workspace/notifications';
+import { NotificationProducers } from '@workspace/notifications/producers';
 
 export class DoseSpotWebhookService {
   private readonly repo: ReturnType<typeof dosespotRepository>;

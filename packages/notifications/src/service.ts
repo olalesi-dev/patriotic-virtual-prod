@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import * as schema from '@workspace/db';
-import { notificationRepository, type Db } from '@workspace/db';
-import { NotificationQueue } from '@workspace/queue';
+import * as schema from '@workspace/db/index';
+import { notificationRepository, type Db } from '@workspace/db/index';
+import { NotificationQueue } from '@workspace/queue/notification-queue';
 import { getNotificationTopic } from './registry';
 import { buildNotificationDedupeKey } from './policies/dedupe.policy';
 import { assertChannelAllowedForTopic } from './policies/phi.policy';
@@ -11,7 +11,7 @@ import type {
   NotificationChannel,
   RecipientProfile,
 } from './types';
-import { sendTemplateEmail } from '@workspace/email';
+import { sendTemplateEmail } from '@workspace/email/send-template-email';
 
 export class NotificationService {
   private readonly repo: ReturnType<typeof notificationRepository>;
