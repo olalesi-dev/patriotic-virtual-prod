@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../../auth/macro';
 import { db } from '../../../db';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import { eq, and, or, desc } from 'drizzle-orm';
 
 export const messagesController = new Elysia({ prefix: '/messages' })

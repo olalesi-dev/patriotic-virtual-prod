@@ -1,10 +1,10 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../auth/macro';
 import { db } from '../../db';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import { eq } from 'drizzle-orm';
 import { ForbiddenException, NotFoundException } from '../../utils/errors';
-import { DEFAULT_MEETING_URL } from '@workspace/common';
+import { DEFAULT_MEETING_URL } from '@workspace/common/index';
 
 export const telehealthController = new Elysia({ prefix: '/telehealth' })
   .use(authMacro)

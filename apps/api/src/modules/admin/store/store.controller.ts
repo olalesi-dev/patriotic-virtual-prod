@@ -1,21 +1,54 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../../auth/macro';
 import { db } from '../../../db';
-import * as schema from '@workspace/db';
-import { eq, and, desc } from 'drizzle-orm';
+import * as schema from '@workspace/db/schema';
+import { eq, and, desc, asc, ilike, or, type SQL } from 'drizzle-orm';
 
 export const storeController = new Elysia({ prefix: '/store' })
   .use(authMacro)
   // Products
-  .get('/products', async ({ user }) => {
+  .get('/products', async ({ query, user }) => {
+    const { 
+      search, 
+      limit = '20', 
+      offset = '0',
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = query;
+
+    let whereClause: SQL | undefined = eq(schema.shopProducts.organizationId, user.organizationId!);
+
+    if (search) {
+      whereClause = and(
+        whereClause,
+        or(
+          ilike(schema.shopProducts.name, `%${search}%`),
+          ilike(schema.shopProducts.sku, `%${search}%`),
+          ilike(schema.shopProducts.category, `%${search}%`)
+        )
+      );
+    }
+
+    const orderColumn = (schema.shopProducts as any)[sortBy] || schema.shopProducts.createdAt;
+    const orderDirection = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
+
     return await db
       .select()
       .from(schema.shopProducts)
-      .where(eq(schema.shopProducts.organizationId, user.organizationId!))
-      .orderBy(desc(schema.shopProducts.createdAt));
+      .where(whereClause)
+      .limit(Number(limit))
+      .offset(Number(offset))
+      .orderBy(orderDirection);
   }, {
     isSignIn: true,
     requirePermissions: ['admin:store:read'],
+    query: t.Object({
+      search: t.Optional(t.String()),
+      limit: t.Optional(t.String()),
+      offset: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
+    }),
     detail: { summary: 'List Store Products', tags: ['Admin'] },
   })
   .post('/products', async ({ body, user }) => {
@@ -41,27 +74,91 @@ export const storeController = new Elysia({ prefix: '/store' })
     detail: { summary: 'Create Store Product', tags: ['Admin'] },
   })
   // Orders
-  .get('/orders', async ({ user }) => {
+  .get('/orders', async ({ query, user }) => {
+    const { 
+      search, 
+      limit = '20', 
+      offset = '0',
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = query;
+
+    let whereClause: SQL | undefined = eq(schema.shopOrders.organizationId, user.organizationId!);
+
+    if (search) {
+      whereClause = and(
+        whereClause,
+        or(
+          ilike(schema.shopOrders.orderNumber, `%${search}%`),
+          ilike(schema.shopOrders.fulfillmentStatus, `%${search}%`)
+        )
+      );
+    }
+
+    const orderColumn = (schema.shopOrders as any)[sortBy] || schema.shopOrders.createdAt;
+    const orderDirection = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
+
     return await db
       .select()
       .from(schema.shopOrders)
-      .where(eq(schema.shopOrders.organizationId, user.organizationId!))
-      .orderBy(desc(schema.shopOrders.createdAt));
+      .where(whereClause)
+      .limit(Number(limit))
+      .offset(Number(offset))
+      .orderBy(orderDirection);
   }, {
     isSignIn: true,
     requirePermissions: ['admin:store:read'],
+    query: t.Object({
+      search: t.Optional(t.String()),
+      limit: t.Optional(t.String()),
+      offset: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
+    }),
     detail: { summary: 'List Store Orders', tags: ['Admin'] },
   })
   // Partners
-  .get('/partners', async ({ user }) => {
+  .get('/partners', async ({ query, user }) => {
+    const { 
+      search, 
+      limit = '20', 
+      offset = '0',
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = query;
+
+    let whereClause: SQL | undefined = eq(schema.shopPartners.organizationId, user.organizationId!);
+
+    if (search) {
+      whereClause = and(
+        whereClause,
+        or(
+          ilike(schema.shopPartners.name, `%${search}%`),
+          ilike(schema.shopPartners.category, `%${search}%`)
+        )
+      );
+    }
+
+    const orderColumn = (schema.shopPartners as any)[sortBy] || schema.shopPartners.createdAt;
+    const orderDirection = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
+
     return await db
       .select()
       .from(schema.shopPartners)
-      .where(eq(schema.shopPartners.organizationId, user.organizationId!))
-      .orderBy(desc(schema.shopPartners.createdAt));
+      .where(whereClause)
+      .limit(Number(limit))
+      .offset(Number(offset))
+      .orderBy(orderDirection);
   }, {
     isSignIn: true,
     requirePermissions: ['admin:store:read'],
+    query: t.Object({
+      search: t.Optional(t.String()),
+      limit: t.Optional(t.String()),
+      offset: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
+    }),
     detail: { summary: 'List Store Partners', tags: ['Admin'] },
   })
   .post('/partners', async ({ body, user }) => {

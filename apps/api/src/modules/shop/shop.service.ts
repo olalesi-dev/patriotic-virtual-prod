@@ -1,9 +1,9 @@
 import { db } from '../../db';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { stripe, isStripeConfigured } from '../payments/stripe';
-import { env } from '@workspace/env';
-import { DEFAULT_APP_URL } from '@workspace/common';
+import { env } from '@workspace/env/index';
+import { DEFAULT_APP_URL } from '@workspace/common/index';
 
 export class ShopService {
   async createCheckoutSession(args: {
@@ -137,5 +137,30 @@ export class ShopService {
       .where(eq(schema.shopOrders.id, orderId));
 
     return { success: true };
+  }
+
+  async completeShopOrderPayment(args: {
+    orderId: string;
+    patientId: string;
+    stripeSessionId: string;
+  }) {
+    const [order] = await db
+      .update(schema.shopOrders)
+      .set({
+        paymentStatus: 'paid',
+        stripeSessionId: args.stripeSessionId,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.shopOrders.id, args.orderId),
+          eq(schema.shopOrders.patientId, args.patientId),
+        ),
+      )
+      .returning();
+
+    if (!order) throw new Error('Order not found');
+
+    return { order };
   }
 }

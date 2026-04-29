@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
 export class ProtocolsService {

@@ -1,5 +1,5 @@
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 
 export class GoogleAnalyticsService {
   private client: BetaAnalyticsDataClient | null = null;

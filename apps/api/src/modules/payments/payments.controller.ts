@@ -1,22 +1,24 @@
 import { Elysia, t } from 'elysia';
 import { stripe, isStripeConfigured } from './stripe';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 import {
   NotificationProducers,
   NotificationService,
-} from '@workspace/notifications';
-import { NotificationQueue } from '@workspace/queue';
+} from '@workspace/notifications/index';
+import { NotificationQueue } from '@workspace/queue/index';
 import { db } from '../../db';
 import {
   completeConsultationPayment,
   createStripeCheckoutSession,
 } from './consultation-payments.service';
+import { ShopService } from '../shop/shop.service';
 import { authMacro } from '../auth/macro';
 import { ForbiddenException, NotFoundException } from '../../utils/errors';
 
 const queue = new NotificationQueue();
 const notificationService = new NotificationService(db, queue);
 const producers = new NotificationProducers(db, notificationService);
+const shopService = new ShopService();
 
 export const paymentsController = new Elysia({ prefix: '/payments' })
   .use(authMacro)
@@ -45,32 +47,42 @@ export const paymentsController = new Elysia({ prefix: '/payments' })
         );
 
         if (event.type === 'checkout.session.completed') {
-          const session = event.data.object;
-          const consultationId =
-            typeof session.metadata?.consultationId === 'string'
-              ? session.metadata.consultationId.trim()
-              : '';
-          const patientId =
-            typeof session.metadata?.patientId === 'string'
-              ? session.metadata.patientId.trim()
-              : '';
+          const session = event.data.object as any;
+          const patientId = session.metadata?.patientId;
 
-          if (consultationId && patientId) {
-            const { consultation, patient } = await completeConsultationPayment({
-              consultationId,
-              patientId,
-              stripeSessionId: session.id,
-            });
+          // Handle Consultation
+          if (session.metadata?.consultationId) {
+            const consultationId = session.metadata.consultationId;
 
-            await producers.notifyPriorityQueuePaymentSuccess({
-              appointmentId: consultation.id,
-              patientId: patientId,
-              patientName: patient
-                ? `${patient.firstName} ${patient.lastName}`
-                : 'Patient',
-              serviceName: consultation.serviceKey,
-              requestedAt: new Date(),
-            });
+            if (consultationId && patientId) {
+              const { consultation, patient } = await completeConsultationPayment({
+                consultationId,
+                patientId,
+                stripeSessionId: session.id,
+              });
+
+              await producers.notifyPriorityQueuePaymentSuccess({
+                appointmentId: consultation.id,
+                patientId: patientId,
+                patientName: patient
+                  ? `${patient.firstName} ${patient.lastName}`
+                  : 'Patient',
+                serviceName: consultation.serviceKey,
+                requestedAt: new Date(),
+              });
+            }
+          }
+          // Handle Shop Order
+          else if (session.metadata?.orderId) {
+            const orderId = session.metadata.orderId;
+
+            if (orderId && patientId) {
+              await shopService.completeShopOrderPayment({
+                orderId,
+                patientId,
+                stripeSessionId: session.id,
+              });
+            }
           }
         } else if (event.type === 'charge.failed') {
           const charge = event.data.object;

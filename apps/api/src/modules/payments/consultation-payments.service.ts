@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import { eq } from 'drizzle-orm';
 import {
   CONSULTATION_CATALOG,
@@ -7,9 +7,9 @@ import {
   DEFAULT_APP_URL,
   buildCheckoutRedirectUrl,
   normalizeAbsoluteUrl,
-} from '@workspace/common';
+} from '@workspace/common/index';
 import { stripe, isStripeConfigured } from './stripe';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 
 function buildReason(serviceKey: string | undefined, fallbackReason: unknown) {
   if (serviceKey && CONSULTATION_CATALOG[serviceKey]) {

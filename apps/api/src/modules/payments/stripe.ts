@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { env } from '@workspace/env';
+import { env } from '@workspace/env/index';
 
 export const isStripeConfigured = !!env.STRIPE_SECRET_KEY;
 
