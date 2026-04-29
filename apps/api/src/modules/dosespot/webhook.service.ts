@@ -5,7 +5,7 @@ import {
 } from '@workspace/db';
 import { env } from '@workspace/env';
 import { createHash } from 'node:crypto';
-import { getPrescription } from '@workspace/dosespot';
+import { getPrescription, dosespotConfig } from '@workspace/dosespot';
 import { eq } from 'drizzle-orm';
 import { NotificationProducers } from '@workspace/notifications';
 
@@ -151,7 +151,7 @@ export class DoseSpotWebhookService {
   }
 
   verifySignature(authHeader?: string): boolean {
-    const secret = env.DOSESPOT_WEBHOOK_SECRET;
+    const secret = dosespotConfig.webhookSecret;
     if (!secret) return true;
     if (!authHeader) return false;
     return authHeader === `Secret ${secret}`;

@@ -27,12 +27,67 @@ export const messagesController = new Elysia({ prefix: '/messages' })
         )
         .orderBy(desc(schema.messages.createdAt));
 
-      return { items };
+      return items;
     },
     {
       isSignIn: true,
       requirePermissions: ['communications:read'],
       detail: { summary: 'List Inbox Messages', tags: ['Clinical'] },
+    }
+  )
+  .get(
+    '/:id',
+    async ({ params: { id }, user }) => {
+      const [message] = await db
+        .select()
+        .from(schema.messages)
+        .where(
+          and(
+            eq(schema.messages.id, id),
+            or(
+              eq(schema.messages.recipientId, user.id),
+              eq(schema.messages.senderId, user.id)
+            )
+          )
+        )
+        .limit(1);
+      
+      if (!message) throw new Error('Message not found');
+      return message;
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['communications:read'],
+      params: t.Object({ id: t.String() }),
+      detail: { summary: 'Get Message Details', tags: ['Clinical'] },
+    }
+  )
+  .patch(
+    '/:id/read',
+    async ({ params: { id }, user }) => {
+      const [message] = await db
+        .update(schema.messages)
+        .set({
+          isRead: true,
+          readAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.messages.id, id),
+            eq(schema.messages.recipientId, user.id)
+          )
+        )
+        .returning();
+      
+      if (!message) throw new Error('Message not found or unauthorized');
+      return message;
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['communications:write'],
+      params: t.Object({ id: t.String() }),
+      detail: { summary: 'Mark Message as Read', tags: ['Clinical'] },
     }
   )
   .post(

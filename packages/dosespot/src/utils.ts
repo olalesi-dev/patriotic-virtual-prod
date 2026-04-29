@@ -7,6 +7,7 @@ export interface DoseSpotConfig {
   userId?: string;
   baseUrl?: string;
   subscriptionKey?: string;
+  webhookSecret?: string;
 }
 
 export const dosespotConfig: DoseSpotConfig = {
@@ -40,12 +41,19 @@ export const dosespotConfig: DoseSpotConfig = {
   set subscriptionKey(v) {
     this._subscriptionKey = v;
   },
+  get webhookSecret() {
+    return this._webhookSecret ?? globalEnv.DOSESPOT_WEBHOOK_SECRET;
+  },
+  set webhookSecret(v) {
+    this._webhookSecret = v;
+  },
 } as DoseSpotConfig & {
   _clinicId?: string;
   _clinicKey?: string;
   _userId?: string;
   _baseUrl?: string;
   _subscriptionKey?: string;
+  _webhookSecret?: string;
 };
 
 function generatePhrase(): string {

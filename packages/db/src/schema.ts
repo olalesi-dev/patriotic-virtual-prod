@@ -155,6 +155,7 @@ export const patients = pgTable(
       .references(() => organizations.id),
     isIdentityVerified: boolean('is_identity_verified').default(false).notNull(),
     latestVerificationId: text('latest_verification_id'),
+    acquisitionSource: text('acquisition_source'),
     doseSpotPatientId: text('dosespot_patient_id'),
     doseSpotSyncStatus: text('dosespot_sync_status').default('pending').notNull(),
     doseSpotSyncError: text('dosespot_sync_error'),
@@ -410,6 +411,346 @@ export const messages = pgTable(
     index('messages_sender_id_idx').on(table.senderId),
     index('messages_recipient_id_idx').on(table.recipientId),
     index('messages_thread_id_idx').on(table.threadId),
+  ],
+);
+
+export const systemSettings = pgTable('system_settings', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  key: text('key').notNull(),
+  value: jsonb('value').notNull(),
+  description: text('description'),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  uniqueIndex('system_settings_org_key_uidx').on(table.organizationId, table.key),
+]);
+
+export const shopProducts = pgTable(
+  'shop_products',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    slug: text('slug').notNull().unique(),
+    sku: text('sku').notNull().unique(),
+    shortDescription: text('short_description'),
+    longDescription: text('long_description'),
+    price: integer('price').notNull(),
+    compareAtPrice: integer('compare_at_price'),
+    inventoryLevel: integer('inventory_level').default(0).notNull(),
+    lowStockThreshold: integer('low_stock_threshold').default(5).notNull(),
+    images: jsonb('images').$type<string[]>().default(sql`'[]'::jsonb`),
+    status: text('status').default('Draft').notNull(),
+    category: text('category').notNull(),
+    stripeLink: text('stripe_link'),
+    iframeUrl: text('iframe_url'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('shop_products_status_idx').on(table.status),
+    index('shop_products_category_idx').on(table.category),
+    index('shop_products_organization_id_idx').on(table.organizationId),
+  ],
+);
+
+export const shopOrders = pgTable(
+  'shop_orders',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    orderNumber: text('order_number').notNull().unique(),
+    patientId: text('patient_id')
+      .notNull()
+      .references(() => patients.id),
+    total: integer('total').notNull(),
+    paymentStatus: text('payment_status').notNull(),
+    fulfillmentStatus: text('fulfillment_status').default('Pending').notNull(),
+    stripeSessionId: text('stripe_session_id'),
+    shippingAddress: jsonb('shipping_address'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('shop_orders_patient_id_idx').on(table.patientId),
+    index('shop_orders_status_idx').on(table.fulfillmentStatus),
+    index('shop_orders_organization_id_idx').on(table.organizationId),
+  ],
+);
+
+export const shopOrderItems = pgTable('shop_order_items', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  orderId: text('order_id')
+    .notNull()
+    .references(() => shopOrders.id, { onDelete: 'cascade' }),
+  productId: text('product_id').references(() => shopProducts.id),
+  productName: text('product_name').notNull(),
+  quantity: integer('quantity').notNull(),
+  unitPrice: integer('unit_price').notNull(),
+});
+
+export const shopPartners = pgTable('shop_partners', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  logo: text('logo'),
+  shortDescription: text('short_description'),
+  longDescription: text('long_description'),
+  affiliateUrl: text('affiliate_url'),
+  status: text('status').default('Active').notNull(),
+  isFeatured: boolean('is_featured').default(false).notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index('shop_partners_organization_id_idx').on(table.organizationId),
+]);
+
+export const shopDiscounts = pgTable('shop_discounts', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  code: text('code').notNull().unique(),
+  type: text('type').notNull(),
+  value: integer('value').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const broadcastLogs = pgTable('broadcast_logs', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  priority: text('priority').notNull(),
+  targetFilters: jsonb('target_filters').notNull(),
+  recipientCount: integer('recipient_count').notNull(),
+  senderId: text('sender_id')
+    .notNull()
+    .references(() => users.id),
+  timestamp: timestamp('timestamp', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index('broadcast_logs_organization_id_idx').on(table.organizationId),
+]);
+
+export const moderationLogs = pgTable('moderation_logs', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: text('document_id').notNull(),
+  collectionName: text('collection_name').notNull(),
+  content: text('content').notNull(),
+  authorName: text('author_name').notNull(),
+  authorId: text('author_id').notNull(),
+  aiRiskLevel: text('ai_risk_level').notNull(),
+  category: text('category'),
+  reason: text('reason'),
+  actionTaken: text('action_taken'),
+  resolved: boolean('resolved').default(false).notNull(),
+  timestamp: timestamp('timestamp', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index('moderation_logs_organization_id_idx').on(table.organizationId),
+]);
+
+export const userSettings = pgTable('user_settings', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  key: text('key').notNull(),
+  value: jsonb('value').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  uniqueIndex('user_settings_user_key_uidx').on(table.userId, table.key),
+]);
+
+export const aiActionItems = pgTable(
+  'ai_action_items',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    patientId: text('patient_id')
+      .notNull()
+      .references(() => patients.id),
+    type: text('type').notNull(), // e.g. Lab Insight, Protocol Match
+    suggestion: text('suggestion').notNull(),
+    status: text('status').default('Pending Review').notNull(),
+    group: text('group'), // e.g. Titration, Chronic Care
+    priority: text('priority').default('medium').notNull(), // low, medium, high
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('ai_action_items_org_idx').on(table.organizationId),
+    index('ai_action_items_status_idx').on(table.status),
+  ],
+);
+
+export const clinicalProtocols = pgTable(
+  'clinical_protocols',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    title: text('title').notNull(),
+    type: text('type').notNull(), // Clinical, Legal, Admin, Orders
+    content: text('content'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('clinical_protocols_org_idx').on(table.organizationId)],
+);
+
+export const vitalLogs = pgTable(
+  'vital_logs',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    patientId: text('patient_id')
+      .notNull()
+      .references(() => patients.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    value: text('value').notNull(),
+    unit: text('unit'),
+    recordedAt: timestamp('recorded_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('vital_logs_patient_type_idx').on(table.patientId, table.type),
+  ],
+);
+
+export const labOrders = pgTable(
+  'lab_orders',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    patientId: text('patient_id')
+      .notNull()
+      .references(() => patients.id, { onDelete: 'cascade' }),
+    providerId: text('provider_id')
+      .notNull()
+      .references(() => providers.id),
+    testName: text('test_name').notNull(),
+    status: text('status').default('Ordered').notNull(),
+    orderedAt: timestamp('ordered_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('lab_orders_patient_id_idx').on(table.patientId),
+    index('lab_orders_status_idx').on(table.status),
+  ],
+);
+
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    patientId: text('patient_id')
+      .notNull()
+      .references(() => patients.id, { onDelete: 'cascade' }),
+    planId: text('plan_id').notNull(),
+    status: text('status').notNull(),
+    currentPeriodStart: timestamp('current_period_start', {
+      withTimezone: true,
+    }),
+    currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
+    stripeSubscriptionId: text('stripe_subscription_id').unique(),
+    mrr: integer('mrr').default(0).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('subscriptions_patient_id_idx').on(table.patientId),
+    index('subscriptions_status_idx').on(table.status),
   ],
 );
 

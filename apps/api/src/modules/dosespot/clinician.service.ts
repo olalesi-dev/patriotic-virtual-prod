@@ -153,6 +153,100 @@ export class DoseSpotClinicianService {
     return { readiness: updated, questions: updated.idp.questions };
   }
 
+  async fetchRegistrationStatus(clinicianUid: string) {
+    const provider = await this.requireClinicianId(clinicianUid);
+    const response = await doseSpotApiFetch<any>(
+      `api/clinicians/${provider.clinicianId}/registrationStatus`,
+      {
+        method: 'GET',
+        onBehalfOfClinicianId: provider.clinicianId,
+      },
+    );
+
+    const registrationStatus =
+      response.RegistrationStatus || response.registrationStatus || null;
+
+    // Update stored state
+    const current = await this.getReadiness(clinicianUid);
+    const updated = {
+      ...current,
+      registrationStatus,
+      lastOperation: 'registration_status.fetch',
+    };
+    await this.persistReadiness(clinicianUid, updated as any);
+
+    return {
+      clinicianUid,
+      clinicianId: provider.clinicianId,
+      registrationStatus,
+      synced: true,
+      message: registrationStatus
+        ? `DoseSpot registration status: ${registrationStatus}.`
+        : 'DoseSpot did not return a clinician registration status.',
+    };
+  }
+
+  async startIdp(clinicianUid: string, body: any) {
+    const provider = await this.requireClinicianId(clinicianUid);
+    const response = await doseSpotApiFetch<any>('api/clinicians/idp', {
+      method: 'POST',
+      body: { ...body, ClinicianId: provider.clinicianId },
+      onBehalfOfClinicianId: provider.clinicianId,
+    });
+
+    const current = await this.getReadiness(clinicianUid);
+    const updated = this.updateReadinessFromIdpResponse(
+      current,
+      response,
+      'idp.start',
+    );
+    await this.persistReadiness(clinicianUid, updated);
+
+    return { readiness: updated, questions: updated.idp.questions };
+  }
+
+  async submitIdpAnswers(clinicianUid: string, body: any) {
+    const provider = await this.requireClinicianId(clinicianUid);
+    const response = await doseSpotApiFetch<any>('api/clinicians/idpAnswers', {
+      method: 'POST',
+      body: { ...body, ClinicianId: provider.clinicianId },
+      onBehalfOfClinicianId: provider.clinicianId,
+    });
+
+    const current = await this.getReadiness(clinicianUid);
+    const updated = this.updateReadinessFromIdpResponse(
+      current,
+      response,
+      'idp.answers',
+    );
+    await this.persistReadiness(clinicianUid, updated);
+
+    return {
+      readiness: updated,
+      questions: updated.idp.questions,
+      otpRequired: updated.idp.otpRequired,
+    };
+  }
+
+  async submitIdpOtp(clinicianUid: string, body: any) {
+    const provider = await this.requireClinicianId(clinicianUid);
+    const response = await doseSpotApiFetch<any>('api/clinicians/idpOtp', {
+      method: 'POST',
+      body: { ...body, ClinicianId: provider.clinicianId },
+      onBehalfOfClinicianId: provider.clinicianId,
+    });
+
+    const current = await this.getReadiness(clinicianUid);
+    const updated = this.updateReadinessFromIdpResponse(
+      current,
+      response,
+      'idp.otp',
+    );
+    await this.persistReadiness(clinicianUid, updated);
+
+    return { readiness: updated, otpRequired: updated.idp.otpRequired };
+  }
+
   private async requireProvider(userId: string) {
     const [provider] = await this.db
       .select()

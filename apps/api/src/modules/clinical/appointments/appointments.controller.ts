@@ -34,7 +34,7 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
         .where(whereClause)
         .orderBy(schema.appointments.scheduledTime);
 
-      return { items };
+      return items;
     },
     {
       isSignIn: true,
@@ -65,12 +65,72 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
         )
         .orderBy(desc(schema.consultations.createdAt));
 
-      return { items };
+      return items;
     },
     {
       isSignIn: true,
       requirePermissions: ['appointments:read'],
       detail: { summary: 'List Patient Waitlist', tags: ['Clinical'] },
+    }
+  )
+  .get(
+    '/:id',
+    async ({ params: { id }, user }) => {
+      const [appointment] = await db
+        .select({
+          appointment: schema.appointments,
+          patient: schema.patients,
+          provider: schema.providers,
+        })
+        .from(schema.appointments)
+        .innerJoin(schema.patients, eq(schema.appointments.patientId, schema.patients.id))
+        .leftJoin(schema.providers, eq(schema.appointments.providerId, schema.providers.id))
+        .where(
+          and(
+            eq(schema.appointments.id, id),
+            eq(schema.patients.organizationId, user.organizationId!)
+          )
+        )
+        .limit(1);
+
+      if (!appointment) throw new Error('Appointment not found');
+      return appointment;
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['appointments:read'],
+      params: t.Object({ id: t.String() }),
+      detail: { summary: 'Get Appointment Details', tags: ['Clinical'] },
+    }
+  )
+  .patch(
+    '/:id',
+    async ({ params: { id }, body }) => {
+      const [appointment] = await db
+        .update(schema.appointments)
+        .set({
+          ...body,
+          scheduledTime: body.scheduledTime ? new Date(body.scheduledTime) : undefined,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.appointments.id, id))
+        .returning();
+      
+      if (!appointment) throw new Error('Appointment not found');
+      return appointment;
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['appointments:write'],
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        status: t.Optional(t.String()),
+        reason: t.Optional(t.String()),
+        scheduledTime: t.Optional(t.String()),
+        providerId: t.Optional(t.String()),
+        meetingUrl: t.Optional(t.String()),
+      }),
+      detail: { summary: 'Update Appointment', tags: ['Clinical'] },
     }
   )
   .get(
@@ -80,8 +140,8 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
         .select()
         .from(schema.soapNotes)
         .where(eq(schema.soapNotes.appointmentId, id));
-      
-      return { notes };
+
+      return notes;
     },
     {
       isSignIn: true,
