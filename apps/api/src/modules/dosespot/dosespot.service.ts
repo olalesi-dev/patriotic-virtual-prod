@@ -1,7 +1,7 @@
 import { db } from '../../db';
-import * as schema from '@workspace/db';
+import * as schema from '@workspace/db/schema';
 import { eq } from 'drizzle-orm';
-import { syncDoseSpotPatient, type SyncPatientInput } from '@workspace/dosespot';
+import { syncDoseSpotPatient, type SyncPatientInput } from '@workspace/dosespot/patient-sync';
 
 export async function ensurePatientSynced(patientId: string, onBehalfOfClinicianId?: number) {
   const [patient] = await db

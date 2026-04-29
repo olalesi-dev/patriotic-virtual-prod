@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
-import * as schema from '@workspace/db';
-import type { Db } from '@workspace/db';
+import * as schema from '@workspace/db/schema';
+import type { Db } from '@workspace/db/index';
 import {
   doseSpotApiFetch,
   ensureDoseSpotResultOk,
-} from '@workspace/dosespot';
+} from '@workspace/dosespot/api';
 
 export class DoseSpotWorkflowService {
   constructor(private readonly db: Db) {}
