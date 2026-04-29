@@ -1,0 +1,101 @@
+﻿
+> patriotic-emr-frontend@1.0.0 build
+> next build
+
+node.exe :  ΓÜá Invalid 
+next.config.js options 
+detected: 
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: ( ΓÜá In  
+  valid ne...ions detected   
+ : :String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+ ΓÜá     Unrecognized key(s) 
+in object: 
+'serverExternalPackages' at 
+"experimental"
+ ΓÜá See more info here: http
+s://nextjs.org/docs/messages/
+invalid-next-config
+   Γû▓ Next.js 14.1.0
+   - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/(patient)/patient/profile/page.tsx
+96:8  Warning: React Hook useEffect has missing dependencies: 'userProfile.displayName' and 'userProfile.photoURL'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/admin/users/[uid]/page.tsx
+31:8  Warning: React Hook useEffect has a missing dependency: 'fetchUser'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/dashboard/profile/page.tsx
+95:8  Warning: React Hook useEffect has missing dependencies: 'userProfile.displayName' and 'userProfile.photoURL'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(provider)/services/page.tsx
+89:15  Warning: Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./src/components/auth/MfaSetup.tsx
+39:8  Warning: React Hook useEffect has a missing dependency: 'recaptchaVerifier'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/layout/SecurityWrapper.tsx
+67:8  Warning: React Hook useEffect has a missing dependency: 'resetTimers'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+Failed to compile.
+
+./src/app/(provider)/dashboar
+d/profile/page.tsx:46:29
+Type error: Cannot find name 
+'useState'.
+
+[0m [90m 44 |[39m 
+[36mexport[39m 
+[36mdefault[39m 
+[36mfunction[39m [33mProvi
+derProfilePage[39m() {[0m
+[0m [90m 45 |[39m     
+[36mconst[39m userProfile 
+[33m=[39m useUserProfile()
+[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m
+ 46 |[39m     
+[36mconst[39m 
+[data[33m,[39m setData] 
+[33m=[39m useState[33m<[3
+9m[33mProfileData[39m[33m>
+[39m([33mEMPTY[39m)[33m;
+[39m[0m
+[0m [90m    |[39m         
+                    
+[31m[1m^[22m[39m[0m
+[0m [90m 47 |[39m     
+[36mconst[39m 
+[editing[33m,[39m 
+setEditing] [33m=[39m useSt
+ate([36mfalse[39m)[33m;[3
+9m[0m
+[0m [90m 48 |[39m     
+[36mconst[39m 
+[saving[33m,[39m 
+setSaving] [33m=[39m useSta
+te([36mfalse[39m)[33m;[39
+m[0m
+[0m [90m 49 |[39m     
+[36mconst[39m 
+[uploading[33m,[39m 
+setUploading] [33m=[39m use
+State([36mfalse[39m)[33m;
+[39m[0m

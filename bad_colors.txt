@@ -1,0 +1,371 @@
+6317: <div style="font-family:sans-serif;max-width:800px;margin:0 auto;padding:2rem;background:#fff;color:#1f2937;position:relative;z-index:999999;">
+6406: <div class="hero-badge" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); color: #00d9a3; margin-left: 8px;">
+6411: <p style="font-size:0.95rem;color:rgba(255,255,255,0.7);max-width:540px;margin-bottom:24px;">Powered by RadiantLogiq, an AI-driven clinical platform for decision support and workflow optimization. RadiantLogiq is a member of the NVIDIA Inception program.</p>
+6415: <p style="font-size:0.875rem;color:#6b7280;margin-top:0.75rem;color:white;">
+6419: <div style="display:flex;align-items:center;gap:0.5rem;color:#e2e8f0;font-weight:600;"><span style="font-size:1.2rem;">🔒</span> HIPAA Compliant</div>
+6420: <div style="display:flex;align-items:center;gap:0.5rem;color:#e2e8f0;font-weight:600;"><span style="font-size:1.2rem;">🩺</span> Licensed Providers</div>
+6421: <div style="display:flex;align-items:center;gap:0.5rem;color:#e2e8f0;font-weight:600;"><span style="font-size:1.2rem;">🛡️</span> Secure Platform</div>
+6423: <p style="font-size:0.875rem;color:rgba(255,255,255,0.6);margin-top:16px;">Our platform integrates advanced clinical software and AI to support efficient, high-quality care delivery.</p>
+6427: style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);"
+6430: style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);"
+6456: <span style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">Shield</span>
+6457: <span style="font-size:11px;color:#f0fdf4;font-weight:600;">HIPAA Compliant</span>
+6462: style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);">
+6464: style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);">
+6473: style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">MD</span>
+6474: <span style="font-size:11px;color:#f0fdf4;font-weight:600;">FL-Licensed</span>
+6479: style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);">
+6481: style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);">
+6491: style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">Rx</span>
+6492: <span style="font-size:11px;color:#f0fdf4;font-weight:600;">Free Shipping</span>
+6498: style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);"
+6501: style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);"
+6527: <span style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">SOP</span>
+6528: <span style="font-size:11px;color:#f0fdf4;font-weight:600;">Protocol-Based</span>
+6533: style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(3,26,14,0.82);border:1px solid rgba(74,222,128,0.75);box-shadow:0 6px 16px rgba(22,163,74,0.24),inset 0 0 0 1px rgba(240,253,244,0.08);">
+6535: style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#052e16;background:linear-gradient(180deg,#4ade80,#22c55e);">
+6545: style="font-size:9px;color:#86efac;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">Location</span>
+6546: <span style="font-size:11px;color:#f0fdf4;font-weight:600;">Serving in <span
+6592: <div class="sb-icon" style="background: var(--emerald)">✓</div>
+6596: <div class="sb-icon" style="background: var(--blue)">✓</div>
+6600: <div class="sb-icon" style="background: var(--amber)">✓</div>
+6604: <div class="sb-icon" style="background: var(--violet)">✓</div>
+6648: <div class="eye-text" style="color: white" data-i18n="proto-eyebrow">Our Approach</div>
+6722: <div class="eye-line" style="background:var(--blue)"></div>
+6723: <span style="color:var(--blue)">Technology & Platform</span>
+6725: <h2 class="sec-title" style="color:var(--navy)">Powered by Innovation.</h2>
+6726: <div style="margin-top:2.5rem;background:#f8fafc;padding:2.5rem;border-radius:1rem;border:1px solid #e2e8f0;">
+6727: <p style="font-size:1.1rem;line-height:1.7;color:var(--navy);font-weight:500;margin-bottom:1.5rem;">
+6730: <div style="display:inline-flex;align-items:center;gap:0.75rem;background:white;padding:1rem 1.5rem;border-radius:0.75rem;border:1px solid #cbd5e1;box-shadow:var(--sh-sm);">
+6731: <div style="width:2rem;height:2rem;background:#ef4444;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:14px;">Rx</div>
+6732: <span style="font-size:0.95rem;color:var(--navy);font-weight:500;">We utilize a secure, integrated e-prescribing platform (DoseSpot) to support safe, compliant, and efficient medication management.</span>
+6735: <p style="font-size:0.85rem;color:var(--g500);margin-top:1.5rem;text-align:center;">
+6751: <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">1</div>
+6753: <strong style="color:#f8fafc;font-size:1.15rem;">Intake</strong><br>
+6754: <span style="font-size:0.95rem;color:#94a3b8;">Complete a brief health questionnaire about your goals and medical history.</span>
+6758: <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">2</div>
+6760: <strong style="color:#f8fafc;font-size:1.15rem;">Provider Evaluation</strong><br>
+6761: <span style="font-size:0.95rem;color:#94a3b8;">A licensed U.S. provider reviews your case and conducts a clinical evaluation.</span>
+6765: <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">3</div>
+6767: <strong style="color:#f8fafc;font-size:1.15rem;">Eligibility</strong><br>
+6768: <span style="font-size:0.95rem;color:#94a3b8;">Your provider determines whether treatment is clinically appropriate for you.</span>
+6772: <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">4</div>
+6774: <strong style="color:#f8fafc;font-size:1.15rem;">Prescription</strong><br>
+6775: <span style="font-size:0.95rem;color:#94a3b8;">If eligible, your provider issues a prescription through our certified pharmacy partner.</span>
+6779: <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">5</div>
+6781: <strong style="color:#f8fafc;font-size:1.15rem;">Follow-Up</strong><br>
+6782: <span style="font-size:0.95rem;color:#94a3b8;">Ongoing check-ins with your provider to monitor progress and adjust your plan.</span>
+6835: <div style="margin-top: 12px; font-size: 12px; font-weight: 600; color: #b45309; background: #fef3c7; padding: 8px 12px; border-radius: 6px;">
+6850: <div style="margin-top: 12px; font-size: 12px; font-weight: 600; color: #b45309; background: #fef3c7; padding: 8px 12px; border-radius: 6px;">
+6865: <div style="margin-top: 12px; font-size: 12px; font-weight: 600; color: #b45309; background: #fef3c7; padding: 8px 12px; border-radius: 6px;">
+6874: <div class="rad-badge rb-n" style="background: var(--rose-soft); color: var(--rose)">
+6896: <div style="margin-top: 12px; font-size: 12px; font-weight: 600; color: #b45309; background: #fef3c7; padding: 8px 12px; border-radius: 6px;">
+6909: <div class="eye-line" style="background: var(--navy)"></div>
+6912: <h2 class="sec-title" style="color: var(--navy)">
+6924: <div class="rad-badge rb-b" style="background: var(--blue); color: white">
+6938: <div class="rad-badge rb-n" style="background: var(--indigo); color: white">
+6952: <div class="rad-badge rb-a" style="background: var(--navy); color: white">
+6968: <section class="providers" id="providers" style="background: white; padding: 80px 0;">
+6974: <h2 class="sec-title" style="color: var(--navy);">Transparent & Dedicated Care.</h2>
+6978: <div class="provider-card" style="padding: 32px; border: 1px solid var(--g200); border-radius: 12px; background: #fff;">
+6980: <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--base-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">OO</div>
+6982: <h3 style="margin: 0; font-size: 18px; color: var(--navy);">Dr. Olalesi Osunsade, MD</h3>
+6983: <div style="font-size: 14px; color: var(--g500);">Medical Director</div>
+6986: <p style="font-size: 14px; color: var(--g600); line-height: 1.6;">Board-certified physician providing medical oversight and direct patient care at Patriotic Virtual Telehealth.</p>
+6987: <div style="margin-top: 20px; padding: 8px 12px; background: rgba(16, 185, 129, 0.1); color: rgb(4, 120, 87); font-size: 12px; font-weight: 600; border-radius: 6px; display: inline-block;">
+6991: <div class="provider-card" style="padding: 32px; border: 1px solid var(--g200); border-radius: 12px; background: #fff;">
+6993: <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--base-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">AB</div>
+6995: <h3 style="margin: 0; font-size: 18px; color: var(--navy);">Alvaro Berrios, MS, FNP-BC</h3>
+6996: <div style="font-size: 14px; color: var(--g500);">Nurse Practitioner</div>
+6999: <p style="font-size: 14px; color: var(--g600); line-height: 1.6;">Board-certified family nurse practitioner dedicated to comprehensive primary care, evaluation, and medical weight management.</p>
+7000: <div style="margin-top: 20px; padding: 8px 12px; background: rgba(16, 185, 129, 0.1); color: rgb(4, 120, 87); font-size: 12px; font-weight: 600; border-radius: 6px; display: inline-block;">
+7106: <span style="color: #9ca3af; font-size: 14px; margin-bottom: 12px; display: block;">📞 (202) 215-0636<br>📍 176 NW 25th St, Miami, FL 33127</span>
+7117: <p style="font-size:0.75rem;color:#9ca3af;text-align:center;max-width:48rem;margin:1rem auto 0;">
+7123: <p style="font-size:0.85rem;color:#9ca3af;font-weight:600;margin:0;">Powered by RadiantLogiq</p>
+7124: <span style="color:#4b5563;">|</span>
+7125: <p style="font-size:0.85rem;color:#9ca3af;margin:0;">Member, NVIDIA Inception Program</p>
+7128: <p style="font-size:0.75rem;color:#6b7280;margin:0;max-width:600px;text-align:center;">© 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries.</p>
+7143: <button class="btn btn-outline" onclick="openPatientMessage()" style="background: white">
+7148: " style="background: white">
+7316: <div class="cli-ic" style="background: var(--blue-pale)">
+7325: <div class="cli-ic" style="background: var(--emerald-soft)">
+7334: <div class="cli-ic" style="background: var(--indigo-pale); background: #e8edff">
+7343: <div class="cli-ic" style="background: var(--amber-soft)">
+7376: <div style="padding: 40px; text-align: center; color: var(--g400)">
+7411: <div style="flex: 1; height: 1px; background: var(--g200)"></div>
+7412: <span style="font-size: 12px; color: var(--g400); font-weight: 500">OR</span>
+7413: <div style="flex: 1; height: 1px; background: var(--g200)"></div>
+7474: <option value="IN" disabled style="color: #9ca3af">Indiana (Soon)</option>
+7506: <div style="flex: 1; height: 1px; background: var(--g200)"></div>
+7507: <span style="font-size: 12px; color: var(--g400); font-weight: 500">OR</span>
+7508: <div style="flex: 1; height: 1px; background: var(--g200)"></div>
+7638: <h3 style="color: white; margin: 0">Schedule Your Appointment</h3>
+7639: <button class="modal-close" style="color: white" onclick="
+7751: style="color: var(--g500)">
+7771: <p style="color: var(--g500); font-size: 14px; margin-bottom: 15px">
+7816: <div style="flex: 1; background: var(--g50); position: relative">
+7841: style="display:flex;gap:8px;justify-content:center;margin-bottom:28px;background:var(--g50);border-radius:12px;padding:6px;">
+7843: style="flex:1;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:var(--blue);color:#fff;">
+7847: style="flex:1;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;background:transparent;color:var(--g500);">
+7860: style="font-size:14px;color:var(--g500);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;">
+7864: style="font-size:15px;line-height:1.7;color:var(--g700);margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto;">
+7873: <div style="background:var(--g50);padding:20px;border-radius:12px;">
+7874: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7876: <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6;">
+7882: <div style="background:var(--g50);padding:20px;border-radius:12px;">
+7883: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7885: <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6;">
+7888: <li style="margin-bottom:6px;color:var(--blue)">Enrolled in IMLC (Interstate Compact)</li>
+7893: style="margin-top:24px;width:100%;text-align:left;background:var(--g50);padding:20px;border-radius:12px;">
+7894: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7897: <p style="font-size:13px;color:var(--g600);line-height:1.6;margin-bottom:8px;"><b>Languages:</b> English
+7899: <p style="font-size:13px;color:var(--g600);line-height:1.6;"><b>Recognition:</b> TOP DOCTOR Magazine
+7904: style="margin-top:24px;width:100%;text-align:left;background:var(--g50);padding:20px;border-radius:12px;">
+7905: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7908: <p style="font-size:13px;color:var(--g600);line-height:1.6;margin-bottom:8px;">
+7911: <p style="font-size:13px;color:var(--g600);line-height:1.6;font-weight:600;">
+7926: style="font-size:14px;color:var(--g500);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;">
+7930: style="font-size:15px;line-height:1.7;color:var(--g700);margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto;">
+7938: <div style="background:var(--g50);padding:20px;border-radius:12px;">
+7939: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7941: <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6;">
+7948: <div style="background:var(--g50);padding:20px;border-radius:12px;">
+7949: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7951: <ul style="list-style:none;font-size:13px;color:var(--g600);line-height:1.6;">
+7959: style="margin-top:24px;width:100%;text-align:left;background:var(--g50);padding:20px;border-radius:12px;">
+7960: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7963: <p style="font-size:13px;color:var(--g600);line-height:1.6;margin-bottom:8px;">
+7970: style="margin-top:24px;width:100%;text-align:left;background:var(--g50);padding:20px;border-radius:12px;">
+7971: <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+7974: <p style="font-size:13px;color:var(--g600);line-height:1.6;">
+8002: <button class="btn btn-primary" style="background: var(--blue); border-color: var(--blue)" onclick="
+8025: <div id="adminDashboard" class="hidden" style="padding: 80px 0; background: var(--g50); min-height: 100vh">
+8033: <h1 style="font-size: 28px; color: var(--navy)">Provider Portal</h1>
+8112: <div style="padding: 20px; text-align: center; color: var(--g500)">
+8132: <div style="color: var(--g400)">Select a conversation</div>
+8185: <h3 style="margin: 0; font-size: 16px; color: var(--navy)">
+8300: <h3 style="margin: 0; font-size: 16px; color: var(--navy)">
+8303: <div style="font-size: 13px; color: var(--g500)" id="todaysAgenda"></div>
+8408: <p style="margin: 4px 0 0; font-size: 13px; color: var(--g500)">
+8438: <div id="chartIntake" style="font-size: 14px; color: var(--g700); line-height: 1.6">
+8458: <span id="soapLastSaved" style="font-size: 12px; color: var(--g400)"></span>
+8547: <div id="labResultsList" style="min-height: 100px; font-size: 13px; color: var(--g500)">
+8603: <h2 style="margin-bottom: 16px; color: white">
+8629: <h4 style="color: white; margin-bottom: 6px">
+8639: <h4 style="color: white; margin-bottom: 6px">
+8649: <h4 style="color: white; margin-bottom: 6px">3. HIPAA & Privacy</h4>
+8657: <h4 style="color: white; margin-bottom: 6px">
+8668: <h4 style="color: white; margin-bottom: 6px">
+8681: <h4 style="color: white; margin-bottom: 6px">
+8694: <h4 style="color: white; margin-bottom: 6px">
+10172: <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--g100);background:white">
+10174: <div style="font-weight:700;color:var(--navy);font-size:14px">${p.description || "Medical Service"}</div>
+10175: <div style="font-size:12px;color:var(--g500)">${new Date(p.date || p.createdAt).toLocaleDateString()}</div>
+10178: <div style="font-weight:800;color:var(--navy)">$${(p.amount / 100).toFixed(2)}</div>
+10179: <div style="font-size:11px;color:var(--emerald);font-weight:800;letter-spacing:0.5px">PAID</div>
+10187: '<div style="padding:40px;text-align:center;color:var(--g400);font-size:14px;background:var(--g50)">No transaction history available.</div>';
+10227: '<div style="padding:40px;text-align:center;color:var(--g400)">Fetching your clinical reports...</div>';
+10238: '<div style="padding:40px;text-align:center;color:var(--g400)">No lab results available yet.</div>';
+10247: <div style="padding:15px;border:1px solid var(--g100);border-radius:12px;background:var(--g50);display:flex;justify-content:space-between;align-items:center">
+10249: <div style="font-weight:700;color:var(--navy);font-size:15px">${l.panels.join(", ")}</div>
+10250: <div style="font-size:12px;color:var(--g500)">Status: <span style="font-weight:700;color:${l.status === "reviewed" ? "#00D9A3" : "#FFB800"}">${l.status.replace(/_/g, " ")}</span> • ${new Date(l.createdAt._seconds ? l.createdAt._seconds * 1000 : l.createdAt).toLocaleDateString()}</div>
+10265: '<div style="padding:40px;text-align:center;color:var(--red)">Failed to load results. Please try again.</div>';
+10330: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Your Name</div>
+10331: <div style="font-size:16px;font-weight:700;color:white">${p.patientName}</div>
+10334: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Service</div>
+10335: <div style="font-size:15px;color:rgba(255,255,255,0.9)">${p.serviceName}</div>
+10339: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Time</div>
+10340: <div style="font-size:14px;color:rgba(255,255,255,0.9)">${date} • ${time}</div>
+10343: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Status</div>
+10344: <div style="font-size:14px;text-transform:capitalize;font-weight:600;color:${p.status === "reviewed" ? "#00D9A3" : p.status === "completed" ? "var(--blue)" : "var(--amber)"}">${p.status}</div>
+10371: <div style="font-weight:600;color:var(--navy)">${c.serviceKey.replace(/_/g, " ")}</div>
+10372: <div style="font-size:12px;color:var(--g500)">${new Date(c.createdAt._seconds * 1000).toLocaleDateString()}</div>
+10374: <div style="font-size:13px;font-weight:600;color:${c.status === "pending" ? "var(--amber)" : c.status === "approved" ? "var(--emerald)" : "var(--g500)"}">
+10382: '<div style="padding:40px;text-align:center;color:var(--g400);font-size:14px">No visits yet. Start your first consultation.</div>';
+10640: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Patient</div>
+10641: <div style="font-size:16px;font-weight:700;color:var(--navy)">${p.patientName
+10643: <div style="font-size:13px;color:var(--g500)">${p.patientEmail
+10647: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Service</div>
+10648: <div style="font-size:15px;color:var(--navy)">${p.serviceName
+10653: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Time</div>
+10654: <div style="font-size:14px;color:var(--navy)">${date} • ${time}</div>
+10657: <div style="font-size:12px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-bottom:4px">Status</div>
+10658: <div style="font-size:14px;text-transform:capitalize;font-weight:600;color:${p.status === "reviewed" ? "green" : p.status === "completed" ? "blue" : "orange"}">${p.status}</div>
+10694: ag.innerHTML = `<div style="padding:20px;text-align:center;color:var(--g500)">No appointments today.</div>`;
+10747: '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--g500)">Loading doctors...</div>';
+10755: '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--g500)">No providers available at the moment.</div>';
+10762: <div class="doctor-card" onclick="selectDoctor('${doc.id}')" style="background:rgba(255,255,255,0.03); border:1px solid var(--g200); border-radius:12px; padding:16px; cursor:pointer; transition:all 0.2s">
+10766: <div style="font-weight:700; color:white; font-size:16px">${doc.name}</div>
+10767: <div style="font-size:13px; color:var(--g500)">${doc.specialty}</div>
+10776: '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">Failed to load providers.</div>';
+10792: <div style="font-weight:700; color:white">${doc.name}</div>
+10793: <div style="font-size:12px; color:var(--g500)">${doc.specialty}</div>
+10821: <div style="font-size:10px;text-transform:uppercase;color:var(--g500);margin-bottom:4px">${d.toLocaleDateString("en-US", { weekday: "short" })}</div>
+10822: <div style="font-size:16px;font-weight:700;color:white">${d.getDate()}</div>
+10848: '<div style="grid-column:1/-1;text-align:center;color:var(--g500);padding:20px">Checking availability...</div>';
+10893: '<div style="grid-column:1/-1;text-align:center;color:var(--red);padding:20px;font-size:13px">No slots available for this date.</div>';
+10900: <div class="time-slot" onclick="selectBookingTime(this, '${t}')" style="background:rgba(255,255,255,0.03); border:1px solid var(--g200); border-radius:8px; padding:10px; text-align:center; cursor:pointer; color:white; font-size:14px">${formatTime(t)}</div>
+10906: '<div style="grid-column:1/-1;text-align:center;color:var(--red);padding:20px">Error loading slots.</div>';
+10994: <div class="modal" style="max-width:480px; width:100%; text-align:center; padding:48px; border-radius:32px; background:#fff; box-shadow:var(--sh-xl); animation: zoomIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;">
+10995: <div style="width:80px; height:80px; background:var(--emerald-soft); color:var(--emerald); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto 32px">✓</div>
+10996: <h3 style="font-family:'Fraunces', serif; font-size:28px; color:var(--navy); margin-bottom:16px; letter-spacing:-0.02em">Request Received</h3>
+10997: <p style="color:var(--g500); font-size:16px; line-height:1.6; margin-bottom:32px">
+11300: '<div style="padding:20px;text-align:center;color:var(--g500)">No messages yet.</div>';
+11317: list.innerHTML = `<div style="color:red;padding:20px;font-size:13px">${msg}<br><br><span style="color:var(--g400)">${error.message}</span></div>`;
+11323: '<div style="color:red;padding:20px">Error loading threads.</div>';
+11406: ? '<span style="color:var(--red)">Suspended</span>'
+11407: : '<span style="color:var(--emerald)">Active</span>';
+11412: <div style="font-weight:700;color:var(--navy);font-size:14px">${u.displayName}</div>
+11413: <div style="font-size:12px;color:var(--g500);margin-top:2px">${statusStr}</div>
+11415: <td style="padding:15px;color:var(--g500)">
+11419: <span style="font-size:11px;font-weight:800;text-transform:uppercase;padding:4px 8px;border-radius:4px;background:var(--g50);color:${roleColor}">
+11433: <button class="btn btn-primary" style="padding:4px 8px;font-size:11px;background:var(--red);border-color:var(--red)" onclick="deleteAdminUser('${u.uid}')">🗑️</button>
+11444: tbody.innerHTML = `<tr><td colspan="4" style="padding:20px;text-align:center;color:red">Permission Denied or Error loading users.</td></tr>`;
+11536: style="padding:15px;border-bottom:1px solid var(--g200);cursor:pointer;background:${currentConversationId === t.id ? "#f0f9ff" : "white"}">
+11538: <div style="font-weight:${unread ? "800" : "600"};color:var(--navy)">${pName}</div>
+11539: <div style="font-size:11px;color:var(--g500)">${date}</div>
+11541: <div style="font-size:13px;color:${unread ? "black" : "var(--g500)"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+11555: <div style="font-weight:700;color:var(--navy)">${pName}</div>
+11556: <div style="font-size:12px;color:var(--g500)">Secure Thread</div>
+11588: '<div style="text-align:center;color:var(--g400);margin-top:20px">Start the conversation...</div>';
+11604: <div style="background:${isMe ? "var(--blue)" : "white"};color:${isMe ? "white" : "var(--navy)"};padding:10px 14px;border-radius:12px;border:${isMe ? "none" : "1px solid var(--g200)"};box-shadow:var(--sh-sm)">
+11606: ${m.attachments ? m.attachments.map((a) => `<div style="margin-top:5px;padding:5px;background:rgba(0,0,0,0.1);border-radius:4px"><a href="${a.url}" target="_blank" style="color:inherit;text-decoration:none">📎 ${a.name}</a></div>`).join("") : ""}
+11608: <div style="font-size:10px;color:var(--g400);margin-top:2px;text-align:${isMe ? "right" : "left"}">${time}</div>
+11690: `<tr><td colspan="5" style="padding:20px;text-align:center;color:red">Error: ${e.message} <br> (Check Console for details)</td></tr>`;
+11722: <span class="patient-link" data-uid="${c.uid}" style="font-weight:700;color:white;text-decoration:underline;cursor:pointer">${patient}</span>
+11723: <br><span style="font-size:12px;color:var(--g500)">${c.patientEmail || ""}</span>
+11726: <td style="padding:12px"><span style="color:${statusColor};font-weight:600;text-transform:capitalize">${c.status
+11774: return `<div style="margin-bottom:8px"><div style="font-size:12px;color:var(--g500)">${label}</div><div style="font-weight:500;color:white">${val}</div></div>`;
+11819: container.innerHTML = `<div style="color:red;padding:20px;text-align:center">Error loading chart:<br><b>${e.message}</b></div>`;
+11834: <div style="display:grid;grid-template-columns:1fr 1fr;height:100%;overflow:hidden;background:#000000">
+11836: <div style="border-right:1px solid rgba(255,255,255,0.1);background:#0A0F1C;padding:40px;display:flex;flex-direction:column;gap:32px;overflow-y:auto">
+11837: <div style="border-right:1px solid rgba(255,255,255,0.1);background:#0A0F1C;padding:40px;display:flex;flex-direction:column;gap:32px;overflow-y:auto">
+11841: <div style="width:100px;height:100px;background:#1F2937;border:2px solid rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 20px;color:var(--blue);font-weight:700;box-shadow:var(--sh-md)">
+11842: <div style="width:100px;height:100px;background:#1F2937;border:2px solid rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 20px;color:var(--blue);font-weight:700;box-shadow:var(--sh-md)">
+11845: <h2 style="margin:0;font-size:26px;color:#FFFFFF;font-weight:800;letter-spacing:-0.5px">${name}</h2>
+11846: <div style="color:rgba(255,255,255,0.6);font-size:15px;margin-top:6px;font-weight:500">${email}</div>
+11848: <button class="btn btn-outline" style="font-size:13px;padding:8px 16px;border-radius:20px;height:36px;color:white;border-color:rgba(255,255,255,0.2)">Message</button>
+11849: <button class="btn btn-outline" style="font-size:13px;padding:8px 16px;border-radius:20px;height:36px;color:white;border-color:rgba(255,255,255,0.2)">Calls</button>
+11854: <div style="background:#1F2937;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;box-shadow:var(--sh-sm)">
+11855: <div style="background:#1F2937;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;box-shadow:var(--sh-sm)">
+11856: <h4 style="margin:0 0 20px 0;font-size:14px;text-transform:uppercase;color:rgba(255,255,255,0.5);letter-spacing:1px;font-weight:700">Patient Details</h4>
+11860: <div style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px">Date of Birth</div>
+11861: <div style="font-size:16px;color:#FFFFFF;font-weight:600">${dob}</div>
+11865: <div style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px">State</div>
+11866: <div style="font-size:16px;color:#FFFFFF;font-weight:600">${state}</div>
+11870: <div style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px">Status</div>
+11871: <div style="font-size:16px;color:var(--emerald);font-weight:700">Active</div>
+11875: <div style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px">Visits</div>
+11876: <div style="font-size:16px;color:#FFFFFF;font-weight:600">${history.length
+11883: <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:20px">
+11884: <div style="font-size:14px;font-weight:700;color:#60A5FA;margin-bottom:8px;display:flex;align-items:center;gap:8px">ℹ️ Patient Note</div>
+11885: <div style="font-size:14px;color:#E5E7EB;line-height:1.6">Patient prefers video calls for follow-ups. No known allergies.</div>
+11890: <div style="flex:1;overflow-y:auto;padding:20px;background:#000000">
+11891: <div style="flex:1;overflow-y:auto;padding:20px;background:#000000">
+11903: <div id="tab-notes" class="chart-content active" style="padding:0;background:transparent">
+11904: <div id="tab-notes" class="chart-content active" style="padding:0;background:transparent">
+11908: <div id="soapForm" style="display:none;background:#111827;padding:15px;border-radius:8px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.1)">
+11909: <h4 style="margin-top:0;color:#FFFFFF">New SOAP Note</h4>
+11910: <textarea id="soapS" placeholder="Subjective" style="width:100%;padding:8px;margin-bottom:8px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;min-height:60px"></textarea>
+11911: <textarea id="soapO" placeholder="Objective" style="width:100%;padding:8px;margin-bottom:8px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;min-height:60px"></textarea>
+11912: <textarea id="soapA" placeholder="Assessment" style="width:100%;padding:8px;margin-bottom:8px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;min-height:60px"></textarea>
+11914: <div style="margin-bottom:12px;padding:10px;background:#0A0F1C;border:1px solid rgba(255,255,255,0.1);border-radius:4px">
+11915: <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Official Diagnosis (ICD-10)</label>
+11916: <input id="soapDiagnosis" type="text" placeholder="e.g. E29.1 Hypogonadism" style="width:100%;padding:6px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;font-size:13px">
+11919: <div style="margin-bottom:12px;padding:10px;background:#0A0F1C;border:1px solid rgba(255,255,255,0.1);border-radius:4px">
+11920: <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Prescription Order</label>
+11922: <input id="rxName" type="text" placeholder="Medication Name" style="padding:6px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;font-size:13px">
+11923: <input id="rxDosage" type="text" placeholder="Dosage" style="padding:6px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;font-size:13px">
+11926: <input id="rxFreq" type="text" placeholder="Frequency" style="padding:6px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;font-size:13px">
+11927: <input id="rxQty" type="text" placeholder="Qty" style="padding:6px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;font-size:13px">
+11931: <textarea id="soapP" placeholder="Plan" style="width:100%;padding:8px;margin-bottom:15px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px;min-height:60px"></textarea>
+11933: <button class="btn btn-ghost" onclick="toggleSoapForm()" style="color:white">Cancel</button>
+11940: ? '<div style="color:rgba(255,255,255,0.5);font-style:italic">No notes recorded.</div>'
+11949: <div style="border:1px solid rgba(255,255,255,0.1);border-left:3px solid var(--blue);border-radius:4px;padding:12px;background:#0A0F1C">
+11950: <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:5px;display:flex;justify-content:space-between">
+11953: <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:rgba(255,255,255,0.8)">
+11954: <div><b style="color:#FFFFFF">S:</b> ${n.subjective || "-"}</div>
+11955: <div><b style="color:#FFFFFF">O:</b> ${n.objective || "-"}</div>
+11956: <div><b style="color:#FFFFFF">A:</b> ${n.assessment || "-"}</div>
+11957: <div><b style="color:#FFFFFF">P:</b> ${n.plan || "-"}</div>
+11959: ${n.diagnosis ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.1);font-size:13px"><b style="color:#FFFFFF">Dx:</b> ${n.diagnosis}</div>` : ""}
+11960: ${n.prescription ? `<div style="margin-top:4px;font-size:13px;color:#60A5FA;font-weight:600">Rx: ${n.prescription.name} ${n.prescription.dosage} - ${n.prescription.frequency} (#${n.prescription.quantity})</div>` : ""}
+11970: <div id="tab-labs" class="chart-content" style="padding:0;background:transparent">
+11971: <div id="tab-labs" class="chart-content" style="padding:0;background:transparent">
+11975: <div id="labForm" style="display:none;background:#111827;padding:15px;border-radius:8px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.1)">
+11976: <h4 style="margin-top:0;color:#FFFFFF">Order Labs</h4>
+11977: <div id="labForm" style="display:none;background:#111827;padding:15px;border-radius:8px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.1)">
+11978: <h4 style="margin-top:0;color:#FFFFFF">Order Labs</h4>
+11980: <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Select Panels</label>
+11981: <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Select Panels</label>
+11983: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CBC"> CBC</label>
+11984: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CMP"> CMP</label>
+11985: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Lipid Panel"> Lipid Panel</label>
+11986: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Testosterone Free/Total"> Testosterone</label>
+11987: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="PSA"> PSA</label>
+11988: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Estradiol"> Estradiol</label>
+11989: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CBC"> CBC</label>
+11990: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="CMP"> CMP</label>
+11991: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Lipid Panel"> Lipid Panel</label>
+11992: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Testosterone Free/Total"> Testosterone</label>
+11993: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="PSA"> PSA</label>
+11994: <label class="ro" style="color:white"><input type="checkbox" class="lab-panel" value="Estradiol"> Estradiol</label>
+11998: <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Diagnosis Code</label>
+11999: <input id="labDiagnosis" type="text" placeholder="e.g. E29.1" style="width:100%;padding:8px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px">
+12000: <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#FFFFFF">Diagnosis Code</label>
+12001: <input id="labDiagnosis" type="text" placeholder="e.g. E29.1" style="width:100%;padding:8px;background:#1F2937;color:white;border:1px solid rgba(255,255,255,0.1);border-radius:4px">
+12004: <button class="btn btn-ghost" onclick="toggleLabForm()" style="color:white">Cancel</button>
+12016: <div id="tab-vitals" class="chart-content" style="padding:0;background:transparent">
+12017: <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px;margin-bottom:20px">
+12018: <h3 style="margin-top:0;color:#FFFFFF;font-size:16px">Weight (lbs)</h3>
+12023: <div style="flex:1;background:rgba(59,130,246,0.3);border-radius:4px 4px 0 0;height:${(w - 150) * 3}px;position:relative;transition:all 0.2s" title="${w} lbs">
+12024: <div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;color:var(--blue)">${w}</div>
+12029: <div style="position:absolute;bottom:-25px;left:0;right:0;display:flex;justify-content:space-around;font-size:11px;color:rgba(255,255,255,0.5)">
+12035: <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px">
+12036: <h3 style="margin-top:0;color:#FFFFFF;font-size:16px">Blood Pressure</h3>
+12038: <div style="background:#111827;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px">
+12039: <h3 style="margin-top:0;color:#FFFFFF;font-size:16px">Blood Pressure</h3>
+12061: <span style="color:var(--blue)">● Systolic</span>
+12062: <span style="color:var(--blush)">● Diastolic</span>
+12070: <div id="tab-history" class="chart-content" style="padding:0;background:transparent">
+12071: <div id="tab-history" class="chart-content" style="padding:0;background:transparent">
+12074: ? '<div style="color:rgba(255,255,255,0.5);font-style:italic">No previous visits recorded.</div>'
+12089: <b style="color:var(--navy)">${svc}</b>
+12093: <div style="font-size:12px;color:var(--g500)">${h.id}</div>
+12094: <span style="font-size:11px;font-weight:700;background:#f0f0f0;padding:2px 6px;border-radius:4px">${stat}</span>
+12114: '<div style="color:var(--g500);font-style:italic">No labs ordered.</div>';
+12132: <div style="border:1px solid var(--g200);border-radius:4px;padding:12px;background:white">
+12134: <div style="font-weight:700;color:var(--navy);font-size:14px">Lab Order #${l.id.slice(0, 5)}</div>
+12135: <div style="font-size:11px;font-weight:700;color:${statusColor};text-transform:uppercase">${l.status.replace("_", " ")}</div>
+12156: <button class="btn btn-primary" style="padding:4px 10px;font-size:11px;background:var(--red);border-color:var(--red)" onclick="reviewLabResult('${l.id}')">Review Needed</button>
+12282: <div style="text-align:center;color:var(--red);font-size:48px;margin-bottom:10px">⚠️</div>
+12283: <div class="modal-header" style="justify-content:center;color:var(--red)"><h3>Safety Alert</h3></div>
+12288: <div style="padding:20px;background:var(--g50);display:flex;justify-content:center">
+12289: <button class="btn btn-primary" onclick="document.getElementById('safetyModal').classList.remove('active')" style="background:var(--red);border-color:var(--red)">Acknowledge & Edit</button>
+12299: `Patient is allergic to <b style="color:var(--red)">${allergy}</b>.<br>Interaction with <b>${drug}</b> blocked.`;
+12811: <div style="padding:24px;border-bottom:1px solid var(--g100);display:flex;justify-content:space-between;align-items:center;background:white;z-index:10">
+12813: <div style="width:48px;height:48px;border-radius:50%;background:var(--blue-pale);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">Dr.</div>
+12815: <h3 style="margin:0;color:var(--navy);font-family:var(--font-display);font-size:20px;letter-spacing:-0.02em">Dr. Osunsade</h3>
+12816: <div style="font-size:13px;color:var(--emerald);font-weight:500;display:flex;align-items:center;gap:4px">
+12817: <span style="width:6px;height:6px;background:currentColor;border-radius:50%"></span> Secure Connection
+12821: <button class="modal-close" style="position:static;width:36px;height:36px;font-size:24px;background:var(--g50)" onclick="closePtChat()">×</button>
+12825: <div id="ptChatMsgs" style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;background:var(--g50)">
+12826: <div style="text-align:center;color:var(--g400);font-size:13px;margin:20px 0">This is a secure, HIPAA-compliant messaging thread.</div>
+12827: <div style="text-align:center;color:var(--g500)">Loading history...</div>
+12831: <div style="padding:20px 24px;background:white;border-top:1px solid var(--g100);display:flex;gap:12px;align-items:center">
+12860: '<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:40px">No messages yet. Start the conversation!</div>';
+12887: <div style="background:var(--blue);color:white;padding:12px 18px;border-radius:18px 18px 4px 18px;box-shadow:var(--sh-sm);font-size:15px;line-height:1.5;position:relative">
+12890: <div style="font-size:11px;color:var(--g400);margin-top:6px;margin-right:2px;font-weight:500">${timeStr}</div>
+12897: <div style="font-size:12px;color:var(--navy);margin-bottom:6px;margin-left:2px;font-weight:600">Dr. Osunsade</div>
+12898: <div style="background:white;color:var(--g800);padding:12px 18px;border-radius:18px 18px 18px 4px;border:1px solid var(--g200);box-shadow:var(--sh-sm);font-size:15px;line-height:1.5">
+12901: <div style="font-size:11px;color:var(--g400);margin-top:6px;margin-left:2px;font-weight:500">${timeStr}</div>
+13100: <div id="promoModal" class="mo" style="z-index:99999;background:rgba(0,0,0,0.4)">
+13102: <button class="modal-close" style="height: 36px; padding: 0 16px; font-size: 14px; font-weight: 600; background: var(--g100); color: var(--navy); border-radius: 18px; display: flex; align-items: center; justify-content: center; position: absolute; top: 16px; right: 16px; opacity: 1;" onclick="closePromoModal()">Close</button>
+13104: <h2 style="font-family:'Fraunces', serif;font-size:28px;margin-bottom:12px;color:white">Welcome to Patriotic Telehealth!</h2>
+13105: <p style="color:var(--g400);margin-bottom:24px;line-height:1.5">Enter your email to receive standard updates and get <strong>20% off</strong> any service.</p>
+13106: <input type="email" id="promoEmail" placeholder="Your Email Address" style="width:100%;padding:14px;border:1px solid var(--g200);border-radius:12px;margin-bottom:16px;font-family:'Outfit', sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--g200)'">
+13108: <div id="promoSuccess" style="display:none;color:var(--emerald);font-weight:600;margin-top:16px">Code NEW2026 unlocked! Enjoy 20% off.</div>
+13157: <div id="cookie-banner" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1f2937; color: white; padding: 16px; z-index: 10000; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); justify-content: center; align-items: center; text-align: center; font-size: 14px; gap: 16px; flex-wrap: wrap;">
+13159: <strong>HIPAA Privacy & Cookie Consent:</strong> We use essential cookies to provide our telehealth services. By clicking "Accept All", you also consent to our use of non-essential cookies for analytics and marketing, in accordance with our <a href="/privacy-policy" style="color: #60a5fa; text-decoration: underline; font-weight: 600;">Privacy Policy</a>. No HIPAA-protected data is shared with third-party tracking pixels.
+13162: <button onclick="acceptCookies()" style="background: var(--primary, #2563eb); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">Accept All</button>
+13163: <button onclick="declineCookies()" style="background: transparent; color: #d1d5db; border: 1px solid #4b5563; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">Essential Only</button>

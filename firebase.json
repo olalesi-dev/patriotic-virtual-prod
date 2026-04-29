@@ -1,0 +1,116 @@
+{
+  "hosting": [
+    {
+      "target": "landing",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+
+
+        {
+          "source": "/sitemap.xml",
+          "destination": "/sitemap.xml"
+        },
+        {
+          "source": "/privacy",
+          "destination": "/privacy/index.html"
+        },
+        {
+          "source": "/terms",
+          "destination": "/terms/index.html"
+        },
+        {
+          "source": "/refund",
+          "destination": "/refund/index.html"
+        },
+        {
+          "source": "/contact",
+          "destination": "/contact/index.html"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "strict-origin-when-cross-origin"
+            },
+            {
+              "key": "Permissions-Policy",
+              "value": "camera=(self \"https://static.vouched.id\"), microphone=(self \"https://static.vouched.id\"), geolocation=()"
+            },
+            {
+              "key": "Cross-Origin-Opener-Policy",
+              "value": "same-origin-allow-popups"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(js|css|svg|png|jpg|webp|woff2)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "emr",
+      "source": "emr-portal",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+
+      ],
+      "frameworksBackend": {
+        "region": "us-central1"
+      },
+      "functions": {
+        "memory": "1GB",
+        "cpu": 1
+      }
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,358 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-slate-900 bg-slate-50 dark:text-slate-100 dark:bg-slate-900;
+}
+}
+
+/* ======= AI NAVIGATOR ======= */
+:root {
+  --sidebar-bg: 15 23 42;
+  --sidebar-active: 51 65 85;
+  --sidebar-hover: 30 41 59;
+  --sidebar-foreground: 248 250 252;
+  --sidebar-muted: 148 163 184;
+  --ai-label-bg: #0f172a;
+  --ai-label-text: #f8fafc;
+  --ai-label-border: rgba(148, 163, 184, 0.32);
+  --ai-card-bg: #0b1220;
+  --ai-card-border: rgba(148, 163, 184, 0.3);
+  --ai-head-bg: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.14));
+  --ai-body-bg: #020617;
+  --ai-title: #f8fafc;
+  --ai-sub: #94a3b8;
+  --ai-bot-bg: #1e293b;
+  --ai-bot-text: #e2e8f0;
+  --ai-opt-bg: #0f172a;
+  --ai-opt-border: #334155;
+  --ai-opt-text: #e2e8f0;
+  --ai-opt-hover-bg: #172554;
+  --ai-opt-hover-text: #dbeafe;
+  --ai-input-wrap: #0b1220;
+  --ai-input-bg: #0f172a;
+  --ai-input-border: #334155;
+  --ai-input-text: #f8fafc;
+  --ai-input-placeholder: #94a3b8;
+  --ai-typing: #64748b;
+  --ai-elig-pass-bg: rgba(16, 185, 129, 0.16);
+  --ai-elig-pass-border: rgba(16, 185, 129, 0.42);
+  --ai-elig-warn-bg: rgba(245, 158, 11, 0.17);
+  --ai-elig-warn-border: rgba(245, 158, 11, 0.42);
+  --ai-elig-no-bg: rgba(239, 68, 68, 0.17);
+  --ai-elig-no-border: rgba(239, 68, 68, 0.42);
+  --ai-elig-text: #e2e8f0;
+  --blue: #3b82f6;
+  --indigo: #6366f1;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-b: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --sh-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --sh-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+body.light-theme {
+  --sidebar-bg: 15 23 42;
+  --sidebar-active: 51 65 85;
+  --sidebar-hover: 30 41 59;
+  --sidebar-foreground: 248 250 252;
+  --sidebar-muted: 148 163 184;
+  --ai-label-bg: #0f172a;
+  --ai-label-text: #ffffff;
+  --ai-label-border: rgba(15, 23, 42, 0.2);
+  --ai-card-bg: #ffffff;
+  --ai-card-border: #dbe3ee;
+  --ai-head-bg: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.06));
+  --ai-body-bg: #f8fafc;
+  --ai-title: #0f172a;
+  --ai-sub: #64748b;
+  --ai-bot-bg: #e2e8f0;
+  --ai-bot-text: #1e293b;
+  --ai-opt-bg: #ffffff;
+  --ai-opt-border: #cbd5e1;
+  --ai-opt-text: #0f172a;
+  --ai-opt-hover-bg: #eff6ff;
+  --ai-opt-hover-text: #1d4ed8;
+  --ai-input-wrap: #ffffff;
+  --ai-input-bg: #f8fafc;
+  --ai-input-border: #cbd5e1;
+  --ai-input-text: #0f172a;
+  --ai-input-placeholder: #94a3b8;
+  --ai-typing: #94a3b8;
+  --ai-elig-pass-bg: #ecfdf5;
+  --ai-elig-pass-border: rgba(16, 185, 129, 0.3);
+  --ai-elig-warn-bg: #fffbeb;
+  --ai-elig-warn-border: rgba(245, 158, 11, 0.3);
+  --ai-elig-no-bg: #fef2f2;
+  --ai-elig-no-border: rgba(239, 68, 68, 0.3);
+  --ai-elig-text: #334155;
+}
+
+.ai-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1500;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), var(--indigo));
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s var(--ease);
+  font-size: 24px;
+}
+
+.ai-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 32px rgba(59, 130, 246, 0.45);
+}
+
+.ai-fab.open {
+  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+}
+
+.ai-fab .fab-close {
+  display: none;
+}
+
+.ai-fab.open .fab-icon {
+  display: none;
+}
+
+.ai-fab.open .fab-close {
+  display: block;
+  font-size: 20px;
+}
+
+.ai-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--blue);
+  animation: aipulse 2.5s ease-out infinite;
+  opacity: 0;
+}
+
+.ai-fab.open .ai-pulse {
+  display: none;
+}
+
+@keyframes aipulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.ai-label {
+  position: absolute;
+  right: 72px;
+  background: var(--ai-label-bg);
+  color: var(--ai-label-text);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--sh-md);
+  border: 1px solid var(--ai-label-border);
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.3s var(--ease);
+  pointer-events: none;
+}
+
+.ai-fab:not(.open):hover .ai-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.ai-label::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: var(--ai-label-bg);
+}
+
+.ai-chat {
+  position: fixed;
+  bottom: 100px;
+  right: 28px;
+  z-index: 1500;
+  width: 400px;
+  max-height: 560px;
+  background: var(--ai-card-bg);
+  border-radius: 12px;
+  box-shadow: var(--sh-xl);
+  border: 1px solid var(--ai-card-border);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px) scale(0.95);
+  transition: all 0.3s var(--ease-b);
+}
+
+.ai-chat.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.ai-chat-head {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--ai-card-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ai-head-bg);
+  border-radius: 12px 12px 0 0;
+}
+
+.ai-chat-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue), var(--indigo));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #fff;
+}
+
+.ai-chat-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ai-title);
+}
+
+.ai-chat-sub {
+  font-size: 11px;
+  color: var(--ai-sub);
+  margin-top: 1px;
+}
+
+.ai-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 360px;
+  min-height: 200px;
+  background: var(--ai-body-bg);
+}
+
+.ai-msg {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  animation: fadeUp 0.3s var(--ease) both;
+}
+
+.ai-msg.bot {
+  background: var(--ai-bot-bg);
+  color: var(--ai-bot-text);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.ai-msg.user {
+  background: linear-gradient(135deg, var(--blue), var(--indigo));
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-opt {
+  background: var(--ai-opt-bg);
+  border: 1.5px solid var(--ai-opt-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ai-opt-text);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  text-align: left;
+  margin-top: 5px;
+  display: block;
+}
+
+.ai-opt:hover {
+  border-color: var(--blue);
+  background: var(--ai-opt-hover-bg);
+  color: var(--ai-opt-hover-text);
+}
+
+.ai-chat-input {
+  padding: 12px 16px;
+  border-top: 1px solid var(--ai-card-border);
+  background: var(--ai-input-wrap);
+  display: flex;
+  gap: 8px;
+  border-radius: 0 0 12px 12px;
+}
+
+.ai-chat-input input {
+  flex: 1;
+  border: 1.5px solid var(--ai-input-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--ai-input-text);
+  background: var(--ai-input-bg);
+  outline: none;
+  transition: all 0.2s var(--ease);
+}
+
+.ai-chat-input input:focus {
+  border-color: var(--blue);
+}
+
+.ai-chat-input button {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue), var(--indigo));
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s var(--ease);
+}
+
+.ai-elig {
+  background: var(--ai-elig-pass-bg);
+  border: 1px solid var(--ai-elig-pass-border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 8px;
+}
+
+.ai-elig.warn {
+  background: var(--ai-elig-warn-bg);
+  border-color: var(--ai-elig-warn-border);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

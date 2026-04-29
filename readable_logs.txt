@@ -1,0 +1,1406 @@
+{
+  "insertId": "69abf8a2000d62a336c581ee",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:06:26.925545822Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:06:26 +0000] \"POST /api/v1/consultations HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:06:26.877219Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.011743710s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.33",
+    "requestMethod": "POST",
+    "requestSize": "2766",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations",
+    "responseSize": "924",
+    "serverIp": "34.143.73.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf8a2000d63dda87e18db",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:06:26.924707471Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "a4b1e17a5daff6bd",
+  "timestamp": "2026-03-07T10:06:26.862888Z",
+  "trace": "projects/patriotic-virtual-prod/traces/3d4315d78b29fde2e0b0a36abc406001",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abf89500024f6db490dd9a",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:06:13.273760483Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:06:13 +0000] \"POST /api/v1/consultations HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:06:13.151405Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.008596171s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.161",
+    "requestMethod": "POST",
+    "requestSize": "2765",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations",
+    "responseSize": "924",
+    "serverIp": "34.143.73.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf89500024f0af425c1de",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:06:13.269409968Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "464d0adeb321fda9",
+  "timestamp": "2026-03-07T10:06:13.140382Z",
+  "trace": "projects/patriotic-virtual-prod/traces/f7433ce29909a5a74aeed9425e219619"
+}
+---
+{
+  "insertId": "69abf891000523ef9b820382",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:06:09.605930369Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:06:09 +0000] \"POST /api/v1/consultations HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:06:09.336879Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.008884268s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "192.178.11.103",
+    "requestMethod": "POST",
+    "requestSize": "2765",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations",
+    "responseSize": "924",
+    "serverIp": "34.143.74.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf891000526694c0eda6f",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:06:09.606282612Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "780be10915d05290",
+  "timestamp": "2026-03-07T10:06:09.326405Z",
+  "trace": "projects/patriotic-virtual-prod/traces/66f43ea7cf8b449131e10b712b4725c3"
+}
+---
+{
+  "insertId": "69abf88b000e50b19b30c2a8",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:06:03.947633836Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:06:03 +0000] \"POST /api/v1/consultations HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:06:03.938161Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.009185700s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.73",
+    "requestMethod": "POST",
+    "requestSize": "2766",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations",
+    "responseSize": "924",
+    "serverIp": "34.143.74.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf88b000e4dc487ee38d4",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:06:03.946021321Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "0b1c77d5a7a25d6f",
+  "timestamp": "2026-03-07T10:06:03.920515Z",
+  "trace": "projects/patriotic-virtual-prod/traces/86c955c3b872dd363d06f564210181d1",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abf83d000428e7f7285504",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:04:45.335460852Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:04:45 +0000] \"POST /api/v1/consultations HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:04:45.272615Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.008399579s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.194",
+    "requestMethod": "POST",
+    "requestSize": "2765",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations",
+    "responseSize": "924",
+    "serverIp": "34.143.74.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf83d000429cda2cc2967",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:04:45.336382631Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "a2f990fb86b48de3",
+  "timestamp": "2026-03-07T10:04:45.261228Z",
+  "trace": "projects/patriotic-virtual-prod/traces/c0b1f96c5898b9c9fdf1922942d3eb36",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abf8330003fc92a664e4ed",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:04:35.344420450Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:04:35 +0000] \"POST /api/v1/consultations HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:04:35.261266Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.010737771s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.165",
+    "requestMethod": "POST",
+    "requestSize": "2766",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations",
+    "responseSize": "924",
+    "serverIp": "34.143.74.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf8330003febdca4981c2",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:04:35.345828368Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "70a262dfd86f9bac",
+  "timestamp": "2026-03-07T10:04:35.248509Z",
+  "trace": "projects/patriotic-virtual-prod/traces/fee617d8864382c23322859bd5d02f36"
+}
+---
+{
+  "insertId": "69abf82e0005353ee2778850",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:04:30.345856214Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:04:30 +0000] \"POST /api/v1/consultations HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:04:30.341310Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.064864316s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.203",
+    "requestMethod": "POST",
+    "requestSize": "2765",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations",
+    "responseSize": "924",
+    "serverIp": "34.143.74.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf82e00053908966e4328",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:04:30.350077712Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "27ef0ec9c8975d7e",
+  "timestamp": "2026-03-07T10:04:30.274466Z",
+  "trace": "projects/patriotic-virtual-prod/traces/538c8db3c045d4582190c8e667f7c582",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abf821000bc692e559d45b",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:04:18.006107976Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:04:17 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:04:17.771730Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.005670509s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.32",
+    "requestMethod": "GET",
+    "requestSize": "2506",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.72.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf821000bc9ef8176fdea",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:04:18.038471961Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "adac09cbcada790a",
+  "timestamp": "2026-03-07T10:04:17.764640Z",
+  "trace": "projects/patriotic-virtual-prod/traces/8ac4b8e9b568ea5c04f02d43f25892cb"
+}
+---
+{
+  "insertId": "69abf821000a8b7676e26fa9",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:04:18.006107976Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:10:04:17 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T10:04:17.691062Z"
+}
+---
+{
+  "insertId": "69abf8210005255fa2572800",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fvarlog%2Fsystem",
+  "receiveTimestamp": "2026-03-07T10:04:17.598199075Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "INFO",
+  "textPayload": "Default STARTUP TCP probe succeeded after 1 attempt for container \"patriotic-virtual-backend-1\" on port 8080.",
+  "timestamp": "2026-03-07T10:04:17.337247Z"
+}
+---
+{
+  "insertId": "69abf821000518d2a9f69eaa",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T10:04:17.343073664Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "info: EMR Backend listening on port 8080 {\"service\":\"emr-backend\"}",
+  "timestamp": "2026-03-07T10:04:17.334034Z"
+}
+---
+{
+  "insertId": "69abf81f000e1c59218d3475",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64",
+    "scaling_reason": "AUTOSCALING"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fvarlog%2Fsystem",
+  "receiveTimestamp": "2026-03-07T10:04:15.931241554Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "INFO",
+  "textPayload": "Starting new instance. Reason: AUTOSCALING - Instance started due to configured scaling factors (e.g. CPU utilization, request throughput, etc.) or no existing capacity for current traffic.",
+  "timestamp": "2026-03-07T10:04:15.924761Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "1.511076442s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.107",
+    "requestMethod": "GET",
+    "requestSize": "2631",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.76.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abf821000aa9fdfbfa4220",
+  "labels": {
+    "instanceId": "00da6cd2c4e756cffcaff3dd43d5eeb06d4bc555c7c7c66dd386d079df5eb14e9bcecd89c5ba8861dbe107f16d7213c067ae241ff403b35e1a18341c44c2fda349b216a9a77ad229d12618dccd64"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T10:04:17.711174075Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "5d7c00e5bc27d2aa",
+  "timestamp": "2026-03-07T10:04:15.899617Z",
+  "trace": "projects/patriotic-virtual-prod/traces/539f318064986bba29872fca3fb0a897",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abee6a0001228c2933466d",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:22:50.323979212Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:22:50 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:22:50.074380Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.004276101s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.103",
+    "requestMethod": "GET",
+    "requestSize": "2506",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.76.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abee6a000123a729789ae2",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:22:50.324252180Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "1aee4ae6ea5f8b6a",
+  "timestamp": "2026-03-07T09:22:50.068400Z",
+  "trace": "projects/patriotic-virtual-prod/traces/5649421c566961ad47c238b3b2957608"
+}
+---
+{
+  "insertId": "69abee69000f0a46266fc3e8",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:22:49.994447504Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:22:49 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:22:49.985670Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.004401581s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.141",
+    "requestMethod": "GET",
+    "requestSize": "2631",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.76.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abee69000f094a9ceec02e",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:22:49.991340610Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "2f7e8f3a213930f2",
+  "timestamp": "2026-03-07T09:22:49.972392Z",
+  "trace": "projects/patriotic-virtual-prod/traces/5bd99897a4debf8eea4d042ea0c8fda7",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abee3f00018b941a8dbed1",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:22:07.370808184Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:22:07 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:22:07.101268Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.007568990s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.65",
+    "requestMethod": "GET",
+    "requestSize": "2518",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.76.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abee3f00018d8aac8a12d9",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:22:07.370937343Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "7601e2a1854e93f0",
+  "timestamp": "2026-03-07T09:22:07.091564Z",
+  "trace": "projects/patriotic-virtual-prod/traces/f4aef31fe892ac3d7b5bbac42fa816c3"
+}
+---
+{
+  "insertId": "69abee3f0000716779e81d72",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:22:07.036742559Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:22:07 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:22:07.029031Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.005758710s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.161",
+    "requestMethod": "GET",
+    "requestSize": "2644",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.72.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abee3f000072ec81cc598b",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:22:07.036082522Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "48dfc3136022ded2",
+  "timestamp": "2026-03-07T09:22:07.016616Z",
+  "trace": "projects/patriotic-virtual-prod/traces/98c533640aa22d911372d2000a976f17",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abed680009b083698022ce",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:18:32.891381056Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:18:32 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:18:32.635011Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.007205130s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.66",
+    "requestMethod": "GET",
+    "requestSize": "2514",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.79.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abed680009b258e06f4528",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:18:32.891017861Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "044e7e7cde331133",
+  "timestamp": "2026-03-07T09:18:32.624349Z",
+  "trace": "projects/patriotic-virtual-prod/traces/aaa83981a148c06a65f02cadbf9e7e0c"
+}
+---
+{
+  "insertId": "69abed6800086f0008bb52dd",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:18:32.558086444Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:18:32 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:18:32.552704Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.007478839s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.33",
+    "requestMethod": "GET",
+    "requestSize": "2638",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.73.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abed680008716c8bf3fa32",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:18:32.561207645Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "d8affefd5eb90b0d",
+  "timestamp": "2026-03-07T09:18:32.536610Z",
+  "trace": "projects/patriotic-virtual-prod/traces/7d0028c75bfa076fc2ae9a77e499a2b8",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abea930000f9354d3acc00",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:27.207195877Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:27 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:27.063797Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.004777580s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.192",
+    "requestMethod": "GET",
+    "requestSize": "2506",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.77.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea930000fac9df42ea75",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:27.213683945Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "c2070e2b5c7260d0",
+  "timestamp": "2026-03-07T09:06:27.056568Z",
+  "trace": "projects/patriotic-virtual-prod/traces/f4a1e6a29aae884703d853ea023c5e9b"
+}
+---
+{
+  "insertId": "69abea92000df1259a47e5cc",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:27.207195877Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:26 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:26.913701Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.011751530s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "74.125.210.193",
+    "requestMethod": "GET",
+    "requestSize": "2632",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.77.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea92000df3b0d34a462f",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:27.213683945Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "5127fe713374c650",
+  "timestamp": "2026-03-07T09:06:26.898485Z",
+  "trace": "projects/patriotic-virtual-prod/traces/43db38d44c950583a700a03061188528",
+  "traceSampled": true
+}
+---
+{
+  "insertId": "69abea86000f049af8d44052",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:15.172322580Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:14 +0000] \"GET /api/v1/doctor/appointments HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:14.984218Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.004709509s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.67",
+    "requestMethod": "GET",
+    "requestSize": "2537",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/doctor/appointments",
+    "responseSize": "866",
+    "serverIp": "34.143.79.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea86000f06c31839ccdb",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:15.175323152Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "72a27e626d88c2b8",
+  "timestamp": "2026-03-07T09:06:14.976831Z",
+  "trace": "projects/patriotic-virtual-prod/traces/dc4589a421dd93fdedbe6c034ab9c2ca"
+}
+---
+{
+  "insertId": "69abea86000de321738a51d2",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:15.172322580Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:14 +0000] \"GET /api/v1/doctor/appointments HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:14.910113Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.005531419s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.130",
+    "requestMethod": "GET",
+    "requestSize": "2663",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/doctor/appointments",
+    "responseSize": "866",
+    "serverIp": "34.143.73.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea86000de58ed5ef4e34",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:15.175323152Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "bbab499536ded27c",
+  "timestamp": "2026-03-07T09:06:14.901914Z",
+  "trace": "projects/patriotic-virtual-prod/traces/48229aaeff2b11489618fd99ad400275"
+}
+---
+{
+  "insertId": "69abea86000925166c2d35a1",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:14.839750975Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:14 +0000] \"GET /api/v1/consultations/mine HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:14.599318Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.009850899s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.237",
+    "requestMethod": "GET",
+    "requestSize": "2560",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations/mine",
+    "responseSize": "866",
+    "serverIp": "34.143.72.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea8600092768f2ff48ee",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:14.839592611Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "6be1ce6e4074a32b",
+  "timestamp": "2026-03-07T09:06:14.585907Z",
+  "trace": "projects/patriotic-virtual-prod/traces/4a5fa5af7c0d91601386da2d17e2c236"
+}
+---
+{
+  "insertId": "69abea860007e2b58d877123",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:14.839750975Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:14 +0000] \"GET /api/v1/consultations/mine HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:14.516789Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.005467429s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.232",
+    "requestMethod": "GET",
+    "requestSize": "2660",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/consultations/mine",
+    "responseSize": "866",
+    "serverIp": "34.143.74.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea860007e485a1aa548d",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:14.839592611Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "7e3dba45139e226b",
+  "timestamp": "2026-03-07T09:06:14.508506Z",
+  "trace": "projects/patriotic-virtual-prod/traces/d1737958b30fc3e596018c0e8938cff5"
+}
+---
+{
+  "insertId": "69abea8600067ce3063f86e7",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:14.506809540Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:14 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:14.425187Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.005304749s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.132",
+    "requestMethod": "GET",
+    "requestSize": "2583",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.74.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea8600067e83a36f4a02",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:14.506978763Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "465a9b03bdce3543",
+  "timestamp": "2026-03-07T09:06:14.417397Z",
+  "trace": "projects/patriotic-virtual-prod/traces/fbd6760080a2bf91a939d99a3ace3fb4"
+}
+---
+{
+  "insertId": "69abea8600052324d630df52",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:14.506809540Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:14 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:14.336676Z"
+}
+---
+{
+  "httpRequest": {
+    "latency": "0.005548830s",
+    "protocol": "HTTP/1.1",
+    "referer": "https://patriotictelehealth.com/",
+    "remoteIp": "66.102.8.235",
+    "requestMethod": "GET",
+    "requestSize": "2638",
+    "requestUrl": "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app/api/v1/auth/me",
+    "responseSize": "866",
+    "serverIp": "34.143.73.2",
+    "status": 500,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+  },
+  "insertId": "69abea86000521c88ff06075",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Frequests",
+  "receiveTimestamp": "2026-03-07T09:06:14.506978763Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "severity": "ERROR",
+  "spanId": "3d4464188674b3c1",
+  "timestamp": "2026-03-07T09:06:14.328700Z",
+  "trace": "projects/patriotic-virtual-prod/traces/ddbbef4e6952c2009c31e54d2ddadc9b"
+}
+---
+{
+  "insertId": "69abea860003c60bff36ccf1",
+  "labels": {
+    "instanceId": "00da6cd2c4ba7d65239e0ef60d09449889ce2ccd87a9accc5d0247b78ee3d945534931f33442e976246278ec7531d58af89696e17552bfcb307d944238cc325a9e48b52620d30386beec284d5d0f"
+  },
+  "logName": "projects/patriotic-virtual-prod/logs/run.googleapis.com%2Fstdout",
+  "receiveTimestamp": "2026-03-07T09:06:14.506809540Z",
+  "resource": {
+    "labels": {
+      "configuration_name": "patriotic-virtual-backend",
+      "location": "us-central1",
+      "project_id": "patriotic-virtual-prod",
+      "revision_name": "patriotic-virtual-backend-00039-6r2",
+      "service_name": "patriotic-virtual-backend"
+    },
+    "type": "cloud_run_revision"
+  },
+  "textPayload": "::ffff:169.254.169.126 - - [07/Mar/2026:09:06:14 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 500 26 \"https://patriotictelehealth.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"",
+  "timestamp": "2026-03-07T09:06:14.247307Z"
+}

@@ -1,0 +1,1418 @@
+import * as admin from 'firebase-admin';
+import { logger } from '../utils/logger';
+import { doseSpotApiFetch, ensureDoseSpotResultOk, type DoseSpotResult } from './dosespot-rest';
+
+export type DoseSpotEnsureStatus =
+    | 'already_linked'
+    | 'linked_existing'
+    | 'created_new'
+    | 'updated_existing'
+    | 'pending_retry'
+    | 'ambiguous_match'
+    | 'blocked';
+
+export type DoseSpotSyncState =
+    | 'ready'
+    | 'pending_retry'
+    | 'ambiguous_match'
+    | 'blocked';
+
+export type DoseSpotDeleteStatus =
+    | 'deleted'
+    | 'ambiguous_match'
+    | 'not_found'
+    | 'blocked';
+
+export interface EnsureDoseSpotPatientResult {
+    status: DoseSpotEnsureStatus;
+    syncStatus: DoseSpotSyncState;
+    patientUid: string;
+    doseSpotPatientId: number | null;
+    missingFields: string[];
+    candidatePatientIds: number[];
+    matchSource: string | null;
+    message: string;
+    lastError?: string | null;
+}
+
+export interface DeleteDoseSpotPatientResult {
+    status: DoseSpotDeleteStatus;
+    patientUid: string;
+    deletedPatientIds: number[];
+    candidatePatientIds: number[];
+    message: string;
+}
+
+interface DoseSpotIdentifierResponse {
+    Id?: number;
+    Result?: DoseSpotResult;
+}
+
+interface DoseSpotPatientRecord {
+    PatientId?: number | string;
+    FirstName?: string;
+    LastName?: string;
+    DateOfBirth?: string;
+    Gender?: string;
+    Email?: string;
+    Address1?: string;
+    Address2?: string;
+    City?: string;
+    State?: string;
+    ZipCode?: string;
+    PrimaryPhone?: string;
+    PrimaryPhoneType?: string;
+    NonDoseSpotMedicalRecordNumber?: string;
+    Active?: boolean;
+}
+
+interface DoseSpotSearchPatientsResponse {
+    Items?: DoseSpotPatientRecord[];
+    Result?: DoseSpotResult;
+}
+
+export interface DoseSpotAddEditPatientRequest {
+    Prefix?: string;
+    FirstName: string;
+    MiddleName?: string;
+    LastName: string;
+    Suffix?: string;
+    DateOfBirth: string;
+    Gender: 'Male' | 'Female' | 'Unknown';
+    Email?: string;
+    Address1: string;
+    Address2?: string;
+    City: string;
+    State: string;
+    ZipCode: string;
+    PhoneAdditional1?: string;
+    PhoneAdditional2?: string;
+    PhoneAdditionalType1?: string;
+    PhoneAdditionalType2?: string;
+    PrimaryPhone: string;
+    PrimaryPhoneType: string;
+    Weight?: number;
+    WeightMetric?: string | number;
+    Height?: number;
+    HeightMetric?: string | number;
+    NonDoseSpotMedicalRecordNumber: string;
+    Active: boolean;
+    Encounter?: string;
+    IsHospice?: boolean;
+}
+
+interface LocalPatientSource {
+    patientUid: string;
+    firstName: string | null;
+    lastName: string | null;
+    dateOfBirth: string | null;
+    gender: 'Male' | 'Female' | 'Unknown';
+    email: string | null;
+    address1: string | null;
+    address2: string | null;
+    city: string | null;
+    state: string | null;
+    zipCode: string | null;
+    primaryPhone: string | null;
+    mrn: string | null;
+    existingDoseSpotPatientId: number | null;
+    retryCount: number;
+    preferredPharmacy: string | null;
+    preferredPharmacyDoseSpotId: number | null;
+    preferredPharmacySyncStatus: string | null;
+    preferredPharmacySyncedDoseSpotId: number | null;
+    preferredPharmacySyncedPatientId: number | null;
+}
+
+interface PersistSyncStateInput {
+    patientUid: string;
+    doseSpotPatientId: number | null;
+    syncStatus: DoseSpotSyncState;
+    matchSource: string | null;
+    lastError: string | null;
+    retryCount: number;
+    candidatePatientIds: number[];
+}
+
+type PersistSyncStateHandler = (input: PersistSyncStateInput) => Promise<void>;
+
+export interface EnsureDoseSpotPatientOptions {
+    onBehalfOfClinicianId?: number;
+    updateExisting?: boolean;
+}
+
+export interface DeleteDoseSpotPatientOptions {
+    onBehalfOfClinicianId?: number;
+    candidatePatientIds?: number[];
+    deactivateAllExactMatches?: boolean;
+}
+
+export function resolveDoseSpotPatientOperationClinicianId(onBehalfOfClinicianId?: number): number | undefined {
+    const explicitClinicianId = asNumber(onBehalfOfClinicianId);
+    if (explicitClinicianId && explicitClinicianId > 0) {
+        return explicitClinicianId;
+    }
+
+    const configuredClinicianId = asNumber(process.env.DOSESPOT_DEFAULT_CLINICIAN_ID);
+    if (configuredClinicianId && configuredClinicianId > 0) {
+        return configuredClinicianId;
+    }
+
+    return undefined;
+}
+
+export function getDoseSpotPatientClinicianContextError(): string {
+    return 'DoseSpot patient operations require a clinician ID. Set DOSESPOT_DEFAULT_CLINICIAN_ID for patient self-service flows or pass the logged-in provider\'s doseSpotClinicianId.';
+}
+
+interface DoseSpotPatientGateway {
+    searchPatients(
+        params: {
+            firstName: string;
+            lastName: string;
+            dateOfBirth: string;
+        },
+        onBehalfOfClinicianId?: number
+    ): Promise<DoseSpotPatientRecord[]>;
+    addPatient(
+        payload: DoseSpotAddEditPatientRequest,
+        onBehalfOfClinicianId?: number
+    ): Promise<number>;
+    editPatient(
+        patientId: number,
+        payload: DoseSpotAddEditPatientRequest,
+        onBehalfOfClinicianId?: number
+    ): Promise<number>;
+    getPatient(
+        patientId: number,
+        onBehalfOfClinicianId?: number
+    ): Promise<DoseSpotPatientRecord | null>;
+    addPatientPharmacy(
+        patientId: number,
+        payload: { pharmacyId: number; setAsPrimary: boolean },
+        onBehalfOfClinicianId?: number
+    ): Promise<void>;
+}
+
+function toErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+}
+
+function isDoseSpotOperationGroupError(error: unknown): boolean {
+    const message = toErrorMessage(error).toLowerCase();
+    return message.includes('configured operation group');
+}
+
+function isDoseSpotAuthorizationConfigError(error: unknown): boolean {
+    const message = toErrorMessage(error).toLowerCase();
+    return (
+        isDoseSpotOperationGroupError(error) ||
+        message.includes('onbehalfofuser validation failed') ||
+        message.includes('authorization has been denied')
+    );
+}
+
+function isDoseSpotOnBehalfValidationError(error: unknown): boolean {
+    return toErrorMessage(error).toLowerCase().includes('onbehalfofuser validation failed');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function asNonEmptyString(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+}
+
+function asNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+}
+
+function normalizePhone(value: string | null): string | null {
+    if (!value) return null;
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 11 && digits.startsWith('1')) {
+        return digits.slice(1);
+    }
+    return digits.length >= 10 ? digits.slice(0, 10) : null;
+}
+
+function normalizeZip(value: string | null): string | null {
+    if (!value) return null;
+    const digits = value.replace(/\D/g, '');
+    return digits.length >= 5 ? digits.slice(0, 5) : null;
+}
+
+function normalizeGender(value: unknown): 'Male' | 'Female' | 'Unknown' {
+    if (typeof value !== 'string') return 'Unknown';
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'male' || normalized === 'm') return 'Male';
+    if (normalized === 'female' || normalized === 'f') return 'Female';
+    return 'Unknown';
+}
+
+function normalizePhoneType(value: unknown): string {
+    if (typeof value !== 'string') return 'Cell';
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : 'Cell';
+}
+
+function formatDateOnly(value: string | null): string | null {
+    if (!value) return null;
+    const directMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (directMatch) {
+        return `${directMatch[1]}-${directMatch[2]}-${directMatch[3]}`;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString().slice(0, 10);
+}
+
+function toDoseSpotDateTime(value: string): string {
+    return `${value}T00:00:00.000Z`;
+}
+
+function namesFromDisplayName(value: string | null): { firstName: string | null; lastName: string | null } {
+    if (!value) return { firstName: null, lastName: null };
+    const parts = value.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return { firstName: null, lastName: null };
+    return {
+        firstName: parts[0] ?? null,
+        lastName: parts.slice(1).join(' ') || null
+    };
+}
+
+function pickPatientName(data: Record<string, unknown>): { firstName: string | null; lastName: string | null } {
+    const directFirst = asNonEmptyString(data.firstName);
+    const directLast = asNonEmptyString(data.lastName);
+    if (directFirst || directLast) {
+        return {
+            firstName: directFirst,
+            lastName: directLast
+        };
+    }
+
+    return namesFromDisplayName(
+        asNonEmptyString(data.name) ??
+        asNonEmptyString(data.displayName)
+    );
+}
+
+function extractExistingDoseSpotPatientId(data: Record<string, unknown>): number | null {
+    return (
+        asNumber(data.doseSpotPatientId) ??
+        asNumber((data.doseSpot as Record<string, unknown> | undefined)?.patientId) ??
+        null
+    );
+}
+
+function readRetryCount(data: Record<string, unknown>): number {
+    return asNumber((data.doseSpot as Record<string, unknown> | undefined)?.retryCount) ?? 0;
+}
+
+function recommendedMissingFields(source: LocalPatientSource): string[] {
+    return [
+        source.address1 ? null : 'address1',
+        source.city ? null : 'city',
+        source.state ? null : 'state',
+        source.zipCode ? null : 'zipCode',
+        source.primaryPhone ? null : 'primaryPhone'
+    ].filter((value): value is string => Boolean(value));
+}
+
+function blockingMissingFields(source: LocalPatientSource): string[] {
+    return [
+        source.firstName ? null : 'firstName',
+        source.lastName ? null : 'lastName',
+        source.dateOfBirth ? null : 'dateOfBirth'
+    ].filter((value): value is string => Boolean(value));
+}
+
+function writeBlockingMissingFields(source: LocalPatientSource): string[] {
+    return [
+        ...blockingMissingFields(source),
+        ...recommendedMissingFields(source)
+    ];
+}
+
+function buildDoseSpotPayload(source: LocalPatientSource): DoseSpotAddEditPatientRequest {
+    const missingFields = writeBlockingMissingFields(source);
+    if (missingFields.length > 0) {
+        throw new Error(`DoseSpot patient payload requires ${missingFields.join(', ')}.`);
+    }
+
+    const payload: DoseSpotAddEditPatientRequest = {
+        FirstName: source.firstName!,
+        LastName: source.lastName!,
+        DateOfBirth: toDoseSpotDateTime(source.dateOfBirth!),
+        Gender: source.gender,
+        Address1: source.address1!,
+        City: source.city!,
+        State: source.state!,
+        ZipCode: source.zipCode!,
+        PrimaryPhone: source.primaryPhone!,
+        PrimaryPhoneType: 'Cell',
+        NonDoseSpotMedicalRecordNumber: source.mrn ?? source.patientUid,
+        Active: true
+    };
+
+    if (source.email) payload.Email = source.email;
+    if (source.address2) payload.Address2 = source.address2;
+
+    return payload;
+}
+
+function buildDoseSpotEditPayloadFromRecord(
+    record: DoseSpotPatientRecord,
+    active: boolean
+): DoseSpotAddEditPatientRequest {
+    const firstName = asNonEmptyString(record.FirstName);
+    const lastName = asNonEmptyString(record.LastName);
+    const dateOfBirth = formatDateOnly(record.DateOfBirth ?? null);
+    const address1 = asNonEmptyString(record.Address1);
+    const city = asNonEmptyString(record.City);
+    const state = asNonEmptyString(record.State);
+    const zipCode = normalizeZip(asNonEmptyString(record.ZipCode));
+    const primaryPhone = normalizePhone(asNonEmptyString(record.PrimaryPhone));
+
+    const missingFields = [
+        firstName ? null : 'firstName',
+        lastName ? null : 'lastName',
+        dateOfBirth ? null : 'dateOfBirth',
+        address1 ? null : 'address1',
+        city ? null : 'city',
+        state ? null : 'state',
+        zipCode ? null : 'zipCode',
+        primaryPhone ? null : 'primaryPhone'
+    ].filter((value): value is string => Boolean(value));
+
+    if (missingFields.length > 0) {
+        throw new Error(`DoseSpot patient edit payload requires ${missingFields.join(', ')}.`);
+    }
+
+    const payload: DoseSpotAddEditPatientRequest = {
+        FirstName: firstName!,
+        LastName: lastName!,
+        DateOfBirth: toDoseSpotDateTime(dateOfBirth!),
+        Gender: normalizeGender(record.Gender),
+        Address1: address1!,
+        City: city!,
+        State: state!,
+        ZipCode: zipCode!,
+        PrimaryPhone: primaryPhone!,
+        PrimaryPhoneType: normalizePhoneType(record.PrimaryPhoneType),
+        NonDoseSpotMedicalRecordNumber: asNonEmptyString(record.NonDoseSpotMedicalRecordNumber) ?? `${pickPatientRecordId(record) ?? 'unknown'}`,
+        Active: active
+    };
+
+    const email = asNonEmptyString(record.Email);
+    const address2 = asNonEmptyString(record.Address2);
+    if (email) payload.Email = email;
+    if (address2) payload.Address2 = address2;
+
+    return payload;
+}
+
+function pickPatientRecordId(record: DoseSpotPatientRecord): number | null {
+    return asNumber(record.PatientId);
+}
+
+function recordsMatchExactly(record: DoseSpotPatientRecord, source: LocalPatientSource): boolean {
+    const recordFirstName = asNonEmptyString(record.FirstName)?.toLowerCase();
+    const recordLastName = asNonEmptyString(record.LastName)?.toLowerCase();
+    const recordDob = formatDateOnly(record.DateOfBirth ?? null);
+
+    return (
+        recordFirstName === source.firstName?.toLowerCase() &&
+        recordLastName === source.lastName?.toLowerCase() &&
+        recordDob === source.dateOfBirth
+    );
+}
+
+function recordMatchesContact(record: DoseSpotPatientRecord, source: LocalPatientSource): boolean {
+    const sourceZip = normalizeZip(source.zipCode);
+    const sourcePhone = normalizePhone(source.primaryPhone);
+    const recordZip = normalizeZip(asNonEmptyString(record.ZipCode));
+    const recordPhone = normalizePhone(asNonEmptyString(record.PrimaryPhone));
+
+    return (
+        (Boolean(sourceZip) && sourceZip === recordZip) ||
+        (Boolean(sourcePhone) && sourcePhone === recordPhone)
+    );
+}
+
+function chooseSearchMatch(records: DoseSpotPatientRecord[], source: LocalPatientSource): {
+    chosenPatientId: number | null;
+    candidatePatientIds: number[];
+    matchSource: string | null;
+    ambiguous: boolean;
+} {
+    const exactMatches = records.filter((record) => recordsMatchExactly(record, source));
+    const exactIds = exactMatches
+        .map((record) => pickPatientRecordId(record))
+        .filter((value): value is number => value !== null);
+
+    if (exactMatches.length === 1 && exactIds.length === 1) {
+        return {
+            chosenPatientId: exactIds[0],
+            candidatePatientIds: exactIds,
+            matchSource: 'search_exact',
+            ambiguous: false
+        };
+    }
+
+    if (exactMatches.length > 1) {
+        const narrowed = exactMatches.filter((record) => recordMatchesContact(record, source));
+        const narrowedIds = narrowed
+            .map((record) => pickPatientRecordId(record))
+            .filter((value): value is number => value !== null);
+
+        if (narrowed.length === 1 && narrowedIds.length === 1) {
+            return {
+                chosenPatientId: narrowedIds[0],
+                candidatePatientIds: exactIds,
+                matchSource: 'search_contact',
+                ambiguous: false
+            };
+        }
+
+        return {
+            chosenPatientId: null,
+            candidatePatientIds: exactIds,
+            matchSource: null,
+            ambiguous: true
+        };
+    }
+
+    return {
+        chosenPatientId: null,
+        candidatePatientIds: [],
+        matchSource: null,
+        ambiguous: false
+    };
+}
+
+function chooseExactMatchRecords(records: DoseSpotPatientRecord[], source: LocalPatientSource): DoseSpotPatientRecord[] {
+    return records.filter((record) => recordsMatchExactly(record, source));
+}
+
+async function withPatientManagementAuthFallback<T>(
+    onBehalfOfClinicianId: number | undefined,
+    operation: string,
+    action: (effectiveOnBehalfOfClinicianId?: number) => Promise<T>
+): Promise<T> {
+    return action(onBehalfOfClinicianId);
+}
+
+const defaultGateway: DoseSpotPatientGateway = {
+    async searchPatients(params, onBehalfOfClinicianId) {
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'searchPatients', async (effectiveOnBehalfOfClinicianId) => {
+            const query = new URLSearchParams({
+                firstname: params.firstName,
+                lastname: params.lastName,
+                dob: params.dateOfBirth,
+                pageNumber: '1',
+                patientStatus: '2'
+            });
+
+            const response = await doseSpotApiFetch<DoseSpotSearchPatientsResponse>(
+                `api/patients/search?${query.toString()}`,
+                { method: 'GET', onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId }
+            );
+
+            return Array.isArray(response.Items) ? response.Items : [];
+        });
+    },
+
+    async addPatient(payload, onBehalfOfClinicianId) {
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'addPatient', async (effectiveOnBehalfOfClinicianId) => {
+            const response = await doseSpotApiFetch<DoseSpotIdentifierResponse>('api/patients', {
+                method: 'POST',
+                body: payload,
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
+            ensureDoseSpotResultOk(response.Result, 'add patient');
+
+            const id = asNumber(response.Id);
+            if (!id) {
+                throw new Error('DoseSpot add patient response did not include an Id.');
+            }
+
+            return id;
+        });
+    },
+
+    async editPatient(patientId, payload, onBehalfOfClinicianId) {
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'editPatient', async (effectiveOnBehalfOfClinicianId) => {
+            const response = await doseSpotApiFetch<DoseSpotIdentifierResponse>(`api/patients/${patientId}`, {
+                method: 'PUT',
+                body: payload,
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
+            ensureDoseSpotResultOk(response.Result, 'edit patient');
+
+            return asNumber(response.Id) ?? patientId;
+        });
+    },
+
+    async getPatient(patientId, onBehalfOfClinicianId) {
+        return withPatientManagementAuthFallback(onBehalfOfClinicianId, 'getPatient', async (effectiveOnBehalfOfClinicianId) => {
+            const response = await doseSpotApiFetch<{ Item?: DoseSpotPatientRecord }>(`api/patients/${patientId}`, {
+                method: 'GET',
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
+
+            return response.Item ?? null;
+        });
+    },
+
+    async addPatientPharmacy(patientId, payload, onBehalfOfClinicianId) {
+        await withPatientManagementAuthFallback(onBehalfOfClinicianId, 'addPatientPharmacy', async (effectiveOnBehalfOfClinicianId) => {
+            await doseSpotApiFetch<{ Result?: DoseSpotResult }>(`api/patients/${patientId}/pharmacies`, {
+                method: 'POST',
+                body: {
+                    PharmacyId: payload.pharmacyId,
+                    SetAsPrimary: payload.setAsPrimary
+                },
+                onBehalfOfClinicianId: effectiveOnBehalfOfClinicianId
+            });
+        });
+    }
+};
+
+type PreferredPharmacySyncStatus = 'synced' | 'skipped' | 'pending_retry' | 'blocked';
+
+interface PreferredPharmacySyncOutcome {
+    status: PreferredPharmacySyncStatus;
+    attempted: boolean;
+    pharmacyId: number | null;
+    message: string;
+    errorMessage: string | null;
+}
+
+function shouldSyncPreferredPharmacy(source: LocalPatientSource, doseSpotPatientId: number): boolean {
+    if (!source.preferredPharmacyDoseSpotId) {
+        return false;
+    }
+
+    if (source.preferredPharmacySyncStatus !== 'synced') {
+        return true;
+    }
+
+    return (
+        source.preferredPharmacySyncedDoseSpotId !== source.preferredPharmacyDoseSpotId ||
+        source.preferredPharmacySyncedPatientId !== doseSpotPatientId
+    );
+}
+
+async function persistPreferredPharmacySyncState(
+    source: LocalPatientSource,
+    doseSpotPatientId: number,
+    outcome: PreferredPharmacySyncOutcome
+): Promise<void> {
+    if (admin.apps.length === 0) {
+        return;
+    }
+
+    const now = new Date();
+    const patientPatch: Record<string, unknown> = {
+        'doseSpot.preferredPharmacySync.status': outcome.status,
+        'doseSpot.preferredPharmacySync.pharmacyId': outcome.pharmacyId,
+        'doseSpot.preferredPharmacySync.doseSpotPatientId': doseSpotPatientId,
+        'doseSpot.preferredPharmacySync.lastAttemptAt': now,
+        'doseSpot.preferredPharmacySync.lastSyncedAt': outcome.status === 'synced' ? now : null,
+        'doseSpot.preferredPharmacySync.lastError': outcome.status === 'synced' ? null : (outcome.errorMessage ?? outcome.message),
+        ...(outcome.pharmacyId ? {
+            preferredPharmacyDoseSpotId: outcome.pharmacyId,
+            'doseSpot.preferredPharmacyDoseSpotId': outcome.pharmacyId
+        } : {}),
+        ...(source.preferredPharmacy ? { preferredPharmacy: source.preferredPharmacy } : {}),
+        updatedAt: now
+    };
+
+    const userPatch: Record<string, unknown> = {
+        'doseSpot.preferredPharmacySync.status': outcome.status,
+        'doseSpot.preferredPharmacySync.pharmacyId': outcome.pharmacyId,
+        'doseSpot.preferredPharmacySync.doseSpotPatientId': doseSpotPatientId,
+        'doseSpot.preferredPharmacySync.lastAttemptAt': now,
+        'doseSpot.preferredPharmacySync.lastSyncedAt': outcome.status === 'synced' ? now : null,
+        'doseSpot.preferredPharmacySync.lastError': outcome.status === 'synced' ? null : (outcome.errorMessage ?? outcome.message),
+        ...(outcome.pharmacyId ? {
+            preferredPharmacyDoseSpotId: outcome.pharmacyId,
+            'doseSpot.preferredPharmacyDoseSpotId': outcome.pharmacyId
+        } : {}),
+        updatedAt: now
+    };
+
+    await Promise.all([
+        admin.firestore().collection('patients').doc(source.patientUid).set(patientPatch, { merge: true }),
+        admin.firestore().collection('users').doc(source.patientUid).set(userPatch, { merge: true })
+    ]);
+}
+
+async function syncPreferredPharmacyForDoseSpotPatient(
+    source: LocalPatientSource,
+    doseSpotPatientId: number,
+    options: EnsureDoseSpotPatientOptions,
+    gateway: DoseSpotPatientGateway
+): Promise<PreferredPharmacySyncOutcome> {
+    const effectiveOnBehalfOfClinicianId = resolveDoseSpotPatientOperationClinicianId(options.onBehalfOfClinicianId);
+    const pharmacyId = source.preferredPharmacyDoseSpotId;
+    if (!pharmacyId) {
+        return {
+            status: 'skipped',
+            attempted: false,
+            pharmacyId: null,
+            message: 'No preferredPharmacyDoseSpotId is set for this patient.',
+            errorMessage: null
+        };
+    }
+
+    if (!shouldSyncPreferredPharmacy(source, doseSpotPatientId)) {
+        return {
+            status: 'skipped',
+            attempted: false,
+            pharmacyId,
+            message: 'Preferred pharmacy is already synced to DoseSpot.',
+            errorMessage: null
+        };
+    }
+
+    if (!effectiveOnBehalfOfClinicianId) {
+        return {
+            status: 'blocked',
+            attempted: false,
+            pharmacyId,
+            message: getDoseSpotPatientClinicianContextError(),
+            errorMessage: getDoseSpotPatientClinicianContextError()
+        };
+    }
+
+    try {
+        await gateway.addPatientPharmacy(
+            doseSpotPatientId,
+            {
+                pharmacyId,
+                setAsPrimary: true
+            },
+            effectiveOnBehalfOfClinicianId
+        );
+
+        return {
+            status: 'synced',
+            attempted: true,
+            pharmacyId,
+            message: 'Preferred pharmacy synced to DoseSpot.',
+            errorMessage: null
+        };
+    } catch (error) {
+        const errorMessage = toErrorMessage(error);
+        if (isDoseSpotAuthorizationConfigError(error)) {
+            return {
+                status: 'blocked',
+                attempted: true,
+                pharmacyId,
+                message: 'DoseSpot pharmacy operations are not enabled for the current staging credentials.',
+                errorMessage
+            };
+        }
+
+        return {
+            status: 'pending_retry',
+            attempted: true,
+            pharmacyId,
+            message: 'Preferred pharmacy sync failed. Retry on the next patient sync attempt.',
+            errorMessage
+        };
+    }
+}
+
+async function loadLocalPatientSource(patientUid: string): Promise<LocalPatientSource | null> {
+    const firestore = admin.firestore();
+    const [patientDoc, userDoc] = await Promise.all([
+        firestore.collection('patients').doc(patientUid).get(),
+        firestore.collection('users').doc(patientUid).get()
+    ]);
+
+    if (!patientDoc.exists && !userDoc.exists) {
+        return null;
+    }
+
+    const merged = {
+        ...(userDoc.exists ? userDoc.data() : {}),
+        ...(patientDoc.exists ? patientDoc.data() : {})
+    } as Record<string, unknown>;
+    const doseSpotData = isRecord(merged.doseSpot) ? merged.doseSpot : {};
+    const preferredPharmacySync = isRecord(doseSpotData.preferredPharmacySync)
+        ? doseSpotData.preferredPharmacySync
+        : {};
+    const patientName = pickPatientName(merged);
+    const formattedDob = formatDateOnly(
+        asNonEmptyString(merged.dateOfBirth) ??
+        asNonEmptyString(merged.dob)
+    );
+
+    return {
+        patientUid,
+        firstName: patientName.firstName,
+        lastName: patientName.lastName,
+        dateOfBirth: formattedDob,
+        gender: normalizeGender(merged.sexAtBirth ?? merged.sex ?? merged.gender),
+        email: asNonEmptyString(merged.email),
+        address1: asNonEmptyString(merged.address1) ?? asNonEmptyString(merged.address),
+        address2: asNonEmptyString(merged.address2),
+        city: asNonEmptyString(merged.city),
+        state: asNonEmptyString(merged.state),
+        zipCode: normalizeZip(asNonEmptyString(merged.zipCode) ?? asNonEmptyString(merged.zip)),
+        primaryPhone: normalizePhone(asNonEmptyString(merged.phone) ?? asNonEmptyString(merged.phoneNumber)),
+        mrn: asNonEmptyString(merged.mrn),
+        existingDoseSpotPatientId: extractExistingDoseSpotPatientId(merged),
+        retryCount: readRetryCount(merged),
+        preferredPharmacy: asNonEmptyString(merged.preferredPharmacy),
+        preferredPharmacyDoseSpotId: asNumber(merged.preferredPharmacyDoseSpotId) ?? asNumber(doseSpotData.preferredPharmacyDoseSpotId),
+        preferredPharmacySyncStatus: asNonEmptyString(preferredPharmacySync.status),
+        preferredPharmacySyncedDoseSpotId: asNumber(preferredPharmacySync.pharmacyId),
+        preferredPharmacySyncedPatientId: asNumber(preferredPharmacySync.doseSpotPatientId)
+    };
+}
+
+async function persistSyncState(input: PersistSyncStateInput): Promise<void> {
+    const now = new Date();
+    const patientPayload: Record<string, unknown> = {
+        doseSpotPatientId: input.doseSpotPatientId,
+        'doseSpot.syncStatus': input.syncStatus,
+        'doseSpot.matchSource': input.matchSource,
+        'doseSpot.lastError': input.lastError,
+        'doseSpot.retryCount': input.retryCount,
+        'doseSpot.candidatePatientIds': input.candidatePatientIds,
+        ...(input.syncStatus === 'ready' ? { 'doseSpot.lastSyncedAt': now } : {}),
+        updatedAt: now
+    };
+
+    const userPayload: Record<string, unknown> = {
+        doseSpotPatientId: input.doseSpotPatientId,
+        'doseSpot.syncStatus': input.syncStatus,
+        ...(input.syncStatus === 'ready' ? { 'doseSpot.lastSyncedAt': now } : {}),
+        updatedAt: now
+    };
+
+    await Promise.all([
+        admin.firestore().collection('patients').doc(input.patientUid).set(patientPayload, { merge: true }),
+        admin.firestore().collection('users').doc(input.patientUid).set(userPayload, { merge: true })
+    ]);
+}
+
+async function clearPersistedSyncState(patientUid: string): Promise<void> {
+    const now = new Date();
+    const deleteField = admin.firestore.FieldValue.delete();
+
+    await Promise.all([
+        admin.firestore().collection('patients').doc(patientUid).set({
+            doseSpotPatientId: deleteField,
+            'doseSpot.syncStatus': deleteField,
+            'doseSpot.matchSource': deleteField,
+            'doseSpot.lastError': deleteField,
+            'doseSpot.retryCount': deleteField,
+            'doseSpot.candidatePatientIds': deleteField,
+            'doseSpot.lastSyncedAt': deleteField,
+            'doseSpot.preferredPharmacySync': deleteField,
+            'doseSpot.preferredPharmacyDoseSpotId': deleteField,
+            updatedAt: now
+        }, { merge: true }),
+        admin.firestore().collection('users').doc(patientUid).set({
+            doseSpotPatientId: deleteField,
+            'doseSpot.syncStatus': deleteField,
+            'doseSpot.lastSyncedAt': deleteField,
+            'doseSpot.preferredPharmacySync': deleteField,
+            'doseSpot.preferredPharmacyDoseSpotId': deleteField,
+            updatedAt: now
+        }, { merge: true })
+    ]);
+}
+
+function buildReadyResult(
+    source: LocalPatientSource,
+    status: Extract<DoseSpotEnsureStatus, 'already_linked' | 'linked_existing' | 'created_new' | 'updated_existing'>,
+    doseSpotPatientId: number,
+    matchSource: string
+): EnsureDoseSpotPatientResult {
+    return {
+        status,
+        syncStatus: 'ready',
+        patientUid: source.patientUid,
+        doseSpotPatientId,
+        missingFields: recommendedMissingFields(source),
+        candidatePatientIds: status === 'linked_existing' ? [doseSpotPatientId] : [],
+        matchSource,
+        message: status === 'created_new'
+            ? 'Created a new DoseSpot patient and linked it to the local record.'
+            : status === 'updated_existing'
+                ? 'Updated the linked DoseSpot patient record.'
+                : status === 'linked_existing'
+                    ? 'Linked the existing DoseSpot patient to the local record.'
+                    : 'Using the linked DoseSpot patient record.'
+    };
+}
+
+async function finalizeResult(
+    source: LocalPatientSource,
+    result: EnsureDoseSpotPatientResult,
+    lastError: string | null = null,
+    persistHandler: PersistSyncStateHandler = persistSyncState
+): Promise<EnsureDoseSpotPatientResult> {
+    const nextRetryCount = result.syncStatus === 'pending_retry'
+        ? source.retryCount + 1
+        : (result.syncStatus === 'ready' ? 0 : source.retryCount);
+
+    await persistHandler({
+        patientUid: source.patientUid,
+        doseSpotPatientId: result.doseSpotPatientId,
+        syncStatus: result.syncStatus,
+        matchSource: result.matchSource,
+        lastError,
+        retryCount: nextRetryCount,
+        candidatePatientIds: result.candidatePatientIds
+    });
+
+    return {
+        ...result,
+        lastError
+    };
+}
+
+async function finalizeReadyResultWithPreferredPharmacy(
+    source: LocalPatientSource,
+    result: EnsureDoseSpotPatientResult,
+    options: EnsureDoseSpotPatientOptions,
+    gateway: DoseSpotPatientGateway,
+    persistHandler: PersistSyncStateHandler
+): Promise<EnsureDoseSpotPatientResult> {
+    const finalized = await finalizeResult(source, result, null, persistHandler);
+    const doseSpotPatientId = finalized.doseSpotPatientId;
+
+    if (!doseSpotPatientId || finalized.syncStatus !== 'ready') {
+        return finalized;
+    }
+
+    const outcome = await syncPreferredPharmacyForDoseSpotPatient(source, doseSpotPatientId, options, gateway);
+    await persistPreferredPharmacySyncState(source, doseSpotPatientId, outcome);
+
+    if (outcome.status === 'synced') {
+        return {
+            ...finalized,
+            message: `${finalized.message} Preferred pharmacy synced to DoseSpot.`
+        };
+    }
+
+    if (outcome.status === 'pending_retry' || outcome.status === 'blocked') {
+        return {
+            ...finalized,
+            message: `${finalized.message} ${outcome.message}`
+        };
+    }
+
+    return finalized;
+}
+
+async function ensureDoseSpotPatientWithSource(
+    source: LocalPatientSource,
+    options: EnsureDoseSpotPatientOptions = {},
+    gateway: DoseSpotPatientGateway = defaultGateway,
+    persistHandler: PersistSyncStateHandler = persistSyncState
+): Promise<EnsureDoseSpotPatientResult> {
+    const effectiveOnBehalfOfClinicianId = resolveDoseSpotPatientOperationClinicianId(options.onBehalfOfClinicianId);
+
+    if (source.existingDoseSpotPatientId) {
+        if (options.updateExisting) {
+            const blockingFields = writeBlockingMissingFields(source);
+            if (blockingFields.length > 0) {
+                return finalizeReadyResultWithPreferredPharmacy(
+                    source,
+                    {
+                        status: 'already_linked',
+                        syncStatus: 'ready',
+                        patientUid: source.patientUid,
+                        doseSpotPatientId: source.existingDoseSpotPatientId,
+                        missingFields: blockingFields,
+                        candidatePatientIds: [],
+                        matchSource: 'existing_link',
+                        message: 'Using the linked DoseSpot patient record. Add missing demographics before attempting a sync update.'
+                    },
+                    options,
+                    gateway,
+                    persistHandler
+                );
+            }
+
+            if (!effectiveOnBehalfOfClinicianId) {
+                return finalizeResult(
+                    source,
+                    {
+                        status: 'blocked',
+                        syncStatus: 'blocked',
+                        patientUid: source.patientUid,
+                        doseSpotPatientId: source.existingDoseSpotPatientId,
+                        missingFields: [],
+                        candidatePatientIds: [],
+                        matchSource: 'existing_link',
+                        message: getDoseSpotPatientClinicianContextError()
+                    },
+                    getDoseSpotPatientClinicianContextError(),
+                    persistHandler
+                );
+            }
+
+            const payload = buildDoseSpotPayload(source);
+            try {
+                const updatedId = await gateway.editPatient(
+                    source.existingDoseSpotPatientId,
+                    payload,
+                    effectiveOnBehalfOfClinicianId
+                );
+
+                return finalizeReadyResultWithPreferredPharmacy(
+                    source,
+                    buildReadyResult(source, 'updated_existing', updatedId, 'updated_existing'),
+                    options,
+                    gateway,
+                    persistHandler
+                );
+            } catch (error) {
+                const message = toErrorMessage(error) || 'DoseSpot patient update failed.';
+                logger.warn('[DoseSpot Patient Sync] Linked patient update failed', {
+                    patientUid: source.patientUid,
+                    doseSpotPatientId: source.existingDoseSpotPatientId,
+                    error: message
+                });
+
+                if (isDoseSpotAuthorizationConfigError(error)) {
+                    return finalizeResult(
+                        source,
+                        {
+                            status: 'blocked',
+                            syncStatus: 'blocked',
+                            patientUid: source.patientUid,
+                            doseSpotPatientId: source.existingDoseSpotPatientId,
+                            missingFields: [],
+                            candidatePatientIds: [],
+                            matchSource: 'existing_link',
+                            message: 'DoseSpot REST patient operations are not enabled for the current staging credentials. Contact DoseSpot to enable the JumpStart patient-management operation group.'
+                        },
+                        message,
+                        persistHandler
+                    );
+                }
+
+                return finalizeResult(
+                    source,
+                    {
+                        status: 'pending_retry',
+                        syncStatus: 'pending_retry',
+                        patientUid: source.patientUid,
+                        doseSpotPatientId: source.existingDoseSpotPatientId,
+                        missingFields: recommendedMissingFields(source),
+                        candidatePatientIds: [],
+                        matchSource: 'existing_link',
+                        message: 'DoseSpot patient is linked, but demographic sync failed and should be retried.'
+                    },
+                    message,
+                    persistHandler
+                );
+            }
+        }
+
+        return finalizeReadyResultWithPreferredPharmacy(
+            source,
+            buildReadyResult(
+                source,
+                'already_linked',
+                source.existingDoseSpotPatientId,
+                'existing_link'
+            ),
+            options,
+            gateway,
+            persistHandler
+        );
+    }
+
+    const blockingFields = blockingMissingFields(source);
+    if (blockingFields.length > 0) {
+        return finalizeResult(source, {
+            status: 'blocked',
+            syncStatus: 'blocked',
+            patientUid: source.patientUid,
+            doseSpotPatientId: null,
+            missingFields: blockingFields,
+            candidatePatientIds: [],
+            matchSource: null,
+            message: 'DoseSpot sync requires first name, last name, and date of birth.'
+        }, null, persistHandler);
+    }
+
+    if (!effectiveOnBehalfOfClinicianId) {
+        return finalizeResult(
+            source,
+            {
+                status: 'blocked',
+                syncStatus: 'blocked',
+                patientUid: source.patientUid,
+                doseSpotPatientId: null,
+                missingFields: [],
+                candidatePatientIds: [],
+                matchSource: null,
+                message: getDoseSpotPatientClinicianContextError()
+            },
+            getDoseSpotPatientClinicianContextError(),
+            persistHandler
+        );
+    }
+
+    try {
+        const searchResults = await gateway.searchPatients({
+            firstName: source.firstName!,
+            lastName: source.lastName!,
+            dateOfBirth: source.dateOfBirth!
+        }, effectiveOnBehalfOfClinicianId);
+
+        const match = chooseSearchMatch(searchResults, source);
+        if (match.chosenPatientId) {
+            return finalizeReadyResultWithPreferredPharmacy(
+                source,
+                {
+                    ...buildReadyResult(source, 'linked_existing', match.chosenPatientId, match.matchSource ?? 'search_exact'),
+                    candidatePatientIds: match.candidatePatientIds
+                },
+                options,
+                gateway,
+                persistHandler
+            );
+        }
+
+        if (match.ambiguous) {
+            return finalizeResult(source, {
+                status: 'ambiguous_match',
+                syncStatus: 'ambiguous_match',
+                patientUid: source.patientUid,
+                doseSpotPatientId: null,
+                missingFields: recommendedMissingFields(source),
+                candidatePatientIds: match.candidatePatientIds,
+                matchSource: null,
+                message: 'Multiple DoseSpot patient matches were found. Review the patient record before linking.'
+            }, null, persistHandler);
+        }
+    } catch (error) {
+        const message = toErrorMessage(error) || 'DoseSpot patient search failed.';
+        logger.warn('[DoseSpot Patient Sync] Search failed', {
+            patientUid: source.patientUid,
+            error: message
+        });
+
+        if (isDoseSpotAuthorizationConfigError(error)) {
+            return finalizeResult(
+                source,
+                {
+                    status: 'blocked',
+                    syncStatus: 'blocked',
+                    patientUid: source.patientUid,
+                    doseSpotPatientId: null,
+                    missingFields: [],
+                    candidatePatientIds: [],
+                    matchSource: null,
+                    message: 'DoseSpot REST patient operations are not enabled for the current staging credentials. Contact DoseSpot to enable the JumpStart patient-management operation group.'
+                },
+                message,
+                persistHandler
+            );
+        }
+
+        return finalizeResult(
+            source,
+            {
+                status: 'pending_retry',
+                syncStatus: 'pending_retry',
+                patientUid: source.patientUid,
+                doseSpotPatientId: null,
+                missingFields: recommendedMissingFields(source),
+                candidatePatientIds: [],
+                matchSource: null,
+                message: 'DoseSpot patient search failed. Retry on the next sync attempt.'
+            },
+            message,
+            persistHandler
+        );
+    }
+
+    const createBlockingFields = recommendedMissingFields(source);
+    if (createBlockingFields.length > 0) {
+        return finalizeResult(source, {
+            status: 'blocked',
+            syncStatus: 'blocked',
+            patientUid: source.patientUid,
+            doseSpotPatientId: null,
+            missingFields: createBlockingFields,
+            candidatePatientIds: [],
+            matchSource: null,
+            message: 'DoseSpot patient creation requires address1, city, state, zipCode, and primaryPhone.'
+        }, null, persistHandler);
+    }
+
+    const payload = buildDoseSpotPayload(source);
+
+    try {
+        const createdPatientId = await gateway.addPatient(payload, effectiveOnBehalfOfClinicianId);
+        return finalizeReadyResultWithPreferredPharmacy(
+            source,
+            buildReadyResult(source, 'created_new', createdPatientId, 'created'),
+            options,
+            gateway,
+            persistHandler
+        );
+    } catch (error) {
+        const message = toErrorMessage(error) || 'DoseSpot patient creation failed.';
+        logger.warn('[DoseSpot Patient Sync] Create failed', {
+            patientUid: source.patientUid,
+            error: message
+        });
+
+        if (isDoseSpotAuthorizationConfigError(error)) {
+            return finalizeResult(
+                source,
+                {
+                    status: 'blocked',
+                    syncStatus: 'blocked',
+                    patientUid: source.patientUid,
+                    doseSpotPatientId: null,
+                    missingFields: [],
+                    candidatePatientIds: [],
+                    matchSource: null,
+                    message: 'DoseSpot REST patient operations are not enabled for the current staging credentials. Contact DoseSpot to enable the JumpStart patient-management operation group.'
+                },
+                message,
+                persistHandler
+            );
+        }
+
+        return finalizeResult(
+            source,
+            {
+                status: 'pending_retry',
+                syncStatus: 'pending_retry',
+                patientUid: source.patientUid,
+                doseSpotPatientId: null,
+                missingFields: recommendedMissingFields(source),
+                candidatePatientIds: [],
+                matchSource: null,
+                message: 'DoseSpot patient creation failed. Retry on the next sync attempt.'
+            },
+            message,
+            persistHandler
+        );
+    }
+}
+
+export async function ensureDoseSpotPatientForUid(
+    patientUid: string,
+    options: EnsureDoseSpotPatientOptions = {},
+    gateway: DoseSpotPatientGateway = defaultGateway
+): Promise<EnsureDoseSpotPatientResult> {
+    const source = await loadLocalPatientSource(patientUid);
+    if (!source) {
+        return {
+            status: 'blocked',
+            syncStatus: 'blocked',
+            patientUid,
+            doseSpotPatientId: null,
+            missingFields: ['patientRecord'],
+            candidatePatientIds: [],
+            matchSource: null,
+            message: 'Local patient record was not found.',
+            lastError: null
+        };
+    }
+
+    return ensureDoseSpotPatientWithSource(source, options, gateway);
+}
+
+async function deleteDoseSpotPatientWithSource(
+    source: LocalPatientSource,
+    options: DeleteDoseSpotPatientOptions = {},
+    gateway: DoseSpotPatientGateway = defaultGateway,
+    clearPersistedStateHandler: (patientUid: string) => Promise<void> = clearPersistedSyncState
+): Promise<DeleteDoseSpotPatientResult> {
+    const effectiveOnBehalfOfClinicianId = resolveDoseSpotPatientOperationClinicianId(options.onBehalfOfClinicianId);
+    if (!effectiveOnBehalfOfClinicianId) {
+        return {
+            status: 'blocked',
+            patientUid: source.patientUid,
+            deletedPatientIds: [],
+            candidatePatientIds: [],
+            message: getDoseSpotPatientClinicianContextError()
+        };
+    }
+
+    const explicitCandidateIds = Array.from(new Set(
+        (options.candidatePatientIds ?? [])
+            .map((value) => asNumber(value))
+            .filter((value): value is number => value !== null && value > 0)
+    ));
+
+    let targetRecords: DoseSpotPatientRecord[] = [];
+    let candidatePatientIds: number[] = [];
+
+    if (explicitCandidateIds.length > 0) {
+        candidatePatientIds = explicitCandidateIds;
+        const records = await Promise.all(
+            explicitCandidateIds.map((patientId) => gateway.getPatient(patientId, effectiveOnBehalfOfClinicianId))
+        );
+        targetRecords = records.filter((record): record is DoseSpotPatientRecord => record !== null);
+    } else if (source.existingDoseSpotPatientId) {
+        candidatePatientIds = [source.existingDoseSpotPatientId];
+        const record = await gateway.getPatient(source.existingDoseSpotPatientId, effectiveOnBehalfOfClinicianId);
+        targetRecords = record ? [record] : [];
+    } else {
+        const blockingFields = blockingMissingFields(source);
+        if (blockingFields.length > 0) {
+            return {
+                status: 'blocked',
+                patientUid: source.patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds: [],
+                message: 'DoseSpot delete lookup requires first name, last name, and date of birth.'
+            };
+        }
+
+        const searchResults = await gateway.searchPatients({
+            firstName: source.firstName!,
+            lastName: source.lastName!,
+            dateOfBirth: source.dateOfBirth!
+        }, effectiveOnBehalfOfClinicianId);
+
+        const exactMatches = chooseExactMatchRecords(searchResults, source);
+        candidatePatientIds = exactMatches
+            .map((record) => pickPatientRecordId(record))
+            .filter((value): value is number => value !== null);
+
+        if (candidatePatientIds.length === 0) {
+            await clearPersistedStateHandler(source.patientUid);
+            return {
+                status: 'not_found',
+                patientUid: source.patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds: [],
+                message: 'No exact DoseSpot patient match was found to delete.'
+            };
+        }
+
+        if (candidatePatientIds.length > 1 && options.deactivateAllExactMatches !== true) {
+            return {
+                status: 'ambiguous_match',
+                patientUid: source.patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds,
+                message: 'Multiple exact DoseSpot patient matches were found. Pass candidate ids or request deletion of all exact matches.'
+            };
+        }
+
+        targetRecords = exactMatches;
+    }
+
+    if (targetRecords.length === 0) {
+        await clearPersistedStateHandler(source.patientUid);
+        return {
+            status: 'not_found',
+            patientUid: source.patientUid,
+            deletedPatientIds: [],
+            candidatePatientIds,
+            message: 'No DoseSpot patient record was found for the requested deletion.'
+        };
+    }
+
+    const deletedPatientIds: number[] = [];
+    for (const record of targetRecords) {
+        const patientId = pickPatientRecordId(record);
+        if (!patientId) {
+            continue;
+        }
+
+        const payload = buildDoseSpotEditPayloadFromRecord(record, false);
+        await gateway.editPatient(patientId, payload, effectiveOnBehalfOfClinicianId);
+        deletedPatientIds.push(patientId);
+    }
+
+    await clearPersistedStateHandler(source.patientUid);
+
+    return {
+        status: 'deleted',
+        patientUid: source.patientUid,
+        deletedPatientIds,
+        candidatePatientIds: deletedPatientIds,
+        message: deletedPatientIds.length > 1
+            ? 'Deactivated multiple exact-match DoseSpot patient records and cleared the local link.'
+            : 'Deactivated the DoseSpot patient record and cleared the local link.'
+    };
+}
+
+export async function deleteDoseSpotPatientForUid(
+    patientUid: string,
+    options: DeleteDoseSpotPatientOptions = {},
+    gateway: DoseSpotPatientGateway = defaultGateway
+): Promise<DeleteDoseSpotPatientResult> {
+    const source = await loadLocalPatientSource(patientUid);
+    if (!source) {
+        return {
+            status: 'blocked',
+            patientUid,
+            deletedPatientIds: [],
+            candidatePatientIds: [],
+            message: 'Local patient record was not found.'
+        };
+    }
+
+    try {
+        return await deleteDoseSpotPatientWithSource(source, options, gateway);
+    } catch (error) {
+        if (isDoseSpotAuthorizationConfigError(error)) {
+            return {
+                status: 'blocked',
+                patientUid,
+                deletedPatientIds: [],
+                candidatePatientIds: [],
+                message: 'DoseSpot patient-management operations are not enabled for the current staging credentials.'
+            };
+        }
+
+        throw error;
+    }
+}
+
+function normalizeMatchCandidates(records: DoseSpotPatientRecord[], source: LocalPatientSource): number[] {
+    return chooseSearchMatch(records, source).candidatePatientIds;
+}
+
+export const doseSpotPatientTestables = {
+    blockingMissingFields,
+    buildDoseSpotEditPayloadFromRecord,
+    buildDoseSpotPayload,
+    chooseSearchMatch,
+    deleteDoseSpotPatientWithSource,
+    ensureDoseSpotPatientWithSource,
+    formatDateOnly,
+    getDoseSpotPatientClinicianContextError,
+    normalizeGender,
+    normalizeMatchCandidates,
+    normalizePhone,
+    normalizeZip,
+    resolveDoseSpotPatientOperationClinicianId,
+    recommendedMissingFields,
+    writeBlockingMissingFields,
+    recordsMatchExactly,
+    recordMatchesContact
+};
