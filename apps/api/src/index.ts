@@ -9,6 +9,12 @@ import { paymentsController } from './modules/payments/payments.controller';
 import { dosespotController } from './modules/dosespot/dosespot.controller';
 import { consultationsController } from './modules/consultations/consultations.controller';
 import { clinicalController } from './modules/clinical/clinical.controller';
+import { adminController } from './modules/admin/admin.controller';
+import { profileController } from './modules/profile/profile.controller';
+import { analyticsController } from './modules/analytics/analytics.controller';
+import { aiController } from './modules/ai/ai.controller';
+import { protocolsController } from './modules/protocols/protocols.controller';
+import { telehealthController } from './modules/telehealth/telehealth.controller';
 import { env } from '@workspace/env';
 
 export const app = new Elysia()
@@ -27,7 +33,13 @@ export const app = new Elysia()
       .use(paymentsController)
       .use(dosespotController)
       .use(consultationsController)
-      .use(clinicalController),
+      .use(clinicalController)
+      .use(adminController)
+      .use(profileController)
+      .use(analyticsController)
+      .use(aiController)
+      .use(protocolsController)
+      .use(telehealthController),
   )
   .listen(env.PORT || 3000);
 

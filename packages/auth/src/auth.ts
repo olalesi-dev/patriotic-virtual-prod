@@ -35,6 +35,14 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    password: {
+      hash: async (password: string) => {
+        return await Bun.password.hash(password, 'argon2id');
+      },
+      verify: async ({ password, hash }: { password: string; hash: string }) => {
+        return await Bun.password.verify(password, hash);
+      },
+    },
   },
   socialProviders: {
     google: {

@@ -79,12 +79,6 @@ export const setupApp = new Elysia({ name: 'setup' })
     if (response instanceof Response) {
       return response;
     }
-    if (response && typeof response === 'object' && 'success' in response) {
-      return response;
-    }
 
-    return Response.json({
-      data: response,
-      success: true,
-    });
+    return response;
   });

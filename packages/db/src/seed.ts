@@ -27,6 +27,11 @@ export const seedDatabase = async () => {
     await db.delete(schema.rolePermissions);
     await db.delete(schema.permissions);
     await db.delete(schema.modules);
+    await db.delete(schema.messages);
+    await db.delete(schema.soapNotes);
+    await db.delete(schema.vitalLogs);
+    await db.delete(schema.labOrders);
+    await db.delete(schema.subscriptions);
     await db.delete(notificationEventSchema.notificationEvents);
     await db.delete(notificationSchema.inAppNotifications);
     await db.delete(notificationSchema.notificationDeliveries);
@@ -59,6 +64,7 @@ export const seedDatabase = async () => {
       { name: 'Billing', key: 'billing', sortOrder: 4 },
       { name: 'Admin Center', key: 'admin_center', sortOrder: 5 },
       { name: 'E-Prescribing', key: 'eprescribing', sortOrder: 6 },
+      { name: 'Analytics', key: 'analytics', sortOrder: 7 },
     ];
 
     const insertedModules = await db
@@ -69,6 +75,8 @@ export const seedDatabase = async () => {
     const adminCenterModule = insertedModules.find(
       (m) => m.key === 'admin_center',
     )!;
+
+    const analyticsModule = insertedModules.find((m) => m.key === 'analytics')!;
 
     const subModulesToInsert = [
       {
@@ -82,6 +90,24 @@ export const seedDatabase = async () => {
         key: 'admin:roles',
         parentId: adminCenterModule.id,
         sortOrder: 2,
+      },
+      {
+        name: 'Clinical Dashboard',
+        key: 'analytics:clinical',
+        parentId: analyticsModule.id,
+        sortOrder: 1,
+      },
+      {
+        name: 'Business Dashboard',
+        key: 'analytics:business',
+        parentId: analyticsModule.id,
+        sortOrder: 2,
+      },
+      {
+        name: 'Google Analytics',
+        key: 'analytics:google',
+        parentId: analyticsModule.id,
+        sortOrder: 3,
       },
     ];
 
@@ -148,6 +174,21 @@ export const seedDatabase = async () => {
         key: 'dosespot:patients:sync',
         moduleId: allModules.find((m) => m.key === 'eprescribing')!.id,
       },
+      {
+        name: 'View Clinical Analytics',
+        key: 'analytics:clinical:read',
+        moduleId: allModules.find((m) => m.key === 'analytics:clinical')!.id,
+      },
+      {
+        name: 'View Business Analytics',
+        key: 'analytics:business:read',
+        moduleId: allModules.find((m) => m.key === 'analytics:business')!.id,
+      },
+      {
+        name: 'View Google Analytics',
+        key: 'analytics:google:read',
+        moduleId: allModules.find((m) => m.key === 'analytics:google')!.id,
+      },
     ];
 
     const insertedPermissions = await db
@@ -196,7 +237,8 @@ export const seedDatabase = async () => {
           p.key.startsWith('patients') ||
           p.key.startsWith('appointments') ||
           p.key.startsWith('dashboard') ||
-          p.key.startsWith('dosespot'),
+          p.key.startsWith('dosespot') ||
+          p.key === 'analytics:clinical:read',
       )
       .map((p) => ({
         roleId: providerRole.id,
@@ -256,6 +298,22 @@ export const seedDatabase = async () => {
       providerId: provider.id,
       scheduledTime: new Date(Date.now() + 86_400_000),
     });
+
+    console.log('Seeding analytics data...');
+    await db.insert(schema.vitalLogs).values([
+      { patientId: patient.id, type: 'weight', value: '185', unit: 'lbs', recordedAt: new Date(Date.now() - 30 * 86_400_000) },
+      { patientId: patient.id, type: 'weight', value: '180', unit: 'lbs', recordedAt: new Date(Date.now() - 15 * 86_400_000) },
+      { patientId: patient.id, type: 'weight', value: '175', unit: 'lbs', recordedAt: new Date() },
+    ]);
+
+    await db.insert(schema.labOrders).values([
+      { patientId: patient.id, providerId: provider.id, testName: 'CBC with Differential', status: 'Completed', completedAt: new Date() },
+      { patientId: patient.id, providerId: provider.id, testName: 'Metabolic Panel', status: 'Overdue' },
+    ]);
+
+    await db.insert(schema.subscriptions).values([
+      { patientId: patient.id, planId: 'weight_loss_monthly', status: 'active', mrr: 12900, stripeSubscriptionId: 'sub_mock_123' },
+    ]);
 
     console.log('Seeding completed successfully.');
   } catch (error) {

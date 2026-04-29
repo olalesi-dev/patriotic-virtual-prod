@@ -7,10 +7,12 @@ import {
   verifySendGridWebhookSignature,
   isSendGridWebhookVerificationEnabled,
   type DispatchTaskPayload,
+  NotificationProducers,
 } from '@workspace/notifications';
 
 const queue = new NotificationQueue();
 const notificationService = new NotificationService(db, queue);
+const producers = new NotificationProducers(db, notificationService);
 
 // Register worker - in production this might be a separate process
 if (process.env.REDIS_URL && process.env.NODE_ENV !== 'test') {
@@ -40,6 +42,35 @@ export const notificationController = new Elysia({
         actorName: t.Optional(t.String()),
         source: t.Optional(t.String()),
       }),
+    },
+  )
+  .post(
+    '/appointment-bucket-alert',
+    async ({ body }) => {
+      const { patientName, service, appointmentId } = body;
+
+      await producers.notifyPriorityQueuePaymentSuccess({
+        appointmentId: appointmentId || `priority-${Date.now()}`,
+        patientName,
+        serviceName: service || 'Consultation',
+        requestedAt: new Date(),
+      });
+
+      return {
+        success: true,
+        message: 'Priority queue notifications enqueued.',
+      };
+    },
+    {
+      body: t.Object({
+        patientName: t.String(),
+        service: t.Optional(t.String()),
+        appointmentId: t.Optional(t.String()),
+      }),
+      detail: {
+        summary: 'Send Appointment Bucket Alert',
+        tags: ['Notifications'],
+      },
     },
   )
   .post('/sendgrid/webhook', async ({ request, headers, set }) => {

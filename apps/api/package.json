@@ -7,7 +7,8 @@
     "build": "bun build --compile --minify --sourcemap src/index.ts --outfile dist/api-server",
     "lint": "oxlint --fix --deny-warnings",
     "format": "oxfmt --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "SKIP_ENV_VALIDATION=true bun test"
   },
   "dependencies": {
     "@bogeychan/elysia-logger": "0.1.10",
@@ -32,7 +33,9 @@
     "elysia-xss": "1.0.4",
     "pino": "10.3.1",
     "pino-roll": "4.0.0",
-    "stripe": "catalog:payments"
+    "stripe": "catalog:payments",
+    "@google-analytics/data": "catalog:analytics",
+    "@google/generative-ai": "catalog:analytics"
   },
   "devDependencies": {
     "bun-types": "catalog:dev",

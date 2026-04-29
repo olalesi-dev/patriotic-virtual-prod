@@ -59,17 +59,16 @@ describe('Setup App', () => {
   });
 
   describe('Response Mapping', () => {
-    it('should wrap successful responses', async () => {
+    it('should return successful responses directly', async () => {
       const app = new Elysia().use(setupApp).get('/', () => ({ myData: 123 }));
 
       const res = await app.handle(new Request('http://localhost/'));
       expect(res.status).toBe(200);
       const json = await res.json();
-      expect(json.success).toBe(true);
-      expect(json.data).toEqual({ myData: 123 });
+      expect(json).toEqual({ myData: 123 });
     });
 
-    it('should not double wrap responses', async () => {
+    it('should not wrap responses even if they look like an envelope', async () => {
       const app = new Elysia()
         .use(setupApp)
         .get('/', () => ({ data: { myData: 123 }, success: true }));
@@ -77,9 +76,7 @@ describe('Setup App', () => {
       const res = await app.handle(new Request('http://localhost/'));
       expect(res.status).toBe(200);
       const json = await res.json();
-      expect(json.success).toBe(true);
-      expect(json.data).toEqual({ myData: 123 });
-      expect(json.data.success).toBeUndefined(); // Should not have a nested success flag
+      expect(json).toEqual({ data: { myData: 123 }, success: true });
     });
 
     it('should not wrap Response objects directly', async () => {

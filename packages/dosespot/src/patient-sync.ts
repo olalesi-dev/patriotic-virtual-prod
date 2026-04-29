@@ -65,7 +65,7 @@ export interface SyncPatientResult {
   matchSource?: 'existing' | 'search_exact' | 'created';
 }
 
-function normalizeGender(value?: string): 'Male' | 'Female' | 'Unknown' {
+export function normalizeGender(value?: string): 'Male' | 'Female' | 'Unknown' {
   if (!value) return 'Unknown';
   const v = value.toLowerCase();
   if (v === 'male' || v === 'm') return 'Male';
@@ -73,12 +73,12 @@ function normalizeGender(value?: string): 'Male' | 'Female' | 'Unknown' {
   return 'Unknown';
 }
 
-function normalizePhone(value?: string): string {
+export function normalizePhone(value?: string): string {
   if (!value) return '';
   return value.replace(/\D/g, '').slice(-10);
 }
 
-function normalizeZip(value?: string): string {
+export function normalizeZip(value?: string): string {
   if (!value) return '';
   return value.replace(/\D/g, '').slice(0, 5);
 }

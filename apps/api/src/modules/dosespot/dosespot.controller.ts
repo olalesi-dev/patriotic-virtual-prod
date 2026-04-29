@@ -95,13 +95,73 @@ export const dosespotController = new Elysia({
   .get(
     '/clinician/readiness',
     async ({ user }) => {
-      return await clinicianService.getReadiness(user.id);
+      const readiness = await clinicianService.getReadiness(user.id);
+      return { readiness };
     },
     {
       isSignIn: true,
       requirePermissions: ['dosespot:sso'],
       detail: {
         summary: 'Get Clinician Readiness Status',
+        tags: ['DoseSpot'],
+      },
+    },
+  )
+  .get(
+    '/clinicians/registration-status',
+    async ({ user }) => {
+      return await clinicianService.fetchRegistrationStatus(user.id);
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['dosespot:sso'],
+      detail: {
+        summary: 'Get Clinician Registration Status',
+        tags: ['DoseSpot'],
+      },
+    },
+  )
+  .post(
+    '/clinicians/idp/start',
+    async ({ user, body }) => {
+      return await clinicianService.startIdp(user.id, body);
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['dosespot:sso'],
+      body: t.Any(),
+      detail: {
+        summary: 'Start Clinician IDP',
+        tags: ['DoseSpot'],
+      },
+    },
+  )
+  .post(
+    '/clinicians/idp/answers',
+    async ({ user, body }) => {
+      return await clinicianService.submitIdpAnswers(user.id, body);
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['dosespot:sso'],
+      body: t.Any(),
+      detail: {
+        summary: 'Submit Clinician IDP Answers',
+        tags: ['DoseSpot'],
+      },
+    },
+  )
+  .post(
+    '/clinicians/idp/otp',
+    async ({ user, body }) => {
+      return await clinicianService.submitIdpOtp(user.id, body);
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['dosespot:sso'],
+      body: t.Any(),
+      detail: {
+        summary: 'Submit Clinician IDP OTP',
         tags: ['DoseSpot'],
       },
     },
@@ -208,6 +268,34 @@ export const dosespotController = new Elysia({
       }),
       detail: {
         summary: 'Fetch Patient Prescription Summary',
+        tags: ['DoseSpot'],
+      },
+    },
+  )
+  .get(
+    '/queues/refills',
+    async ({ user }) => {
+      return await workflowService.getPendingRefillsQueue(user.id);
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['appointments:read'],
+      detail: {
+        summary: 'Fetch Pending Refills Queue',
+        tags: ['DoseSpot'],
+      },
+    },
+  )
+  .get(
+    '/queues/rx-changes',
+    async ({ user }) => {
+      return await workflowService.getPendingRxChangesQueue(user.id);
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['appointments:read'],
+      detail: {
+        summary: 'Fetch Pending Rx Changes Queue',
         tags: ['DoseSpot'],
       },
     },

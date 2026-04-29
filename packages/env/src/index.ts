@@ -31,6 +31,8 @@ export const EnvSchema = Type.Object({
   EMAIL_DEBUG_LOGS: Type.Optional(Type.String()),
   STRIPE_SECRET_KEY: Type.Optional(Type.String()),
   STRIPE_WEBHOOK_SECRET: Type.Optional(Type.String()),
+  GA_PROPERTY_ID: Type.Optional(Type.String()),
+  GEMINI_API_KEY: Type.Optional(Type.String()),
   APP_URL: Type.Optional(Type.String({ default: DEFAULT_APP_URL })),
   REDIS_URL: Type.Optional(Type.String()),
   DOSESPOT_BASE_URL: Type.Optional(Type.String()),

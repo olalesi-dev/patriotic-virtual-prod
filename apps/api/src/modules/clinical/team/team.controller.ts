@@ -22,7 +22,7 @@ export const teamController = new Elysia({ prefix: '/team' })
         .leftJoin(schema.roles, eq(schema.users.roleId, schema.roles.id))
         .where(eq(schema.users.organizationId, user.organizationId!));
 
-      return { items };
+      return items;
     },
     {
       isSignIn: true,
@@ -38,7 +38,7 @@ export const teamController = new Elysia({ prefix: '/team' })
         .from(schema.providers)
         .where(eq(schema.providers.organizationId, user.organizationId!));
 
-      return { items };
+      return items;
     },
     {
       isSignIn: true,

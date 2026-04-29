@@ -1,26 +1,50 @@
-import { describe, it, expect, spyOn, mock } from 'bun:test';
+import { describe, it, expect, spyOn, mock, afterEach } from 'bun:test';
 import { generateAuditSummary, createAuditLog } from './service';
 import { db } from '../../db';
 
 describe('Audit Service', () => {
+  afterEach(() => {
+    mock.restore();
+  });
+
   describe('generateAuditSummary', () => {
     it('should format summary for VIEW action', () => {
-      const summary = generateAuditSummary('Admin John', 'VIEW', 'Patient', 'cuid123');
+      const summary = generateAuditSummary(
+        'Admin John',
+        'VIEW',
+        'Patient',
+        'cuid123',
+      );
       expect(summary).toBe('Admin John viewed Patient ID cuid123');
     });
 
     it('should format summary for CREATE action', () => {
-      const summary = generateAuditSummary('System', 'CREATE', 'Appointment', 'app-456');
+      const summary = generateAuditSummary(
+        'System',
+        'CREATE',
+        'Appointment',
+        'app-456',
+      );
       expect(summary).toBe('System created Appointment ID app-456');
     });
 
     it('should format summary for UPDATE action', () => {
-      const summary = generateAuditSummary('Staff', 'UPDATE', 'Provider', 'prov-789');
+      const summary = generateAuditSummary(
+        'Staff',
+        'UPDATE',
+        'Provider',
+        'prov-789',
+      );
       expect(summary).toBe('Staff updated Provider ID prov-789');
     });
 
     it('should format summary for DELETE action', () => {
-      const summary = generateAuditSummary('SuperAdmin', 'DELETE', 'User', 'user-000');
+      const summary = generateAuditSummary(
+        'SuperAdmin',
+        'DELETE',
+        'User',
+        'user-000',
+      );
       expect(summary).toBe('SuperAdmin deleted User ID user-000');
     });
 
@@ -44,11 +68,14 @@ describe('Audit Service', () => {
     it('should insert an audit log with provided organizationId', async () => {
       const mockLog = { id: 'log-123', summary: 'Test summary' } as any;
 
-      const insertSpy = spyOn(db, 'insert').mockImplementation(() => ({
-        values: mock(() => ({
-          returning: mock(() => [mockLog]),
-        })) as any,
-      }) as any);
+      const insertSpy = spyOn(db, 'insert').mockImplementation(
+        () =>
+          ({
+            values: mock(() => ({
+              returning: mock(() => [mockLog]),
+            })) as any,
+          }) as any,
+      );
 
       const result = await createAuditLog({
         actorId: 'user-1',
@@ -67,10 +94,15 @@ describe('Audit Service', () => {
 
     it('should default organizationId if not provided', async () => {
       const mockLog = { id: 'log-456', summary: 'Default Org summary' } as any;
-      const mockOrg = { id: 'patriotic-org-id', name: 'Patriotic Virtual Telehealth' };
+      const mockOrg = {
+        id: 'patriotic-org-id',
+        name: 'Patriotic Virtual Telehealth',
+      };
 
       // Mock organization lookup
-      spyOn(db.query.organizations, 'findFirst').mockResolvedValue(mockOrg as any);
+      const orgSpy = spyOn(db.query.organizations, 'findFirst').mockResolvedValue(
+        mockOrg as any,
+      );
 
       // Mock insert
       const insertSpy = spyOn(db, 'insert').mockImplementation(() => {
@@ -90,10 +122,12 @@ describe('Audit Service', () => {
       });
 
       expect(result).toEqual(mockLog);
+      expect(orgSpy).toHaveBeenCalled();
       expect(insertSpy).toHaveBeenCalled();
 
       // Verify that the insert used the found organization ID
-      const valuesCall = (insertSpy.mock.results[0].value as any).values.mock.calls[0][0];
+      const valuesCall = (insertSpy.mock.results[0].value as any).values.mock
+        .calls[0][0];
       expect(valuesCall.organizationId).toBe('patriotic-org-id');
     });
   });

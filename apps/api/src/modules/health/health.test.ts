@@ -9,9 +9,7 @@ describe('Health Controller', () => {
     expect(response.status).toBe(200);
 
     const body = await response.json();
-    expect(body.success).toBe(true);
-    expect(body.data).toBeDefined();
-    expect(body.data.db).toBe('ok');
-    expect(body.data.memory).toBeDefined();
+    expect(body.db).toBe('ok');
+    expect(body.memory).toBeDefined();
   });
 });

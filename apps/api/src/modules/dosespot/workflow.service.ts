@@ -10,7 +10,10 @@ export class DoseSpotWorkflowService {
   constructor(private readonly db: Db) {}
 
   async getMedicationHistory(userId: string, patientId: string) {
-    const { clinicianId, patientDoseSpotId } = await this.requireContext(userId, patientId);
+    const { clinicianId, patientDoseSpotId } = await this.requireContext(
+      userId,
+      patientId,
+    );
 
     const response = await doseSpotApiFetch<any>(
       `api/patients/${patientDoseSpotId}/medications/history`,
@@ -18,13 +21,26 @@ export class DoseSpotWorkflowService {
     );
 
     return {
+      patientUid: patientId,
+      doseSpotPatientId: patientDoseSpotId,
+      status: 'linked_existing',
+      syncStatus: 'ready',
+      message: 'Data loaded.',
       items: response.Items || [],
-      pageResult: response.PageResult,
+      pageResult: response.PageResult || null,
+      result: response.Result || null,
     };
   }
 
-  async setMedicationHistoryConsent(userId: string, patientId: string, consent: boolean) {
-    const { clinicianId, patientDoseSpotId } = await this.requireContext(userId, patientId);
+  async setMedicationHistoryConsent(
+    userId: string,
+    patientId: string,
+    consent: boolean,
+  ) {
+    const { clinicianId, patientDoseSpotId } = await this.requireContext(
+      userId,
+      patientId,
+    );
 
     const response = await doseSpotApiFetch<any>(
       `api/patients/${patientDoseSpotId}/medications/history/consent`,
@@ -40,7 +56,10 @@ export class DoseSpotWorkflowService {
   }
 
   async getPrescriptionSummary(userId: string, patientId: string) {
-    const { clinicianId, patientDoseSpotId } = await this.requireContext(userId, patientId);
+    const { clinicianId, patientDoseSpotId } = await this.requireContext(
+      userId,
+      patientId,
+    );
 
     const response = await doseSpotApiFetch<any>(
       `api/patients/${patientDoseSpotId}/prescriptions`,
@@ -48,12 +67,48 @@ export class DoseSpotWorkflowService {
     );
 
     return {
+      patientUid: patientId,
+      doseSpotPatientId: patientDoseSpotId,
+      status: 'linked_existing',
+      syncStatus: 'ready',
+      message: 'Data loaded.',
       items: response.Items || [],
-      pageResult: response.PageResult,
+      pageResult: response.PageResult || null,
+      result: response.Result || null,
     };
   }
 
-  private async requireContext(userId: string, patientId: string) {
+  async getPendingRefillsQueue(userId: string) {
+    const provider = await this.requireProvider(userId);
+    const clinicianId = Number(provider.doseSpotClinicianId);
+
+    const response = await doseSpotApiFetch<any>(
+      `api/clinicians/${clinicianId}/queues/refills`,
+      { onBehalfOfClinicianId: clinicianId },
+    );
+
+    return {
+      items: response.Items || [],
+      pageResult: response.PageResult || null,
+    };
+  }
+
+  async getPendingRxChangesQueue(userId: string) {
+    const provider = await this.requireProvider(userId);
+    const clinicianId = Number(provider.doseSpotClinicianId);
+
+    const response = await doseSpotApiFetch<any>(
+      `api/clinicians/${clinicianId}/queues/rxChanges`,
+      { onBehalfOfClinicianId: clinicianId },
+    );
+
+    return {
+      items: response.Items || [],
+      pageResult: response.PageResult || null,
+    };
+  }
+
+  private async requireProvider(userId: string) {
     const [provider] = await this.db
       .select()
       .from(schema.providers)
@@ -63,6 +118,11 @@ export class DoseSpotWorkflowService {
     if (!provider || !provider.doseSpotClinicianId) {
       throw new Error('Provider not linked to DoseSpot');
     }
+    return provider;
+  }
+
+  private async requireContext(userId: string, patientId: string) {
+    const provider = await this.requireProvider(userId);
 
     const [patient] = await this.db
       .select()

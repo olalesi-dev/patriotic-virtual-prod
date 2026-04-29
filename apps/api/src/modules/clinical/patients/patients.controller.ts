@@ -32,7 +32,7 @@ export const patientsController = new Elysia({ prefix: '/patients' })
         .offset(Number(offset))
         .orderBy(desc(schema.patients.createdAt));
 
-      return { items };
+      return items;
     },
     {
       isSignIn: true,
@@ -67,5 +67,75 @@ export const patientsController = new Elysia({ prefix: '/patients' })
       requirePermissions: ['patients:read'],
       params: t.Object({ id: t.String() }),
       detail: { summary: 'Get Patient Details', tags: ['Clinical'] },
+    }
+  )
+  .post(
+    '/',
+    async ({ body, user }) => {
+      const [patient] = await db
+        .insert(schema.patients)
+        .values({
+          ...body,
+          organizationId: user.organizationId!,
+          updatedAt: new Date(),
+        })
+        .returning();
+      return patient;
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['patients:write'],
+      body: t.Object({
+        firstName: t.String(),
+        lastName: t.String(),
+        dateOfBirth: t.Optional(t.String()),
+        gender: t.Optional(t.String()),
+        email: t.Optional(t.String()),
+        phone: t.Optional(t.String()),
+        address1: t.Optional(t.String()),
+        city: t.Optional(t.String()),
+        state: t.Optional(t.String()),
+        zipCode: t.Optional(t.String()),
+      }),
+      detail: { summary: 'Create Patient', tags: ['Clinical'] },
+    }
+  )
+  .patch(
+    '/:id',
+    async ({ params: { id }, body, user }) => {
+      const [patient] = await db
+        .update(schema.patients)
+        .set({
+          ...body,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.patients.id, id),
+            eq(schema.patients.organizationId, user.organizationId!)
+          )
+        )
+        .returning();
+      
+      if (!patient) throw new Error('Patient not found or unauthorized');
+      return patient;
+    },
+    {
+      isSignIn: true,
+      requirePermissions: ['patients:write'],
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        firstName: t.Optional(t.String()),
+        lastName: t.Optional(t.String()),
+        dateOfBirth: t.Optional(t.String()),
+        gender: t.Optional(t.String()),
+        email: t.Optional(t.String()),
+        phone: t.Optional(t.String()),
+        address1: t.Optional(t.String()),
+        city: t.Optional(t.String()),
+        state: t.Optional(t.String()),
+        zipCode: t.Optional(t.String()),
+      }),
+      detail: { summary: 'Update Patient', tags: ['Clinical'] },
     }
   );
