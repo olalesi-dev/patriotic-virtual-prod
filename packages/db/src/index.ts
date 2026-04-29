@@ -1,7 +1,19 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
+import * as authSchema from './auth-schema';
+import * as identitySchema from './identity-verifications';
+import * as notificationSchema from './notifications';
+import * as notificationEventSchema from './notification-events';
 
-export type Db = PostgresJsDatabase<typeof schema>;
+export const dbSchema = {
+  ...schema,
+  ...authSchema,
+  ...identitySchema,
+  ...notificationSchema,
+  ...notificationEventSchema,
+};
+
+export type Db = PostgresJsDatabase<typeof dbSchema>;
 
 export * from './schema';
 export * from './auth-schema';
@@ -10,39 +22,3 @@ export * from './notifications';
 export * from './notification-events';
 export * from './repositories/notification.repository';
 export * from './repositories/dosespot.repository';
-export {
-  modules,
-  permissions,
-  rolePermissions,
-  dosespotWebhookEvents,
-  prescriptions,
-  soapNotes,
-  messages,
-  systemSettings,
-  shopProducts,
-  shopOrders,
-  shopOrderItems,
-  shopPartners,
-  shopDiscounts,
-  broadcastLogs,
-  moderationLogs,
-  userSettings,
-  vitalLogs,
-  labOrders,
-  subscriptions,
-  aiActionItems,
-  clinicalProtocols,
-  services,
-  imagingOrders,
-  socialPosts,
-  communityProfiles,
-  communityPosts,
-  communityLikes,
-  communityReplies,
-  facilities,
-  vendors,
-  campaigns,
-  grantProposals,
-  timeSheets,
-  complianceDocuments,
-} from './schema';

@@ -13,16 +13,6 @@ import { sql } from 'drizzle-orm';
 
 export const generateId = () => createId();
 
-export const roles = pgTable('roles', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => generateId()),
-  name: text('name').notNull().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
 export const organizations = pgTable('organizations', {
   id: text('id')
     .primaryKey()
@@ -124,10 +114,20 @@ export const users = pgTable(
       .notNull(),
   },
   (table) => [
-    index('users_role_id_idx').on(table.roleId),
+    index('users_email_idx').on(table.email),
     index('users_organization_id_idx').on(table.organizationId),
   ],
 );
+
+export const roles = pgTable('roles', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  name: text('name').notNull().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
 
 export const patients = pgTable(
   'patients',
@@ -186,6 +186,10 @@ export const providers = pgTable(
     lastName: text('last_name').notNull(),
     phone: text('phone'),
     npi: text('npi').unique(),
+    title: text('title'),
+    specialty: text('specialty'),
+    bio: text('bio'),
+    yearsOfExperience: integer('years_of_experience'),
     doseSpotClinicianId: text('dosespot_clinician_id'),
     doseSpotData: jsonb('dosespot_data').$type<Record<string, any>>(),
     organizationId: text('organization_id')
@@ -267,22 +271,30 @@ export const auditLogs = pgTable(
     id: text('id')
       .primaryKey()
       .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    actorId: text('actor_id').references(() => users.id),
+    actorName: text('actor_name').notNull(),
+    actorRole: text('actor_role').notNull(),
+    action: text('action').notNull(),
     tableName: text('table_name').notNull(),
     recordId: text('record_id').notNull(),
-    action: text('action').notNull(),
     summary: text('summary').notNull(),
-    actorRole: text('actor_role'),
-    organizationId: text('organization_id').references(() => organizations.id),
     details: jsonb('details'),
     oldData: jsonb('old_data'),
     newData: jsonb('new_data'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
     hash: text('hash'),
+    isPhiAccess: boolean('is_phi_access').default(false).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (table) => [
     index('audit_logs_organization_id_idx').on(table.organizationId),
+    index('audit_logs_actor_id_idx').on(table.actorId),
     index('audit_logs_record_idx').on(table.tableName, table.recordId),
   ],
 );
@@ -414,22 +426,29 @@ export const messages = pgTable(
   ],
 );
 
-export const systemSettings = pgTable('system_settings', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => generateId()),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organizations.id),
-  key: text('key').notNull(),
-  value: jsonb('value').notNull(),
-  description: text('description'),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-}, (table) => [
-  uniqueIndex('system_settings_org_key_uidx').on(table.organizationId, table.key),
-]);
+export const systemSettings = pgTable(
+  'system_settings',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    key: text('key').notNull(),
+    value: jsonb('value').notNull(),
+    description: text('description'),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex('system_settings_org_key_uidx').on(
+      table.organizationId,
+      table.key,
+    ),
+  ],
+);
 
 export const shopProducts = pgTable(
   'shop_products',
@@ -514,31 +533,35 @@ export const shopOrderItems = pgTable('shop_order_items', {
   unitPrice: integer('unit_price').notNull(),
 });
 
-export const shopPartners = pgTable('shop_partners', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => generateId()),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organizations.id),
-  name: text('name').notNull(),
-  category: text('category').notNull(),
-  logo: text('logo'),
-  shortDescription: text('short_description'),
-  longDescription: text('long_description'),
-  affiliateUrl: text('affiliate_url'),
-  status: text('status').default('Active').notNull(),
-  isFeatured: boolean('is_featured').default(false).notNull(),
-  notes: text('notes'),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-}, (table) => [
-  index('shop_partners_organization_id_idx').on(table.organizationId),
-]);
+export const shopPartners = pgTable(
+  'shop_partners',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    category: text('category').notNull(),
+    logo: text('logo'),
+    shortDescription: text('short_description'),
+    longDescription: text('long_description'),
+    affiliateUrl: text('affiliate_url'),
+    status: text('status').default('Active').notNull(),
+    isFeatured: boolean('is_featured').default(false).notNull(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('shop_partners_organization_id_idx').on(table.organizationId),
+  ],
+);
 
 export const shopDiscounts = pgTable('shop_discounts', {
   id: text('id')
@@ -553,70 +576,8 @@ export const shopDiscounts = pgTable('shop_discounts', {
     .notNull(),
 });
 
-export const broadcastLogs = pgTable('broadcast_logs', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => generateId()),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organizations.id),
-  subject: text('subject').notNull(),
-  body: text('body').notNull(),
-  priority: text('priority').notNull(),
-  targetFilters: jsonb('target_filters').notNull(),
-  recipientCount: integer('recipient_count').notNull(),
-  senderId: text('sender_id')
-    .notNull()
-    .references(() => users.id),
-  timestamp: timestamp('timestamp', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-}, (table) => [
-  index('broadcast_logs_organization_id_idx').on(table.organizationId),
-]);
-
-export const moderationLogs = pgTable('moderation_logs', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => generateId()),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organizations.id),
-  documentId: text('document_id').notNull(),
-  collectionName: text('collection_name').notNull(),
-  content: text('content').notNull(),
-  authorName: text('author_name').notNull(),
-  authorId: text('author_id').notNull(),
-  aiRiskLevel: text('ai_risk_level').notNull(),
-  category: text('category'),
-  reason: text('reason'),
-  actionTaken: text('action_taken'),
-  resolved: boolean('resolved').default(false).notNull(),
-  timestamp: timestamp('timestamp', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-}, (table) => [
-  index('moderation_logs_organization_id_idx').on(table.organizationId),
-]);
-
-export const userSettings = pgTable('user_settings', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => generateId()),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  key: text('key').notNull(),
-  value: jsonb('value').notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-}, (table) => [
-  uniqueIndex('user_settings_user_key_uidx').on(table.userId, table.key),
-]);
-
-export const aiActionItems = pgTable(
-  'ai_action_items',
+export const broadcastLogs = pgTable(
+  'broadcast_logs',
   {
     id: text('id')
       .primaryKey()
@@ -624,25 +585,68 @@ export const aiActionItems = pgTable(
     organizationId: text('organization_id')
       .notNull()
       .references(() => organizations.id),
-    patientId: text('patient_id')
+    subject: text('subject').notNull(),
+    body: text('body').notNull(),
+    priority: text('priority').notNull(),
+    targetFilters: jsonb('target_filters').notNull(),
+    recipientCount: integer('recipient_count').notNull(),
+    senderId: text('sender_id')
       .notNull()
-      .references(() => patients.id),
-    type: text('type').notNull(), // e.g. Lab Insight, Protocol Match
-    suggestion: text('suggestion').notNull(),
-    status: text('status').default('Pending Review').notNull(),
-    group: text('group'), // e.g. Titration, Chronic Care
-    priority: text('priority').default('medium').notNull(), // low, medium, high
-    metadata: jsonb('metadata'),
-    createdAt: timestamp('created_at', { withTimezone: true })
+      .references(() => users.id),
+    timestamp: timestamp('timestamp', { withTimezone: true })
       .defaultNow()
       .notNull(),
+  },
+  (table) => [
+    index('broadcast_logs_organization_id_idx').on(table.organizationId),
+  ],
+);
+
+export const moderationLogs = pgTable(
+  'moderation_logs',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    documentId: text('document_id').notNull(),
+    collectionName: text('collection_name').notNull(),
+    content: text('content').notNull(),
+    authorName: text('author_name').notNull(),
+    authorId: text('author_id').notNull(),
+    aiRiskLevel: text('ai_risk_level').notNull(),
+    category: text('category'),
+    reason: text('reason'),
+    actionTaken: text('action_taken'),
+    resolved: boolean('resolved').default(false).notNull(),
+    timestamp: timestamp('timestamp', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('moderation_logs_organization_id_idx').on(table.organizationId),
+  ],
+);
+
+export const userSettings = pgTable(
+  'user_settings',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    value: jsonb('value').notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (table) => [
-    index('ai_action_items_org_idx').on(table.organizationId),
-    index('ai_action_items_status_idx').on(table.status),
+    uniqueIndex('user_settings_user_key_uidx').on(table.userId, table.key),
   ],
 );
 
@@ -656,7 +660,7 @@ export const clinicalProtocols = pgTable(
       .notNull()
       .references(() => organizations.id),
     title: text('title').notNull(),
-    type: text('type').notNull(), // Clinical, Legal, Admin, Orders
+    type: text('type').notNull(),
     content: text('content'),
     metadata: jsonb('metadata'),
     createdAt: timestamp('created_at', { withTimezone: true })
@@ -852,7 +856,6 @@ export const communityReplies = pgTable(
   (table) => [index('community_replies_post_idx').on(table.postId)],
 );
 
-
 export const facilities = pgTable(
   'facilities',
   {
@@ -1015,6 +1018,58 @@ export const complianceDocuments = pgTable(
   ],
 );
 
+export const availability = pgTable(
+  'availability',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    providerId: text('provider_id')
+      .notNull()
+      .references(() => providers.id, { onDelete: 'cascade' }),
+    type: text('type').default('block').notNull(), // block, recurring
+    dayOfWeek: integer('day_of_week'), // 0-6 for recurring
+    startTime: timestamp('start_time', { withTimezone: true }),
+    endTime: timestamp('end_time', { withTimezone: true }),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('availability_provider_idx').on(table.providerId)],
+);
+
+export const supportTickets = pgTable(
+  'support_tickets',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    subject: text('subject').notNull(),
+    message: text('message').notNull(),
+    status: text('status').default('Open').notNull(), // Open, In Progress, Resolved, Closed
+    priority: text('priority').default('medium').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('support_tickets_user_idx').on(table.userId),
+    index('support_tickets_org_idx').on(table.organizationId),
+  ],
+);
 
 export const vitalLogs = pgTable(
   'vital_logs',
@@ -1101,6 +1156,37 @@ export const subscriptions = pgTable(
   ],
 );
 
+export const aiActionItems = pgTable(
+  'ai_action_items',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    patientId: text('patient_id')
+      .notNull()
+      .references(() => patients.id),
+    type: text('type').notNull(),
+    suggestion: text('suggestion').notNull(),
+    status: text('status').default('Pending Review').notNull(),
+    group: text('group'),
+    priority: text('priority').default('medium').notNull(),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('ai_action_items_org_idx').on(table.organizationId),
+    index('ai_action_items_status_idx').on(table.status),
+  ],
+);
+
 export const auditTriggerSQL = sql`
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -1113,18 +1199,18 @@ DECLARE
   hash_val TEXT;
 BEGIN
   IF (TG_OP = 'DELETE') THEN
-    old_data_json = row_to_json(OLD)::JSONB;
-    record_id = OLD.id;
+    old_data_json := to_jsonb(OLD);
+    record_id := OLD.id::TEXT;
   ELSIF (TG_OP = 'UPDATE') THEN
-    old_data_json = row_to_json(OLD)::JSONB;
-    new_data_json = row_to_json(NEW)::JSONB;
-    record_id = NEW.id;
+    old_data_json := to_jsonb(OLD);
+    new_data_json := to_jsonb(NEW);
+    record_id := NEW.id::TEXT;
   ELSIF (TG_OP = 'INSERT') THEN
-    new_data_json = row_to_json(NEW)::JSONB;
-    record_id = NEW.id;
+    new_data_json := to_jsonb(NEW);
+    record_id := NEW.id::TEXT;
   END IF;
 
-  hash_val = encode(digest(COALESCE(old_data_json::TEXT, '') || COALESCE(new_data_json::TEXT, ''), 'sha256'), 'hex');
+  hash_val := encode(digest(coalesce(old_data_json::text, '') || coalesce(new_data_json::text, ''), 'sha256'), 'hex');
 
   INSERT INTO audit_logs (id, table_name, record_id, action, old_data, new_data, hash)
   VALUES (substr(md5(random()::text), 1, 24), TG_TABLE_NAME, record_id, TG_OP, old_data_json, new_data_json, hash_val);

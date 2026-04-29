@@ -80,6 +80,10 @@ export async function createAuditLog({
 
   const summary = generateAuditSummary(actorName, action, resourceType, resourceId);
 
+  if (!finalOrganizationId) {
+    throw new Error('No organization context for audit log');
+  }
+
   const [log] = await db
     .insert(auditLogs)
     .values({
@@ -87,12 +91,12 @@ export async function createAuditLog({
       recordId: resourceId ?? 'N/A',
       action,
       summary,
+      actorId,
+      actorName,
       actorRole,
       organizationId: finalOrganizationId,
       details: {
         ...details,
-        actorId,
-        actorName,
         ipAddress,
       },
     })
