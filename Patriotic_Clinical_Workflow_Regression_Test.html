@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regression Test Script: Clinical Prescribing Workflow</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f9fbfd;
+        }
+
+        h1 {
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #0f172a;
+            margin-top: 40px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #334155;
+            background-color: #f1f5f9;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 30px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .meta-info {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 40px;
+        }
+
+        .meta-info p {
+            margin: 5px 0;
+            font-weight: 500;
+        }
+
+        .meta-info a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .meta-info a:hover {
+            text-decoration: underline;
+        }
+
+        .workflow-step {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .screenshot-placeholder {
+            background-color: #e2e8f0;
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            color: #64748b;
+            font-weight: 600;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .pass-fail {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-weight: bold;
+        }
+
+        .checkbox {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .notes {
+            margin-top: 15px;
+            width: 100%;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 5px;
+            color: #94a3b8;
+        }
+
+        strong {
+            color: #475569;
+        }
+
+        ul,
+        ol {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Regression Test Script: Clinical Prescribing Workflow</h1>
+
+    <div class="meta-info">
+        <p><strong>Patient Portal:</strong> <a href="https://patriotictelehealth.com/"
+                target="_blank">https://patriotictelehealth.com/</a></p>
+        <p><strong>Provider Portal (EMR):</strong> <a href="https://patriotic-virtual-emr.web.app/"
+                target="_blank">https://patriotic-virtual-emr.web.app/</a></p>
+        <p><strong>Integrated Services:</strong> DoseSpot (e-Prescribing), Surescripts Network</p>
+        <p><strong>Date:</strong> _____________________</p>
+        <p><strong>Tester:</strong> ___________________</p>
+    </div>
+
+    <h2>Assumptions & Pre-requisites</h2>
+    <div class="workflow-step">
+        <ol>
+            <li>The tester has valid testing credentials for both the Patient Portal and the Provider EMR Portal.</li>
+            <li>The DoseSpot sandbox/production environment is actively integrated and authenticating API calls.</li>
+            <li>Test patients and test providers are pre-configured in the system.</li>
+        </ol>
+    </div>
+
+    <h2>Step-by-Step Workflow Execution</h2>
+
+    <!-- STEP 1 -->
+    <div class="workflow-step">
+        <h3>Step 1 — Patient Intake & Registration</h3>
+        <p><strong>Objective:</strong> Verify that a patient can successfully onboard, complete clinical intake, and
+            consent to treatment.</p>
+
+        <p><strong>Actions:</strong></p>
+        <ol>
+            <li>Navigate to the patient portal: <code>https://patriotictelehealth.com/</code></li>
+            <li>Create a new patient account or log in as an existing test patient.</li>
+            <li>Select a service line (e.g., GLP-1 Weight Loss, General Consult).</li>
+            <li>Fill out the structured intake questionnaire (chief complaint, medical history, medications, allergies,
+                and BMI/screening questions).</li>
+            <li>Review and sign the Electronic Informed Consent and Notice of Privacy Practices.</li>
+            <li>Submit the intake form.</li>
+        </ol>
+
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>Intake form fields adapt dynamically to the chosen service line.</li>
+            <li>Patient identity step passes verification.</li>
+            <li>Upon submission, data is securely transmitted and a success confirmation is displayed to the patient.
+            </li>
+        </ul>
+
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 1: Patient completing the clinical intake
+            questionnaire at patriotictelehealth.com]</div>
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 2: Electronic Informed Consent signature page]</div>
+
+        <div class="pass-fail">
+            <span><span class="checkbox"></span> Pass</span>
+            <span><span class="checkbox"></span> Fail</span>
+        </div>
+        <div class="notes">Notes: </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="workflow-step">
+        <h3>Step 2 — AI-Assisted Clinical Review</h3>
+        <p><strong>Objective:</strong> Verify the CDS (Clinical Decision Support) engine parses intake data and flags
+            relevant clinical warnings.</p>
+
+        <p><strong>Actions:</strong></p>
+        <ol>
+            <li>Log into the Provider EMR: <code>https://patriotic-virtual-emr.web.app/</code></li>
+            <li>Open the chart/consult request for the test patient created in Step 1.</li>
+            <li>Locate the AI Clinical Review / CDS summary section.</li>
+        </ol>
+
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>The AI summary accurately reflects the patient's submitted intake data.</li>
+            <li>Eligibility criteria are clearly displayed.</li>
+            <li>Any simulated contraindications (e.g., allergies or BMI mismatches) are prominently flagged, indicating
+                required provider follow-up.</li>
+        </ul>
+
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 3: Provider EMR dashboard highlighting the AI Clinical
+            Review and contraindication flags]</div>
+
+        <div class="pass-fail">
+            <span><span class="checkbox"></span> Pass</span>
+            <span><span class="checkbox"></span> Fail</span>
+        </div>
+        <div class="notes">Notes: </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="workflow-step">
+        <h3>Step 3 — Provider Clinical Decision & Prescription Initiation</h3>
+        <p><strong>Objective:</strong> Verify that the provider can review the record and initiate a DoseSpot
+            prescription directly from the EMR interface.</p>
+
+        <p><strong>Actions:</strong></p>
+        <ol>
+            <li>In the Provider EMR (<code>https://patriotic-virtual-emr.web.app/</code>), navigate to the test
+                patient's prescribing/medication module.</li>
+            <li>Review the patient demographics and clinical summary.</li>
+            <li>Open the DoseSpot integration frame/modal.</li>
+            <li>Search for a test medication (e.g., a non-controlled test drug).</li>
+            <li>Fill out the prescription details: strength, dosage form, quantity, days supply, refills, and DAW
+                indicator.</li>
+            <li>Select a test pharmacy routing location (e.g., retail or mail-order).</li>
+        </ol>
+
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>DoseSpot frame loads successfully via SSO/API integration.</li>
+            <li>Provider NPI/License is automatically attached.</li>
+            <li>All prescription fields (drug, quantity, pharmacy) are selectable without errors.</li>
+        </ul>
+
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 4: Provider filling out the DoseSpot prescription
+            details within the EMR portal]</div>
+
+        <div class="pass-fail">
+            <span><span class="checkbox"></span> Pass</span>
+            <span><span class="checkbox"></span> Fail</span>
+        </div>
+        <div class="notes">Notes: </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="workflow-step">
+        <h3>Step 4 — Prescription Transmission via DoseSpot</h3>
+        <p><strong>Objective:</strong> Validate that authorizing the prescription securely transmits data to DoseSpot
+            and passes internal clinical rules.</p>
+
+        <p><strong>Actions:</strong></p>
+        <ol>
+            <li>In the DoseSpot module, click "Approve" or "Send Prescription".</li>
+            <li>Observe any DoseSpot clinical alerts (e.g., Drug-Drug interactions, if purposely triggered).</li>
+            <li>Confirm and authorize the final transmission.</li>
+        </ol>
+
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>EMR initiates a secure REST API call to DoseSpot.</li>
+            <li>DoseSpot runs interaction/allergy checks.</li>
+            <li>Prescription is successfully queued for Surescripts network packaging.</li>
+            <li><em>(Note: If testing EPCS for controlled substances, verify two-factor authentication prompts).</em>
+            </li>
+        </ul>
+
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 5: DoseSpot authorization screen showing successful
+            drug interaction checks/transmission]</div>
+
+        <div class="pass-fail">
+            <span><span class="checkbox"></span> Pass</span>
+            <span><span class="checkbox"></span> Fail</span>
+        </div>
+        <div class="notes">Notes: </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="workflow-step">
+        <h3>Step 5 — Surescripts Network Routing</h3>
+        <p><strong>Objective:</strong> Confirm that DoseSpot successfully formats and routes the NCPDP SCRIPT (NewRx) to
+            the selected pharmacy via Surescripts.</p>
+
+        <p><strong>Actions:</strong></p>
+        <ol>
+            <li>Navigate to the Prescription History or EMR audit logs for the patient.</li>
+            <li>Check the outbound network status for the recently transmitted Rx.</li>
+        </ol>
+
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>The prescription status updates to "Sent to Pharmacy" or "Transmitted".</li>
+            <li>The EMR/DoseSpot logs reflect successful Surescripts NewRx routing to the designated retail or specialty
+                pharmacy.</li>
+        </ul>
+
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 6: Prescription history showing 'Transmitted' status
+            to the selected pharmacy]</div>
+
+        <div class="pass-fail">
+            <span><span class="checkbox"></span> Pass</span>
+            <span><span class="checkbox"></span> Fail</span>
+        </div>
+        <div class="notes">Notes: </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="workflow-step">
+        <h3>Step 6 — Pharmacy Dispensing & Fill Status Return</h3>
+        <p><strong>Objective:</strong> Validate that the EMR receives and surfaces dispensing loop-back notifications
+            (RxFill) from the pharmacy.</p>
+
+        <p><strong>Actions:</strong></p>
+        <ol>
+            <li>Trigger a mock RxFill response from the DoseSpot sandbox/test tools (simulating the pharmacy filling the
+                medication).</li>
+            <li>Check the Provider Dashboard in the EMR (<code>https://patriotic-virtual-emr.web.app/</code>).</li>
+        </ol>
+
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>The Provider dashboard prominently displays an "RxFilled" or "Dispensed" notification for the patient.
+            </li>
+            <li>The patient's chart reflects the updated, active medication status.</li>
+        </ul>
+
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 7: Provider Dashboard or Notifications Center showing
+            the returning RxFill status notification]</div>
+
+        <div class="pass-fail">
+            <span><span class="checkbox"></span> Pass</span>
+            <span><span class="checkbox"></span> Fail</span>
+        </div>
+        <div class="notes">Notes: </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="workflow-step">
+        <h3>Step 7 — Medication History Retrieval</h3>
+        <p><strong>Objective:</strong> Validate that patient medication history can be pulled from Surescripts/DoseSpot,
+            enriching the record and logging the event.</p>
+
+        <p><strong>Actions:</strong></p>
+        <ol>
+            <li>In the Provider EMR (<code>https://patriotic-virtual-emr.web.app/</code>), navigate to the test
+                patient's Medication History section.</li>
+            <li>Ensure patient consent is toggled to 'Yes'.</li>
+            <li>Initiate a "Refresh" or "Sync Medication History" request.</li>
+            <li>Navigate to the EMR System Audit Logs (if accessible).</li>
+        </ol>
+
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>DoseSpot/Surescripts returns a list of previously prescribed/filled medications.</li>
+            <li>Data successfully populates in the patient's EMR clinical record.</li>
+            <li>The retrieval action is logged as a discrete audit event, tied to the requesting provider's credentials.
+            </li>
+        </ul>
+
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 8: Populated patient medication history list pulled
+            from Surescripts]</div>
+        <div class="screenshot-placeholder">📸 [Insert Screenshot 9: Audit log showing the distinct medication history
+            pull event]</div>
+
+        <div class="pass-fail">
+            <span><span class="checkbox"></span> Pass</span>
+            <span><span class="checkbox"></span> Fail</span>
+        </div>
+        <div class="notes">Notes: </div>
+    </div>
+
+</body>
+
+</html>

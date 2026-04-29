@@ -1,0 +1,130 @@
+﻿git : remote: error: GH013: 
+Repository rule violations 
+found for refs/heads/main.   
+     
+At line:1 char:1
++ git push origin main 2>&1 
+| Out-File push_error3.txt 
+-Encoding UTF8
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (remote:  
+   error: ...s/main.         
+   :String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+remote: 
+remote: - GITHUB PUSH 
+PROTECTION        
+remote:   ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇö        
+remote:     Resolve the 
+following violations before 
+pushing again        
+remote: 
+remote:     - Push cannot 
+contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how 
+to resolve a blocked push    
+    
+remote:      https://docs.git
+hub.com/code-security/secret-
+scanning/working-with-secret-
+scanning-and-push-protection/
+working-with-push-protection-
+from-the-command-line#resolvi
+ng-a-blocked-push        
+remote:             
+remote:             
+remote:       ΓÇöΓÇö 
+SendGrid API Key ΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇö        
+remote:        locations:    
+    
+remote:          - commit: f2
+dd1de3148a75164851eedbc4aee1f
+19cda56b0        
+remote:            path: 
+backend/env.yaml:1        
+remote:             
+remote:        (?) To push, 
+remove secret from commit(s) 
+or follow this URL to allow 
+the secret.        
+remote:        https://github
+.com/olalesi-dev/patriotic-vi
+rtual-prod/security/secret-sc
+anning/unblock-secret/3AeG5zf
+HCkaQMnvbCYTibHK6Qwn        
+remote:             
+remote:             
+remote:       ΓÇöΓÇö Twilio 
+Account String Identifier ΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö       
+ 
+remote:        locations:    
+    
+remote:          - commit: f2
+dd1de3148a75164851eedbc4aee1f
+19cda56b0        
+remote:            path: 
+backend/env.yaml:3        
+remote:             
+remote:        (?) To push, 
+remove secret from commit(s) 
+or follow this URL to allow 
+the secret.        
+remote:        https://github
+.com/olalesi-dev/patriotic-vi
+rtual-prod/security/secret-sc
+anning/unblock-secret/3AeG64C
+vunbqVwsDaMnyoncuc0y        
+remote:             
+remote:             
+remote:       ΓÇöΓÇö Stripe 
+API Key ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+        
+remote:        locations:    
+    
+remote:          - commit: f2
+dd1de3148a75164851eedbc4aee1f
+19cda56b0        
+remote:            path: 
+backend/env.yaml:8        
+remote:             
+remote:        (?) To push, 
+remove secret from commit(s) 
+or follow this URL to allow 
+the secret.        
+remote:        https://github
+.com/olalesi-dev/patriotic-vi
+rtual-prod/security/secret-sc
+anning/unblock-secret/3AeZTZY
+gwDsDuhZkj5Gq9eO2tdr        
+remote:             
+remote: 
+remote: 
+To https://github.com/olalesi
+-dev/patriotic-virtual-prod.g
+it
+ ! [remote rejected] main -> 
+main (push declined due to 
+repository rule violations)
+error: failed to push some 
+refs to 'https://github.com/o
+lalesi-dev/patriotic-virtual-
+prod.git'

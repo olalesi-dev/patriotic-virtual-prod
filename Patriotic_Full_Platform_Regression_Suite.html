@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regression Suite: EMR Telehealth Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f8fafc;
+        }
+
+        h1 {
+            color: #0f172a;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            color: #1e293b;
+            margin-top: 50px;
+            background-color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.4rem;
+        }
+
+        .test-case {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .tc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+
+        .tc-id {
+            font-weight: 800;
+            color: #3b82f6;
+            font-size: 1.2rem;
+        }
+
+        .tc-mod {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tc-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 15px;
+        }
+
+        .block {
+            margin-bottom: 15px;
+        }
+
+        .block strong {
+            color: #475569;
+            display: inline-block;
+            width: 150px;
+            vertical-align: top;
+        }
+
+        .block .content {
+            display: inline-block;
+            width: calc(100% - 160px);
+        }
+
+        ol {
+            margin-top: 0;
+            padding-left: 20px;
+        }
+
+        .screenshot-box {
+            margin: 25px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f1f5f9;
+            position: relative;
+        }
+
+        .screenshot-box img.real-screenshot {
+            width: 100%;
+            display: block;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .screenshot-caption {
+            padding: 10px;
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+            font-weight: 600;
+            background: #fff;
+        }
+
+        /* CSS Mockups */
+        .css-mockup {
+            width: 100%;
+            height: 350px;
+            background: #fff;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .css-mockup-header {
+            height: 50px;
+            background: #1e293b;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-weight: bold;
+            justify-content: space-between;
+        }
+
+        .css-mockup-body {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            background: #f8fafc;
+        }
+
+        .mockup-sidebar {
+            width: 200px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .mockup-main {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .mockup-skeleton-line {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .mockup-skeleton-line.short {
+            width: 60%;
+        }
+
+        .mockup-skeleton-box {
+            height: 100px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-weight: bold;
+        }
+
+        .mockup-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 5rem;
+            font-weight: 900;
+            color: rgba(239, 68, 68, 0.15);
+            pointer-events: none;
+            letter-spacing: 5px;
+            z-index: 10;
+        }
+
+        /* Specific Mockups */
+        .mockup-video-call {
+            background: #0f172a;
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            position: relative;
+        }
+
+        .mockup-video-self {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 100px;
+            height: 70px;
+            background: #334155;
+            border-radius: 4px;
+            border: 2px solid #fff;
+        }
+
+        .pass-fail {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-weight: bold;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            gap: 30px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #475569;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Regression Suite: EMR Telehealth Platform</h1>
+    <p style="text-align: center; color: #64748b; margin-top: -30px; margin-bottom: 50px;">Generated with live project
+        integrations & layout mockups.</p>
+
+    <!-- 1. PATIENT-SIDE FLOW -->
+    <h2>1. Patient-Side Flow</h2>
+
+    <div class="test-case">
+        <div class="tc-header">
+            <span class="tc-id">TC-001</span>
+            <span class="tc-mod">Module: Landing Page</span>
+        </div>
+        <div class="tc-name">Landing Page Load and Rendering</div>
+        <div class="block"><strong>Preconditions:</strong> <span class="content">Unauthenticated user accesses the root
+                URL.</span></div>
+        <div class="block">
+            <strong>Steps:</strong>
+            <div class="content">
+                <ol>
+                    <li>Launch browser and navigate to <code>https://patriotictelehealth.com/</code></li>
+                    <li>Verify Hero Section image and primary text rendering.</li>
+                    <li>Verify visibility of main Call-to-Action (CTA) buttons.</li>
+                    <li>Resize window to test mobile/tablet responsiveness.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="block"><strong>Expected Result:</strong> <span class="content">Page loads under 3 seconds. Hero text
+                is legible, CTAs are clickable, and layout cleanly stacks on mobile dimensions.</span></div>
+
+        <div class="screenshot-box">
+            <img class="real-screenshot"
+                src="https://api.microlink.io/?url=https://patriotictelehealth.com/&screenshot=true&meta=false&embed=screenshot.url"
+                alt="Landing Page Live Screenshot" />
+            <div class="screenshot-caption">📸 Live Screenshot: patriotictelehealth.com</div>
+        </div>
+
+        <div class="pass-fail">
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Pass
+            </div>
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Fail
+            </div>
+        </div>
+    </div>
+
+    <div class="test-case">
+        <div class="tc-header">
+            <span class="tc-id">TC-002</span>
+            <span class="tc-mod">Module: Authentication</span>
+        </div>
+        <div class="tc-name">Patient Portal Login & Registration</div>
+        <div class="block"><strong>Preconditions:</strong> <span class="content">User is on the login/signup
+                route.</span></div>
+        <div class="block">
+            <strong>Steps:</strong>
+            <div class="content">
+                <ol>
+                    <li>Click the "Sign Up" or "Register" CTA on the patient portal.</li>
+                    <li>Enter test email, secure password, and demographic details.</li>
+                    <li>Submit registration and verify email (if required).</li>
+                    <li>Log out, then attempt to log back in with the new credentials.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="block"><strong>Expected Result:</strong> <span class="content">User account is created securely.
+                User is successfully redirected to the Patient Portal Dashboard upon login.</span></div>
+
+        <div class="screenshot-box">
+            <div class="css-mockup">
+                <div class="mockup-watermark">MOCKUP</div>
+                <div class="css-mockup-header" style="background: #e2e8f0; color: #333;">
+                    <span>Patriotic Telehealth Login</span>
+                </div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: #fff;">
+                    <div
+                        style="width: 350px; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+                        <h3 style="margin-top: 0; text-align: center;">Welcome Back</h3>
+                        <div style="height: 40px; background: #f1f5f9; border-radius: 6px; margin-bottom: 15px;"></div>
+                        <div style="height: 40px; background: #f1f5f9; border-radius: 6px; margin-bottom: 25px;"></div>
+                        <div
+                            style="height: 45px; background: #3b82f6; border-radius: 8px; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                            Sign In</div>
+                    </div>
+                </div>
+            </div>
+            <div class="screenshot-caption">📸 Mockup: Patient Login & Auth Screen</div>
+        </div>
+
+        <div class="pass-fail">
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Pass
+            </div>
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Fail
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 2. PROVIDER-SIDE FLOW -->
+    <h2>2. Provider-Side Flow</h2>
+
+    <div class="test-case">
+        <div class="tc-header">
+            <span class="tc-id">TC-006</span>
+            <span class="tc-mod">Module: Dashboard</span>
+        </div>
+        <div class="tc-name">Provider Login and Dashboard Load</div>
+        <div class="block"><strong>Preconditions:</strong> <span class="content">User has 'provider' role
+                permissions.</span></div>
+        <div class="block">
+            <strong>Steps:</strong>
+            <div class="content">
+                <ol>
+                    <li>Navigate to the Provider EMR: <code>https://patriotic-virtual-emr.web.app/login</code></li>
+                    <li>Enter Provider Credentials and click Login.</li>
+                    <li>Verify Dashboard metrics and navigation load.</li>
+                    <li>Verify "Today's Schedule" populates with the bookings.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="block"><strong>Expected Result:</strong> <span class="content">Provider login is successful, and the
+                Dashboard loads securely with the specific provider's schedule data.</span></div>
+
+        <div class="screenshot-box">
+            <img class="real-screenshot"
+                src="https://api.microlink.io/?url=https://patriotic-virtual-emr.web.app/login&screenshot=true&meta=false&embed=screenshot.url"
+                alt="Provider Login Live Screenshot" />
+            <div class="screenshot-caption">📸 Live Screenshot: patriotic-virtual-emr.web.app/login</div>
+        </div>
+
+        <div class="pass-fail">
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Pass
+            </div>
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Fail
+            </div>
+        </div>
+    </div>
+
+    <div class="test-case">
+        <div class="tc-header">
+            <span class="tc-id">TC-007</span>
+            <span class="tc-mod">Module: Telehealth</span>
+        </div>
+        <div class="tc-name">Joining Video Visit & In-Session UI</div>
+        <div class="block"><strong>Preconditions:</strong> <span class="content">Patient is in the virtual waiting
+                room.</span></div>
+        <div class="block">
+            <strong>Steps:</strong>
+            <div class="content">
+                <ol>
+                    <li>From the Provider Dashboard, click "Start Visit" next to the scheduled patient.</li>
+                    <li>Verify split-screen or overlay UI (Video on one side, Charting/Notes on the other).</li>
+                    <li>Admit patient from waiting room and test audio/video.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="block"><strong>Expected Result:</strong> <span class="content">Provider and Patient are successfully
+                connected with 2-way audio/video, alongside the active clinical charting pane.</span></div>
+
+        <div class="screenshot-box">
+            <div class="css-mockup">
+                <div class="mockup-watermark">MOCKUP</div>
+                <div class="css-mockup-header">
+                    <span>Telehealth Session: Patient John Doe</span>
+                    <span style="color: #ef4444;">● Live 04:23</span>
+                </div>
+                <div class="css-mockup-body">
+                    <div style="flex: 2; display: flex; flex-direction: column; gap: 15px;">
+                        <div class="mockup-video-call">
+                            🎥 Patient Video Feed
+                            <div class="mockup-video-self"></div>
+                        </div>
+                        <div
+                            style="height: 60px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 20px;">
+                            <div style="width: 40px; height: 40px; background: #ef4444; border-radius: 50%;"></div>
+                            <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%;"></div>
+                            <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%;"></div>
+                        </div>
+                    </div>
+                    <div style="flex: 1;" class="mockup-main">
+                        <div style="font-weight: bold; margin-bottom: 20px;">Clinical Notes Pane</div>
+                        <div class="mockup-skeleton-line"></div>
+                        <div class="mockup-skeleton-line short"></div>
+                        <div class="mockup-skeleton-box" style="height: 150px; text-align: center; font-size: 0.9rem;">
+                            Subjective Note Input<br>...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="screenshot-caption">📸 Mockup: Split-Screen View (Telehealth Video + Charting)</div>
+        </div>
+
+        <div class="pass-fail">
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Pass
+            </div>
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Fail
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. PRESCRIPTIONS FLOW -->
+    <h2>4. Prescriptions Flow</h2>
+
+    <div class="test-case">
+        <div class="tc-header">
+            <span class="tc-id">TC-012</span>
+            <span class="tc-mod">Module: ePrescribe</span>
+        </div>
+        <div class="tc-name">DoseSpot e-Prescribing Workflow & Audit Trail</div>
+        <div class="block"><strong>Preconditions:</strong> <span class="content">Provider is registered via SSO DoseSpot
+                config. Patient record is open.</span></div>
+        <div class="block">
+            <strong>Steps:</strong>
+            <div class="content">
+                <ol>
+                    <li>Click "New Prescription" from the clinical chart.</li>
+                    <li>Confirm DoseSpot interface authenticates and loads.</li>
+                    <li>Select Medication (e.g., Amoxicillin 500mg), dosage, and duration.</li>
+                    <li>Select a test Pharmacy and click "Send".</li>
+                    <li>Close DoseSpot frame and view local Medications list in EMR.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="block"><strong>Expected Result:</strong> <span class="content">Prescription is authorized through
+                the external network (Surescripts). EMR local UI reflects the new active medication with an audit log
+                showing Date/Time.</span></div>
+
+        <div class="screenshot-box">
+            <div class="css-mockup">
+                <div class="mockup-watermark">MOCKUP</div>
+                <div class="css-mockup-header" style="background: #2563eb;">
+                    <span>DoseSpot Integration</span>
+                    <span>Rx Module</span>
+                </div>
+                <div class="css-mockup-body" style="justify-content: center; align-items: center;">
+                    <div
+                        style="width: 70%; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 30px;">
+                        <h3 style="margin-top:0; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">Prescribe
+                            Medication</h3>
+                        <div class="mockup-skeleton-line"></div>
+                        <div class="mockup-skeleton-line short"></div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
+                            <div
+                                style="height: 40px; background: #e0e7ff; border: 1px solid #c7d2fe; border-radius: 6px; display: flex; align-items: center; padding: 0 15px; color: #3730a3; font-weight: bold;">
+                                Drug: Amoxicillin</div>
+                            <div style="height: 40px; background: #f1f5f9; border-radius: 6px;"></div>
+                            <div style="height: 40px; background: #f1f5f9; border-radius: 6px; grid-column: span 2;">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px;">
+                            <div
+                                style="padding: 10px 20px; border-radius: 6px; background: #cbd5e1; color: #333; font-weight: bold;">
+                                Cancel</div>
+                            <div
+                                style="padding: 10px 20px; border-radius: 6px; background: #10b981; color: white; font-weight: bold;">
+                                Send to Pharmacy</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="screenshot-caption">📸 Mockup: Built-in DoseSpot Prescribing Module Workflow</div>
+        </div>
+
+        <div class="pass-fail">
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Pass
+            </div>
+            <div class="checkbox-container">
+                <div class="checkbox"></div> Fail
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

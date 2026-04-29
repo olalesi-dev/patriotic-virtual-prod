@@ -1,0 +1,179 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isStaff() {
+      // In a real HIPAA environment, we would use Custom Claims: request.auth.token.role == 'staff'
+      // Temporarily allowing all authenticated users to act as staff for beta testing
+      return isAuthenticated();
+    }
+
+    // --- PATIENTS & SENSITIVE SUBCOLLECTIONS ---
+    match /patients/{uid} {
+      allow read, write: if isAuthenticated() && (isOwner(uid) || isStaff());
+
+      // HIPAA: Subcollections inherit parent lock or have specific rules
+      match /{allSubcollections=**} {
+        allow read, write: if isAuthenticated() && (isOwner(uid) || isStaff());
+      }
+    }
+
+    // --- CONSULTATIONS ---
+    match /consultations/{id} {
+      // Staff (any authenticated user in beta) can list/query all consultations
+      // Patients can only read their own docs
+      allow list: if isAuthenticated();
+      allow get: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.uid == request.auth.uid || isStaff());
+    }
+
+    // --- MESSAGING THREADS ---
+    match /threads/{threadId} {
+      allow read: if isAuthenticated() && (resource.data.patientId == request.auth.uid || isStaff());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.patientId == request.auth.uid || isStaff());
+
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated() && (get(/databases/$(database)/documents/threads/$(threadId)).data.patientId == request.auth.uid || isStaff());
+      }
+    }
+
+    // --- SOAP NOTES ---
+    match /soap_notes/{noteId} {
+      allow read: if isAuthenticated() && (resource.data.patientId == request.auth.uid || isStaff());
+      allow write: if isStaff();
+    }
+
+    // --- LAB ORDERS ---
+    match /lab_orders/{orderId} {
+      allow read: if isAuthenticated() && (resource.data.patientId == request.auth.uid || isStaff());
+      allow write: if isStaff();
+    }
+
+    // --- AI FEEDBACK & AUDIT ---
+    match /ai_feedback/{id} {
+      allow create: if isAuthenticated();
+      allow read: if isStaff();
+    }
+
+    match /audit_logs/{id} {
+      allow create: if isAuthenticated();
+      allow read: if isStaff();
+    }
+
+    // --- INSURANCE REVIEWS ---
+    match /insurance_reviews/{id} {
+      allow create: if isAuthenticated();
+      allow read, write: if isStaff();
+    }
+
+    // --- CONSENT ---
+    match /consent/{uid} {
+      allow read, write: if isAuthenticated() && isOwner(uid);
+    }
+
+    // --- PROVIDERS ---
+    match /providers/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // --- NOTIFICATIONS ---
+    match /notifications/{id} {
+      // Accept both field names: recipientId (useNotifications hook query) and userId (some write paths)
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         resource.data.recipientId == request.auth.uid ||
+         isStaff());
+      allow create: if isAuthenticated();
+      allow update, delete: if isStaff();
+    }
+
+    // --- PRACTICE SETTINGS (module toggles, feature flags) ---
+    // Used by usePracticeModules onSnapshot in MainLayout — staff can read/write, all auth users can read
+    match /practice-settings/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // --- CRM MODULE (vendors, campaigns, grants, facilities, patients/leads) ---
+    match /crm/{document=**} {
+      allow read, write: if isStaff();
+    }
+
+    // --- CRM COMPLIANCE DOCUMENTS ---
+    // Staff-level access only — no patient read access to compliance docs
+    match /crm-compliance/{document=**} {
+      allow read, write: if isStaff();
+    }
+
+    // --- PLATFORM CONFIG (banner, feature flags) ---
+    // All authenticated users can read (banner loads on every page for all roles)
+    // Only staff/admin can write (managed via Communications admin panel)
+    match /platform-config/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // --- INTEGRATION SETTINGS (Doxy.me, etc.) ---
+    // Staff-only: read and write integration configuration
+    match /settings/{document} {
+      allow read, write: if isStaff();
+    }
+
+    // --- GLOBAL SETTINGS ---
+    match /global_settings/{document} {
+      allow read, write: if isStaff();
+    }
+
+    // --- API & SYSTEM ---
+
+    match /appointments/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /availability/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /users/{id} {
+      allow read, write: if isAuthenticated();
+
+      match /{document=**} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+    match /claims/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /shop-products/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    match /community-profiles/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+    match /community-posts/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+    match /community-events/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    match /social-posts/{id} {
+      allow read, write: if isStaff();
+    }
+    match /crm_leads/{id} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+  }
+}

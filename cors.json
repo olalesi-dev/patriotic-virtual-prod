@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["*"],
+    "method": ["GET", "PUT", "POST", "DELETE", "OPTIONS", "HEAD"],
+    "responseHeader": ["Content-Type", "Access-Control-Allow-Origin", "x-goog-meta-*", "x-goog-resumable-task", "x-goog-upload-command", "x-goog-upload-header-content-length", "x-goog-upload-header-content-type", "x-goog-upload-protocol", "x-goog-upload-status", "x-goog-upload-url"],
+    "maxAgeSeconds": 3600
+  }
+]

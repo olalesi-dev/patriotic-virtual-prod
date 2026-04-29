@@ -1,0 +1,266 @@
+
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { enforceMfaForStaff, loadUserContext, verifyFirebaseToken } from './middleware/auth';
+import { errorHandler } from './middleware/error';
+import healthRoutes from './routes/health';
+import appointmentRoutes from './routes/appointments';
+import patientRoutes from './routes/patients';
+import notificationRoutes from './routes/notifications';
+import notificationWorkerRoutes from './routes/notification-worker';
+import notificationV1Routes from './routes/notifications-v1';
+import dosespotRoutes from './routes/dosespot';
+import vouchedRoutes from './routes/vouched';
+import consultationRoutes from './routes/consultations';
+import paymentRoutes from './routes/payments';
+import webhookRoutes from './routes/webhooks';
+import { logger } from './utils/logger';
+import { generateSSOUrl } from './utils/dosespot';
+import { ensureDoseSpotPatientForUid } from './services/dosespot-patients';
+import { assertDoseSpotWebhookRuntimeConfig } from './services/dosespot-push';
+import { admin } from './config/firebase';
+
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+// Security & Metrics
+app.use(helmet());
+
+function normalizeOrigin(value?: string | null): string | null {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+
+    try {
+        return new URL(trimmed).origin;
+    } catch {
+        return null;
+    }
+}
+
+const allowedOrigins = [
+    'https://patriotic-virtual-emr.web.app',
+    'https://patriotictelehealth.com',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    normalizeOrigin(process.env.FRONTEND_URL),
+    normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL),
+].filter((value): value is string => Boolean(value));
+
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+}));
+
+app.options('*', cors());
+app.use(morgan('combined'));
+app.use(express.json({
+    verify: (req, _res, buf) => {
+        (req as typeof req & { rawBody?: string }).rawBody = buf.toString('utf8');
+        (req as typeof req & { rawBodyBuffer?: Buffer }).rawBodyBuffer = Buffer.from(buf);
+    },
+}));
+
+// Public Routes (No Auth)
+app.get('/', (_req, res) => {
+    res.json({ service: 'emr-backend', status: 'UP', health: '/health' });
+});
+app.use('/health', healthRoutes);
+
+// DoseSpot Webhook (Public - server-to-server from DoseSpot infrastructure)
+app.use('/api/v1/dosespot', dosespotRoutes);
+
+// Vouched Webhook (Public)
+app.use('/api/v1/vouched', vouchedRoutes);
+
+// Patient intake and payments (Protected by Firebase token, but not Postgres-backed staff context)
+app.use('/api/v1/consultations', verifyFirebaseToken, consultationRoutes);
+app.use('/api/v1/payments', verifyFirebaseToken, paymentRoutes);
+
+// Payment webhooks (Public)
+app.use('/api/v1/webhooks', webhookRoutes);
+app.use('/api/v1/notifications', notificationWorkerRoutes);
+app.use('/api/v1/notifications', verifyFirebaseToken, notificationV1Routes);
+
+// DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
+app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
+    try {
+        const uid = req['user']?.uid;
+        if (!uid) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const providerDoc = await admin.firestore().collection('users').doc(uid).get();
+        if (!providerDoc.exists) {
+            return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
+        }
+
+        const data = providerDoc.data();
+        const doseSpotClinicianIdRaw = data?.doseSpotClinicianId;
+        const doseSpotClinicianId = typeof doseSpotClinicianIdRaw === 'number'
+            ? doseSpotClinicianIdRaw
+            : Number.parseInt(String(doseSpotClinicianIdRaw), 10);
+
+        if (!Number.isFinite(doseSpotClinicianId) || doseSpotClinicianId <= 0) {
+            return res.status(400).json({ error: 'Provider not configured for eRx. Contact admin.' });
+        }
+
+        // Parse all supported query parameters
+        let patientDoseSpotId = req.query.patientDoseSpotId
+            ? parseInt(req.query.patientDoseSpotId as string, 10)
+            : undefined;
+        const patientUid = typeof req.query.patientUid === 'string' && req.query.patientUid.trim().length > 0
+            ? req.query.patientUid.trim()
+            : undefined;
+
+        const encounterId = req.query.encounterId
+            ? (req.query.encounterId as string)
+            : undefined;
+
+        const refillsErrors = req.query.refillsErrors === 'true';
+
+        let ensuredPatientContext: Awaited<ReturnType<typeof ensureDoseSpotPatientForUid>> | null = null;
+
+        if (patientUid) {
+            ensuredPatientContext = await ensureDoseSpotPatientForUid(patientUid, {
+                updateExisting: false,
+                onBehalfOfClinicianId: doseSpotClinicianId
+            });
+
+            if (!ensuredPatientContext.doseSpotPatientId || ensuredPatientContext.syncStatus !== 'ready') {
+                return res.status(200).json(ensuredPatientContext);
+            }
+
+            patientDoseSpotId = ensuredPatientContext.doseSpotPatientId;
+        }
+
+        const ssoUrl = generateSSOUrl({
+            clinicianDoseSpotId: doseSpotClinicianId,
+            patientDoseSpotId,
+            encounterId,
+            refillsErrors,
+        });
+
+        return res.json({
+            status: 'ready',
+            syncStatus: 'ready',
+            patientUid: patientUid ?? null,
+            doseSpotPatientId: patientDoseSpotId ?? null,
+            missingFields: ensuredPatientContext?.missingFields ?? [],
+            candidatePatientIds: ensuredPatientContext?.candidatePatientIds ?? [],
+            matchSource: ensuredPatientContext?.matchSource ?? null,
+            message: ensuredPatientContext?.message ?? (
+                patientDoseSpotId
+                    ? 'DoseSpot SSO URL generated for the requested patient.'
+                    : 'DoseSpot SSO URL generated.'
+            ),
+            ssoUrl
+        });
+    } catch (error: any) {
+        logger.error('Error generating DoseSpot SSO URL:', error);
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to build SSO link' });
+    }
+});
+
+app.get('/api/v1/dosespot/notification-count', verifyFirebaseToken, async (req, res) => {
+    try {
+        const uid = req['user']?.uid;
+        if (!uid) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Return all zeros if doc doesn't exist
+        const defaultCounts = {
+            pendingPrescriptions: 0,
+            transmissionErrors: 0,
+            refillRequests: 0,
+            changeRequests: 0,
+            total: 0
+        };
+
+        const snapshot = await admin.firestore()
+            .collection('users')
+            .doc(uid)
+            .collection('dosespot')
+            .doc('notifications')
+            .get();
+
+        if (!snapshot.exists) {
+            return res.json(defaultCounts);
+        }
+
+        const data = snapshot.data();
+        if (!data) return res.json(defaultCounts);
+
+        const pendingPrescriptions = data.pendingPrescriptions || 0;
+        const transmissionErrors = data.transmissionErrors || 0;
+        const refillRequests = data.refillRequests || 0;
+        const changeRequests = data.changeRequests || 0;
+        const total = pendingPrescriptions + transmissionErrors + refillRequests + changeRequests;
+
+        return res.json({
+            pendingPrescriptions,
+            transmissionErrors,
+            refillRequests,
+            changeRequests,
+            total
+        });
+    } catch (error: any) {
+        logger.error('Error fetching DoseSpot notification count:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Admin User Extension Route
+app.post('/api/v1/admin/users', verifyFirebaseToken, async (req, res) => {
+    try {
+        const doseSpotClinicianId = req.body.doseSpotClinicianId;
+        const targetUid = req.body.uid;
+
+        const userToUpdate = targetUid || req['user']?.uid;
+        if (!userToUpdate) {
+            return res.status(400).json({ error: 'Missing uid' });
+        }
+
+        if (doseSpotClinicianId) {
+            await admin.firestore().collection('users').doc(userToUpdate).set({
+                doseSpotClinicianId: parseInt(doseSpotClinicianId, 10)
+            }, { merge: true });
+        }
+
+        return res.json({ success: true, updated: true });
+    } catch (error: any) {
+        logger.error('Error updating admin user:', error);
+        return res.status(500).json({ error: 'Failed to update user' });
+    }
+});
+
+// Protected EMR Routes (Require Auth + MFA)
+app.use('/api', verifyFirebaseToken, loadUserContext, enforceMfaForStaff); // Global MFA Gate
+
+// Routes
+app.use('/api/patients', patientRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+
+
+// Error Handling
+app.use(errorHandler);
+
+try {
+    assertDoseSpotWebhookRuntimeConfig();
+} catch (error) {
+    logger.error('DoseSpot webhook runtime configuration check failed', {
+        error: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
+}
+
+app.listen(PORT, () => {
+    logger.info(`EMR Backend listening on port ${PORT}`);
+});
