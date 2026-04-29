@@ -11,7 +11,9 @@ import { consultationsController } from './modules/consultations/consultations.c
 import { clinicalController } from './modules/clinical/clinical.controller';
 import { adminController } from './modules/admin/admin.controller';
 import { profileController } from './modules/profile/profile.controller';
+import { availabilityController } from './modules/availability/availability.controller';
 import { analyticsController } from './modules/analytics/analytics.controller';
+import { supportController } from './modules/support/support.controller';
 import { aiController } from './modules/ai/ai.controller';
 import { protocolsController } from './modules/protocols/protocols.controller';
 import { servicesController } from './modules/services/services.controller';
@@ -41,7 +43,9 @@ export const app = new Elysia()
       .use(clinicalController)
       .use(adminController)
       .use(profileController)
+      .use(availabilityController)
       .use(analyticsController)
+      .use(supportController)
       .use(aiController)
       .use(protocolsController)
       .use(servicesController)

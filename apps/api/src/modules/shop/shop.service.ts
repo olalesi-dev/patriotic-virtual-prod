@@ -90,7 +90,7 @@ export class ShopService {
         });
       }
 
-      const session = await stripe.checkout.sessions.create({
+      const session = await stripe!.checkout.sessions.create({
         payment_method_types: ['card'],
         billing_address_collection: 'required',
         shipping_address_collection: {
