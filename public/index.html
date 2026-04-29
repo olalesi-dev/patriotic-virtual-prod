@@ -9225,51 +9225,18 @@
           <p class="lp-section-copy" data-i18n="reviews-sub">Hear from Florida patients who transformed their health with Patriotic Virtual Telehealth.</p>
         </div>
 
-        <div class="lp-testimonials-grid">
-          <article class="lp-testimonial-card">
+        <div class="lp-testimonials-grid" style="display: flex; justify-content: center;">
+          <article class="lp-testimonial-card" style="max-width: 600px;">
             <span class="lp-testimonial-quote" aria-hidden="true">
               <svg viewBox="0 0 48 48" fill="none">
                 <path d="M9 13h14v14H15c0 5.5 3 9 8 10v5C13 40.5 9 33.2 9 24V13Zm18 0h14v14h-8c0 5.5 3 9 8 10v5c-10-1.5-14-8.8-14-18V13Z" fill="currentColor"></path>
               </svg>
             </span>
-            <blockquote data-i18n="testimonial-1-quote">"Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right."</blockquote>
+            <blockquote data-i18n="testimonial-coming-soon">"Real patient experiences and reviews are coming soon! Check back later to hear from our community."</blockquote>
             <div class="lp-testimonial-author">
-              <img src="/assets/patient1.png" alt="Marcus R." />
               <div>
-                <strong>Marcus R.</strong>
-                <span data-i18n="testimonial-1-detail">Weight Loss · Jacksonville, FL</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="lp-testimonial-card">
-            <span class="lp-testimonial-quote" aria-hidden="true">
-              <svg viewBox="0 0 48 48" fill="none">
-                <path d="M9 13h14v14H15c0 5.5 3 9 8 10v5C13 40.5 9 33.2 9 24V13Zm18 0h14v14h-8c0 5.5 3 9 8 10v5c-10-1.5-14-8.8-14-18V13Z" fill="currentColor"></path>
-              </svg>
-            </span>
-            <blockquote data-i18n="testimonial-2-quote">"Having an actual radiologist explain my CT findings over video was incredible. Plain English, no jargon. Worth every penny for peace of mind."</blockquote>
-            <div class="lp-testimonial-author">
-              <img src="/assets/patient2.png" alt="Sarah K." />
-              <div>
-                <strong>Sarah K.</strong>
-                <span data-i18n="testimonial-2-detail">Video Imaging Consult · Tampa, FL</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="lp-testimonial-card">
-            <span class="lp-testimonial-quote" aria-hidden="true">
-              <svg viewBox="0 0 48 48" fill="none">
-                <path d="M9 13h14v14H15c0 5.5 3 9 8 10v5C13 40.5 9 33.2 9 24V13Zm18 0h14v14h-8c0 5.5 3 9 8 10v5c-10-1.5-14-8.8-14-18V13Z" fill="currentColor"></path>
-              </svg>
-            </span>
-            <blockquote data-i18n="testimonial-3-quote">"The physician noticed something on my chest X-ray, confirmed the diagnosis, and walked me through next steps. Protocol-driven and professional."</blockquote>
-            <div class="lp-testimonial-author">
-              <img src="/assets/patient3.png" alt="James D." />
-              <div>
-                <strong>James D.</strong>
-                <span data-i18n="testimonial-3-detail">Radiology Review · Orlando, FL</span>
+                <strong>Coming Soon</strong>
+                <span data-i18n="testimonial-coming-soon-detail">Patriotic Virtual Telehealth</span>
               </div>
             </div>
           </article>
@@ -9960,48 +9927,17 @@
         <h2 class="sec-title" data-i18n="reviews-title">Real results,<br />real people.</h2>
         <p class="sec-sub" data-i18n="reviews-sub">Hear from Florida patients who transformed their health with
           Patriotic Virtual Telehealth.</p>
-        <div class="test-grid">
-          <div class="tc">
+        <div class="test-grid" style="display: flex; justify-content: center;">
+          <div class="tc" style="max-width: 600px;">
             <div class="tc-stars">★★★★★</div>
             <blockquote>
-              "Got my Rx prescription in 24 hours. Down 35 lbs and
-              counting. The safety screening made me feel confident they
-              actually care about doing this right."
+              "Real patient experiences and reviews are coming soon! Check back later to hear from our community."
             </blockquote>
             <div class="tc-auth">
-              <div class="tc-av ta1">MR</div>
+              <div class="tc-av ta1">PT</div>
               <div>
-                <div class="tc-name">Marcus R.</div>
-                <div class="tc-det">Weight Loss · Jacksonville, FL</div>
-              </div>
-            </div>
-          </div>
-          <div class="tc">
-            <div class="tc-stars">★★★★★</div>
-            <blockquote>
-              "Having an actual radiologist explain my CT findings over video
-              was incredible. Plain English, no jargon. Worth every penny for
-              peace of mind."
-            </blockquote>
-            <div class="tc-auth">
-              <div class="tc-av ta2">SK</div>
-              <div>
-                <div class="tc-name">Sarah K.</div>
-                <div class="tc-det">Video Imaging Consult · Tampa, FL</div>
-              </div>
-            </div>
-          </div>
-          <div class="tc">
-            <div class="tc-stars">★★★★★</div>
-            <blockquote>
-              "The physician noticed something on my chest X-ray, confirmed the diagnosis, and walked me through next steps.
-              Protocol-driven and professional."
-            </blockquote>
-            <div class="tc-auth">
-              <div class="tc-av ta3">JD</div>
-              <div>
-                <div class="tc-name">James D.</div>
-                <div class="tc-det">Radiology Review · Orlando, FL</div>
+                <div class="tc-name">Coming Soon</div>
+                <div class="tc-det">Patriotic Virtual Telehealth</div>
               </div>
             </div>
           </div>
@@ -12022,7 +11958,8 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const API = ""; // Relative path via Firebase Hosting Rewrite (Solves CORS & Org Policy)
+    // Fallback to Next.js API URL if available, otherwise absolute Cloud Run backend
+    const API = "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app";
     const ACTIVE_STATES = ["FL"];
     const COMING_STATES = ["IN", "VA"];
     let token = null,
