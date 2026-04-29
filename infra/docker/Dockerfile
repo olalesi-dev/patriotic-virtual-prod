@@ -1,34 +1,33 @@
 FROM oven/bun:alpine AS builder
 
-# Install some standard utilities just in case
-RUN apk add --no-cache bash curl
-
 WORKDIR /app
 
-# Cache dependencies
+# Cache dependencies separately for faster rebuilds
 COPY package.json bun.lock bunfig.toml ./
 COPY apps/*/package.json apps/
 COPY packages/*/package.json packages/
-RUN bun install --frozen-lockfile
+RUN bun install
 
-# Copy source code
+# Copy rest of the code
 COPY . .
 
-# Build the standalone binary
-RUN bun run --filter api build
+# Build the standalone binary with production optimizations
+ENV NODE_ENV=production
+RUN bun run --filter api build && chmod +x /app/apps/api/dist/api-server
 
-FROM oven/bun:alpine AS runner
+# Final Stage: Use plain Alpine
+FROM alpine:3.20 AS runner
 
 WORKDIR /app
 
-# Create a non-root user
+# Install runtime dependencies for the binary
+RUN apk add --no-cache libstdc++ libgcc
+
+# Create non-root user and group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copy the compiled binary from the builder
-COPY --from=builder /app/apps/api/dist/api-server .
-
-# Ensure proper permissions
-RUN chown appuser:appgroup ./api-server && chmod +x ./api-server
+# COPY with --chown and preserve permissions
+COPY --from=builder --chown=appuser:appgroup /app/apps/api/dist/api-server ./api-server
 
 USER appuser
 

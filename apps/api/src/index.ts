@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
 import { openapi } from '@elysiajs/openapi';
+import { setupApp } from './setup';
 import { healthController } from './modules/health/health.controller';
 import { authController } from './modules/auth/auth.controller';
 import { vouchedController } from './modules/vouched/vouched.controller';
@@ -25,6 +26,7 @@ import { telehealthController } from './modules/telehealth/telehealth.controller
 import { env } from '@workspace/env';
 
 export const app = new Elysia()
+  .use(setupApp)
   .use(
     openapi({
       path: '/api/docs',
@@ -54,9 +56,18 @@ export const app = new Elysia()
       .use(crmController)
       .use(shopController)
       .use(telehealthController),
-  )
-  .listen(env.PORT || 3000);
+  );
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
-);
+if (import.meta.main) {
+  app.listen({
+    port: Number(env.PORT) || 3000,
+    cluster: env.API_CLUSTER_MODE ? (env.WORKER_COUNT || true) : false,
+  } as any);
+
+  console.log(
+    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}${
+      env.API_CLUSTER_MODE ? ` (Cluster Mode enabled)` : ''
+    }`,
+  );
+}
+
