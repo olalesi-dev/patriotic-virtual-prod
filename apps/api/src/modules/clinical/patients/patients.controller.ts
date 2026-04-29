@@ -1,17 +1,23 @@
 import { Elysia, t } from 'elysia';
 import { authMacro } from '../../auth/macro';
 import { db } from '../../../db';
-import * as schema from '@workspace/db';
-import { eq, and, or, ilike, desc } from 'drizzle-orm';
+import * as schema from '@workspace/db/schema';
+import { eq, and, or, ilike, desc, asc, type SQL } from 'drizzle-orm';
 
 export const patientsController = new Elysia({ prefix: '/patients' })
   .use(authMacro)
   .get(
     '/',
     async ({ query, user }) => {
-      const { search, limit = '20', offset = '0' } = query;
+      const { 
+        search, 
+        limit = '20', 
+        offset = '0', 
+        sortBy = 'createdAt', 
+        sortOrder = 'desc' 
+      } = query;
       
-      let whereClause = eq(schema.patients.organizationId, user.organizationId!);
+      let whereClause: SQL | undefined = eq(schema.patients.organizationId, user.organizationId!);
       
       if (search) {
         whereClause = and(
@@ -21,8 +27,11 @@ export const patientsController = new Elysia({ prefix: '/patients' })
             ilike(schema.patients.lastName, `%${search}%`),
             ilike(schema.patients.email, `%${search}%`)
           )
-        ) as any;
+        );
       }
+
+      const orderColumn = (schema.patients as any)[sortBy] || schema.patients.createdAt;
+      const orderDirection = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
 
       const items = await db
         .select()
@@ -30,7 +39,7 @@ export const patientsController = new Elysia({ prefix: '/patients' })
         .where(whereClause)
         .limit(Number(limit))
         .offset(Number(offset))
-        .orderBy(desc(schema.patients.createdAt));
+        .orderBy(orderDirection);
 
       return items;
     },
@@ -38,9 +47,11 @@ export const patientsController = new Elysia({ prefix: '/patients' })
       isSignIn: true,
       requirePermissions: ['patients:read'],
       query: t.Object({
-        search: t.Optional(t.String()),
-        limit: t.Optional(t.String()),
-        offset: t.Optional(t.String()),
+        search: t.Optional(t.String({ description: 'Search term for first name, last name, or email' })),
+        limit: t.Optional(t.String({ description: 'Number of records to return (default: 20)' })),
+        offset: t.Optional(t.String({ description: 'Number of records to skip (default: 0)' })),
+        sortBy: t.Optional(t.String({ description: 'Column to sort by (e.g., firstName, createdAt)' })),
+        sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')], { description: 'Sort direction' })),
       }),
       detail: { summary: 'List Patients', tags: ['Clinical'] },
     }
@@ -86,12 +97,12 @@ export const patientsController = new Elysia({ prefix: '/patients' })
       isSignIn: true,
       requirePermissions: ['patients:write'],
       body: t.Object({
-        firstName: t.String(),
-        lastName: t.String(),
-        dateOfBirth: t.Optional(t.String()),
-        gender: t.Optional(t.String()),
-        email: t.Optional(t.String()),
-        phone: t.Optional(t.String()),
+        firstName: t.String({ description: 'Legal first name' }),
+        lastName: t.String({ description: 'Legal last name' }),
+        dateOfBirth: t.Optional(t.String({ description: 'Format: YYYY-MM-DD' })),
+        gender: t.Optional(t.String({ description: 'Male, Female, or Unknown' })),
+        email: t.Optional(t.String({ format: 'email' })),
+        phone: t.Optional(t.String({ description: 'Mobile or landline number' })),
         address1: t.Optional(t.String()),
         city: t.Optional(t.String()),
         state: t.Optional(t.String()),
