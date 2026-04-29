@@ -1,0 +1,31 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "cuid",
+    "drizzle",
+    "patriotic",
+    "valkey",
+    "shadcn",
+    "tailwindcss",
+    "oxlint",
+    "oxfmt",
+    "typebox",
+    "vinxi",
+    "turborepo",
+    "vouched",
+    "elysia",
+    "postgres",
+    "pg_isready",
+    "clsx"
+  ],
+  "ignorePaths": [
+    "node_modules",
+    ".next",
+    "dist",
+    "bun.lock",
+    ".bun",
+    "*.log",
+    "infra/docker/postgres_data"
+  ]
+}

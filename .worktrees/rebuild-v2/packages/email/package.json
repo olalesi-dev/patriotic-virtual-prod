@@ -1,0 +1,21 @@
+{
+  "name": "@workspace/email",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "oxlint --fix --deny-warnings",
+    "typecheck": "tsc --noEmit",
+    "test": "SKIP_ENV_VALIDATION=true bun test"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "catalog:email",
+    "@workspace/env": "workspace:*"
+  },
+  "devDependencies": {
+    "bun-types": "catalog:dev",
+    "oxlint": "catalog:dev",
+    "typescript": "catalog:dev"
+  }
+}

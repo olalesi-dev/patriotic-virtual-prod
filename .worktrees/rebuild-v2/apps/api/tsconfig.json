@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@workspace/auth/*": ["../../packages/auth/src/*"],
+      "@workspace/common/*": ["../../packages/common/src/*"],
+      "@workspace/db/*": ["../../packages/db/src/*"],
+      "@workspace/dosespot/*": ["../../packages/dosespot/src/*"],
+      "@workspace/email/*": ["../../packages/email/src/*"],
+      "@workspace/env/*": ["../../packages/env/src/*"],
+      "@workspace/notifications/*": ["../../packages/notifications/src/*"],
+      "@workspace/queue/*": ["../../packages/queue/src/*"],
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "~/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "index.ts"],
+  "exclude": ["node_modules"]
+}
