@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { apiFetchJson } from '@/lib/api-client';
+import { IdentityVerificationBadge } from '@/components/common/IdentityVerificationBadge';
 import NewPatientRegistration from '@/components/patient/NewPatientRegistration';
 import type { PatientRegistryFacetOption, PatientRegistryResponse, PatientRegistryRow } from '@/lib/patient-registry-types';
 
@@ -351,6 +352,7 @@ export default function PatientsClient() {
                             <span>MRN: {patient.mrn}</span>
                             <span>DOB: {patient.dob ?? '—'}</span>
                         </div>
+                        <IdentityVerificationBadge verification={patient.identityVerification} compact />
                     </div>
                 );
             }

@@ -30,6 +30,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { apiFetchJson } from '@/lib/api-client';
 import { useAuthUser } from '@/hooks/useAuthUser';
+import { IdentityVerificationBadge } from '@/components/common/IdentityVerificationBadge';
 import type {
     PatientDetailBilling,
     PatientDetailDocument,
@@ -573,6 +574,7 @@ export function PatientDetailClient({ patientId }: { patientId: string }) {
                                 <span className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.18em] ${patient.statusColor}`}>
                                     {patient.statusLabel}
                                 </span>
+                                <IdentityVerificationBadge verification={patient.identityVerification} />
                             </div>
                             <div className="flex flex-wrap gap-5 text-sm font-semibold text-slate-500">
                                 <span>DOB: {patient.dob ?? '—'}{age !== null ? ` (${age}y)` : ''}</span>
@@ -1342,6 +1344,7 @@ function DemographicsSection({
             ) : (
                 <div className="space-y-4 text-sm">
                     <DataField label="Name" value={patient.name} />
+                    <DataField label="Identity Verification" value={<IdentityVerificationBadge verification={patient.identityVerification} />} />
                     <DataField label="DOB" value={patient.dob ?? '—'} />
                     <DataField label="Age / Sex" value={`${age ?? '—'} / ${patient.sex ?? '—'}`} />
                     <DataField label="State" value={patient.state ?? '—'} />
@@ -2071,7 +2074,7 @@ function EmptyState({ text }: { text: string }) {
     );
 }
 
-function DataField({ label, value }: { label: string; value: string }) {
+function DataField({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div className="border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
             <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">{label}</div>

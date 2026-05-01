@@ -22,6 +22,16 @@ export interface PatientRegistryDoseSpotSummary {
     missingWriteFields: string[];
 }
 
+export interface PatientIdentityVerificationSummary {
+    provider: 'vouched' | string | null;
+    status: 'not_started' | 'pending' | 'verified' | 'failed' | 'review_required';
+    verified: boolean;
+    method: 'crosscheck' | 'dob' | 'visual_id' | null;
+    requiredMethod: 'crosscheck' | 'dob' | 'visual_id' | null;
+    verifiedAt: string | null;
+    lastUpdatedAt: string | null;
+}
+
 export interface PatientRegistryRow {
     id: string;
     name: string;
@@ -39,6 +49,7 @@ export interface PatientRegistryRow {
     teams: PatientRegistryTeam[];
     tags: PatientRegistryTag[];
     lastActivityAt: string | null;
+    identityVerification: PatientIdentityVerificationSummary;
     doseSpot?: PatientRegistryDoseSpotSummary;
 }
 

@@ -13,9 +13,10 @@ import { apiFetchJson } from "@/lib/api-client";
 import { getApiUrl } from "@/lib/api-origin";
 import { auth } from "@/lib/firebase";
 import { VouchedVerification } from "@/components/auth/VouchedVerification";
-import type { VouchedCompletionResponse } from "@/lib/identity-verification";
+import { runVouchedStepUpWorkflow, type VouchedCompletionResponse } from "@/lib/identity-verification";
 import { useIdentityVerificationProfile } from "@/hooks/useIdentityVerificationProfile";
 import { finalizePatientRegistration, type PatientRegistrationFormValues, validatePatientRegistration } from "@/lib/patient-registration";
+import { recordSignupFlowTrace } from "@/lib/signup-flow-trace";
 import { svcs, iQs } from "./landingModalsData";
 
 interface LandingModalsProps {
@@ -55,6 +56,12 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   onOpenLogin,
   showToast,
 }) => {
+  const signupTraceSource = "landing_modal" as const;
+
+  const asErrorMessage = React.useCallback((error: unknown, fallback: string): string => {
+    return error instanceof Error ? error.message : fallback;
+  }, []);
+
   const [consultStep, setConsultStep] = useState(initialConsultStep);
   const [selSvc, setSelSvc] = useState<string | null>(initialService || "membership_elite");
   const [intake, setIntake] = useState<Record<string, any>>({});
@@ -64,8 +71,11 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
   const [postBookingVerificationOutcome, setPostBookingVerificationOutcome] = useState<"verified" | "review_required" | null>(null);
+  const [workflowCheckStatus, setWorkflowCheckStatus] = useState<"idle" | "checking" | "visual_required" | "error">("idle");
   const verificationHandledRef = React.useRef<"verified" | "review_required" | null>(null);
+  const workflowCheckUidRef = React.useRef<string | null>(null);
   const autoCloseTimerRef = React.useRef<number | null>(null);
   const verificationUser = auth.currentUser;
   const verificationProfile = useIdentityVerificationProfile(verificationUser);
@@ -154,6 +164,9 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       setIntake({});
       setSelSvc(null);
       setVerificationError(null);
+      setVerificationNotice(null);
+      setWorkflowCheckStatus("idle");
+      workflowCheckUidRef.current = null;
       setPostBookingVerificationOutcome(null);
     }, 300);
   }, [clearAutoCloseTimer, onConsultClose, setConsultModalOpen]);
@@ -185,6 +198,9 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       setConsultStep(initialConsultStep);
       setSelSvc(initialService);
       setVerificationError(null);
+      setVerificationNotice(null);
+      setWorkflowCheckStatus("idle");
+      workflowCheckUidRef.current = null;
       setPostBookingVerificationOutcome(null);
     }
   }, [clearAutoCloseTimer, consultModalOpen, initialConsultStep, initialService]);
@@ -208,6 +224,69 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
   }, [consultModalOpen, consultStep, finalizeVerificationSuccess, verificationProfile.loading, verificationProfile.status]);
 
   React.useEffect(() => {
+    if (!consultModalOpen || consultStep !== 4 || !verificationUser || verificationProfile.loading) {
+      return;
+    }
+
+    if (verificationProfile.status === "verified" || verificationProfile.status === "review_required") {
+      return;
+    }
+
+    if (workflowCheckUidRef.current === verificationUser.uid) {
+      return;
+    }
+
+    workflowCheckUidRef.current = verificationUser.uid;
+    setWorkflowCheckStatus("checking");
+    setVerificationError(null);
+    setVerificationNotice("Checking whether passive identity verification can complete this appointment...");
+
+    runVouchedStepUpWorkflow(verificationUser)
+      .then((result) => {
+        if (result.status === "verified") {
+          setVerificationNotice("Identity verification completed.");
+          finalizeVerificationSuccess("verified", "Identity verification completed successfully.");
+          setWorkflowCheckStatus("idle");
+          return;
+        }
+
+        if (result.status === "review_required") {
+          setVerificationNotice(result.warningMessage || "Identity verification completed and is pending manual review.");
+          finalizeVerificationSuccess(
+            "review_required",
+            result.warningMessage || "Identity verification completed and is pending manual review.",
+          );
+          setWorkflowCheckStatus("idle");
+          return;
+        }
+
+        setWorkflowCheckStatus(result.nextStep === "visual_id" ? "visual_required" : "idle");
+        if (result.nextStep === "visual_id") {
+          const message = result.warningMessage || "We could not verify your identity with passive checks. Complete secure ID verification to continue.";
+          setVerificationNotice(message);
+          showToast(message);
+        } else if (result.warningMessage) {
+          setVerificationNotice(result.warningMessage);
+          showToast(result.warningMessage);
+        }
+      })
+      .catch((error) => {
+        console.error("Step-up identity verification failed:", error);
+        setWorkflowCheckStatus("error");
+        setVerificationNotice(null);
+        setVerificationError(error instanceof Error ? error.message : "Identity verification could not be checked.");
+      });
+  }, [
+    consultModalOpen,
+    consultStep,
+    finalizeVerificationSuccess,
+    verificationProfile.loading,
+    verificationProfile.status,
+    verificationUser,
+    showToast,
+  ]);
+
+  React.useEffect(() => {
     return () => {
       clearAutoCloseTimer();
     };
@@ -215,6 +294,7 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
 
   const handleAuthClose = () => {
     setVerificationError(null);
+    setVerificationNotice(null);
     setAuthModalOpen(false);
   };
 
@@ -234,11 +314,13 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
 
     const message = result.failureReason || "Identity verification failed. Please try again or contact support.";
     setVerificationError(message);
+    setVerificationNotice(null);
     showToast(message);
   }, [finalizeVerificationSuccess, showToast]);
 
   const handleVerificationError = React.useCallback((message: string) => {
     setVerificationError(message);
+    setVerificationNotice(null);
     showToast(message);
   }, [showToast]);
 
@@ -337,13 +419,69 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const userInfo = getAdditionalUserInfo(result);
+      try {
+        const dbResult = await finalizePatientRegistration(user, validation.data, {
+          emailOverride: user.email ?? registerForm.email ?? null,
+          mergePatientRecord: true,
+          doseSpotUpdateExisting: !(userInfo?.isNewUser ?? false),
+          auditAction: userInfo?.isNewUser ? "ACCOUNT_CREATED" : "ACCOUNT_PROFILE_COMPLETED",
+        });
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "db_write",
+          status: "success",
+          user,
+          response: dbResult,
+        });
+      } catch (error) {
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "db_write",
+          status: "error",
+          user,
+          error: asErrorMessage(error, "Failed to persist patient/user signup records."),
+        });
+        throw error;
+      }
 
-      await finalizePatientRegistration(user, validation.data, {
-        emailOverride: user.email ?? registerForm.email ?? null,
-        mergePatientRecord: true,
-        doseSpotUpdateExisting: !(userInfo?.isNewUser ?? false),
-        auditAction: userInfo?.isNewUser ? "ACCOUNT_CREATED" : "ACCOUNT_PROFILE_COMPLETED",
-      });
+      try {
+        const workflowPayload = {
+          firstName: validation.data.firstName,
+          lastName: validation.data.lastName,
+          email: validation.data.email,
+          phone: validation.data.phone,
+          dob: validation.data.dob,
+          address: {
+            streetAddress: validation.data.address1,
+            city: validation.data.city,
+            state: validation.data.state,
+            postalCode: validation.data.zipCode,
+            country: "US",
+          },
+        };
+        const workflow = await runVouchedStepUpWorkflow(user, workflowPayload);
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "vouched_workflow",
+          status: "success",
+          user,
+          payload: workflowPayload,
+          response: workflow,
+        });
+
+        if (workflow.nextStep === "none" && workflow.status === "verified") {
+          showToast("Identity verification completed.");
+        }
+      } catch (error) {
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "vouched_workflow",
+          status: "error",
+          user,
+          error: asErrorMessage(error, "Vouched step-up workflow failed."),
+        });
+        console.warn("Passive identity verification failed:", error);
+      }
 
       setRegisterForm((current) => ({
         ...current,
@@ -373,11 +511,67 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
         validation.data.email,
         registerForm.password ?? ""
       );
+      try {
+        const dbResult = await finalizePatientRegistration(userCredential.user, validation.data, {
+          sendVerificationEmail: true,
+          auditAction: "ACCOUNT_CREATED",
+        });
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "db_write",
+          status: "success",
+          user: userCredential.user,
+          response: dbResult,
+        });
+      } catch (error) {
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "db_write",
+          status: "error",
+          user: userCredential.user,
+          error: asErrorMessage(error, "Failed to persist patient/user signup records."),
+        });
+        throw error;
+      }
 
-      await finalizePatientRegistration(userCredential.user, validation.data, {
-        sendVerificationEmail: true,
-        auditAction: "ACCOUNT_CREATED",
-      });
+      try {
+        const workflowPayload = {
+          firstName: validation.data.firstName,
+          lastName: validation.data.lastName,
+          email: validation.data.email,
+          phone: validation.data.phone,
+          dob: validation.data.dob,
+          address: {
+            streetAddress: validation.data.address1,
+            city: validation.data.city,
+            state: validation.data.state,
+            postalCode: validation.data.zipCode,
+            country: "US",
+          },
+        };
+        const workflow = await runVouchedStepUpWorkflow(userCredential.user, workflowPayload);
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "vouched_workflow",
+          status: "success",
+          user: userCredential.user,
+          payload: workflowPayload,
+          response: workflow,
+        });
+
+        if (workflow.nextStep === "none" && workflow.status === "verified") {
+          showToast("Identity verification completed.");
+        }
+      } catch (error) {
+        await recordSignupFlowTrace({
+          source: signupTraceSource,
+          step: "vouched_workflow",
+          status: "error",
+          user: userCredential.user,
+          error: asErrorMessage(error, "Vouched step-up workflow failed."),
+        });
+        console.warn("Passive identity verification failed:", error);
+      }
 
       showToast("Account created. Please check your email to verify your email address.");
       setAuthModalOpen(false);
@@ -883,6 +1077,23 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               {verificationError}
             </div>
           ) : null}
+          {verificationNotice ? (
+            <div
+              style={{
+                margin: "0 auto 16px",
+                padding: "12px 14px",
+                borderRadius: "12px",
+                background: "#fffbeb",
+                color: "#92400e",
+                fontSize: "13px",
+                fontWeight: 600,
+                textAlign: "left",
+                maxWidth: "720px",
+              }}
+            >
+              {verificationNotice}
+            </div>
+          ) : null}
           <div className="auth-verify-frame consult-verify-frame">
             {!isAuthenticated || !verificationUser ? (
               <div
@@ -918,7 +1129,24 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
               >
                 Loading your secure verification details...
               </div>
-            ) : (
+            ) : workflowCheckStatus === "checking" ? (
+              <div
+                style={{
+                  minHeight: "320px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontWeight: 600,
+                  padding: "24px",
+                  background: "#ffffff",
+                  borderRadius: "16px",
+                }}
+              >
+                Checking whether passive identity verification can complete this appointment...
+              </div>
+            ) : workflowCheckStatus === "visual_required" ? (
               <VouchedVerification
                 user={verificationUser}
                 firstName={verificationProfile.firstName}
@@ -929,6 +1157,23 @@ export const LandingModals: React.FC<LandingModalsProps> = ({
                 onCompleted={handleVerificationCompleted}
                 onError={handleVerificationError}
               />
+            ) : (
+              <div
+                style={{
+                  minHeight: "320px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontWeight: 600,
+                  padding: "24px",
+                  background: "#ffffff",
+                  borderRadius: "16px",
+                }}
+              >
+                Preparing identity verification...
+              </div>
             )}
           </div>
         </div>

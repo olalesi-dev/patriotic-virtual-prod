@@ -10,6 +10,7 @@ import type {
     PatientDetailOrder,
     PatientDetailProblem,
     PatientRegistryDoseSpotSummary,
+    PatientIdentityVerificationSummary,
     PatientDetailRecord,
     PatientRegistryFacetOption,
     PatientRegistryResponse,
@@ -391,6 +392,39 @@ function buildDoseSpotSummary(value: Record<string, unknown>): PatientRegistryDo
         isLaunchBlocked: missingCoreFields.length > 0,
         missingCoreFields,
         missingWriteFields
+    };
+}
+
+function normalizeIdentityVerificationStatus(value: unknown, verified: boolean): PatientIdentityVerificationSummary['status'] {
+    const normalized = asNonEmptyString(value)?.toLowerCase();
+    if (normalized === 'pending' || normalized === 'verified' || normalized === 'failed' || normalized === 'review_required' || normalized === 'not_started') {
+        return normalized;
+    }
+    return verified ? 'verified' : 'not_started';
+}
+
+function normalizeIdentityVerificationMethod(value: unknown): PatientIdentityVerificationSummary['method'] {
+    const normalized = asNonEmptyString(value)?.toLowerCase();
+    if (normalized === 'crosscheck' || normalized === 'dob' || normalized === 'visual_id') {
+        return normalized;
+    }
+    return null;
+}
+
+function buildIdentityVerificationSummary(value: Record<string, unknown>): PatientIdentityVerificationSummary {
+    const verification = typeof value.identityVerification === 'object' && value.identityVerification !== null && !Array.isArray(value.identityVerification)
+        ? value.identityVerification as Record<string, unknown>
+        : {};
+    const verified = Boolean(verification.verified ?? value.isIdentityVerified ?? false);
+
+    return {
+        provider: asNonEmptyString(verification.provider) ?? (verified ? 'vouched' : null),
+        status: normalizeIdentityVerificationStatus(verification.status, verified),
+        verified,
+        method: normalizeIdentityVerificationMethod(verification.method),
+        requiredMethod: normalizeIdentityVerificationMethod(verification.requiredMethod),
+        verifiedAt: toIsoDateTime(verification.verifiedAt ?? value.vouchedVerificationDate),
+        lastUpdatedAt: toIsoDateTime(verification.lastUpdatedAt),
     };
 }
 
@@ -946,6 +980,7 @@ function buildSummaryRow({
         ...patientDoc
     } as Record<string, unknown>;
     const doseSpot = buildDoseSpotSummary(merged);
+    const identityVerification = buildIdentityVerificationSummary(merged);
 
     const rawStatuses = [
         ...asStringArray(draft._rawStatuses),
@@ -989,6 +1024,7 @@ function buildSummaryRow({
         teams: teamRows,
         tags: tagLabels.map((label) => normalizeTag(label)),
         lastActivityAt: asNonEmptyString(draft.lastActivityAt),
+        identityVerification,
         doseSpot
     };
 }
