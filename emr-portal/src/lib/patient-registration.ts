@@ -48,6 +48,16 @@ interface FinalizePatientRegistrationOptions {
     emailOverride?: string | null;
 }
 
+export interface FinalizePatientRegistrationResult {
+    uid: string;
+    email: string;
+    patientDocumentPath: string;
+    userDocumentPath: string;
+    mergedPatientRecord: boolean;
+    verificationEmailRequested: boolean;
+    persistedAt: string;
+}
+
 export function normalizeUsPhone(value: string): string | null {
     const digits = value.replace(/\D/g, '');
     if (digits.length === 10) return digits;
@@ -192,7 +202,7 @@ export async function finalizePatientRegistration(
     user: FirebaseUser,
     registration: ValidatedPatientRegistration,
     options: FinalizePatientRegistrationOptions = {}
-): Promise<void> {
+): Promise<FinalizePatientRegistrationResult> {
     const mergePatientRecord = options.mergePatientRecord ?? false;
     const doseSpotUpdateExisting = options.doseSpotUpdateExisting ?? false;
     const sendVerificationEmailOption = options.sendVerificationEmail ?? false;
@@ -283,4 +293,14 @@ export async function finalizePatientRegistration(
             console.warn('Patient welcome notification failed:', error);
         }
     }
+
+    return {
+        uid: user.uid,
+        email,
+        patientDocumentPath: `patients/${user.uid}`,
+        userDocumentPath: `users/${user.uid}`,
+        mergedPatientRecord: mergePatientRecord,
+        verificationEmailRequested: sendVerificationEmailOption && !user.emailVerified,
+        persistedAt: new Date().toISOString(),
+    };
 }

@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, type User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserPlus, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, MapPin, Phone } from 'lucide-react';
-import { finalizePatientRegistration, type PatientRegistrationFormValues, validatePatientRegistration } from '@/lib/patient-registration';
+import { VouchedVerification } from '@/components/auth/VouchedVerification';
+import { runVouchedStepUpWorkflow, type VouchedCompletionResponse } from '@/lib/identity-verification';
+import { finalizePatientRegistration, type PatientRegistrationFormValues, type ValidatedPatientRegistration, validatePatientRegistration } from '@/lib/patient-registration';
+import { recordSignupFlowTrace } from '@/lib/signup-flow-trace';
 import { US_STATE_OPTIONS } from '@/lib/us-states';
 
 const INPUT_CLASS_NAME = 'w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-xl py-4 pl-12 pr-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-brand/20 transition-all';
@@ -28,13 +31,87 @@ export default function SignupPage() {
         confirmPassword: ''
     });
     const [error, setError] = useState<string | null>(null);
+    const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState('Please verify your email before logging in.');
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [visualVerificationUser, setVisualVerificationUser] = useState<FirebaseUser | null>(null);
+    const [visualVerificationRegistration, setVisualVerificationRegistration] = useState<ValidatedPatientRegistration | null>(null);
     const router = useRouter();
+    const signupTraceSource = 'signup_page' as const;
 
-    const handleSignup = async (e: React.FormEvent) => {
+    const asErrorMessage = React.useCallback((error: unknown, fallback: string): string => {
+        return error instanceof Error ? error.message : fallback;
+    }, []);
+
+    const finishSignup = React.useCallback((message?: string) => {
+        if (message) {
+            setSuccessMessage(message);
+        }
+        setVisualVerificationUser(null);
+        setVisualVerificationRegistration(null);
+        setVerificationNotice(null);
+        setSuccess(true);
+        setTimeout(() => {
+            router.push('/login');
+        }, 5000);
+    }, [router]);
+
+    const runSignupVerification = React.useCallback(async (
+        user: FirebaseUser,
+        registration: ValidatedPatientRegistration,
+    ) => {
+        const workflowPayload = {
+            firstName: registration.firstName,
+            lastName: registration.lastName,
+            email: registration.email,
+            phone: registration.phone,
+            dob: registration.dob,
+            address: {
+                streetAddress: registration.address1,
+                city: registration.city,
+                state: registration.state,
+                postalCode: registration.zipCode,
+                country: 'US',
+            },
+        };
+
+        try {
+            const workflow = await runVouchedStepUpWorkflow(user, workflowPayload);
+            await recordSignupFlowTrace({
+                source: signupTraceSource,
+                step: 'vouched_workflow',
+                status: 'success',
+                user,
+                payload: workflowPayload,
+                response: workflow,
+            });
+
+            if (workflow.nextStep === 'visual_id') {
+                setVerificationNotice(workflow.warningMessage || 'We could not verify your identity with passive checks. Complete secure ID verification to continue.');
+                setVisualVerificationUser(user);
+                setVisualVerificationRegistration(registration);
+                return;
+            }
+
+            finishSignup('Your account was created and identity verification is complete. Please verify your email before logging in.');
+        } catch (error) {
+            await recordSignupFlowTrace({
+                source: signupTraceSource,
+                step: 'vouched_workflow',
+                status: 'error',
+                user,
+                payload: workflowPayload,
+                error: asErrorMessage(error, 'Vouched step-up workflow failed.'),
+            });
+            throw error;
+        }
+    }, [asErrorMessage, finishSignup, signupTraceSource]);
+
+    const handleSignup = React.useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        setVerificationNotice(null);
 
         const validation = validatePatientRegistration(formData);
         if (validation.error || !validation.data) {
@@ -50,15 +127,30 @@ export default function SignupPage() {
                 validation.data.email,
                 formData.password ?? ''
             );
-            await finalizePatientRegistration(userCredential.user, validation.data, {
-                sendVerificationEmail: true,
-                auditAction: 'ACCOUNT_CREATED'
-            });
+            try {
+                const dbResult = await finalizePatientRegistration(userCredential.user, validation.data, {
+                    sendVerificationEmail: true,
+                    auditAction: 'ACCOUNT_CREATED'
+                });
+                await recordSignupFlowTrace({
+                    source: signupTraceSource,
+                    step: 'db_write',
+                    status: 'success',
+                    user: userCredential.user,
+                    response: dbResult,
+                });
+            } catch (error) {
+                await recordSignupFlowTrace({
+                    source: signupTraceSource,
+                    step: 'db_write',
+                    status: 'error',
+                    user: userCredential.user,
+                    error: asErrorMessage(error, 'Failed to persist patient/user signup records.'),
+                });
+                throw error;
+            }
 
-            setSuccess(true);
-            setTimeout(() => {
-                router.push('/login');
-            }, 5000);
+            await runSignupVerification(userCredential.user, validation.data);
 
         } catch (err: any) {
             console.error('Signup Error:', err);
@@ -66,7 +158,25 @@ export default function SignupPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [asErrorMessage, formData, runSignupVerification, signupTraceSource]);
+
+    const handleVisualVerificationCompleted = React.useCallback((result: VouchedCompletionResponse) => {
+        if (result.verified) {
+            finishSignup('Your account was created and identity verification is complete. Please verify your email before logging in.');
+            return;
+        }
+
+        if (result.status === 'review_required') {
+            finishSignup(result.warningMessage || 'Your account was created and identity verification is pending manual review. Please verify your email before logging in.');
+            return;
+        }
+
+        setError(result.failureReason || 'Identity verification failed. Please try again or contact support.');
+    }, [finishSignup]);
+
+    const handleVisualVerificationError = React.useCallback((message: string) => {
+        setError(message);
+    }, []);
 
     if (success) {
         return (
@@ -78,7 +188,7 @@ export default function SignupPage() {
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Account Created!</h2>
                     <p className="text-slate-500 font-medium">
                         We've sent a verification email to <span className="text-brand font-bold">{formData.email}</span>.
-                        Please verify your email before logging in.
+                        {successMessage ? ` ${successMessage}` : ''}
                     </p>
                     <div className="pt-4">
                         <Link
@@ -87,6 +197,51 @@ export default function SignupPage() {
                         >
                             Return to Login <ArrowRight className="w-4 h-4" />
                         </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (visualVerificationUser && visualVerificationRegistration) {
+        return (
+            <div className="min-h-screen bg-[#F0F9FF] flex items-center justify-center p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-brand/5 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-50 rounded-full blur-3xl -ml-48 -mb-48 pointer-events-none"></div>
+
+                <div className="relative z-10 w-full max-w-3xl">
+                    <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="mb-6 text-center">
+                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                                <CheckCircle2 className="h-7 w-7" />
+                            </div>
+                            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Complete Identity Verification</h2>
+                            <p className="mx-auto mt-2 max-w-xl text-sm font-medium text-slate-500">
+                                Your account was created. Complete this secure ID check now so future appointment booking does not ask for the same verification again.
+                            </p>
+                        </div>
+
+                        {error ? (
+                            <div className="mb-5 rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-600">
+                                {error}
+                            </div>
+                        ) : null}
+                        {verificationNotice ? (
+                            <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+                                {verificationNotice}
+                            </div>
+                        ) : null}
+
+                        <VouchedVerification
+                            user={visualVerificationUser}
+                            firstName={visualVerificationRegistration.firstName}
+                            lastName={visualVerificationRegistration.lastName}
+                            email={visualVerificationRegistration.email}
+                            phone={visualVerificationRegistration.phone}
+                            birthDate={visualVerificationRegistration.dob}
+                            onCompleted={handleVisualVerificationCompleted}
+                            onError={handleVisualVerificationError}
+                        />
                     </div>
                 </div>
             </div>

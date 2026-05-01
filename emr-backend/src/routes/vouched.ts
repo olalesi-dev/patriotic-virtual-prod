@@ -5,7 +5,9 @@ import {
     fetchVouchedJob,
     findUidForVouchedJob,
     persistVouchedJobResult,
+    runVouchedStepUpWorkflow,
     verifyVouchedWebhookSignature,
+    type VouchedWorkflowInput,
 } from '../services/vouched';
 
 const router = Router();
@@ -18,6 +20,77 @@ function getRawBody(req: Request): string {
 function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback;
 }
+
+function asBodyRecord(req: Request): Record<string, unknown> {
+    return req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+        ? req.body as Record<string, unknown>
+        : {};
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    return value as Record<string, unknown>;
+}
+
+function asString(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+}
+
+function getClientIp(req: Request): string | null {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const forwardedValue = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+    const firstForwardedIp = forwardedValue?.split(',')[0]?.trim();
+    return firstForwardedIp || asString(req.headers['x-real-ip']) || req.ip || null;
+}
+
+function buildWorkflowInput(req: Request): VouchedWorkflowInput {
+    const body = asBodyRecord(req);
+    const addressObject = asRecord(body.address);
+    const addressString = asString(body.address);
+
+    return {
+        firstName: asString(body.firstName),
+        lastName: asString(body.lastName),
+        email: asString(body.email),
+        phone: asString(body.phone),
+        dob: asString(body.dob) ?? asString(body.dateOfBirth),
+        address1: asString(body.address1)
+            ?? asString(addressObject?.streetAddress)
+            ?? asString(addressObject?.address1)
+            ?? addressString,
+        unit: asString(body.unit) ?? asString(addressObject?.unit),
+        city: asString(body.city) ?? asString(addressObject?.city),
+        state: asString(body.state) ?? asString(addressObject?.state),
+        postalCode: asString(body.postalCode)
+            ?? asString(body.zipCode)
+            ?? asString(body.zip)
+            ?? asString(addressObject?.postalCode)
+            ?? asString(addressObject?.zipCode)
+            ?? asString(addressObject?.zip),
+        country: asString(body.country) ?? asString(addressObject?.country),
+        ipAddress: asString(body.ipAddress) ?? getClientIp(req),
+    };
+}
+
+router.post('/workflow/start', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const uid = typeof req['user']?.uid === 'string' ? req['user'].uid : '';
+    if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const result = await runVouchedStepUpWorkflow(uid, buildWorkflowInput(req));
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error('[Vouched] Failed to run step-up workflow', {
+            uid,
+            error: getErrorMessage(error, 'Unknown Vouched workflow error'),
+        });
+        return res.status(500).json({ error: 'Failed to run identity verification workflow.' });
+    }
+});
 
 router.post('/jobs/complete', verifyFirebaseToken, async (req: Request, res: Response) => {
     const uid = typeof req['user']?.uid === 'string' ? req['user'].uid : '';

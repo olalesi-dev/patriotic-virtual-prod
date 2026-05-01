@@ -7,7 +7,7 @@ import { signInWithCustomToken, type User as FirebaseUser } from 'firebase/auth'
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { CheckCircle2, Clock, User, ArrowRight, Sparkles, Phone, ShieldCheck } from 'lucide-react';
 import { VouchedVerification } from '@/components/auth/VouchedVerification';
-import type { IdentityVerificationStatus, VouchedCompletionResponse } from '@/lib/identity-verification';
+import { runVouchedStepUpWorkflow, type IdentityVerificationStatus, type VouchedCompletionResponse } from '@/lib/identity-verification';
 import { useIdentityVerificationProfile } from '@/hooks/useIdentityVerificationProfile';
 
 export default function SuccessPage() {
@@ -16,8 +16,11 @@ export default function SuccessPage() {
     const [status, setStatus] = useState('processing');
     const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(() => auth.currentUser);
     const [verificationError, setVerificationError] = useState<string | null>(null);
+    const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
     const [verificationOutcome, setVerificationOutcome] = useState<IdentityVerificationStatus | null>(null);
+    const [workflowCheckStatus, setWorkflowCheckStatus] = useState<'idle' | 'checking' | 'visual_required' | 'error'>('idle');
     const writtenRef = useRef(false);
+    const workflowCheckUidRef = useRef<string | null>(null);
     const verificationProfile = useIdentityVerificationProfile(currentUser);
 
     const patientName = searchParams.get('patientName');
@@ -103,8 +106,56 @@ export default function SuccessPage() {
         }
     }, [verificationProfile.loading, verificationProfile.status]);
 
+    useEffect(() => {
+        if (status !== 'confirmed' || !currentUser || verificationProfile.loading) {
+            return;
+        }
+
+        if (verificationProfile.status === 'verified' || verificationProfile.status === 'review_required') {
+            return;
+        }
+
+        if (workflowCheckUidRef.current === currentUser.uid) {
+            return;
+        }
+
+        workflowCheckUidRef.current = currentUser.uid;
+        setWorkflowCheckStatus('checking');
+        setVerificationError(null);
+        setVerificationNotice('Checking whether passive identity verification can complete this appointment...');
+
+        runVouchedStepUpWorkflow(currentUser)
+            .then((result) => {
+                if (result.status === 'verified' || result.status === 'review_required') {
+                    setVerificationOutcome(result.status);
+                    setWorkflowCheckStatus('idle');
+                    setVerificationNotice(result.status === 'verified'
+                        ? 'Identity verification completed.'
+                        : (result.warningMessage || 'Identity verification was submitted and is pending manual review.'));
+                    return;
+                }
+
+                setWorkflowCheckStatus(result.nextStep === 'visual_id' ? 'visual_required' : 'idle');
+                if (result.nextStep === 'visual_id') {
+                    setVerificationNotice(result.warningMessage || 'We could not verify your identity with passive checks. Complete secure ID verification to continue.');
+                    return;
+                }
+
+                if (result.warningMessage) {
+                    setVerificationNotice(result.warningMessage);
+                }
+            })
+            .catch((error) => {
+                console.error('Step-up identity verification failed:', error);
+                setWorkflowCheckStatus('error');
+                setVerificationNotice(null);
+                setVerificationError(error instanceof Error ? error.message : 'Identity verification could not be checked.');
+            });
+    }, [currentUser, status, verificationProfile.loading, verificationProfile.status]);
+
     const handleVerificationCompleted = React.useCallback((result: VouchedCompletionResponse) => {
         setVerificationError(null);
+        setVerificationNotice(null);
 
         if (result.verified) {
             setVerificationOutcome('verified');
@@ -122,6 +173,7 @@ export default function SuccessPage() {
 
     const handleVerificationError = React.useCallback((message: string) => {
         setVerificationError(message);
+        setVerificationNotice(null);
     }, []);
 
     const isVerificationResolved = verificationOutcome === 'verified' || verificationOutcome === 'review_required';
@@ -211,6 +263,11 @@ export default function SuccessPage() {
                                 {verificationError}
                             </div>
                         ) : null}
+                        {verificationNotice ? (
+                            <div className="mb-5 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100">
+                                {verificationNotice}
+                            </div>
+                        ) : null}
                         {!currentUser ? (
                             <div className="rounded-2xl bg-white px-6 py-12 text-center text-slate-600 font-semibold">
                                 Sign in again to complete identity verification for this appointment.
@@ -219,7 +276,11 @@ export default function SuccessPage() {
                             <div className="rounded-2xl bg-white px-6 py-12 text-center text-slate-600 font-semibold">
                                 Loading your secure verification details...
                             </div>
-                        ) : (
+                        ) : workflowCheckStatus === 'checking' ? (
+                            <div className="rounded-2xl bg-white px-6 py-12 text-center text-slate-600 font-semibold">
+                                Checking whether passive identity verification can complete this appointment...
+                            </div>
+                        ) : workflowCheckStatus === 'visual_required' ? (
                             <VouchedVerification
                                 user={currentUser}
                                 firstName={verificationProfile.firstName}
@@ -230,6 +291,10 @@ export default function SuccessPage() {
                                 onCompleted={handleVerificationCompleted}
                                 onError={handleVerificationError}
                             />
+                        ) : (
+                            <div className="rounded-2xl bg-white px-6 py-12 text-center text-slate-600 font-semibold">
+                                Preparing identity verification...
+                            </div>
                         )}
                     </div>
                 ) : null}
