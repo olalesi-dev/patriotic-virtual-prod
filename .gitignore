@@ -28,3 +28,6 @@ backend-service-utf8.yaml
 google-services-account.json
 dosespot-docs
 .agents.worktrees/
+.agents
+.turbo
+docs
