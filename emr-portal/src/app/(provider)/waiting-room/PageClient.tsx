@@ -1,38 +1,51 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Mic, StopCircle, Save, Loader2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { AITextarea } from '@/components/ui/AITextarea';
+import { embedDoxyMe } from 'doxy.me';
+import { DOXY_IFRAME_ALLOW } from '@/lib/doxy';
 
 export default function WaitingRoomClient() {
-    const [clinicUrl, setClinicUrl] = useState('https://PVT.doxy.me/patrioticvirtualtelehealth');
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const recognitionRef = useRef<any>(null);
+    const sdkRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     
     const [isGenerating, setIsGenerating] = useState(false);
+
     const [subjective, setSubjective] = useState('');
     const [objective, setObjective] = useState('');
     const [assessment, setAssessment] = useState('');
     const [plan, setPlan] = useState('');
 
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const res = await fetch('/api/admin/doxy');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.data?.doxyUrl) {
-                        setClinicUrl(data.data.doxyUrl);
-                    }
+        if (containerRef.current) {
+            // Use the SDK to embed the Provider view
+            const {  destroy } = embedDoxyMe(containerRef.current, {
+                url:'pvt.doxy.me/sign-in',
+                width: '100%',
+                height: '100%',
+                allow: DOXY_IFRAME_ALLOW,
+            });
+            sdkRef.current = destroy;
+
+            // Explicitly ensure the allow attribute is set on the returned iframe element
+            // if (iframe) {
+            //     iframe.setAttribute('allow', DOXY_IFRAME_ALLOW);
+            // }
+
+            return () => {
+                if (sdkRef.current) {
+                    sdkRef.current();
+                    sdkRef.current = null;
                 }
-            } catch (e) {
-                console.warn('Failed to load Doxy settings:', e);
-            }
-        };
-        fetchSettings();
+            };
+        }
     }, []);
+
 
     useEffect(() => {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -137,16 +150,11 @@ export default function WaitingRoomClient() {
                         Doxy.me Waiting Room
                     </h2>
                 </div>
-                <iframe
-                    src={clinicUrl}
-                    allow="camera; microphone; fullscreen; display-capture"
-                    className="flex-1 w-full border-none"
-                    title="Doxy.me Waiting Room"
-                />
+                <div ref={containerRef} className="flex-1 w-full border-none" />
             </div>
 
             {/* Right side: AI Scribe */}
-            <div className="w-[400px] xl:w-[500px] bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+            <div className="w-[350px] xl:w-[450px] bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="font-bold flex items-center gap-2">
                         <Bot className="w-5 h-5 text-brand" />

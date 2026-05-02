@@ -1,6 +1,7 @@
 import { admin, firestore } from '../config/firebase';
 
-const DEFAULT_MEETING_URL = 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+const DEFAULT_DOXY_ROOM = 'virtualtelehealth';
+const DEFAULT_MEETING_URL = `https://pvt.doxy.me/${DEFAULT_DOXY_ROOM}`;
 const DEFAULT_PROVIDER_NAME = 'Patriotic Provider';
 const DEFAULT_PROVIDER_ID = '';
 
@@ -67,6 +68,7 @@ export async function completeTelehealthConsultationPayment(args: {
         type: 'Telehealth',
         status: 'pending_scheduling',
         scheduledAt: null,
+        doxyRoom: DEFAULT_DOXY_ROOM,
         meetingUrl: DEFAULT_MEETING_URL,
         consultationId,
         serviceKey: consultationData.serviceKey || 'general_visit',

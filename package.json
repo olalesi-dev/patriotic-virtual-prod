@@ -3,6 +3,7 @@
     "landing": "node scripts/serve-landing.js"
   },
   "dependencies": {
+    "doxy.me": "^1.0.0",
     "firebase-admin": "^13.8.0"
   }
 }

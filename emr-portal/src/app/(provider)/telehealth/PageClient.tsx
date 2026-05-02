@@ -8,7 +8,7 @@ import { SoapNoteModal } from '@/components/telehealth/SoapNoteModal';
 // Simulate API Response for now (until backend is fully CORS enabled for local dev)
 const MOCK_SESSION = {
     provider: 'DOXY',
-    joinLink: 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+    joinLink: 'https://pvt.doxy.me/virtualtelehealth',
     patientName: 'John Doe',
     providerName: 'Dr. Patriotic'
 };

@@ -24,6 +24,7 @@
         "browser-image-compression": "^2.0.2",
         "clsx": "^2.1.0",
         "date-fns": "^3.3.1",
+        "doxy.me": "^1.0.0",
         "dompurify": "^3.3.1",
         "firebase": "^10.8.0",
         "firebase-admin": "^13.6.1",

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Mic, BrainCircuit, Activity, CheckCircle, Video, Loader2, ExternalLink } from 'lucide-react';
+import { embedDoxyMe } from 'doxy.me';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
+import { DOXY_IFRAME_ALLOW } from '@/lib/doxy';
 
 interface TelehealthIframeModalProps {
     isOpen: boolean;
@@ -24,6 +26,26 @@ export function TelehealthIframeModal({
     intakeAnswers
 }: TelehealthIframeModalProps) {
     const [isGeneratingNote, setIsGeneratingNote] = useState(false);
+    const sdkRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isOpen && videoLink && containerRef.current) {
+            const { destroy } = embedDoxyMe(containerRef.current, {
+                url: videoLink,
+                width: '100%',
+                height: '100%',
+                allow: DOXY_IFRAME_ALLOW,
+            });
+            sdkRef.current = destroy;
+        }
+        return () => {
+            if (sdkRef.current) {
+                sdkRef.current();
+                sdkRef.current = null;
+            }
+        };
+    }, [isOpen, videoLink]);
 
     // Only render when open
     if (!isOpen) return null;
@@ -177,13 +199,12 @@ export function TelehealthIframeModal({
                         <span className="text-sm text-slate-500 font-medium tracking-widest uppercase">Loading Secure Environment...</span>
                     </div>
 
-                    <iframe 
-                        src={videoLink}
-                        title="Doxy.me Telehealth Session"
-                        className="relative z-10 w-full h-full border-none"
-                        allow="camera; microphone; fullscreen; display-capture"
-                        allowFullScreen
-                    />
+                     <div 
+                         ref={containerRef}
+                         className="relative z-10 w-full h-full border-none" 
+                         title="Doxy.me Telehealth Session"
+                      />
+
                 </div>
                 
                 {/* AI Overlay during generation */}

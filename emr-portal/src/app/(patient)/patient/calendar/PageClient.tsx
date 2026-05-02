@@ -14,6 +14,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
+import { buildPatientDoxyJoinUrl, normalizeDoxyMeetingUrl } from '@/lib/doxy';
 
 // --- CONSTANTS ---
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7 AM → 7 PM
@@ -70,6 +71,14 @@ function normalizeStatus(raw: string): string {
     return 'PENDING_SCHEDULING';
 }
 
+function resolvePatientMeetingUrl(raw: Record<string, any>, patientName?: string, patientId?: string): string {
+    return buildPatientDoxyJoinUrl({
+        meetingUrl: normalizeDoxyMeetingUrl(raw.patientMeetingUrl || raw.meetingUrl),
+        patientName,
+        patientId,
+    });
+}
+
 // --- COMPONENTS ---
 
 function AppointmentCard({ appt, style, onClickCard }: {
@@ -123,7 +132,7 @@ function SlideOutPanel({ appt, onClose }: { appt: any | null; onClose: () => voi
     const joinActive = appt.status === 'scheduled' && isJoinActive(appt);
     const apptDate = getApptDate(appt);
     const displayDateTime = apptDate ? format(apptDate, 'h:mm a · MMM d, yyyy') : 'TBD (Awaiting Provider)';
-    const meetingUrl = appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+    const meetingUrl = appt.meetingUrl || normalizeDoxyMeetingUrl(null);
 
     return (
         <>
@@ -272,7 +281,7 @@ export default function PatientCalendarPage() {
                     type: raw.type || 'Telehealth',
                     scheduledAt: apptDate,   // plain JS Date
                     date: apptDate,          // plain JS Date
-                    meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                    meetingUrl: resolvePatientMeetingUrl(raw, raw.patientName, raw.patientId || raw.uid),
                 };
             };
 
@@ -306,7 +315,7 @@ export default function PatientCalendarPage() {
                             type: raw.type || 'Telehealth',
                             scheduledAt: apptDate,
                             date: apptDate,
-                            meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                            meetingUrl: resolvePatientMeetingUrl(raw, raw.patientName, raw.patientId || raw.patientUid || user.uid),
                         };
                     });
                     merge();
@@ -329,7 +338,7 @@ export default function PatientCalendarPage() {
                             type: 'Telehealth',
                             scheduledAt: apptDate,
                             date: apptDate,
-                            meetingUrl: raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                            meetingUrl: resolvePatientMeetingUrl(raw, raw.patientName, raw.patientId || raw.patientUid || user.uid),
                         };
                     });
                     // Merge top-level appts into subApptData by best status

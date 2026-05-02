@@ -15,6 +15,7 @@ import { format, isAfter, isBefore, addMinutes, subMinutes, formatDistanceToNow,
 import { toast } from 'sonner';
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
+import { buildPatientDoxyJoinUrl, normalizeDoxyMeetingUrl } from '@/lib/doxy';
 
 /* ─── helpers ──────────────────────────────────────────────── */
 function toDate(v: any): Date | null {
@@ -41,6 +42,14 @@ function normalizeStatus(raw: string): string {
     if (s === 'completed') return 'completed';
     if (s === 'cancelled') return 'cancelled';
     return 'PENDING_SCHEDULING';
+}
+
+function resolvePatientMeetingUrl(raw: Record<string, any>, patientName?: string, patientId?: string): string {
+    return buildPatientDoxyJoinUrl({
+        meetingUrl: normalizeDoxyMeetingUrl(raw.patientMeetingUrl || raw.meetingUrl),
+        patientName,
+        patientId,
+    });
 }
 
 /* ─── types ─────────────────────────────────────────────────── */
@@ -115,7 +124,7 @@ export default function ScheduledAppointmentsPage() {
                     providerName: raw.providerName || 'Patriotic Provider',
                     serviceKey: raw.serviceKey || 'Consultation',
                     type: 'Telehealth',
-                    meetingUrl: (() => { const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'; return u.includes('doxy.me/patriotic-visit-') ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u; })(),
+                    meetingUrl: resolvePatientMeetingUrl(raw, raw.patientName, raw.patientId || raw.uid),
                     intakeAnswers: raw.intake || {},
                     patientName: raw.intake ? `${raw.intake.firstName || ''} ${raw.intake.lastName || ''}`.trim() : '',
                     patientEmail: raw.intake?.email || '',
@@ -157,7 +166,7 @@ export default function ScheduledAppointmentsPage() {
                             providerName: raw.providerName || 'Patriotic Provider',
                             serviceKey: raw.serviceKey || 'Consultation',
                             type: 'Telehealth',
-                            meetingUrl: (() => { const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'; const isStale = u.includes('check-in') || u.includes('patriotic-visit-') || (u.includes('doxy.me') && !u.startsWith('https://PVT.doxy.me')); return isStale ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u; })(),
+                            meetingUrl: resolvePatientMeetingUrl(raw, raw.patientName, raw.patientId || raw.patientUid || user.uid),
                             intakeAnswers: raw.intakeAnswers || {},
                         };
                     });
@@ -181,7 +190,7 @@ export default function ScheduledAppointmentsPage() {
                             providerName: raw.providerName || 'Patriotic Provider',
                             serviceKey: raw.serviceKey || raw.service || raw.type || 'Consultation',
                             type: 'Telehealth',
-                            meetingUrl: (() => { const u = raw.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth'; const isStale = u.includes('check-in') || u.includes('patriotic-visit-') || (u.includes('doxy.me') && !u.startsWith('https://PVT.doxy.me')); return isStale ? 'https://PVT.doxy.me/patrioticvirtualtelehealth' : u; })(),
+                            meetingUrl: resolvePatientMeetingUrl(raw, raw.patientName, raw.patientId || raw.patientUid || user.uid),
                             intakeAnswers: raw.intakeAnswers || raw.intake || {},
                             patientName: raw.patientName || '',
                             patientEmail: raw.patientEmail || '',
@@ -272,7 +281,7 @@ export default function ScheduledAppointmentsPage() {
                                     isJoinable={isJoinable(appt.scheduledAt)}
                                     fmtService={fmtService}
                                     onClick={() => setSelected(appt)}
-                                    onJoin={() => setActiveVideoCall({ url: appt.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth', apptId: appt.id, role: 'patient', intakeAnswers: appt.intakeAnswers })}
+                                    onJoin={() => setActiveVideoCall({ url: appt.meetingUrl || normalizeDoxyMeetingUrl(null), apptId: appt.id, role: 'patient', intakeAnswers: appt.intakeAnswers })}
                                 />
                             ))}
                         </section>
@@ -361,7 +370,7 @@ export default function ScheduledAppointmentsPage() {
                                         return;
                                     }
                                     setActiveVideoCall({
-                                        url: selected.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth',
+                                        url: selected.meetingUrl || normalizeDoxyMeetingUrl(null),
                                         apptId: selected.id,
                                         role: 'patient',
                                         intakeAnswers: selected.intakeAnswers
