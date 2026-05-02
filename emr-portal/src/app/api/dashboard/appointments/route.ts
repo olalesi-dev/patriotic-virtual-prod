@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
+import { buildDoxyRoomUrl, buildPatientDoxyJoinUrl, resolveProviderDoxyRoom } from '@/lib/doxy';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,10 +38,6 @@ function sanitizePlainText(value: string): string {
         .replace(/[\u0000-\u001F\u007F]+/g, ' ')
         .replace(/[<>]/g, '')
         .trim();
-}
-
-function buildTelehealthUrl(): string {
-    return 'https://PVT.doxy.me/patrioticvirtualtelehealth';
 }
 
 function formatDisplayTime(startAt: Date): string {
@@ -160,7 +157,22 @@ export async function POST(request: Request) {
 
         const notes = sanitizePlainText(parsedBody.data.notes);
         const visitType = parsedBody.data.visitType;
-        const meetingUrl = visitType === 'video' ? buildTelehealthUrl() : null;
+        const providerData = providerDoc.data() as Record<string, unknown> | undefined;
+        const doxyRoom = visitType === 'video'
+            ? resolveProviderDoxyRoom({
+                email: asNonEmptyString(providerData?.email) ?? user.email ?? null,
+                roomName: asNonEmptyString(providerData?.roomName),
+                doxyRoom: asNonEmptyString(providerData?.doxyRoom),
+            })
+            : null;
+        const meetingUrl = doxyRoom ? buildDoxyRoomUrl(doxyRoom) : null;
+        const patientMeetingUrl = meetingUrl
+            ? buildPatientDoxyJoinUrl({
+                meetingUrl,
+                patientName,
+                patientId: parsedBody.data.patientId,
+            })
+            : null;
         const typeLabel = visitType === 'video' ? 'Telehealth' : 'In-Person';
         const serviceLabel = visitType === 'video' ? 'Telehealth Visit' : 'In-Person Visit';
         const now = new Date();
@@ -188,7 +200,9 @@ export async function POST(request: Request) {
             service: serviceLabel,
             notes,
             reason: notes,
+            doxyRoom,
             meetingUrl,
+            patientMeetingUrl,
             source: 'provider_dashboard',
             createdAt: now,
             updatedAt: now
@@ -204,7 +218,9 @@ export async function POST(request: Request) {
             type: typeLabel,
             reason: notes,
             notes,
+            doxyRoom,
             meetingUrl,
+            patientMeetingUrl,
             globalAppointmentId: appointmentRef.id,
             source: 'provider_dashboard',
             createdAt: now,

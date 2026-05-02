@@ -14,6 +14,7 @@ import {
 import { TelehealthIframeModal } from '@/components/telehealth/TelehealthIframeModal';
 import { toast } from 'sonner';
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isPast, startOfDay, getDay } from 'date-fns';
+import { buildPatientDoxyJoinUrl, buildDoxyRoomUrl, DEFAULT_DOXY_ROOM, resolveProviderDoxyRoom } from '@/lib/doxy';
 
 interface WaitlistEntry {
     id: string;
@@ -27,6 +28,14 @@ interface WaitlistEntry {
     meetingUrl: string;
     intakeAnswers: Record<string, any>;
     priority: 'high' | 'normal' | 'low';
+}
+
+interface ProviderOption {
+    id: string;
+    name: string;
+    email: string | null;
+    roomName: string | null;
+    doxyRoom: string | null;
 }
 
 const TIME_SLOTS = [
@@ -61,7 +70,7 @@ function ScheduleModal({
     const [notes, setNotes] = useState('');
     const [saving, setSaving] = useState(false);
     const [step, setStep] = useState<'intake' | 'schedule'>('intake');
-    const [providers, setProviders] = useState<{ id: string, name: string }[]>([]);
+    const [providers, setProviders] = useState<ProviderOption[]>([]);
     const [selectedProviderId, setSelectedProviderId] = useState<string>('');
 
     useEffect(() => {
@@ -69,10 +78,16 @@ function ScheduleModal({
             try {
                 const q = query(collection(db, 'users'), where('role', 'in', ['provider', 'doctor', 'admin', 'systems admin']));
                 const snap = await getDocs(q);
-                const provs = snap.docs.map(d => ({
-                    id: d.id,
-                    name: d.data().displayName || d.data().name || `${d.data().firstName || ''} ${d.data().lastName || ''}`.trim() || 'Unknown Provider'
-                }));
+                const provs = snap.docs.map(d => {
+                    const data = d.data();
+                    return {
+                        id: d.id,
+                        name: data.displayName || data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Unknown Provider',
+                        email: typeof data.email === 'string' ? data.email : null,
+                        roomName: typeof data.roomName === 'string' ? data.roomName : null,
+                        doxyRoom: typeof data.doxyRoom === 'string' ? data.doxyRoom : null,
+                    };
+                });
                 // Filter out any without names just in case
                 const validProvs = provs.filter(p => !p.name.includes('Unknown')).sort((a,b) => a.name.localeCompare(b.name));
                 setProviders(validProvs);
@@ -114,6 +129,13 @@ function ScheduleModal({
             const provObj = providers.find(p => p.id === selectedProviderId);
             const actualProviderName = provObj ? provObj.name : providerName;
             const actualProviderId = selectedProviderId || user.uid;
+            const doxyRoom = resolveProviderDoxyRoom(provObj ?? { email: user.email, roomName: null, doxyRoom: null });
+            const meetingUrl = buildDoxyRoomUrl(doxyRoom);
+            const patientMeetingUrl = buildPatientDoxyJoinUrl({
+                meetingUrl,
+                patientName: entry.patientName,
+                patientId: entry.patientId,
+            });
 
             const updatePayload = {
                 status: 'scheduled',
@@ -123,7 +145,9 @@ function ScheduleModal({
                 time: selectedTime,
                 providerName: actualProviderName,
                 providerId: actualProviderId,
-                meetingUrl: entry.meetingUrl,
+                doxyRoom,
+                meetingUrl,
+                patientMeetingUrl,
                 notes: notes,
                 updatedAt: serverTimestamp(),
             };
@@ -407,7 +431,7 @@ function ScheduleModal({
                                             {format(selectedDate, 'EEEE, MMMM d, yyyy')} at {formatTime(selectedTime)}
                                         </p>
                                         <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mt-0.5">
-                                            Meeting link: {entry.meetingUrl}
+                                            Meeting link: {buildDoxyRoomUrl(resolveProviderDoxyRoom(providers.find(p => p.id === selectedProviderId) ?? { email: auth.currentUser?.email, roomName: null, doxyRoom: null }))}
                                         </p>
                                     </div>
                                 </div>
@@ -484,10 +508,10 @@ export default function WaitlistPage() {
         let patientUid = data.patientId || data.uid || '';
         let serviceKey = data.serviceKey || data.service || data.type || 'consultation';
         let intakeAnswers: Record<string, any> = data.intakeAnswers || {};
-        let meetingUrl = data.meetingUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+        let meetingUrl = data.meetingUrl || buildDoxyRoomUrl(DEFAULT_DOXY_ROOM);
         // Normalize any old per-appointment random URLs to the canonical clinic waiting room
         if (meetingUrl && meetingUrl.includes('doxy.me/patriotic-visit-')) {
-            meetingUrl = 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+            meetingUrl = buildDoxyRoomUrl(DEFAULT_DOXY_ROOM);
         }
 
         try {

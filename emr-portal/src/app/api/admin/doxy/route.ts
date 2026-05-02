@@ -3,7 +3,7 @@ import { db, auth } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
-const CANONICAL_DOXY_URL = 'https://PVT.doxy.me/patrioticvirtualtelehealth';
+const CANONICAL_DOXY_URL = 'https://pvt.doxy.me/virtualtelehealth';
 
 function isStaleDoxyUrl(url: string): boolean {
     if (!url) return true;
@@ -11,8 +11,9 @@ function isStaleDoxyUrl(url: string): boolean {
     return (
         url.includes('check-in') ||
         url.includes('doxy.me/patriotic-visit-') ||
+        url.includes('doxy.me/patrioticvirtualtelehealth') ||
         url === 'https://doxy.me/patrioticvirtualtelehealth' ||
-        (url.includes('doxy.me') && !url.startsWith('https://PVT.doxy.me'))
+        (url.includes('doxy.me') && !url.toLowerCase().startsWith('https://pvt.doxy.me'))
     );
 }
 

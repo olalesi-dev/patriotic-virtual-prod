@@ -51,14 +51,21 @@ const frameSrc = [
     'https://patriotictelehealth.cloudflareaccess.com',
     'https://www.recaptcha.net/recaptcha/',
     'https://doxy.me',
+    'https://*.doxy.me',
     'https://my.dosespot.com',
     'https://my.staging.dosespot.com',
     'https://*.vouched.id',
 ].join(' ');
 
+const doxyPermissions = [
+    'self',
+    '"https://doxy.me"',
+    '"https://*.doxy.me"',
+].join(' ');
+
 const contentSecurityPolicy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com https://*.gstatic.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://www.recaptcha.net/recaptcha/ https://www.gstatic.cn/recaptcha/ https://doxy.me https://*.vouched.id",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com https://*.gstatic.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://www.recaptcha.net/recaptcha/ https://www.gstatic.cn/recaptcha/ https://doxy.me https://*.doxy.me https://*.vouched.id",
     `connect-src ${connectSrc}`,
     "img-src 'self' data: blob: https://storage.googleapis.com https://*.googleusercontent.com https://*.gstatic.com https://www.google-analytics.com https://www.googletagmanager.com https://*.stripe.com https://*.vouched.id",
     "media-src 'self' blob: https://cdn.prod.website-files.com https://*.vouched.id",
@@ -102,7 +109,7 @@ const nextConfig = {
                     { key: 'X-Frame-Options', value: 'DENY' },
                     { key: 'X-Content-Type-Options', value: 'nosniff' },
                     { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-                    { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
+                    { key: 'Permissions-Policy', value: `camera=(${doxyPermissions}), microphone=(${doxyPermissions}), display-capture=(${doxyPermissions}), geolocation=()` },
                     { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
                     {
                         key: 'Content-Security-Policy',

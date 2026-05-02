@@ -158,7 +158,7 @@ export default function DoxyAdminSettings() {
                                     type="url"
                                     value={doxyUrl}
                                     onChange={(e) => setDoxyUrl(e.target.value)}
-                                    placeholder="https://PVT.doxy.me/patrioticvirtualtelehealth"
+                                    placeholder="https://pvt.doxy.me/virtualtelehealth"
                                     className="w-full pl-4 pr-12 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-900 dark:text-white"
                                 />
                                 {doxyUrl && (

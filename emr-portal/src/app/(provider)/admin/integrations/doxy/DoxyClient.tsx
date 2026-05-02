@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 export function DoxyClient() {
     const [environment, setEnvironment] = useState('production');
-    const [clinicUrl, setClinicUrl] = useState('https://PVT.doxy.me/patrioticvirtualtelehealth');
+    const [clinicUrl, setClinicUrl] = useState('https://pvt.doxy.me/virtualtelehealth');
     const [apiKey, setApiKey] = useState('');
     const [clinicName, setClinicName] = useState('Patriotic Virtual Telehealth');
     const [isActive, setIsActive] = useState(true);
@@ -26,7 +26,7 @@ export function DoxyClient() {
                 if (res.ok) {
                     const data = await res.json();
                     if (data.data) {
-                        setClinicUrl(data.data.doxyUrl || 'https://PVT.doxy.me/patrioticvirtualtelehealth');
+                        setClinicUrl(data.data.doxyUrl || 'https://pvt.doxy.me/virtualtelehealth');
                         setClinicName(data.data.clinicName || 'Patriotic Virtual Telehealth');
                         setIsActive(data.data.isActive !== false);
                         // API key not returned for security — show placeholder

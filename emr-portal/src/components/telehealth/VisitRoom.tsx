@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Mic, Settings, UserCheck, Clock, ShieldCheck, Video, Bot, StopCircle } from 'lucide-react';
+import { embedDoxyMe } from 'doxy.me';
+import { DOXY_IFRAME_ALLOW } from '@/lib/doxy';
 
 function useSpeechRecognition() {
     const [isListening, setIsListening] = useState(false);
@@ -80,6 +82,26 @@ export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, provide
     const [cameraOn, setCameraOn] = useState(true);
     const [micOn, setMicOn] = useState(true);
     const { isListening, startListening, stopListening, transcript } = useSpeechRecognition();
+    const sdkRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (role === 'provider' && status === 'connected' && videoLink && containerRef.current) {
+            const { destroy } = embedDoxyMe(containerRef.current, {
+                url: videoLink,
+                width: '100%',
+                height: '100%',
+                allow: DOXY_IFRAME_ALLOW,
+            });
+            sdkRef.current = destroy;
+        }
+        return () => {
+            if (sdkRef.current) {
+                sdkRef.current();
+                sdkRef.current = null;
+            }
+        };
+    }, [status, videoLink, role]);
 
     /* --- PATIENT WAITING ROOM --- */
     if (role === 'patient' && status === 'waiting') {
@@ -186,15 +208,12 @@ export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, provide
 
                 {/* Main Stage */}
                 <div className="flex-1 flex flex-col relative bg-slate-900">
-                    {status === 'connected' && videoLink ? (
-                        <>
-                            <iframe
-                                src={videoLink}
-                                allow="camera; microphone; fullscreen; display-capture"
-                                className="flex-1 w-full border-none"
-                            />
-                            {/* Provider Controls Footer */}
-                            <div className="h-20 bg-slate-800 border-t border-slate-700 flex items-center justify-between px-6 shrink-0">
+                            {status === 'connected' && videoLink ? (
+                                <>
+                                    <div ref={containerRef} className="flex-1 w-full border-none" />
+                                    {/* Provider Controls Footer */}
+                                    <div className="h-20 bg-slate-800 border-t border-slate-700 flex items-center justify-between px-6 shrink-0">
+
                                 <div className="flex items-center gap-4">
                                     <button 
                                         onClick={isListening ? stopListening : startListening}
@@ -212,13 +231,15 @@ export const VisitRoom: React.FC<VisitRoomProps> = ({ role, patientName, provide
                                         </div>
                                     )}
                                 </div>
-                                <button 
-                                    onClick={() => {
-                                        stopListening();
-                                        onEndVisit?.(transcript);
-                                    }}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all"
-                                >
+                                 <button 
+                                     onClick={() => {
+                                         sdkRef.current?.();
+                                         stopListening();
+                                         onEndVisit?.(transcript);
+                                     }}
+                                     className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all"
+                                 >
+
                                     <StopCircle className="w-5 h-5" />
                                     End Visit
                                 </button>

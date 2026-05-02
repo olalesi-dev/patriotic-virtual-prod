@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { sendBackendNotification } from '@/lib/backend-notifications';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { requireAuthenticatedUser } from '@/lib/server-auth';
+import { buildPatientDoxyJoinUrl } from '@/lib/doxy';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,11 +131,20 @@ function formatAppointmentTime(date: Date | null): string {
 }
 
 function resolveAppointmentLocation(data: Record<string, unknown>): string {
-    return asNonEmptyString(data.meetingUrl)
+    return asNonEmptyString(data.patientMeetingUrl)
+        ?? asNonEmptyString(data.meetingUrl)
         ?? asNonEmptyString(data.location)
         ?? asNonEmptyString(data.service)
         ?? asNonEmptyString(data.type)
         ?? 'See your patient portal for location details.';
+}
+
+function resolveProviderAppointmentLocation(data: Record<string, unknown>): string {
+    return asNonEmptyString(data.meetingUrl)
+        ?? asNonEmptyString(data.location)
+        ?? asNonEmptyString(data.service)
+        ?? asNonEmptyString(data.type)
+        ?? 'See your provider portal for location details.';
 }
 
 function resolvePreviousAppointmentDate(previousDate: string | undefined, previousTime: string | undefined): Date | null {
@@ -270,7 +280,15 @@ export async function POST(request: Request) {
         const patientPortalLink = buildPortalUrl(request, '/patient/scheduled');
         const providerPortalLink = buildPortalUrl(request, '/calendar');
         const patientScheduleUrl = buildPortalUrl(request, '/book');
-        const appointmentLocation = resolveAppointmentLocation(appointmentData);
+        const providerAppointmentLocation = resolveProviderAppointmentLocation(appointmentData);
+        const appointmentLocation = asNonEmptyString(appointmentData.patientMeetingUrl)
+            ?? (asNonEmptyString(appointmentData.meetingUrl)
+                ? buildPatientDoxyJoinUrl({
+                    meetingUrl: asNonEmptyString(appointmentData.meetingUrl) as string,
+                    patientName,
+                    patientId: appointmentPatientId,
+                })
+                : resolveAppointmentLocation(appointmentData));
         const platformName = 'Patriotic Telehealth';
         const reminderBaseDedupe = `appointment-reminder:${appointmentDoc.id}`;
         const cancelDedupeKeys = ['patient', 'provider'].flatMap((recipientType) => (
@@ -286,6 +304,10 @@ export async function POST(request: Request) {
             appointment_date: formatAppointmentDate(appointmentDate),
             appointment_time: formatAppointmentTime(appointmentDate),
             appointment_location: appointmentLocation,
+            appointmentLocation: appointmentLocation,
+            doxy_room: asNonEmptyString(appointmentData.doxyRoom),
+            meeting_url: appointmentLocation,
+            meetingUrl: appointmentLocation,
             reschedule_url: patientPortalLink,
             manage_url: patientPortalLink,
             schedule_url: patientScheduleUrl,
@@ -310,7 +332,11 @@ export async function POST(request: Request) {
             provider_dashboard_url: providerPortalLink,
             appointment_date: formatAppointmentDate(appointmentDate),
             appointment_time: formatAppointmentTime(appointmentDate),
-            appointment_location: appointmentLocation,
+            appointment_location: providerAppointmentLocation,
+            appointmentLocation: providerAppointmentLocation,
+            doxy_room: asNonEmptyString(appointmentData.doxyRoom),
+            meeting_url: providerAppointmentLocation,
+            meetingUrl: providerAppointmentLocation,
             reschedule_url: providerPortalLink,
             manage_url: providerPortalLink,
             schedule_url: providerPortalLink,
