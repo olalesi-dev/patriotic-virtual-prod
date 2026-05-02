@@ -970,7 +970,7 @@ export function LandingEmbed() {
               playsInline
               preload="auto"
             >
-              <source src="/assets/pick2.mp4" type="video/mp4" />
+              <source src="/assets/hero_bg.mp4" type="video/mp4" />
             </video>
             <div className="hero-video-overlay" />
             <div className="hero-video-glow" />
