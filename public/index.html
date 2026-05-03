@@ -5355,11 +5355,13 @@
     }
 
     #landingPage .hero-bg-video {
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
       object-position: center;
       filter: saturate(1.05) contrast(1.02);
+      transform: scale(1.01);
     }
 
     #landingPage .hero-video-overlay {
@@ -6852,6 +6854,13 @@
     }
 
     #landingPage .lp-hero-powered {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    #landingPage .lp-hero-powered-copy {
       display: grid;
       gap: 4px;
     }
@@ -6871,114 +6880,165 @@
       color: #fbfaf2;
     }
 
+    #landingPage .lp-hero-powered-logo {
+      display: block;
+      width: 170px;
+      height: auto;
+      max-width: 40vw;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
     #landingPage .lp-service-cards {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
-      align-items: stretch;
+      align-items: flex-start;
+    }
+
+    @media (min-width: 1025px) {
+      #landingPage .lp-service-cards {
+        width: calc(100% + 48px);
+        margin-left: -24px;
+        margin-right: -24px;
+      }
     }
 
     #landingPage .lp-service-card {
       appearance: none;
+      position: relative;
       width: 100%;
+      height: 442px;
       min-height: 442px;
       padding: 16px;
       border: 0;
       border-radius: 12px;
-      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+      overflow: hidden;
+      background: #090909;
+      box-shadow: none;
+      color: #ffffff;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 20px;
+      gap: 16px;
+      font-family: "Plus Jakarta Sans", sans-serif;
       text-align: left;
       cursor: pointer;
+      isolation: isolate;
       transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+
+    #landingPage .lp-service-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(9, 9, 9, 0) 41.968%, #000000 97.098%);
+      pointer-events: none;
     }
 
     #landingPage .lp-service-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 18px 32px rgba(17, 24, 39, 0.16);
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.22);
     }
 
-    #landingPage .lp-service-card--gradient {
-      background: linear-gradient(180deg, #74a4ff 0%, #315deb 100%);
-      color: #ffffff;
+    #landingPage .lp-service-card-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      pointer-events: none;
     }
 
-    #landingPage .lp-service-card--light {
-      background: rgba(255, 255, 255, 0.96);
-      color: #0d0d0d;
+    #landingPage .lp-service-card-bg img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      object-fit: cover;
+      object-position: center center;
     }
 
     #landingPage .lp-service-card-header {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: flex-start;
-      justify-content: space-between;
       gap: 12px;
+      width: 100%;
     }
 
     #landingPage .lp-service-card-title {
-      font-size: 30px;
+      flex: 1 0 0;
+      min-width: 1px;
+      margin: 0;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 24px;
       font-weight: 600;
-      line-height: 38px;
-      letter-spacing: -0.016em;
+      line-height: 1.1;
+      letter-spacing: -0.96px;
+      color: #ffffff;
     }
 
-    #landingPage .lp-service-card-icon {
+    #landingPage .lp-service-card-title span {
+      line-height: 1.1;
+    }
+
+    #landingPage .lp-service-title-accent {
+      color: #0c4285;
+    }
+
+    #landingPage .lp-service-card .lp-service-card-icon {
+      position: relative;
+      z-index: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.14);
+      width: 24px;
+      height: 24px;
+      border-radius: 0;
+      background: transparent;
       flex-shrink: 0;
-      color: inherit;
+      color: #ffffff;
     }
 
-    #landingPage .lp-service-card--light .lp-service-card-icon {
-      background: #eaf0ff;
-      color: #1e3fab;
-    }
-
-    #landingPage .lp-service-card-icon svg {
-      width: 22px;
-      height: 22px;
+    #landingPage .lp-service-card .lp-service-card-icon svg {
+      width: 24px;
+      height: 24px;
       display: block;
-    }
-
-    #landingPage .lp-service-card-figure {
-      width: min(253px, 100%);
-      height: 100%;
-      margin: 0 auto;
-      border-radius: 14px;
-      overflow: hidden;
-      /* background: rgba(255, 255, 255, 0.15); */
-    }
-
-    #landingPage .lp-service-card-figure img,
-    #landingPage .lp-service-card-visual img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      transform: rotate(90deg);
     }
 
     #landingPage .lp-service-card-copy {
-      display: grid;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
       gap: 16px;
-      margin-top: auto;
+      align-items: flex-start;
+      width: 100%;
+      margin-top: 0;
+      color: #ffffff;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 500;
     }
 
     #landingPage .lp-service-card-copy p {
       font-size: 16px;
+      font-weight: 500;
       line-height: 24px;
-      color: inherit;
+      min-height: 72px;
+      width: 100%;
+      color: #ffffff;
     }
 
     #landingPage .lp-service-card-price {
       font-size: 16px;
       line-height: 24px;
-      color: inherit;
+      color: #ffffff;
     }
 
     #landingPage .lp-service-card-price strong {
@@ -8570,6 +8630,16 @@
         align-items: flex-start;
       }
 
+      #landingPage .lp-hero-powered {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      #landingPage .lp-hero-powered-logo {
+        width: 150px;
+        max-width: 100%;
+      }
+
       #landingPage .lp-service-card,
       #landingPage .lp-feature-box,
       #landingPage .lp-step-card,
@@ -8777,26 +8847,29 @@
             </button>
 
             <div class="lp-hero-powered">
-              <span data-i18n="hero-powered-label">Powered by:</span>
-              <a href="https://radiantlogiq.com/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
-                <strong data-i18n="hero-powered">RadiantLogiq</strong>
-              </a>
+              <div class="lp-hero-powered-copy">
+                <span data-i18n="hero-powered-label">Powered by:</span>
+                <a href="https://radiantlogiq.com/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
+                  <strong data-i18n="hero-powered">RadiantLogiq</strong>
+                </a>
+              </div>
+              <img class="lp-hero-powered-logo" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" />
             </div>
           </div>
         </div>
 
         <div class="lp-service-cards lp-section-anchor" id="services">
-          <button class="lp-service-card lp-service-card--gradient" type="button" onclick="startSvc('weight_loss')">
+          <button class="lp-service-card" type="button" onclick="startSvc('weight_loss')" aria-label="Start Medical Weight Loss">
+            <div class="lp-service-card-bg" aria-hidden="true">
+              <img src="landing-page-demo/assets/hero-card-1.png" alt="" />
+            </div>
             <div class="lp-service-card-header">
-              <h2 class="lp-service-card-title" data-i18n="svc-weight_loss-name">RX Weight Loss</h2>
+              <h2 class="lp-service-card-title" data-i18n="hero-card-weight_loss-title"><span class="lp-service-title-accent">Medical<br />Weight Loss<br /></span><span>Start Your</span><br /><span>Journey Today</span></h2>
               <span class="lp-service-card-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M6 12h12M12 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M5.63604 15.5355V5.63604M5.63604 5.63604H15.5355M5.63604 5.63604L18.364 18.364" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                 </svg>
               </span>
-            </div>
-            <div class="lp-service-card-figure">
-              <img src="landing-page-demo/assets/general-health.png" alt="General health visit illustration" />
             </div>
             <div class="lp-service-card-copy">
               <p data-i18n="svc-weight_loss-desc">Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.</p>
@@ -8804,17 +8877,17 @@
             </div>
           </button>
 
-          <button class="lp-service-card lp-service-card--gradient" type="button" onclick="startSvc('membership_elite')">
+          <button class="lp-service-card" type="button" onclick="startSvc('membership_elite')" aria-label="Start All Access Elite">
+            <div class="lp-service-card-bg" aria-hidden="true">
+              <img src="landing-page-demo/assets/hero-card-2.png" alt="" />
+            </div>
             <div class="lp-service-card-header">
-              <h2 class="lp-service-card-title" data-i18n="svc-membership_elite-name">All Access — Elite</h2>
+              <h2 class="lp-service-card-title" data-i18n="hero-card-membership_elite-title"><span>All Access -</span><br /><span class="lp-service-title-accent">Elite</span></h2>
               <span class="lp-service-card-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M6 12h12M12 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M5.63604 15.5355V5.63604M5.63604 5.63604H15.5355M5.63604 5.63604L18.364 18.364" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                 </svg>
               </span>
-            </div>
-            <div class="lp-service-card-figure">
-              <img src="landing-page-demo/assets/all-access.png" alt="Weight loss program preview" />
             </div>
             <div class="lp-service-card-copy">
               <p data-i18n="svc-membership_elite-desc">Everything: telehealth visits, specialty programs, priority radiology reviews, and priority scheduling.</p>
@@ -8822,19 +8895,17 @@
             </div>
           </button>
 
-          <button class="lp-service-card lp-service-card--light" type="button" onclick="startSvc('imaging_video')">
+          <button class="lp-service-card" type="button" onclick="startSvc('imaging_video')" aria-label="Start Imaging and Video Consult">
+            <div class="lp-service-card-bg" aria-hidden="true">
+              <img src="landing-page-demo/assets/hero-card-3.png" alt="" />
+            </div>
             <div class="lp-service-card-header">
-              <h2 class="lp-service-card-title" data-i18n="svc-imaging_video-name">Imaging + Video Consult</h2>
+              <h2 class="lp-service-card-title" data-i18n="hero-card-imaging_video-title"><span>Imaging + </span><br /><span class="lp-service-title-accent">Video Consult</span></h2>
               <span class="lp-service-card-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M6 12h12M12 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M5.63604 15.5355V5.63604M5.63604 5.63604H15.5355M5.63604 5.63604L18.364 18.364" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                 </svg>
               </span>
-            </div>
-            <div class="lp-service-card-visual">
-              <div class="lp-service-card-figure">
-                <img src="landing-page-demo/assets/imaging-video.png" alt="Imaging consultation preview" />
-              </div>
             </div>
             <div class="lp-service-card-copy">
               <p data-i18n="svc-imaging_video-desc">Full imaging review plus a 30 - 60 minute secure video consultation to discuss findings directly with a specialist.</p>
@@ -8845,7 +8916,7 @@
       </div>
     </section>
 
-    <section class="lp-trust-strip">
+    <!-- <section class="lp-trust-strip">
       <div class="lp-container">
         <div class="lp-trust-item">
           <span class="lp-check-icon" aria-hidden="true">
@@ -8884,7 +8955,7 @@
           <span data-i18n="safety-4">Board-Certified Review</span>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <section class="lp-section">
       <div class="lp-container">
@@ -9309,11 +9380,7 @@
     <!-- HERO -->
     <section class="hero hero-showcase">
       <div class="hero-video-bg" aria-hidden="true">
-        <video class="hero-bg-video" autoplay loop muted playsinline preload="auto">
-          <source
-            src="/assets/hero_bg.mp4"
-            type="video/mp4" />
-        </video>
+        <video class="hero-bg-video" muted playsinline preload="none"></video>
         <div class="hero-video-overlay"></div>
         <div class="hero-video-glow"></div>
       </div>
@@ -11843,6 +11910,9 @@
       "footer-telehealth-consent": "Telehealth Consent",
       "footer-copy": "&copy; 2026 Patriotic Virtual Telehealth. All rights reserved.",
       "footer-badges": "HIPAA Compliant &middot; Florida-Licensed Providers &middot; Board-Certified Review &middot; Encrypted",
+      "hero-card-weight_loss-title": "<span class=\"lp-service-title-accent\">Medical<br />Weight Loss<br /></span><span>Start Your</span><br /><span>Journey Today</span>",
+      "hero-card-membership_elite-title": "<span>All Access -</span><br /><span class=\"lp-service-title-accent\">Elite</span>",
+      "hero-card-imaging_video-title": "<span>Imaging + </span><br /><span class=\"lp-service-title-accent\">Video Consult</span>",
       "svc-general_visit-name": "General Health Visit",
       "svc-general_visit-desc": "Virtual visits for non-emergent health concerns - medication management, wellness checks, health advice. Convenient care from home.",
       "svc-weight_loss-name": "Rx Weight Loss",
@@ -11941,6 +12011,9 @@
       "footer-telehealth-consent": "Consentimiento de Telesalud",
       "footer-copy": "&copy; 2026 Patriotic Virtual Telehealth. Todos los derechos reservados.",
       "footer-badges": "Compatible con HIPAA &middot; Proveedores con Licencia en Florida &middot; Revision Certificada &middot; Encriptado",
+      "hero-card-weight_loss-title": "<span class=\"lp-service-title-accent\">Perdida<br />de Peso<br />Medica</span><br /><span>Empiece Hoy</span>",
+      "hero-card-membership_elite-title": "<span>Acceso Total -</span><br /><span class=\"lp-service-title-accent\">Elite</span>",
+      "hero-card-imaging_video-title": "<span>Imagenes + </span><br /><span class=\"lp-service-title-accent\">Consulta Video</span>",
       "svc-general_visit-name": "Visita General de Salud",
       "svc-general_visit-desc": "Visitas virtuales para problemas de salud no emergentes: manejo de medicamentos, controles de bienestar y orientacion de salud. Atencion conveniente desde casa.",
       "svc-weight_loss-name": "Rx para Perdida de Peso",
@@ -16227,6 +16300,59 @@
     (function () {
       const saved = localStorage.getItem("theme");
       setTheme(saved === "dark" ? "dark" : "light", false);
+    })();
+
+    (function initLandingHeroVideo() {
+      const landing = document.getElementById("landingPage");
+      const activeVideo = landing?.querySelector(":scope > .lp-hero .hero-bg-video");
+      const legacyVideos = document.querySelectorAll("#landingPageLegacy .hero-bg-video");
+
+      legacyVideos.forEach(function (video) {
+        video.pause();
+        video.removeAttribute("autoplay");
+        video.removeAttribute("loop");
+        video.preload = "none";
+        video.removeAttribute("src");
+        video.querySelectorAll("source").forEach(function (source) {
+          source.removeAttribute("src");
+        });
+        video.load();
+      });
+
+      if (!landing || !activeVideo) return;
+
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      function landingIsVisible() {
+        return !landing.classList.contains("hidden") && landing.style.display !== "none";
+      }
+
+      window.syncLandingHeroVideo = function () {
+        if (reducedMotion.matches || document.hidden || !landingIsVisible()) {
+          activeVideo.pause();
+          return;
+        }
+        activeVideo.play().catch(function () {
+          // Autoplay can be deferred by the browser; muted playback resumes on the next sync.
+        });
+      };
+
+      activeVideo.addEventListener("ended", function () {
+        activeVideo.currentTime = 0;
+        window.syncLandingHeroVideo();
+      });
+
+      document.addEventListener("visibilitychange", window.syncLandingHeroVideo);
+      reducedMotion.addEventListener?.("change", window.syncLandingHeroVideo);
+
+      const observer = new MutationObserver(window.syncLandingHeroVideo);
+      observer.observe(landing, { attributes: true, attributeFilter: ["class", "style"] });
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", window.syncLandingHeroVideo, { once: true });
+      } else {
+        window.syncLandingHeroVideo();
+      }
     })();
   </script>
 
