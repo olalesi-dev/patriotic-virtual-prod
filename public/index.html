@@ -6121,7 +6121,7 @@
     body:not(.light-theme) #landingPage .services,
     body:not(.light-theme) #landingPage .protocol-section,
     body:not(.light-theme) #landingPage .pricing,
-    body:not(.light-theme) #clinicians {
+    body:not(.light-theme) #diagnostic-radiology {
       background-color: #020617 !important;
     }
 
@@ -6724,6 +6724,73 @@
       background: #ffffff;
     }
 
+    #landingPage .lp-subpage {
+      display: none !important;
+    }
+
+    #landingPage[data-lp-route="radiology"] #radiology,
+    #landingPage[data-lp-route="diagnostic-radiology"] #diagnostic-radiology,
+    #landingPage[data-lp-route="reviews"] #reviews,
+    #landingPage[data-lp-route="partners"] #partners {
+      display: block !important;
+    }
+
+    #landingPage:not([data-lp-route="home"]) .lp-home-section {
+      display: none !important;
+    }
+
+    #landingPage .lp-subpage.lp-section,
+    #landingPage .lp-subpage.lp-facility-strip {
+      padding-top: 156px !important;
+    }
+
+    body.lp-subroute #mainNav:not(.scrolled),
+    body.light-theme.lp-subroute #mainNav:not(.scrolled) {
+      background: rgba(255, 255, 255, 0.92) !important;
+      border-bottom: 1px solid rgba(214, 214, 214, 0.7) !important;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) {
+      background: rgba(5, 10, 24, 0.92) !important;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+      box-shadow: 0 10px 30px rgba(2, 6, 23, 0.28) !important;
+    }
+
+    body.lp-subroute #mainNav:not(.scrolled) .lp-nav-links a,
+    body.lp-subroute #mainNav:not(.scrolled) .lp-nav-btn--ghost,
+    body.lp-subroute #mainNav:not(.scrolled) .lp-icon-btn,
+    body.light-theme.lp-subroute #mainNav:not(.scrolled) .lp-nav-links a,
+    body.light-theme.lp-subroute #mainNav:not(.scrolled) .lp-nav-btn--ghost,
+    body.light-theme.lp-subroute #mainNav:not(.scrolled) .lp-icon-btn {
+      color: #475569 !important;
+    }
+
+    body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-nav-links a,
+    body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-nav-btn--ghost,
+    body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn {
+      color: rgba(241, 245, 249, 0.92) !important;
+    }
+
+    body.lp-subroute #mainNav:not(.scrolled) .lp-nav-links a:hover,
+    body.lp-subroute #mainNav:not(.scrolled) .lp-nav-btn--ghost:hover,
+    body.lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover,
+    body.light-theme.lp-subroute #mainNav:not(.scrolled) .lp-nav-links a:hover,
+    body.light-theme.lp-subroute #mainNav:not(.scrolled) .lp-nav-btn--ghost:hover,
+    body.light-theme.lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
+      color: #1e3fab !important;
+      background: rgba(30, 63, 171, 0.08) !important;
+    }
+
+    body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-nav-links a:hover,
+    body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-nav-btn--ghost:hover,
+    body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
+      color: #ffffff !important;
+      background: rgba(148, 163, 184, 0.14) !important;
+    }
+
     #landingPage .lp-section-anchor {
       scroll-margin-top: 110px;
     }
@@ -6981,14 +7048,22 @@
       line-height: 1.1;
       letter-spacing: -0.96px;
       color: #ffffff;
+      text-shadow: none;
     }
 
     #landingPage .lp-service-card-title span {
       line-height: 1.1;
     }
 
+    #landingPage .lp-service-card-title span:not(.lp-service-title-accent) {
+      text-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.44),
+        0 1px 2px rgba(0, 0, 0, 0.62);
+    }
+
     #landingPage .lp-service-title-accent {
       color: #0c4285;
+      text-shadow: none;
     }
 
     #landingPage .lp-service-card .lp-service-card-icon {
@@ -7003,6 +7078,7 @@
       background: transparent;
       flex-shrink: 0;
       color: #ffffff;
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.62));
     }
 
     #landingPage .lp-service-card .lp-service-card-icon svg {
@@ -7024,6 +7100,9 @@
       color: #ffffff;
       font-family: "Plus Jakarta Sans", sans-serif;
       font-weight: 500;
+      text-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.66),
+        0 1px 2px rgba(0, 0, 0, 0.8);
     }
 
     #landingPage .lp-service-card-copy p {
@@ -8414,7 +8493,7 @@
     }
 
     body:not(.light-theme) #radiology.lp-section,
-    body:not(.light-theme) #testimonials.lp-section {
+    body:not(.light-theme) #reviews.lp-section {
       background: rgba(5, 10, 24, 0.46);
       border-top: 1px solid var(--lp-border);
       border-bottom: 1px solid var(--lp-border);
@@ -8617,6 +8696,11 @@
         padding-bottom: 64px;
       }
 
+      #landingPage .lp-subpage.lp-section,
+      #landingPage .lp-subpage.lp-facility-strip {
+        padding-top: 132px !important;
+      }
+
       #landingPage .lp-hero-content {
         padding-top: 104px;
       }
@@ -8640,12 +8724,195 @@
         max-width: 100%;
       }
 
-      #landingPage .lp-service-card,
-      #landingPage .lp-feature-box,
-      #landingPage .lp-step-card,
-      #landingPage .lp-facility-card {
-        min-height: auto;
+      #how-it-works.lp-section {
+        padding-top: 64px;
+        padding-bottom: 56px;
       }
+
+      #landingPage #how-it-works .lp-section-header {
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      #landingPage #how-it-works .lp-section-copy {
+        font-size: 16px;
+        line-height: 24px;
+      }
+
+      #landingPage #how-it-works .lp-steps-grid {
+        position: relative;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      #landingPage #how-it-works .lp-steps-grid::before {
+        content: "";
+        position: absolute;
+        top: 20px;
+        bottom: 20px;
+        left: 31px;
+        width: 2px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, rgba(248, 181, 181, 0.4), rgba(239, 68, 68, 0.9));
+        pointer-events: none;
+      }
+
+      #landingPage #how-it-works .lp-step-card {
+        position: relative;
+        z-index: 1;
+        min-height: 0;
+        padding: 12px 14px;
+        border-radius: 16px;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        grid-template-areas:
+          "number title"
+          "number copy";
+        column-gap: 12px;
+        row-gap: 2px;
+        align-items: start;
+        background: linear-gradient(135deg, rgba(248, 181, 181, 0.96) 0%, rgba(239, 68, 68, 0.96) 100%);
+        box-shadow: 0 12px 28px rgba(239, 68, 68, 0.18);
+      }
+
+      #landingPage #how-it-works .lp-step-number {
+        grid-area: number;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 20px;
+        line-height: 1;
+        box-shadow: 0 6px 16px rgba(127, 29, 29, 0.18);
+      }
+
+      #landingPage #how-it-works .lp-step-card h3 {
+        grid-area: title;
+        margin: 0;
+        font-size: 17px;
+        line-height: 22px;
+      }
+
+      #landingPage #how-it-works .lp-step-card p {
+        grid-area: copy;
+        margin: 0;
+        font-size: 13.5px;
+        line-height: 20px;
+        color: rgba(255, 255, 255, 0.92);
+      }
+
+      #landingPage.lp-motion-ready #how-it-works .lp-step-card.lp-scroll-reveal:not(.lp-in-view) {
+        opacity: 1 !important;
+        filter: none !important;
+        transform: none !important;
+      }
+
+        #landingPage .lp-service-card,
+        #landingPage .lp-feature-box,
+        #landingPage .lp-step-card,
+        #landingPage .lp-facility-card {
+          min-height: auto;
+        }
+
+        #landingPage .lp-providers-grid {
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x mandatory;
+          scroll-padding-left: 16px;
+          padding: 2px 16px 14px;
+          margin-left: -16px;
+          margin-right: -16px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+
+        #landingPage .lp-providers-grid::-webkit-scrollbar {
+          display: none;
+        }
+
+        #landingPage .lp-providers-grid > .lp-scroll-reveal,
+        #landingPage.lp-motion-ready .lp-providers-grid > .lp-scroll-reveal,
+        #landingPage.lp-motion-ready .lp-providers-grid > .lp-scroll-reveal:not(.lp-in-view) {
+          opacity: 1 !important;
+          filter: none !important;
+          transform: none !important;
+          animation: none !important;
+        }
+
+        #landingPage .lp-provider-card,
+        #landingPage .lp-provider-card--centered {
+          flex: 0 0 min(82vw, 328px);
+          width: min(82vw, 328px);
+          max-width: min(82vw, 328px);
+          min-height: 0;
+          height: auto;
+          grid-column: auto;
+          justify-self: auto;
+          align-self: flex-start;
+          grid-template-columns: 1fr;
+          border-radius: 16px;
+          scroll-snap-align: start;
+        }
+
+        #landingPage .lp-provider-card img {
+          display: block;
+          height: 214px;
+          max-height: 214px;
+          object-fit: cover;
+          object-position: center 18%;
+        }
+
+        #landingPage .lp-provider-card-body {
+          min-height: 0;
+          padding: 4px 12px 10px !important;
+          justify-content: flex-start;
+          gap: 5px;
+        }
+
+        #landingPage .lp-provider-card-copy {
+          gap: 3px;
+        }
+
+        #landingPage .lp-provider-card-copy > div {
+          margin: 0;
+        }
+
+        #landingPage .lp-provider-card h3 {
+          margin: 0;
+          font-size: 18px;
+          line-height: 22px;
+          letter-spacing: -0.01em;
+        }
+
+        #landingPage .lp-provider-role {
+          margin-top: 0;
+          font-size: 11.5px;
+          line-height: 16px;
+        }
+
+        #landingPage .lp-provider-card p {
+          margin: 0;
+          display: block;
+          overflow: visible;
+          font-size: 12px;
+          line-height: 16.5px;
+        }
+
+        #landingPage .lp-provider-tag {
+          margin-top: 4px;
+          align-self: flex-start;
+          gap: 6px;
+          padding: 6px 8px;
+          font-size: 11px;
+          line-height: 15px;
+        }
+
+        #landingPage .lp-provider-tag .lp-check-icon {
+          width: 18px;
+          height: 18px;
+        }
 
       #landingPage .lp-protocol-column,
       #landingPage .lp-radiology-grid {
@@ -8773,8 +9040,8 @@
         <a href="#services" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-services">Services</a>
         <a href="#how-it-works" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-how">How It Works</a>
         <a href="#radiology" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-radiology">Radiology Education</a>
-        <a href="#clinicians" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-clinicians">For Clinicians</a>
-        <a href="#testimonials" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-reviews">Reviews</a>
+        <a href="#diagnostic-radiology" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-clinicians">Diagnostic Radiology</a>
+        <a href="#reviews" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-reviews">Reviews</a>
       </div>
 
       <div class="nav-actions lp-nav-actions">
@@ -8799,8 +9066,8 @@
       <a href="#services" onclick="closeMobileNav()" data-i18n="nav-services">Services</a>
       <a href="#how-it-works" onclick="closeMobileNav()" data-i18n="nav-how">How It Works</a>
       <a href="#radiology" onclick="closeMobileNav()" data-i18n="nav-radiology">Radiology Education</a>
-      <a href="#clinicians" onclick="closeMobileNav()" data-i18n="nav-clinicians">For Clinicians</a>
-      <a href="#testimonials" onclick="closeMobileNav()" data-i18n="nav-reviews">Reviews</a>
+      <a href="#diagnostic-radiology" onclick="closeMobileNav()" data-i18n="nav-clinicians">Diagnostic Radiology</a>
+      <a href="#reviews" onclick="closeMobileNav()" data-i18n="nav-reviews">Reviews</a>
 
       <div class="lp-mobile-panel-actions">
         <button class="lp-nav-btn lp-nav-btn--ghost" id="mobileLoginBtn" onclick="closeMobileNav(); openModal('login')" data-i18n="nav-login">Log In</button>
@@ -8811,8 +9078,8 @@
     </div>
   </nav>
 
-  <main id="landingPage" class="lp-page">
-    <section class="lp-hero">
+  <main id="landingPage" class="lp-page" data-lp-route="home">
+    <section class="lp-hero lp-home-section">
       <div class="hero-video-bg" aria-hidden="true">
         <video class="hero-bg-video" autoplay loop muted playsinline preload="auto">
           <source src="/assets/hero_bg.mp4" type="video/mp4" />
@@ -8957,7 +9224,7 @@
       </div>
     </section> -->
 
-    <section class="lp-section">
+    <section class="lp-section lp-home-section">
       <div class="lp-container">
         <div class="lp-section-header lp-section-header--split">
           <h2 class="lp-section-title" data-i18n="proto-title"><span class="accent">Protocol-driven</span> care.<br />No exceptions.</h2>
@@ -9028,7 +9295,7 @@
       </div>
     </section>
 
-    <section class="lp-section">
+    <section class="lp-section lp-subpage lp-section-anchor" id="partners">
       <div class="lp-container lp-innovation-layout">
         <div class="lp-innovation-logo">
           <a href="https://radiantlogiq.com/" target="_blank" rel="noopener noreferrer">
@@ -9038,6 +9305,7 @@
 
         <div class="lp-innovation-copy">
           <div class="lp-innovation-body">
+            <div class="lp-eyebrow" data-i18n="partners-eyebrow">Partners</div>
             <h2 class="lp-section-title"><span data-i18n="innovation-title-prefix">Powered by</span> <span class="accent" data-i18n="innovation-title-accent">Innovation.</span></h2>
             <p class="lp-section-copy" data-i18n="innovation-body">Patriotic Virtual Telehealth is powered by RadiantLogiq, a physician-founded clinical platform designed to enhance care delivery through workflow optimization and intelligent data processing. RadiantLogiq supports scalable telehealth operations today and is a member of the NVIDIA Inception program.</p>
           </div>
@@ -9050,7 +9318,7 @@
       </div>
     </section>
 
-    <section class="lp-section lp-section-anchor" id="how-it-works">
+    <section class="lp-section lp-home-section lp-section-anchor" id="how-it-works">
       <div class="lp-container">
         <div class="lp-section-header lp-section-header--narrow">
           <h2 class="lp-section-title" data-i18n="how-title">Your Path to <span class="accent">Health</span></h2>
@@ -9091,7 +9359,7 @@
       </div>
     </section>
 
-    <section class="lp-section lp-section-anchor" id="radiology">
+    <section class="lp-section lp-subpage lp-section-anchor" id="radiology">
       <div class="lp-container lp-radiology-layout">
         <div class="lp-radiology-intro">
           <div class="lp-eyebrow" data-i18n="radiology-eyebrow">Radiology Education</div>
@@ -9167,7 +9435,7 @@
       </div>
     </section>
 
-    <section class="lp-facility-strip lp-section-anchor" id="clinicians">
+    <section class="lp-facility-strip lp-subpage lp-section-anchor" id="diagnostic-radiology">
       <div class="lp-container">
         <div class="lp-section-header lp-section-header--narrow">
           <div class="lp-eyebrow" data-i18n="facility-eyebrow">Diagnostic Radiology</div>
@@ -9209,7 +9477,7 @@
       </div>
     </section>
 
-    <section class="lp-section">
+    <section class="lp-section lp-home-section">
       <div class="lp-container">
         <div class="lp-section-header lp-section-header--narrow">
           <div class="lp-eyebrow" data-i18n="providers-eyebrow">Our Providers</div>
@@ -9270,7 +9538,7 @@
                   <h3>La Donna L. Lue Winston, MSN, APRN, SCRN</h3>
                   <div class="lp-provider-role" data-i18n="provider-3-role">Nurse Practitioner</div>
                 </div>
-                <p data-i18n="provider-3-body">Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.</p>
+                <p data-i18n="provider-3-body">Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in nursing. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and delivering expert clinical guidance in critical care and stroke programs.</p>
               </div>
               <div class="lp-provider-tag">
                 <span class="lp-check-icon" aria-hidden="true">
@@ -9287,7 +9555,7 @@
       </div>
     </section>
 
-    <section class="lp-section lp-section-anchor" id="testimonials">
+    <section class="lp-section lp-subpage lp-section-anchor" id="reviews">
       <div class="lp-container">
         <div class="lp-section-header lp-section-header--narrow">
           <div class="lp-eyebrow" data-i18n="reviews-eyebrow">Reviews</div>
@@ -9342,6 +9610,7 @@
             <h4 data-i18n="footer-company">Company</h4>
             <div class="lp-footer-links">
               <a href="#" onclick="openAboutUs(); return false;" data-i18n="footer-about">About Us</a>
+              <a href="#partners" data-i18n="footer-partners">Partners</a>
               <a href="#" onclick="toast('Careers page coming soon!'); return false;" data-i18n="footer-careers">Careers</a>
               <a href="#" onclick="toast('Press page coming soon!'); return false;" data-i18n="footer-press">Press</a>
             </div>
@@ -11827,7 +12096,7 @@
 
     function extendLandingI18n() {
       Object.assign(i18n.en, {
-      "nav-clinicians": "For Clinicians",
+      "nav-clinicians": "Diagnostic Radiology",
       "nav-get-started": "Start My Free Intake",
       "nav-provider-portal": "Provider Portal",
       "nav-emr-portal": "EMR Portal ↗",
@@ -11849,6 +12118,7 @@
       "proto-card2-title": "Evidence-Based Care Standards",
       "proto-card3-title": "Mandatory Physician Review Process",
       "proto-card4-title": "HIPAA-Compliant Secure Platform",
+      "partners-eyebrow": "Partners",
       "innovation-title-prefix": "Powered by",
       "innovation-title-accent": "Innovation.",
       "innovation-body": "Patriotic Virtual Telehealth is powered by RadiantLogiq, a physician-founded clinical platform designed to enhance care delivery through workflow optimization and intelligent data processing. RadiantLogiq supports scalable telehealth operations today and is a member of the NVIDIA Inception program.",
@@ -11905,6 +12175,7 @@
       "cta-btn": "Start Your Free Visit",
       "footer-brand": "Board-certified telehealth and radiology services. Currently accepting patients in Florida. No controlled substances are prescribed through this platform.",
       "footer-contact-info": "Contact Info",
+      "footer-partners": "Partners",
       "footer-terms": "Terms of Service",
       "footer-npp": "Notice of Privacy Practices",
       "footer-telehealth-consent": "Telehealth Consent",
@@ -11928,7 +12199,7 @@
     });
 
       Object.assign(i18n.es, {
-      "nav-clinicians": "Para Clinicos",
+      "nav-clinicians": "Radiologia Diagnostica",
       "nav-get-started": "Comenzar Mi Evaluacion Gratis",
       "nav-provider-portal": "Portal del Proveedor",
       "nav-emr-portal": "Portal EMR ↗",
@@ -11950,6 +12221,7 @@
       "proto-card2-title": "Estandares Clinicos Basados en Evidencia",
       "proto-card3-title": "Revision Medica Obligatoria",
       "proto-card4-title": "Plataforma Segura Compatible con HIPAA",
+      "partners-eyebrow": "Socios",
       "innovation-title-prefix": "Impulsado por",
       "innovation-title-accent": "Innovacion.",
       "innovation-body": "Patriotic Virtual Telehealth esta impulsado por RadiantLogiq, una plataforma clinica fundada por medicos y disenada para mejorar la atencion mediante optimizacion de flujo de trabajo y procesamiento inteligente de datos. RadiantLogiq respalda operaciones escalables de telesalud y es miembro del programa NVIDIA Inception.",
@@ -12006,6 +12278,7 @@
       "cta-btn": "Comenzar Visita Gratis",
       "footer-brand": "Servicios de telesalud y radiologia certificados. Actualmente aceptando pacientes en Florida. No se recetan sustancias controladas por esta plataforma.",
       "footer-contact-info": "Informacion de Contacto",
+      "footer-partners": "Socios",
       "footer-terms": "Terminos del Servicio",
       "footer-npp": "Aviso de Practicas de Privacidad",
       "footer-telehealth-consent": "Consentimiento de Telesalud",
@@ -13183,13 +13456,82 @@
         toggleNavVisibility(id, !li),
       );
     }
+
+    const landingSubpageRoutes = {
+      radiology: "radiology",
+      "diagnostic-radiology": "diagnostic-radiology",
+      clinicians: "diagnostic-radiology",
+      reviews: "reviews",
+      testimonials: "reviews",
+      partners: "partners",
+    };
+    const landingHomeAnchors = new Set(["", "services", "how-it-works"]);
+
+    function setLandingRoute(route, options = {}) {
+      const page = document.getElementById("landingPage");
+      if (!page) return;
+
+      const normalizedRoute = landingSubpageRoutes[route] || "home";
+      page.dataset.lpRoute = normalizedRoute;
+      document.body.classList.toggle("lp-subroute", normalizedRoute !== "home");
+
+      page.querySelectorAll(".lp-subpage").forEach((section) => {
+        section.setAttribute("aria-hidden", String(section.id !== normalizedRoute));
+      });
+
+      page.querySelectorAll(".lp-home-section").forEach((section) => {
+        section.setAttribute("aria-hidden", String(normalizedRoute !== "home"));
+      });
+
+      if (options.updateHash && window.history && window.history.pushState) {
+        const baseUrl = window.location.pathname + window.location.search;
+        const nextUrl = normalizedRoute === "home" ? baseUrl : `${baseUrl}#${normalizedRoute}`;
+        window.history.pushState(null, "", nextUrl);
+      }
+
+      if (options.scroll !== false) {
+        const targetId = normalizedRoute === "home" ? options.anchor : normalizedRoute;
+        window.requestAnimationFrame(() => {
+          const target = targetId ? document.getElementById(targetId) : null;
+          if (target) {
+            target.scrollIntoView({ block: "start", behavior: options.smooth ? "smooth" : "auto" });
+          } else {
+            window.scrollTo({ top: 0, behavior: options.smooth ? "smooth" : "auto" });
+          }
+        });
+      }
+    }
+
+    function syncLandingRouteFromHash() {
+      const hash = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+      if (landingSubpageRoutes[hash]) {
+        setLandingRoute(hash);
+        return;
+      }
+
+      if (landingHomeAnchors.has(hash)) {
+        setLandingRoute("home", { anchor: hash, scroll: !!hash });
+        return;
+      }
+
+      setLandingRoute("home", { scroll: false });
+    }
+
+    window.addEventListener("hashchange", syncLandingRouteFromHash);
+    window.addEventListener("popstate", syncLandingRouteFromHash);
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", syncLandingRouteFromHash, { once: true });
+    } else {
+      syncLandingRouteFromHash();
+    }
+
     function showLanding() {
       closeMobileNav();
       document.getElementById("landingPage").classList.remove("hidden");
       document.getElementById("landingPage").style.display = "block";
       document.getElementById("dashboardPage").style.display = "none";
       document.getElementById("adminDashboard").classList.add("hidden");
-      window.scrollTo(0, 0);
+      setLandingRoute("home", { updateHash: true });
     }
     async function showDashboard() {
       toast("Redirecting to your EMR portal...");
@@ -15729,7 +16071,7 @@
         'nav-services': 'Services',
         'nav-how': 'How It Works',
         'nav-radiology': 'Radiology Education',
-        'nav-clinicians': 'For Clinicians and Facilities',
+        'nav-clinicians': 'Diagnostic Radiology',
         'nav-reviews': 'Reviews',
         'nav-login': 'Log In',
         'nav-get-started': 'Get Started',
@@ -15757,6 +16099,7 @@
         'proto-pill2': 'Evidence-based treatment protocols for all services',
         'proto-pill3': 'Board-certified physician review required for every Rx',
         'proto-pill4': 'HIPAA-compliant platform with full audit logging',
+        'partners-eyebrow': 'Partners',
         // How It Works
         'how-eyebrow': 'How It Works',
         'how-title': 'Care in four<br />simple steps.',
@@ -15781,6 +16124,7 @@
         'footer-brand': 'Board-certified telehealth and radiology services. Protocol-driven care, delivered to your door. Currently serving Florida.',
         'footer-company': 'Company',
         'footer-about': 'About Us',
+        'footer-partners': 'Partners',
         'footer-careers': 'Careers',
         'footer-press': 'Press',
         'footer-support': 'Support',
@@ -15796,7 +16140,7 @@
         'nav-services': 'Servicios',
         'nav-how': 'Cómo Funciona',
         'nav-radiology': 'Educación en Radiología',
-        'nav-clinicians': 'Para Clínicos e Instalaciones',
+        'nav-clinicians': 'Radiología Diagnóstica',
         'nav-reviews': 'Opiniones',
         'nav-login': 'Iniciar Sesión',
         'nav-get-started': 'Comenzar',
@@ -15824,6 +16168,7 @@
         'proto-pill2': 'Protocolos de tratamiento basados en evidencia para todos los servicios',
         'proto-pill3': 'Revisión médica certificada requerida para cada receta',
         'proto-pill4': 'Plataforma compatible con HIPAA con registro de auditoría completo',
+        'partners-eyebrow': 'Socios',
         // How It Works
         'how-eyebrow': 'Cómo Funciona',
         'how-title': 'Atención en cuatro<br />pasos sencillos.',
@@ -15848,6 +16193,7 @@
         'footer-brand': 'Servicios de telesalud y radiología certificados. Atención guiada por protocolos, entregada a su puerta. Actualmente atendiendo a Florida.',
         'footer-company': 'Empresa',
         'footer-about': 'Sobre Nosotros',
+        'footer-partners': 'Socios',
         'footer-careers': 'Empleos',
         'footer-press': 'Prensa',
         'footer-support': 'Soporte',
@@ -16405,13 +16751,13 @@
         addReveal(page.querySelector("#radiology .lp-radiology-intro"), "left", 0);
         addRevealGroup("#radiology .lp-radiology-grid > *", "up", 90);
 
-        addReveal(page.querySelector("#clinicians .lp-section-header"), "up", 0);
-        addRevealGroup("#clinicians .lp-facility-grid > *", "up", 90);
+        addReveal(page.querySelector("#diagnostic-radiology .lp-section-header"), "up", 0);
+        addRevealGroup("#diagnostic-radiology .lp-facility-grid > *", "up", 90);
 
         addRevealGroup(".lp-providers-grid > *", "soft", 90);
 
-        addReveal(page.querySelector("#testimonials .lp-section-header"), "up", 0);
-        addRevealGroup("#testimonials .lp-testimonials-grid > *", "soft", 90);
+        addReveal(page.querySelector("#reviews .lp-section-header"), "up", 0);
+        addRevealGroup("#reviews .lp-testimonials-grid > *", "soft", 90);
 
         addReveal(page.querySelector(".lp-cta-box"), "scale", 0);
         addReveal(page.querySelector(".lp-footer-brand"), "left", 0);
