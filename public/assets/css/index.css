@@ -6955,8 +6955,8 @@
       appearance: none;
       position: relative;
       width: 100%;
-      height: 442px;
-      min-height: 442px;
+      height: 560px;
+      min-height: 560px;
       padding: 16px;
       border: 0;
       border-radius: 12px;
@@ -7164,12 +7164,10 @@
       padding: 18px 18px 18px 20px;
       border: 1px solid rgba(117, 160, 225, 0.22);
       border-radius: 14px;
-      background:
-        radial-gradient(circle at 82% 20%, rgba(91, 127, 255, 0.22), transparent 30%),
-        linear-gradient(135deg, rgba(248, 251, 255, 0.98) 0%, rgba(231, 241, 255, 0.96) 100%);
+      background: linear-gradient(135deg, rgba(248, 251, 255, 0.98) 0%, rgba(231, 241, 255, 0.96) 100%);
       color: #12315f;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 58px 22px;
+      grid-template-columns: minmax(0, 1fr) 104px 22px;
       align-items: center;
       gap: 14px;
       font-family: "Plus Jakarta Sans", sans-serif;
@@ -7209,6 +7207,22 @@
       letter-spacing: 0;
     }
 
+    #landingPage .lp-service-mini-emphasis {
+      font-weight: 900;
+    }
+
+    #landingPage .lp-service-mini-emphasis--red {
+      color: #b83b3b;
+    }
+
+    #landingPage .lp-service-mini-emphasis--blue {
+      color: #1e5fc1;
+    }
+
+    #landingPage .lp-service-mini-emphasis--brown {
+      color: #8b5a2b;
+    }
+
     #landingPage .lp-service-mini-sub {
       display: block;
       color: rgba(21, 59, 116, 0.72);
@@ -7219,22 +7233,25 @@
     }
 
     #landingPage .lp-service-mini-art {
-      position: relative;
-      width: 54px;
-      height: 54px;
-      border-radius: 14px;
-      background: linear-gradient(145deg, #b9ecff 0%, #5b9cff 54%, #214ca9 100%);
-      box-shadow:
-        0 12px 18px rgba(18, 49, 95, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-      transform: rotate(-4deg);
+      display: block;
+      width: 104px;
+      height: 86px;
+      max-width: none;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      flex: 0 0 auto;
+      transform: none;
+      filter: drop-shadow(0 12px 16px rgba(28, 65, 120, 0.18));
+      pointer-events: none;
     }
 
     #landingPage .lp-service-mini-art::before,
     #landingPage .lp-service-mini-art::after {
-      content: "";
-      position: absolute;
-      display: block;
+      content: none;
+      display: none;
     }
 
     #landingPage .lp-service-mini-card--intimacy .lp-service-mini-art::before {
@@ -7259,10 +7276,8 @@
     }
 
     #landingPage .lp-service-mini-card--hair .lp-service-mini-art {
-      background:
-        radial-gradient(circle at 63% 30%, rgba(255, 255, 255, 0.88), transparent 0 17%, transparent 18%),
-        linear-gradient(145deg, #d9ecff 0%, #88baff 48%, #3567c9 100%);
-      transform: rotate(7deg);
+      background: transparent;
+      transform: none;
     }
 
     #landingPage .lp-service-mini-card--hair .lp-service-mini-art::before {
@@ -7285,8 +7300,8 @@
     }
 
     #landingPage .lp-service-mini-card--checkup .lp-service-mini-art {
-      background: linear-gradient(145deg, #e6f5ff 0%, #8abfff 50%, #2a5fbe 100%);
-      transform: rotate(-2deg);
+      background: transparent;
+      transform: none;
     }
 
     #landingPage .lp-service-mini-card--checkup .lp-service-mini-art::before {
@@ -7331,10 +7346,11 @@
     }
 
     #landingPage .lp-breakthrough {
-      --lp-breakthrough-pad-x: clamp(84px, 10vw, 172px);
+      --lp-breakthrough-pad-x: clamp(168px, 20vw, 344px);
       position: relative;
       overflow: hidden;
-      margin: 36px clamp(16px, 3vw, 48px) 0;
+      width: min(100%, 1600px);
+      margin: 36px auto 0;
       padding: 72px var(--lp-breakthrough-pad-x) 76px;
       border: 1px solid rgba(143, 183, 255, 0.16);
       border-radius: 28px;
@@ -7618,9 +7634,9 @@
     #landingPage .lp-dose-panel {
       position: relative;
       overflow: hidden;
-      min-height: 610px;
-      padding: 34px;
-      border-radius: 24px;
+      min-height: 430px;
+      padding: 24px;
+      border-radius: 20px;
       background:
         radial-gradient(circle at 50% 80%, rgba(143, 183, 255, 0.22), transparent 38%),
         linear-gradient(180deg, rgba(7, 18, 37, 0.92), rgba(4, 12, 26, 0.94));
@@ -7641,7 +7657,7 @@
     #landingPage .lp-dose-panel h3 {
       margin: 0;
       color: #ffffff;
-      font-size: 42px;
+      font-size: 30px;
       font-weight: 900;
       line-height: 0.98;
       letter-spacing: 0;
@@ -7650,9 +7666,10 @@
     #landingPage .lp-science-panel img {
       position: absolute;
       left: 50%;
-      bottom: -14%;
-      width: 70%;
-      height: 58%;
+      bottom: 0;
+      width: 92%;
+      height: 66%;
+      object-position: center bottom;
       transform: translateX(-50%);
       filter: drop-shadow(0 -18px 34px rgba(143, 183, 255, 0.12));
     }
@@ -7662,26 +7679,26 @@
       justify-items: center;
       align-content: start;
       text-align: center;
-      gap: 24px;
+      gap: 16px;
     }
 
     #landingPage .lp-dose-panel h3 {
-      max-width: 520px;
-      font-size: 48px;
+      max-width: 360px;
+      font-size: 34px;
       line-height: 1.06;
     }
 
     #landingPage .lp-dose-panel img {
-      width: min(500px, 80%);
-      height: 160px;
+      width: min(320px, 76%);
+      height: 112px;
       transform: rotate(-10deg);
       filter: drop-shadow(0 30px 40px rgba(143, 183, 255, 0.28));
     }
 
     #landingPage .lp-dose-gauge {
-      width: min(440px, 92%);
-      height: 130px;
-      margin-top: 8px;
+      width: min(310px, 92%);
+      height: 88px;
+      margin-top: 4px;
       border-radius: 440px 440px 0 0;
       border-top: 2px dashed rgba(143, 183, 255, 0.38);
       position: relative;
@@ -7691,6 +7708,395 @@
       font-size: 13px;
       font-weight: 900;
       padding-top: 10px;
+    }
+
+    #landingPage .lp-breakthrough-panels .lp-breakthrough-btn {
+      min-height: 42px;
+      padding: 11px 20px;
+      font-size: 14px;
+      line-height: 18px;
+    }
+
+    #landingPage .lp-edge {
+      --lp-edge-pad-x: clamp(192px, 22vw, 336px);
+      position: relative;
+      overflow: hidden;
+      width: min(100%, 1600px);
+      margin: 36px auto 0;
+      padding: 72px var(--lp-edge-pad-x) 76px;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(235, 247, 255, 0.94) 0%, rgba(229, 244, 255, 0.92) 46%, rgba(212, 234, 255, 0.96) 100%),
+        linear-gradient(140deg, #f8fbff 0%, #d9edff 52%, #c3dcff 100%);
+      color: #071e36;
+      isolation: isolate;
+      box-shadow: 0 26px 70px rgba(15, 46, 88, 0.14);
+    }
+
+    #landingPage .lp-edge-track {
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      top: 290px;
+      height: 80px;
+      z-index: 0;
+      pointer-events: none;
+      transform: rotate(-10deg);
+      transform-origin: center;
+    }
+
+    #landingPage .lp-edge-track::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      border-top: 4px dotted rgba(255, 255, 255, 0.92);
+      transform: translateY(-50%);
+      filter: drop-shadow(0 1px 0 rgba(54, 91, 132, 0.14));
+    }
+
+    #landingPage .lp-edge-marker {
+      position: absolute;
+      top: 50%;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 12px solid rgba(143, 183, 255, 0.32);
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow:
+        0 0 0 10px rgba(188, 217, 255, 0.22),
+        0 18px 42px rgba(46, 90, 156, 0.18);
+      transform: translate(-50%, -50%);
+    }
+
+    #landingPage .lp-edge-marker--one {
+      left: 16%;
+    }
+
+    #landingPage .lp-edge-marker--two {
+      left: 74%;
+    }
+
+    #landingPage .lp-edge-marker--three {
+      left: 98%;
+      width: 58px;
+      height: 58px;
+      border-width: 17px;
+    }
+
+    #landingPage .lp-edge-hero,
+    #landingPage .lp-edge-card-grid,
+    #landingPage .lp-edge-footnote {
+      position: relative;
+      z-index: 1;
+    }
+
+    #landingPage .lp-edge-hero {
+      display: grid;
+      justify-items: center;
+      text-align: center;
+      min-height: 690px;
+    }
+
+    #landingPage .lp-edge-hero h2 {
+      width: min(760px, 100%);
+      margin: 0;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: clamp(42px, 5vw, 64px);
+      font-weight: 500;
+      line-height: 1.04;
+      letter-spacing: 0;
+      color: #071e36;
+    }
+
+    #landingPage .lp-edge-visual {
+      width: min(620px, 68vw);
+      height: 430px;
+      margin-top: 36px;
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 34px 54px rgba(32, 74, 132, 0.2));
+    }
+
+    #landingPage .lp-edge-visual img,
+    #landingPage .lp-edge-card img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      max-width: none;
+    }
+
+    #landingPage .lp-edge-actions {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    #landingPage .lp-edge-btn,
+    #landingPage .lp-edge-card-btn {
+      appearance: none;
+      border: 0;
+      min-height: 58px;
+      padding: 15px 34px;
+      border-radius: 999px;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 24px;
+      cursor: pointer;
+      transition:
+        transform 0.28s var(--ease),
+        box-shadow 0.28s var(--ease),
+        background 0.28s var(--ease);
+    }
+
+    #landingPage .lp-edge-btn:hover,
+    #landingPage .lp-edge-card-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    #landingPage .lp-edge-btn--light {
+      background: #ffffff;
+      color: #071e36;
+      box-shadow: 0 18px 40px rgba(20, 54, 96, 0.16);
+    }
+
+    #landingPage .lp-edge-btn--glass {
+      background: rgba(7, 30, 54, 0.54);
+      color: #ffffff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px rgba(20, 54, 96, 0.16);
+      backdrop-filter: blur(12px);
+    }
+
+    #landingPage .lp-edge-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 64px;
+    }
+
+    #landingPage .lp-edge-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 430px;
+      padding: 28px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 56% 72%, rgba(143, 183, 255, 0.18), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(244, 249, 255, 0.9));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    #landingPage .lp-edge-card-copy {
+      position: relative;
+      z-index: 2;
+    }
+
+    #landingPage .lp-edge-card h3 {
+      margin: 0;
+      font-size: clamp(24px, 2.2vw, 32px);
+      font-weight: 650;
+      line-height: 1.04;
+      letter-spacing: 0;
+      color: #071e36;
+    }
+
+    #landingPage .lp-edge-card p {
+      margin: 4px 0 0;
+      color: #6f8ba3;
+      font-size: clamp(18px, 1.8vw, 26px);
+      font-weight: 650;
+      line-height: 1.12;
+    }
+
+    #landingPage .lp-edge-card img {
+      position: absolute;
+      left: 50%;
+      top: 58%;
+      width: 56%;
+      height: 50%;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 28px 34px rgba(47, 83, 127, 0.2));
+    }
+
+    #landingPage .lp-edge-card:nth-child(2) img {
+      top: 58%;
+      width: 60%;
+      height: 54%;
+    }
+
+    #landingPage .lp-edge-card-btn {
+      position: absolute;
+      right: 28px;
+      bottom: 28px;
+      z-index: 2;
+      min-height: 46px;
+      padding: 12px 22px;
+      font-size: 15px;
+      line-height: 20px;
+      background: #071e36;
+      color: #f1f7ff;
+      box-shadow: 0 18px 34px rgba(7, 30, 54, 0.22);
+    }
+
+    #landingPage .lp-edge-footnote {
+      width: min(920px, 100%);
+      margin: 30px auto 0;
+      color: rgba(7, 30, 54, 0.74);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    @media (max-width: 1023px) {
+      #landingPage .lp-edge {
+        --lp-edge-pad-x: 96px;
+        margin: 28px auto 0;
+        padding: 58px var(--lp-edge-pad-x) 58px;
+        border-radius: 24px;
+      }
+
+      #landingPage .lp-edge-track {
+        top: 250px;
+      }
+
+      #landingPage .lp-edge-hero {
+        min-height: 610px;
+      }
+
+      #landingPage .lp-edge-visual {
+        width: min(520px, 82vw);
+        height: 360px;
+        margin-bottom: -22px;
+      }
+
+      #landingPage .lp-edge-card-grid {
+        grid-template-columns: 1fr;
+        margin-top: 18px;
+      }
+
+      #landingPage .lp-edge-card {
+        min-height: 430px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      #landingPage .lp-edge {
+        --lp-edge-pad-x: 36px;
+        margin: 20px auto 0;
+        padding: 34px var(--lp-edge-pad-x) 36px;
+        border-radius: 20px;
+      }
+
+      #landingPage .lp-edge-track {
+        top: 180px;
+        left: -18%;
+        right: -18%;
+        height: 56px;
+        transform: rotate(-9deg);
+      }
+
+      #landingPage .lp-edge-track::before {
+        border-top-width: 3px;
+      }
+
+      #landingPage .lp-edge-marker {
+        width: 26px;
+        height: 26px;
+        border-width: 8px;
+      }
+
+      #landingPage .lp-edge-marker--one {
+        left: 16%;
+      }
+
+      #landingPage .lp-edge-marker--two {
+        left: 76%;
+      }
+
+      #landingPage .lp-edge-marker--three {
+        left: 98%;
+        width: 38px;
+        height: 38px;
+        border-width: 11px;
+      }
+
+      #landingPage .lp-edge-hero {
+        min-height: 420px;
+      }
+
+      #landingPage .lp-edge-hero h2 {
+        font-size: 31px;
+        line-height: 1.08;
+      }
+
+      #landingPage .lp-edge-visual {
+        width: min(315px, 88vw);
+        height: 230px;
+        margin-top: 22px;
+        margin-bottom: -30px;
+      }
+
+      #landingPage .lp-edge-actions {
+        margin-top: 0;
+        gap: 8px;
+      }
+
+      #landingPage .lp-edge-btn,
+      #landingPage .lp-edge-card-btn {
+        min-height: 44px;
+        padding: 11px 18px;
+        font-size: 14px;
+        line-height: 18px;
+      }
+
+      #landingPage .lp-edge-card-grid {
+        gap: 10px;
+        margin-top: 0;
+      }
+
+      #landingPage .lp-edge-card {
+        min-height: 320px;
+        padding: 20px;
+        border-radius: 18px;
+      }
+
+      #landingPage .lp-edge-card h3 {
+        font-size: 24px;
+      }
+
+      #landingPage .lp-edge-card p {
+        font-size: 19px;
+      }
+
+      #landingPage .lp-edge-card img {
+        width: 58%;
+        height: 50%;
+        top: 58%;
+      }
+
+      #landingPage .lp-edge-card:nth-child(2) img {
+        width: 64%;
+        height: 54%;
+      }
+
+      #landingPage .lp-edge-card-btn {
+        right: 20px;
+        bottom: 20px;
+      }
+
+      #landingPage .lp-edge-footnote {
+        margin-top: 18px;
+        font-size: 11px;
+      }
     }
 
     #landingPage .lp-badge {
@@ -8005,8 +8411,7 @@
     }
 
     #landingPage .lp-radiology-card:hover,
-    #landingPage .lp-facility-card:hover,
-    #landingPage .lp-cta-box:hover {
+    #landingPage .lp-facility-card:hover {
       box-shadow: 0 28px 62px rgba(17, 24, 39, 0.18);
       filter: saturate(1.04);
     }
@@ -8703,61 +9108,93 @@
     }
 
     #landingPage .lp-cta {
-      padding: 0;
+      padding: 96px 0 84px;
+      background: #ffffff;
     }
 
     #landingPage .lp-cta-shell {
-      min-height: 548px;
-      padding: 100px 0;
+      position: relative;
+      min-height: 492px;
+      padding: clamp(48px, 4.4vw, 64px);
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: flex-start;
+      justify-content: flex-start;
+      overflow: hidden;
+      border-radius: 22px;
       background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.36) 0%, rgba(0, 0, 0, 0.52) 100%),
-        url("/landing-page-demo/assets/cta-bg.jpg") center center / cover no-repeat;
+        linear-gradient(90deg, rgba(5, 25, 49, 0.58) 0%, rgba(12, 42, 76, 0.34) 31%, rgba(33, 77, 116, 0.11) 58%, rgba(8, 27, 50, 0.02) 100%),
+        linear-gradient(180deg, rgba(7, 24, 46, 0.03) 0%, rgba(7, 24, 46, 0.1) 100%),
+        url("/landing-page-demo/assets/cta-bg.jpg") center 48% / cover no-repeat;
+      box-shadow: 0 24px 60px rgba(14, 41, 84, 0.16);
+      isolation: isolate;
+      animation: none;
+    }
+
+    #landingPage .lp-cta-shell::after {
+      content: none;
     }
 
     #landingPage .lp-cta-box {
-      width: min(100%, 1312px);
-      margin: 0 auto;
-      padding: 64px 24px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.96);
+      position: relative;
+      z-index: 1;
+      width: min(100%, 620px);
+      margin: 0;
+      padding: 0;
       display: grid;
-      justify-items: center;
-      gap: 16px;
-      text-align: center;
-      box-shadow: 0 28px 70px rgba(17, 24, 39, 0.16);
+      justify-items: start;
+      gap: 18px;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
     }
 
-    #landingPage .lp-cta-box .lp-eyebrow {
-      color: #3328bf;
+    #landingPage .lp-cta-title {
+      max-width: 620px;
+      margin: 0;
+      color: #ffffff !important;
+      font-size: clamp(32px, 2.65vw, 42px);
+      font-weight: 430;
+      line-height: 1.08;
+      letter-spacing: 0;
+      text-shadow: 0 2px 16px rgba(3, 16, 33, 0.2);
     }
 
-    #landingPage .lp-cta-box .lp-eyebrow::before {
-      display: none;
-    }
-
-    #landingPage .lp-cta-box .lp-section-title,
     #landingPage .lp-cta-box .lp-section-copy {
-      max-width: 723px;
+      max-width: 370px;
+      margin: 0 0 10px;
+      color: rgba(255, 255, 255, 0.92) !important;
+      font-size: 15px;
+      font-weight: 520;
+      line-height: 1.28;
+      letter-spacing: 0;
+      text-shadow: 0 1px 12px rgba(3, 16, 33, 0.18);
     }
 
     #landingPage .lp-cta-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 44px;
-      padding: 10px 16px;
-      border-radius: 8px;
+      min-width: 272px;
+      min-height: 38px;
+      padding: 9px 24px;
+      border-radius: 17px;
       border: 0;
-      background: #1e3fab;
-      color: #ffffff;
-      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-      font-size: 16px;
-      font-weight: 600;
-      line-height: 24px;
+      background: #020914;
+      color: #ffffff !important;
+      box-shadow: 0 10px 22px rgba(3, 21, 42, 0.18);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 18px;
       cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #landingPage .lp-cta-btn:hover {
+      transform: translateY(-2px);
+      background: #0b2d56;
+      box-shadow: 0 22px 46px rgba(3, 21, 42, 0.3);
     }
 
     #landingPage .lp-footer {
@@ -8850,8 +9287,62 @@
       color: #1e3fab !important;
     }
 
+    #landingPage .lp-footer-powered {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid #d6d6d6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    #landingPage .lp-footer-powered-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    #landingPage .lp-footer-powered-copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    #landingPage .lp-footer-powered-copy span,
+    #landingPage .lp-footer-powered p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 20px;
+      color: #808080 !important;
+    }
+
+    #landingPage .lp-footer-powered-copy a {
+      color: #0d0d0d !important;
+      text-decoration: none;
+    }
+
+    #landingPage .lp-footer-powered-copy strong {
+      font-family: "Inter", sans-serif;
+      font-size: 28px;
+      font-weight: 650;
+      line-height: 26px;
+      letter-spacing: -0.04em;
+    }
+
+    #landingPage .lp-footer-powered-logo {
+      display: block;
+      width: 92px;
+      height: auto;
+      max-width: min(32vw, 92px);
+      object-fit: contain;
+      margin-left: 0;
+    }
+
     #landingPage .lp-footer-bottom {
-      margin-top: 64px;
+      margin-top: 28px;
       padding: 24px 0;
       border-top: 1px solid #d6d6d6;
       display: flex;
@@ -8965,8 +9456,7 @@
     body:not(.light-theme) #landingPage .lp-feature-box,
     body:not(.light-theme) #landingPage .lp-provider-card,
     body:not(.light-theme) #landingPage .lp-testimonial-card,
-    body:not(.light-theme) #landingPage .lp-innovation-copy,
-    body:not(.light-theme) #landingPage .lp-cta-box {
+    body:not(.light-theme) #landingPage .lp-innovation-copy {
       background: rgba(10, 17, 34, 0.8);
       border: 1px solid var(--lp-border);
       box-shadow: var(--lp-card-shadow);
@@ -9070,6 +9560,10 @@
       color: #cbd5e1;
     }
 
+    body:not(.light-theme) #landingPage .lp-cta {
+      background: #050816;
+    }
+
     body:not(.light-theme) #landingPage .lp-footer {
       background: #050816 !important;
       border-top: 1px solid var(--lp-border) !important;
@@ -9079,8 +9573,13 @@
       color: var(--lp-accent) !important;
     }
 
+    body:not(.light-theme) #landingPage .lp-footer-powered,
     body:not(.light-theme) #landingPage .lp-footer-bottom {
       border-top-color: var(--lp-border);
+    }
+
+    body:not(.light-theme) #landingPage .lp-footer-powered-copy a {
+      color: #f8fafc !important;
     }
 
     @media (max-width: 1279px) {
@@ -9192,8 +9691,8 @@
       }
 
       #landingPage .lp-breakthrough {
-        --lp-breakthrough-pad-x: 48px;
-        margin: 28px 20px 0;
+        --lp-breakthrough-pad-x: 96px;
+        margin: 28px auto 0;
         padding: 54px var(--lp-breakthrough-pad-x) 60px;
       }
 
@@ -9215,7 +9714,26 @@
 
       #landingPage .lp-science-panel,
       #landingPage .lp-dose-panel {
-        min-height: 560px;
+        min-height: 430px;
+      }
+
+      #landingPage .lp-cta {
+        padding: 72px 0 64px;
+      }
+
+      #landingPage .lp-cta-shell {
+        min-height: 480px;
+        padding: 44px;
+        border-radius: 22px;
+        background:
+          linear-gradient(90deg, rgba(5, 25, 49, 0.6) 0%, rgba(12, 42, 76, 0.36) 40%, rgba(33, 77, 116, 0.14) 72%, rgba(8, 27, 50, 0.04) 100%),
+          linear-gradient(180deg, rgba(7, 24, 46, 0.03) 0%, rgba(7, 24, 46, 0.1) 100%),
+          url("/landing-page-demo/assets/cta-bg.jpg") center 50% / cover no-repeat;
+      }
+
+      #landingPage .lp-cta-box {
+        width: min(100%, 520px);
+        padding: 0;
       }
 
       #providers .provider-grid {
@@ -9305,8 +9823,8 @@
       }
 
       #landingPage .lp-service-card {
-        min-height: 132px;
-        height: 132px;
+        min-height: 168px;
+        height: 168px;
         padding: 11px;
         border-radius: 12px;
         gap: 8px;
@@ -9314,8 +9832,8 @@
 
       #landingPage .lp-service-card:first-child {
         grid-column: 1 / -1;
-        min-height: 148px;
-        height: 148px;
+        min-height: 188px;
+        height: 188px;
       }
 
       #landingPage .lp-service-card:first-child .lp-service-card-bg img {
@@ -9371,10 +9889,10 @@
 
       #landingPage .lp-service-mini-card {
         grid-column: 1 / -1;
-        min-height: 56px;
-        padding: 8px 12px 8px 15px;
+        min-height: 66px;
+        padding: 9px 12px 9px 15px;
         border-radius: 14px;
-        grid-template-columns: minmax(0, 1fr) 42px 20px;
+        grid-template-columns: minmax(0, 1fr) 74px 20px;
         gap: 10px;
       }
 
@@ -9388,9 +9906,10 @@
       }
 
       #landingPage .lp-service-mini-art {
-        width: 40px;
-        height: 40px;
-        border-radius: 11px;
+        width: 74px;
+        height: 58px;
+        border-radius: 0;
+        filter: drop-shadow(0 8px 10px rgba(28, 65, 120, 0.16));
       }
 
       #landingPage .lp-service-mini-card--intimacy .lp-service-mini-art::before {
@@ -9487,8 +10006,8 @@
       }
 
       #landingPage .lp-breakthrough {
-        --lp-breakthrough-pad-x: 14px;
-        margin: 20px 12px 0;
+        --lp-breakthrough-pad-x: 36px;
+        margin: 20px auto 0;
         padding: 34px var(--lp-breakthrough-pad-x) 42px;
         border-radius: 20px;
       }
@@ -9520,6 +10039,47 @@
       #landingPage .lp-breakthrough-product {
         width: min(330px, 84vw);
         margin-top: 12px;
+      }
+
+      #landingPage .lp-cta {
+        padding: 52px 0 44px;
+      }
+
+      #landingPage .lp-cta-shell {
+        min-height: 560px;
+        align-items: flex-start;
+        padding: 34px 24px;
+        border-radius: 22px;
+        background:
+          linear-gradient(180deg, rgba(5, 25, 49, 0.68) 0%, rgba(12, 42, 76, 0.5) 40%, rgba(23, 67, 112, 0.22) 70%, rgba(7, 24, 46, 0.08) 100%),
+          url("/landing-page-demo/assets/cta-bg.jpg") center bottom / cover no-repeat;
+      }
+
+      #landingPage .lp-cta-box {
+        width: 100%;
+        gap: 16px;
+        padding: 0;
+      }
+
+      #landingPage .lp-cta-title {
+        font-size: 31px;
+        font-weight: 430;
+        line-height: 1.08;
+      }
+
+      #landingPage .lp-cta-box .lp-section-copy {
+        max-width: 100%;
+        font-size: 13.5px;
+        font-weight: 520;
+        line-height: 1.32;
+      }
+
+      #landingPage .lp-cta-btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 40px;
+        padding: 10px 18px;
+        font-size: 13px;
       }
 
       #landingPage .lp-breakthrough-carousel-wrap {
@@ -9567,8 +10127,8 @@
 
       #landingPage .lp-science-panel,
       #landingPage .lp-dose-panel {
-        min-height: 440px;
-        padding: 22px;
+        min-height: 360px;
+        padding: 20px;
         border-radius: 18px;
       }
 
@@ -9578,13 +10138,13 @@
 
       #landingPage .lp-science-panel h3,
       #landingPage .lp-dose-panel h3 {
-        font-size: 30px;
+        font-size: 26px;
       }
 
       #landingPage .lp-science-panel img {
-        width: 78%;
-        height: 42%;
-        bottom: -16%;
+        width: 94%;
+        height: 64%;
+        bottom: 0;
       }
 
       #landingPage .lp-dose-panel {
@@ -9592,7 +10152,7 @@
       }
 
       #landingPage .lp-dose-panel h3 {
-        font-size: 32px;
+        font-size: 28px;
       }
 
       #landingPage .lp-dose-panel img {
@@ -9804,8 +10364,7 @@
       }
 
       #landingPage .lp-innovation-logo,
-      #landingPage .lp-innovation-copy,
-      #landingPage .lp-cta-box {
+      #landingPage .lp-innovation-copy {
         padding: 28px 20px;
       }
 
@@ -9831,5 +10390,22 @@
       #landingPage .lp-footer-bottom {
         flex-direction: column;
         align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 767px) and (max-height: 700px) {
+      #landingPage .lp-hero-content {
+        padding-top: 44px;
+        gap: 6px;
+      }
+
+      #landingPage .lp-service-card {
+        min-height: 156px;
+        height: 156px;
+      }
+
+      #landingPage .lp-service-card:first-child {
+        min-height: 176px;
+        height: 176px;
       }
     }
