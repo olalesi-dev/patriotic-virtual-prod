@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { admin } from '../config/firebase';
 import { startTelnyxPhoneVerification, verifyTelnyxPhoneCode } from '../services/telnyx';
 import { logger } from '../utils/logger';
+import { getPhoneVerificationErrorStatus } from '../utils/phone-verification-errors';
 
 const router = Router();
 
@@ -64,7 +65,9 @@ router.post('/request', async (req, res) => {
         const result = await startTelnyxPhoneVerification(uid, phoneNumber, { includePatientRecord });
         return res.json({ success: true, verification: result });
     } catch (error) {
-        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to start phone verification.' });
+        return res
+            .status(getPhoneVerificationErrorStatus(error))
+            .json({ error: error instanceof Error ? error.message : 'Failed to start phone verification.' });
     }
 });
 
@@ -91,7 +94,9 @@ router.post('/verify', async (req, res) => {
         const result = await verifyTelnyxPhoneCode(uid, parsed.data.phoneNumber, parsed.data.code, { includePatientRecord });
         return res.json({ success: true, verification: result });
     } catch (error) {
-        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to verify phone number.' });
+        return res
+            .status(getPhoneVerificationErrorStatus(error))
+            .json({ error: error instanceof Error ? error.message : 'Failed to verify phone number.' });
     }
 });
 
