@@ -75,6 +75,7 @@ export interface RecipientProfile {
     uid: string;
     email: string | null;
     phone: string | null;
+    phoneVerified: boolean;
     displayName: string;
     role: string | null;
 }

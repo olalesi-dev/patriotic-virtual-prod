@@ -12,7 +12,7 @@ const REMINDER_SPECS = [
         topicKey: 'APPOINTMENT_REMINDER_24H' as const,
         hoursBefore: 24,
         dedupeSuffix: '24h',
-        channels: ['email', 'in_app'] as Array<'email' | 'in_app'>,
+        channels: ['email', 'sms', 'in_app'] as Array<'email' | 'sms' | 'in_app'>,
     },
     {
         topicKey: 'APPOINTMENT_REMINDER_8H' as const,
@@ -24,7 +24,7 @@ const REMINDER_SPECS = [
         topicKey: 'APPOINTMENT_REMINDER_1H' as const,
         hoursBefore: 1,
         dedupeSuffix: '1h',
-        channels: ['email', 'in_app'] as Array<'email' | 'in_app'>,
+        channels: ['email', 'sms', 'in_app'] as Array<'email' | 'sms' | 'in_app'>,
     },
 ] as const;
 
@@ -164,7 +164,7 @@ function buildReminderSchedules(input: {
     entityId: string;
     dedupeKey: string;
     sendAt: string;
-    channels: Array<'email' | 'in_app'> | Array<'in_app'>;
+    channels: Array<'email' | 'sms' | 'in_app'> | Array<'in_app'>;
     templateData: Record<string, unknown>;
     metadata: Record<string, unknown>;
 }> {
@@ -379,7 +379,7 @@ export async function POST(request: Request) {
                 entityId: appointmentDoc.id,
                 recipientIds: [appointmentPatientId],
                 dedupeKey: `appointment:${parsedBody.data.type}:${appointmentDoc.id}:patient`,
-                channels: ['email', 'in_app'],
+                channels: ['email', 'sms', 'in_app'],
                 templateData: patientTemplateData,
                 metadata: {
                     appointmentId: appointmentDoc.id,
@@ -401,7 +401,7 @@ export async function POST(request: Request) {
                 entityId: appointmentDoc.id,
                 recipientIds: [providerId],
                 dedupeKey: `appointment:${parsedBody.data.type}:${appointmentDoc.id}:provider`,
-                channels: ['email', 'in_app'],
+                channels: ['email', 'sms', 'in_app'],
                 templateData: providerTemplateData,
                 metadata: {
                     appointmentId: appointmentDoc.id,

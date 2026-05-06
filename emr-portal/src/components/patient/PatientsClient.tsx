@@ -96,7 +96,7 @@ function parseSavedView() {
     }
 }
 
-export default function PatientsClient() {
+export default function PatientsClient({ scope = 'assigned' }: { scope?: 'assigned' | 'global' }) {
     const queryClient = useQueryClient();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -152,6 +152,7 @@ export default function PatientsClient() {
 
     const patientQueryKey = React.useMemo(() => [
         'patients',
+        scope,
         activeUser?.uid ?? 'anonymous',
         deferredSearch.trim(),
         statusFilters,
@@ -166,6 +167,7 @@ export default function PatientsClient() {
         currentCursor,
         deferredSearch,
         pageSize,
+        scope,
         sortDir,
         sortField,
         statusFilters,
@@ -183,6 +185,7 @@ export default function PatientsClient() {
         statusFilters.forEach((status) => params.append('status', status));
         teamFilters.forEach((teamId) => params.append('teamId', teamId));
         tagFilters.forEach((tag) => params.append('tag', tag));
+        params.set('scope', scope);
         params.set('pageSize', String(pageSize));
         params.set('sortField', sortField);
         params.set('sortDir', sortDir);
@@ -199,7 +202,7 @@ export default function PatientsClient() {
         }
 
         return payload;
-    }, [activeUser, deferredSearch, pageSize, sortDir, sortField, statusFilters, tagFilters, teamFilters]);
+    }, [activeUser, deferredSearch, pageSize, scope, sortDir, sortField, statusFilters, tagFilters, teamFilters]);
 
     const patientsQuery = useQuery({
         queryKey: patientQueryKey,
@@ -214,6 +217,7 @@ export default function PatientsClient() {
 
         const nextQueryKey = [
             'patients',
+            scope,
             activeUser.uid,
             deferredSearch.trim(),
             statusFilters,
@@ -236,6 +240,7 @@ export default function PatientsClient() {
         pageSize,
         patientsQuery.data?.nextCursor,
         queryClient,
+        scope,
         sortDir,
         sortField,
         statusFilters,
@@ -292,8 +297,9 @@ export default function PatientsClient() {
     }, []);
 
     const handleOpenPatient = React.useCallback((patient: PatientRegistryRow) => {
-        router.push(`/patients/${patient.id}`);
-    }, [router]);
+        const suffix = scope === 'global' ? '?scope=global' : '';
+        router.push(`/patients/${patient.id}${suffix}`);
+    }, [router, scope]);
 
     const handleNewPatientComplete = React.useCallback(() => {
         setIsNewPatientOpen(false);
@@ -301,7 +307,7 @@ export default function PatientsClient() {
             setCursorStack([null]);
             setPageIndex(0);
             void queryClient.invalidateQueries({
-                queryKey: ['patients', activeUser.uid]
+                queryKey: ['patients']
             });
         }
     }, [activeUser, queryClient]);
@@ -450,15 +456,17 @@ export default function PatientsClient() {
                                 <Users className="h-6 w-6" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-black tracking-tight text-slate-900">Patients</h1>
+                                <h1 className="text-2xl font-black tracking-tight text-slate-900">{scope === 'global' ? 'Global Patients' : 'Patients'}</h1>
                                 <p className="text-sm text-slate-500">
-                                    Only patients linked to your appointments, messages, or teams are listed here.
+                                    {scope === 'global'
+                                        ? 'Browse the full patient registry across the practice.'
+                                        : 'Only patients linked to your appointments, messages, or teams are listed here.'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex flex-wrap gap-3 text-xs font-semibold text-slate-500">
-                            <span className="rounded-full bg-slate-100 px-3 py-1">{totalCount} provider-scoped patients</span>
+                            <span className="rounded-full bg-slate-100 px-3 py-1">{totalCount} {scope === 'global' ? 'global' : 'provider-scoped'} patients</span>
                             <span className="rounded-full bg-slate-100 px-3 py-1">{Object.keys(rowSelection).length} selected</span>
                         </div>
                     </div>
@@ -592,7 +600,7 @@ export default function PatientsClient() {
                             <tr>
                                 <td colSpan={table.getVisibleLeafColumns().length} className="px-6 py-20 text-center">
                                     <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-brand" />
-                                    <p className="mt-4 text-sm font-medium text-slate-500">Loading provider patient registry...</p>
+                                    <p className="mt-4 text-sm font-medium text-slate-500">Loading {scope === 'global' ? 'global' : 'provider'} patient registry...</p>
                                 </td>
                             </tr>
                         ) : table.getRowModel().rows.length === 0 ? (

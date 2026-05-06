@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { DoseSpotFrame } from '@/components/telehealth/DoseSpotFrame';
 import { AITextarea } from '@/components/ui/AITextarea';
 import { syncDoseSpotClinician } from '@/lib/dosespot-clinician-sync';
+import { PhoneVerificationModal } from '@/components/common/PhoneVerificationModal';
 import {
     DOSESPOT_CLINICIAN_SPECIALTIES,
     DOSESPOT_PDMP_ROLE_TYPES,
@@ -76,6 +77,8 @@ function isDoseSpotClinicianSynced(clinicianId: string, status: { synced: boolea
 export default function ProviderProfilePage() {
     const userProfile = useUserProfile();
     const [data, setData] = useState<ProfileData>(EMPTY);
+    const [phoneVerification, setPhoneVerification] = useState({ verified: false, phone: '' });
+    const [verifyModalOpen, setVerifyModalOpen] = useState(false);
     const [doseSpotStatus, setDoseSpotStatus] = useState({
         synced: false,
         registrationStatus: null as string | null,
@@ -138,6 +141,10 @@ export default function ProviderProfilePage() {
                         registrationStatus: typeof d.doseSpot?.registrationStatus === 'string' ? d.doseSpot.registrationStatus : null,
                         lastSyncError: typeof d.doseSpot?.lastSyncError === 'string' ? d.doseSpot.lastSyncError : null
                     });
+                    setPhoneVerification({
+                        verified: d.phoneVerified === true,
+                        phone: typeof d.phoneVerification?.phone === 'string' ? d.phoneVerification.phone : (d.phone || '')
+                    });
                 } else {
                     setData(prev => ({
                         ...prev,
@@ -183,11 +190,14 @@ export default function ProviderProfilePage() {
         try {
             const fullName = `${data.firstName} ${data.lastName}`.trim();
             const sanitizePhone = (value: string) => value.replace(/\D/g, '');
+            const normalizedPhone = sanitizePhone(data.phone);
+            const previousPhone = phoneVerification.phone.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+            const phoneChanged = normalizedPhone !== previousPhone;
             const adminShape: AdminUpdateUserInput = {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 email: userProfile.email,
-                phone: sanitizePhone(data.phone),
+                phone: normalizedPhone,
                 dob: data.dateOfBirth,
                 sex: data.gender as AdminUpdateUserInput['sex'],
                 role: 'provider',
@@ -228,6 +238,12 @@ export default function ProviderProfilePage() {
                 : clinicianId || null;
             const profilePayload = {
                 ...providerProfile,
+                phoneVerified: phoneChanged ? false : phoneVerification.verified,
+                phoneVerification: {
+                    status: phoneChanged ? 'unverified' : (phoneVerification.verified ? 'verified' : 'unverified'),
+                    phone: normalizedPhone || null,
+                    updatedAt: serverTimestamp(),
+                },
                 dateOfBirth: data.dateOfBirth,
                 gender: data.gender,
                 aboutMe: data.aboutMe,
@@ -249,8 +265,13 @@ export default function ProviderProfilePage() {
             ]);
 
             if (fullName) await updateProfile(auth.currentUser, { displayName: fullName });
+            setPhoneVerification({ verified: !phoneChanged && phoneVerification.verified, phone: normalizedPhone });
             setEditing(false);
             toast.success('Provider profile saved!');
+            if (phoneChanged && normalizedPhone) {
+                setVerifyModalOpen(true);
+                toast.info('Your phone number changed. Verify it to receive SMS reminders.');
+            }
         } catch (e) {
             toast.error('Failed to save profile');
             console.error(e);
@@ -430,6 +451,12 @@ export default function ProviderProfilePage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-20">
+            <PhoneVerificationModal
+                open={verifyModalOpen}
+                phoneNumber={data.phone}
+                onClose={() => setVerifyModalOpen(false)}
+                onVerified={() => setPhoneVerification({ verified: true, phone: data.phone })}
+            />
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -437,12 +464,22 @@ export default function ProviderProfilePage() {
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Manage your clinical credentials</p>
                 </div>
                 {!editing ? (
-                    <button
-                        onClick={() => setEditing(true)}
-                        className="flex items-center gap-2 bg-[#0EA5E9] text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-100 dark:shadow-none hover:bg-sky-500 transition-all"
-                    >
-                        <Edit3 className="w-4 h-4" /> Edit Profile
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {data.phone && !phoneVerification.verified && (
+                            <button
+                                onClick={() => setVerifyModalOpen(true)}
+                                className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-amber-700 transition hover:bg-amber-100"
+                            >
+                                <Shield className="w-4 h-4" /> Verify Phone
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setEditing(true)}
+                            className="flex items-center gap-2 bg-[#0EA5E9] text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-100 dark:shadow-none hover:bg-sky-500 transition-all"
+                        >
+                            <Edit3 className="w-4 h-4" /> Edit Profile
+                        </button>
+                    </div>
                 ) : (
                     <div className="flex gap-2">
                         <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">

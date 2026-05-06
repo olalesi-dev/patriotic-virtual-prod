@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
 import { sendMessage } from '@/lib/server-messaging';
-import { loadProviderScopedPatientDetail, loadProviderScopedPatientSummary } from '@/lib/server-patients';
+import {
+    loadGlobalPatientDetail,
+    loadGlobalPatientSummary,
+    loadProviderScopedPatientDetail,
+    loadProviderScopedPatientSummary
+} from '@/lib/server-patients';
 import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
@@ -55,7 +60,11 @@ export async function GET(
         const resolvedAccessError = ensureProviderAccess(user, role);
         if (resolvedAccessError) return resolvedAccessError;
 
-        const patient = await loadProviderScopedPatientDetail(firestore, user.uid, params.id);
+        const scope = new URL(request.url).searchParams.get('scope') === 'global' ? 'global' : 'assigned';
+
+        const patient = await (scope === 'global'
+            ? loadGlobalPatientDetail(firestore, user.uid, params.id)
+            : loadProviderScopedPatientDetail(firestore, user.uid, params.id));
         if (!patient) {
             return NextResponse.json({ success: false, error: 'Patient not found.' }, { status: 404 });
         }
@@ -96,7 +105,10 @@ export async function PATCH(
 
     try {
         const firestore = db;
-        const patientSummary = await loadProviderScopedPatientSummary(firestore, user.uid, params.id);
+        const scope = new URL(request.url).searchParams.get('scope') === 'global' ? 'global' : 'assigned';
+        const patientSummary = await (scope === 'global'
+            ? loadGlobalPatientSummary(firestore, params.id)
+            : loadProviderScopedPatientSummary(firestore, user.uid, params.id));
         if (!patientSummary) {
             return NextResponse.json({ success: false, error: 'Patient not found.' }, { status: 404 });
         }
@@ -115,11 +127,20 @@ export async function PATCH(
             const lastName = asNonEmptyString(values.lastName);
             const displayName = [firstName, lastName].filter(Boolean).join(' ');
             const sex = asNonEmptyString(values.sex);
+            const phone = asNonEmptyString(values.phone);
             const preferredPharmacyDoseSpotId = asNumber(values.preferredPharmacyDoseSpotId);
             const nextPatientData = {
                 ...(displayName ? { name: displayName, displayName, firstName, lastName } : {}),
                 ...(asNonEmptyString(values.email) ? { email: asNonEmptyString(values.email) } : {}),
-                ...(asNonEmptyString(values.phone) ? { phone: asNonEmptyString(values.phone) } : {}),
+                ...(phone ? {
+                    phone,
+                    phoneVerified: false,
+                    phoneVerification: {
+                        status: 'unverified',
+                        phone,
+                        updatedAt: now
+                    }
+                } : {}),
                 ...(asNonEmptyString(values.dob) ? { dob: asNonEmptyString(values.dob) } : {}),
                 ...(sex ? { sex, sexAtBirth: sex, gender: sex } : {}),
                 ...(asNonEmptyString(values.state) ? { state: asNonEmptyString(values.state) } : {}),
@@ -134,7 +155,15 @@ export async function PATCH(
             await firestore.collection('users').doc(params.id).set({
                 ...(displayName ? { displayName, name: displayName, firstName, lastName } : {}),
                 ...(asNonEmptyString(values.email) ? { email: asNonEmptyString(values.email) } : {}),
-                ...(asNonEmptyString(values.phone) ? { phone: asNonEmptyString(values.phone) } : {}),
+                ...(phone ? {
+                    phone,
+                    phoneVerified: false,
+                    phoneVerification: {
+                        status: 'unverified',
+                        phone,
+                        updatedAt: now
+                    }
+                } : {}),
                 ...(sex ? { sex, sexAtBirth: sex, gender: sex } : {}),
                 ...(preferredPharmacyDoseSpotId && preferredPharmacyDoseSpotId > 0 ? { preferredPharmacyDoseSpotId } : {}),
                 updatedAt: now

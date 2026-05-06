@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
     ChevronLeft, ChevronRight, ChevronDown, Plus, Filter, Settings,
-    Calendar as CalendarIcon, User, Search, Video, Clock, FileText,
-    MapPin, X, CheckCircle2, AlertTriangle, RefreshCw, MessageSquare,
-    Phone, MoreVertical, Repeat, Check, UserX, ArrowRight, ShieldCheck, ChevronDown as ChevronDownIcon
+    User, Search, Video, Clock, FileText,
+    X, AlertTriangle, RefreshCw, MessageSquare,
+    Repeat, Check, UserX, ShieldCheck, ChevronDown as ChevronDownIcon
 } from 'lucide-react';
 import {
     format, addWeeks, subWeeks, startOfWeek, endOfWeek,
@@ -16,11 +17,14 @@ import { useRouter } from 'next/navigation';
 import { ProviderConfirmDialog } from '@/components/provider/ProviderConfirmDialog';
 import { ProviderRescheduleModal } from '@/components/provider/ProviderRescheduleModal';
 import { db } from '@/lib/firebase';
-import { formatDateForInput, formatTimeForInput, validateFutureAppointmentInput } from '@/lib/provider-appointment-actions';
+import { useAuthUser } from '@/hooks/useAuthUser';
+import { fetchAppointmentWorkspace } from '@/lib/appointment-workspace';
+import { apiFetchJson } from '@/lib/api-client';
+import { validateFutureAppointmentInput } from '@/lib/provider-appointment-actions';
 import { isTelehealthJoinAvailable } from '@/lib/telehealth-join';
 import {
-    collection, onSnapshot, query, orderBy, addDoc, getDocs,
-    limit, where, updateDoc, doc, Timestamp, getDoc
+    collection, onSnapshot, query, addDoc,
+    where, updateDoc, doc, Timestamp, getDoc
 } from 'firebase/firestore';
 import { AITextarea } from '@/components/ui/AITextarea';
 
@@ -110,16 +114,67 @@ function getPatientLabel(appt: any) {
     return { name, isFallback: false };
 }
 
+function chunkValues<T>(values: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let index = 0; index < values.length; index += size) {
+        chunks.push(values.slice(index, index + size));
+    }
+    return chunks;
+}
+
+function matchesAppointmentSearch(appt: any, query: string): boolean {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return true;
+
+    const searchable = [
+        appt.patientName,
+        appt.patient,
+        appt.providerName,
+        appt.doctor,
+        appt.service,
+        appt.notes,
+        appt.type,
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return searchable.includes(normalizedQuery);
+}
+
+function resolveAppointmentProviderId(appt: any, teamMembers: Array<{ id: string; name: string }>): string | null {
+    const directId = typeof appt?.providerId === 'string' && appt.providerId.trim()
+        ? appt.providerId.trim()
+        : typeof appt?.doctorId === 'string' && appt.doctorId.trim()
+            ? appt.doctorId.trim()
+            : null;
+    if (directId) return directId;
+
+    const providerName = typeof appt?.providerName === 'string' && appt.providerName.trim()
+        ? appt.providerName.trim().toLowerCase()
+        : typeof appt?.doctor === 'string' && appt.doctor.trim()
+            ? appt.doctor.trim().toLowerCase()
+            : null;
+    if (!providerName) return null;
+
+    const member = teamMembers.find((entry) => entry.name.trim().toLowerCase() === providerName);
+    return member?.id ?? null;
+}
+
 // â”€â”€â”€ APPOINTMENT CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AppointmentCard({
-    appt, style, onClickCard, onStatusChange, onDragStart
+    appt, style, onClickCard, onStatusChange, onDragStart, onDragEnd, onJoinWaitingRoom, canManage, highlightJoinWindow
 }: {
     appt: any;
     style: React.CSSProperties;
     onClickCard: (appt: any) => void;
     onStatusChange: (id: string, status: string) => void;
     onDragStart: (e: React.DragEvent, appt: any) => void;
+    onDragEnd: () => void;
+    onJoinWaitingRoom: (appt: any) => void;
+    canManage: boolean;
+    highlightJoinWindow: boolean;
 }) {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
     const { name, isFallback } = getPatientLabel(appt);
@@ -129,6 +184,7 @@ function AppointmentCard({
     const isVideo = (appt.type || '').toLowerCase() === 'video' || (appt.type || '').toLowerCase() === 'telehealth';
 
     const handleContextMenu = (e: React.MouseEvent) => {
+        if (!canManage) return;
         e.preventDefault();
         e.stopPropagation();
         setContextMenu({ x: e.clientX, y: e.clientY });
@@ -147,8 +203,9 @@ function AppointmentCard({
     return (
         <div
             style={style}
-            draggable
-            onDragStart={(e) => onDragStart(e, appt)}
+            draggable={canManage}
+            onDragStart={(e) => canManage && onDragStart(e, appt)}
+            onDragEnd={onDragEnd}
             onContextMenu={handleContextMenu}
             onClick={() => onClickCard(appt)}
             className={`absolute left-1 right-1 border-l-4 rounded-xl p-2.5 text-xs shadow-sm cursor-pointer hover:shadow-md transition-all z-10 overflow-hidden group select-none
@@ -173,6 +230,12 @@ function AppointmentCard({
                 {appt.service || appt.type || 'Consultation'}
             </div>
 
+            {appt.providerName && (
+                <div className="text-[10px] opacity-50 truncate mb-1">
+                    {appt.providerName}
+                </div>
+            )}
+
             <div className="flex items-center justify-between gap-1">
                 <span className="text-[10px] font-bold opacity-70">{displayTime}</span>
                 {isVideo && (
@@ -182,18 +245,21 @@ function AppointmentCard({
                 )}
             </div>
 
-            {isVideo && joinActive && (
+            {isVideo && joinActive && highlightJoinWindow && (
                 <div className="mt-1.5" title="Join Telehealth Visit">
                     <button
-                        onClick={(e) => { e.stopPropagation(); if (joinActive) alert('Joining...'); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onJoinWaitingRoom(appt);
+                        }}
                         className="w-full text-[9px] font-black rounded-lg py-1 transition-all bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-300"
                     >
-                        Join Now
+                        Waiting Room
                     </button>
                 </div>
             )}
 
-            {contextMenu && (
+            {canManage && contextMenu && (
                 <div
                     style={{ top: contextMenu.y, left: contextMenu.x, position: 'fixed', zIndex: 9999 }}
                     className="bg-white dark:bg-slate-800 dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 dark:border-slate-700 py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
@@ -217,12 +283,14 @@ function AppointmentCard({
 
 // â”€â”€â”€ SLIDE-OUT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCancelAppointment }: {
+function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCancelAppointment, onJoinWaitingRoom, canManage }: {
     appt: any | null;
     onClose: () => void;
     onStatusChange: (id: string, status: string) => void;
     onOpenReschedule: (appt: any) => void;
     onCancelAppointment: (appt: any) => void;
+    onJoinWaitingRoom: (appt: any) => void;
+    canManage: boolean;
 }) {
     const [intakeData, setIntakeData] = useState<Record<string, any> | null>(null);
     const [intakeLoading, setIntakeLoading] = useState(false);
@@ -432,6 +500,7 @@ function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCanc
                                 <button
                                     key={s}
                                     onClick={() => onStatusChange(appt.id, s)}
+                                    disabled={!canManage}
                                     className={`text-[10px] font-black px-3 py-2 rounded-xl border-2 transition-all flex items-center gap-1.5 ${appt.status === s
                                         ? `${STATUS_CONFIG[s].border} ${STATUS_CONFIG[s].bg}`
                                         : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'}`}
@@ -450,13 +519,19 @@ function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCanc
                         <button
                             disabled={!joinActive}
                             title={joinActive ? undefined : 'Available 1 hour before appointment'}
+                            onClick={() => joinActive && onJoinWaitingRoom(appt)}
                             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all ${joinActive
                                 ? 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-200'
                                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
                         >
                             <Video size={16} />
-                            {joinActive ? 'Start Telehealth Visit' : 'Join Available 1 Hour Before'}
+                            {joinActive ? 'Open Waiting Room' : 'Join Available 1 Hour Before'}
                         </button>
+                    )}
+                    {!canManage && (
+                        <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700">
+                            This appointment belongs to another team member. You can review details here, but status changes and rescheduling stay with the assigned provider.
+                        </div>
                     )}
                     <div className="grid grid-cols-2 gap-2">
                         <button className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors text-slate-600 dark:text-slate-300">
@@ -464,6 +539,7 @@ function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCanc
                         </button>
                         <button
                             onClick={() => onOpenReschedule(appt)}
+                            disabled={!canManage}
                             className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors text-slate-600 dark:text-slate-300"
                         >
                             <RefreshCw size={13} /> Reschedule
@@ -472,12 +548,16 @@ function SlideOutPanel({ appt, onClose, onStatusChange, onOpenReschedule, onCanc
                     {appt.status !== 'completed' && appt.status !== 'cancelled' && (
                         <button
                             onClick={() => onCancelAppointment(appt)}
+                            disabled={!canManage}
                             className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-rose-100 text-rose-500 hover:bg-rose-50 transition-colors"
                         >
                             <X size={13} /> Cancel Appointment
                         </button>
                     )}
-                    <button className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-red-100 text-red-500 hover:bg-red-50 transition-colors">
+                    <button
+                        disabled={!canManage}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border border-red-100 text-red-500 hover:bg-red-50 transition-colors"
+                    >
                         <UserX size={13} /> Mark No-Show
                     </button>
                 </div>
@@ -504,6 +584,7 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
 
 export default function CalendarPage() {
     const router = useRouter();
+    const { user: activeUser, isReady } = useAuthUser();
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewType, setViewType] = useState<'day' | 'week' | 'month'>('week');
@@ -512,7 +593,6 @@ export default function CalendarPage() {
     const [availability, setAvailability] = useState<any[]>([]);
     const [dbLoading, setDbLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [patients, setPatients] = useState<any[]>([]);
     const [selectedAppt, setSelectedAppt] = useState<any | null>(null);
     const [rescheduleAppt, setRescheduleAppt] = useState<any | null>(null);
     const [cancelAppt, setCancelAppt] = useState<any | null>(null);
@@ -520,12 +600,118 @@ export default function CalendarPage() {
     const [rescheduleError, setRescheduleError] = useState<string | null>(null);
     const [rescheduleSaving, setRescheduleSaving] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
-    const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [draggedAppt, setDraggedAppt] = useState<any | null>(null);
+    const draggedApptRef = useRef<any | null>(null);
+    const [selectedTeamMemberIds, setSelectedTeamMemberIds] = useState<string[]>([]);
+    const [searchInput, setSearchInput] = useState('');
+    const [statusFilters, setStatusFilters] = useState<string[]>([]);
+    const [visitTypeFilter, setVisitTypeFilter] = useState<'all' | 'video' | 'in-person'>('all');
+    const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+    const [showBlockedSlots, setShowBlockedSlots] = useState(true);
+    const [enableDragAndDrop, setEnableDragAndDrop] = useState(true);
+    const [highlightJoinWindow, setHighlightJoinWindow] = useState(true);
+    const [scheduleSaving, setScheduleSaving] = useState(false);
 
     const [apptForm, setApptForm] = useState({
-        patientName: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', type: 'video', notes: ''
+        patientId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', type: 'video', notes: ''
     });
+
+    const deferredSearch = React.useDeferredValue(searchInput);
+
+    const appointmentWorkspaceQuery = useQuery({
+        queryKey: ['appointment-workspace', activeUser?.uid ?? 'anonymous'],
+        enabled: isReady && Boolean(activeUser),
+        queryFn: () => fetchAppointmentWorkspace(activeUser)
+    });
+
+    const patients = React.useMemo(
+        () => appointmentWorkspaceQuery.data?.patients ?? [],
+        [appointmentWorkspaceQuery.data?.patients]
+    );
+    const providers = React.useMemo(
+        () => appointmentWorkspaceQuery.data?.providers ?? [],
+        [appointmentWorkspaceQuery.data?.providers]
+    );
+    const teams = React.useMemo(
+        () => appointmentWorkspaceQuery.data?.teams ?? [],
+        [appointmentWorkspaceQuery.data?.teams]
+    );
+
+    const currentProvider = React.useMemo(() => {
+        const providerRecord = providers.find((provider) => provider.id === activeUser?.uid);
+        if (providerRecord) return providerRecord;
+        if (!activeUser) return null;
+
+        return {
+            id: activeUser.uid,
+            name: activeUser.displayName ?? activeUser.email?.split('@')[0] ?? 'Provider',
+            email: activeUser.email ?? null,
+            role: 'provider'
+        };
+    }, [activeUser, providers]);
+
+    const teamMemberOptions = React.useMemo(() => {
+        const providerMap = new Map(providers.map((provider) => [provider.id, provider]));
+        const relevantIds = new Set<string>();
+        if (activeUser?.uid) {
+            relevantIds.add(activeUser.uid);
+        }
+
+        teams.forEach((team) => {
+            relevantIds.add(team.ownerId);
+            team.memberIds.forEach((memberId) => relevantIds.add(memberId));
+        });
+
+        const memberMap = new Map<string, { id: string; name: string; initials: string; color: string }>();
+
+        teams.forEach((team) => {
+            team.members.forEach((member) => {
+                if (!member.id || memberMap.has(member.id)) return;
+                memberMap.set(member.id, {
+                    id: member.id,
+                    name: member.name,
+                    initials: member.name.substring(0, 2).toUpperCase(),
+                    color: member.id === activeUser?.uid ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'
+                });
+            });
+        });
+
+        return Array.from(relevantIds)
+            .map((id) => {
+                const provider = providerMap.get(id);
+                if (provider) {
+                    return {
+                        id,
+                        name: provider.name,
+                        initials: provider.name.substring(0, 2).toUpperCase(),
+                        color: id === activeUser?.uid ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'
+                    };
+                }
+
+                if (id === activeUser?.uid && currentProvider) {
+                    return {
+                        id,
+                        name: currentProvider.name,
+                        initials: currentProvider.name.substring(0, 2).toUpperCase(),
+                        color: 'bg-indigo-100 text-indigo-700'
+                    };
+                }
+
+                return memberMap.get(id) ?? null;
+            })
+            .filter((member): member is { id: string; name: string; initials: string; color: string } => Boolean(member))
+            .sort((first, second) => {
+                if (first.id === activeUser?.uid) return -1;
+                if (second.id === activeUser?.uid) return 1;
+                return first.name.localeCompare(second.name);
+            });
+    }, [activeUser?.uid, currentProvider, providers, teams]);
+
+    const teamMembers = React.useMemo(() => teamMemberOptions.map((member) => ({
+        ...member,
+        checked: selectedTeamMemberIds.includes(member.id)
+    })), [selectedTeamMemberIds, teamMemberOptions]);
 
     const showToast = (msg: string) => {
         setToast(msg);
@@ -555,65 +741,140 @@ export default function CalendarPage() {
     // â”€â”€â”€ REALTIME SYNC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     useEffect(() => {
-        import('@/lib/firebase').then(({ auth }) => {
-            const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    const { doc: fireDoc, getDoc } = await import('firebase/firestore');
-                    let fetchedName = user.displayName || 'Provider';
-                    try {
-                        const userSnap = await getDoc(fireDoc(db, 'users', user.uid));
-                        if (userSnap.exists() && userSnap.data().name) {
-                            fetchedName = userSnap.data().name;
-                        } else {
-                            const patientSnap = await getDoc(fireDoc(db, 'patients', user.uid));
-                            if (patientSnap.exists()) {
-                                const d = patientSnap.data();
-                                if (d.name) fetchedName = d.name;
-                                else if (d.firstName) fetchedName = `${d.firstName} ${d.lastName || ''}`.trim();
-                            }
-                        }
-                    } catch (e) { console.error(e); }
+        if (teamMemberOptions.length === 0) {
+            setSelectedTeamMemberIds([]);
+            return;
+        }
 
-                    setTeamMembers([{
-                        id: user.uid, name: fetchedName,
-                        initials: fetchedName.substring(0, 2).toUpperCase(),
-                        color: 'bg-indigo-100 text-indigo-700', checked: true
-                    }]);
-
-                    const { where: fiWhere } = await import('firebase/firestore');
-
-                    // FIX: Also query appointments where providerId is not set but status is 'scheduled'
-                    // so freshly-scheduled ones always appear regardless of provider query
-                    const apptQ = query(collection(db, 'appointments'), fiWhere('providerId', '==', user.uid));
-                    const unsubAppts = onSnapshot(apptQ, snap => {
-                        setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                        setDbLoading(false);
-                    }, () => setDbLoading(false));
-
-                    const availQ = query(collection(db, 'availability'), fiWhere('doctorId', '==', user.uid));
-                    const unsubAvail = onSnapshot(availQ, snap => {
-                        setAvailability(snap.docs.map(d => ({ id: d.id, ...d.data(), isBlock: true })));
-                    });
-
-                    return () => { unsubAppts(); unsubAvail(); };
-                } else {
-                    setDbLoading(false);
-                }
-            });
-            return () => unsubscribeAuth();
-        }).catch(() => setDbLoading(false));
-    }, []);
+        setSelectedTeamMemberIds((current) => {
+            const validIds = new Set(teamMemberOptions.map((member) => member.id));
+            const next = current.filter((id) => validIds.has(id));
+            return next.length > 0 ? next : teamMemberOptions.map((member) => member.id);
+        });
+    }, [teamMemberOptions]);
 
     useEffect(() => {
-        getDocs(query(collection(db, 'patients'), limit(50))).then(snap => {
-            const data = snap.docs.map(d => ({
-                id: d.id,
-                name: ((d.data().firstName || '') + ' ' + (d.data().lastName || d.data().name || '')).trim() || 'Unknown',
-                ...d.data()
-            }));
-            setPatients(data.length ? data : [{ id: 'demo-1', name: 'John Doe' }]);
-        }).catch(() => setPatients([{ id: 'demo-1', name: 'John Doe' }]));
-    }, []);
+        if (patients.length === 0) return;
+        setApptForm((current) => {
+            if (current.patientId) return current;
+            return { ...current, patientId: patients[0].id };
+        });
+    }, [patients]);
+
+    useEffect(() => {
+        if (!isReady) return;
+        if (!activeUser) {
+            setAppointments([]);
+            setAvailability([]);
+            setDbLoading(false);
+            return;
+        }
+
+        const providerIds = teamMemberOptions.map((member) => member.id);
+        if (providerIds.length === 0) {
+            setAppointments([]);
+            setAvailability([]);
+            setDbLoading(false);
+            return;
+        }
+
+        setDbLoading(true);
+        const chunks = chunkValues(providerIds, 10);
+        const appointmentBuckets = new Map<string, any[]>();
+        const availabilityBuckets = new Map<string, any[]>();
+        const unsubscribers: Array<() => void> = [];
+        let pendingSnapshots = chunks.length * 3;
+
+        const markReady = () => {
+            pendingSnapshots -= 1;
+            if (pendingSnapshots <= 0) {
+                setDbLoading(false);
+            }
+        };
+
+        const rebuildAppointments = () => {
+            const merged = Array.from(appointmentBuckets.values()).flat();
+            const unique = new Map(merged.map((entry) => [entry.id, entry]));
+            setAppointments(Array.from(unique.values()));
+        };
+
+        const rebuildAvailability = () => {
+            const merged = Array.from(availabilityBuckets.values()).flat();
+            const unique = new Map(merged.map((entry) => [entry.id, entry]));
+            setAvailability(Array.from(unique.values()));
+        };
+
+        chunks.forEach((providerChunk) => {
+            const chunkKey = providerChunk.join(':');
+            let apptInitialized = false;
+            let availabilityInitialized = false;
+
+            unsubscribers.push(onSnapshot(
+                query(collection(db, 'appointments'), where('providerId', 'in', providerChunk)),
+                (snapshot) => {
+                    appointmentBuckets.set(`${chunkKey}:provider`, snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+                    rebuildAppointments();
+                    if (!apptInitialized) {
+                        apptInitialized = true;
+                        markReady();
+                    }
+                },
+                () => {
+                    appointmentBuckets.set(`${chunkKey}:provider`, []);
+                    rebuildAppointments();
+                    if (!apptInitialized) {
+                        apptInitialized = true;
+                        markReady();
+                    }
+                }
+            ));
+
+            let doctorInitialized = false;
+            unsubscribers.push(onSnapshot(
+                query(collection(db, 'appointments'), where('doctorId', 'in', providerChunk)),
+                (snapshot) => {
+                    appointmentBuckets.set(`${chunkKey}:doctor`, snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+                    rebuildAppointments();
+                    if (!doctorInitialized) {
+                        doctorInitialized = true;
+                        markReady();
+                    }
+                },
+                () => {
+                    appointmentBuckets.set(`${chunkKey}:doctor`, []);
+                    rebuildAppointments();
+                    if (!doctorInitialized) {
+                        doctorInitialized = true;
+                        markReady();
+                    }
+                }
+            ));
+
+            unsubscribers.push(onSnapshot(
+                query(collection(db, 'availability'), where('doctorId', 'in', providerChunk)),
+                (snapshot) => {
+                    availabilityBuckets.set(chunkKey, snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data(), isBlock: true })));
+                    rebuildAvailability();
+                    if (!availabilityInitialized) {
+                        availabilityInitialized = true;
+                        markReady();
+                    }
+                },
+                () => {
+                    availabilityBuckets.set(chunkKey, []);
+                    rebuildAvailability();
+                    if (!availabilityInitialized) {
+                        availabilityInitialized = true;
+                        markReady();
+                    }
+                }
+            ));
+        });
+
+        return () => {
+            unsubscribers.forEach((unsubscribe) => unsubscribe());
+        };
+    }, [activeUser, isReady, teamMemberOptions]);
 
     // â”€â”€â”€ VIEW LOGIC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -647,9 +908,36 @@ export default function CalendarPage() {
         return { position: 'absolute', top: `${Math.max(0, top)}px`, height: `${SLOT_HEIGHT}px`, left: 4, right: 4 };
     };
 
+    const canManageAppointment = (appt: any) => resolveAppointmentProviderId(appt, teamMemberOptions) === activeUser?.uid;
+
+    const filteredAppointments = React.useMemo(() => appointments.filter((appt) => {
+        const appointmentProviderId = resolveAppointmentProviderId(appt, teamMemberOptions);
+        if (!appointmentProviderId || !selectedTeamMemberIds.includes(appointmentProviderId)) return false;
+        if (!matchesAppointmentSearch(appt, deferredSearch)) return false;
+        if (statusFilters.length > 0 && !statusFilters.includes(appt.status)) return false;
+
+        if (visitTypeFilter !== 'all') {
+            const normalizedType = String(appt.type ?? '').toLowerCase();
+            if (visitTypeFilter === 'video' && normalizedType !== 'video' && normalizedType !== 'telehealth') return false;
+            if (visitTypeFilter === 'in-person' && normalizedType !== 'in-person') return false;
+        }
+
+        return true;
+    }), [appointments, deferredSearch, selectedTeamMemberIds, statusFilters, teamMemberOptions, visitTypeFilter]);
+
+    const filteredAvailability = React.useMemo(() => availability.filter((entry) => (
+        selectedTeamMemberIds.includes(entry.doctorId)
+    )), [availability, selectedTeamMemberIds]);
+
     // â”€â”€â”€ STATUS UPDATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleStatusChange = async (id: string, status: string) => {
+        const targetAppointment = appointments.find((appt) => appt.id === id);
+        if (!canManageAppointment(targetAppointment)) {
+            showToast('Only the assigned provider can change this appointment.');
+            return;
+        }
+
         try {
             await callAppointmentUpdate(id, {
                 action: 'status',
@@ -661,11 +949,19 @@ export default function CalendarPage() {
     };
 
     const openRescheduleModal = (appt: any) => {
+        if (!canManageAppointment(appt)) {
+            showToast('Only the assigned provider can reschedule this appointment.');
+            return;
+        }
         setRescheduleError(null);
         setRescheduleAppt(appt);
     };
 
     const openCancelDialog = (appt: any) => {
+        if (!canManageAppointment(appt)) {
+            showToast('Only the assigned provider can cancel this appointment.');
+            return;
+        }
         setCancelAppt(appt);
     };
 
@@ -730,33 +1026,50 @@ export default function CalendarPage() {
     // â”€â”€â”€ DRAG & DROP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleDragStart = (e: React.DragEvent, appt: any) => {
+        if (!enableDragAndDrop || !canManageAppointment(appt)) {
+            e.preventDefault();
+            return;
+        }
         setDraggedAppt(appt);
+        draggedApptRef.current = appt;
+        e.dataTransfer.setData('text/plain', appt.id);
         e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragEnd = () => {
+        setDraggedAppt(null);
+        draggedApptRef.current = null;
     };
 
     const handleDrop = async (e: React.DragEvent, day: Date, hour: number) => {
         e.preventDefault();
-        if (!draggedAppt) return;
+        const draggedAppointmentId = e.dataTransfer.getData('text/plain');
+        const activeDraggedAppt = draggedApptRef.current
+            ?? draggedAppt
+            ?? appointments.find((appt) => appt.id === draggedAppointmentId)
+            ?? null;
+        if (!enableDragAndDrop || !activeDraggedAppt || !canManageAppointment(activeDraggedAppt)) return;
 
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         const relY = e.clientY - rect.top;
-        const minuteOffset = Math.round((relY / SLOT_HEIGHT) * 60 / 15) * 15;
+        const minuteOffset = Math.min(45, Math.max(0, Math.round((relY / SLOT_HEIGHT) * 60 / 15) * 15));
         const newTime = `${hour.toString().padStart(2, '0')}:${minuteOffset.toString().padStart(2, '0')}`;
         const newDate = format(day, 'yyyy-MM-dd');
         const newStart = new Date(`${newDate}T${newTime}:00`);
         if (newStart.getTime() < Date.now()) {
             showToast('Appointments cannot be moved into the past.');
             setDraggedAppt(null);
+            draggedApptRef.current = null;
             return;
         }
-        const previousStart = getApptDate(draggedAppt);
-        const previousDate = previousStart ? format(previousStart, 'yyyy-MM-dd') : draggedAppt.date;
+        const previousStart = getApptDate(activeDraggedAppt);
+        const previousDate = previousStart ? format(previousStart, 'yyyy-MM-dd') : activeDraggedAppt.date;
         const previousTime = previousStart
             ? format(previousStart, 'HH:mm')
-            : (typeof draggedAppt.time === 'string' ? draggedAppt.time : undefined);
+            : (typeof activeDraggedAppt.time === 'string' ? activeDraggedAppt.time : undefined);
 
         try {
-            await callAppointmentUpdate(draggedAppt.id, {
+            await callAppointmentUpdate(activeDraggedAppt.id, {
                 action: 'reschedule',
                 date: newDate,
                 time: newTime,
@@ -767,17 +1080,23 @@ export default function CalendarPage() {
             showToast(`Appointment rescheduled to ${format(day, 'EEE MMM d')} at ${newTime}`);
         } catch (e) { showToast('Reschedule failed.'); }
         setDraggedAppt(null);
+        draggedApptRef.current = null;
     };
 
     // â”€â”€â”€ BLOCK TIME â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleBlockTime = async (date: Date, hour: number) => {
+        if (!currentProvider?.id) {
+            showToast('Provider context is still loading.');
+            return;
+        }
+
         const start = new Date(date);
         start.setHours(hour, 0, 0, 0);
         const end = new Date(start.getTime() + 60 * 60000);
         try {
             await addDoc(collection(db, 'availability'), {
-                doctorId: teamMembers[0]?.id,
+                doctorId: currentProvider.id,
                 startTime: start, endTime: end, type: 'block', createdAt: new Date()
             });
             showToast('Hour blocked.');
@@ -795,51 +1114,52 @@ export default function CalendarPage() {
     // â”€â”€â”€ ADD APPOINTMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleScheduleVisit = async () => {
-        if (!apptForm.patientName) { alert('Please select a patient.'); return; }
-        try {
-            const startDate = new Date(`${apptForm.date}T${apptForm.time}:00`);
-            const pat = patients.find(p => p.name === apptForm.patientName);
-            const patId = pat ? pat.id : '';
+        if (!activeUser || !apptForm.patientId) {
+            showToast('Please select a patient.');
+            return;
+        }
 
-            const newRef = await addDoc(collection(db, 'appointments'), {
-                patient: apptForm.patientName, patientName: apptForm.patientName,
-                patientId: patId, patientUid: patId,
-                date: apptForm.date, time: apptForm.time,
-                startTime: Timestamp.fromDate(startDate),
-                type: apptForm.type, notes: apptForm.notes,
-                status: 'confirmed',
-                providerId: teamMembers[0]?.id || '',
-                providerName: teamMembers[0]?.name || 'Provider',
-                doctor: teamMembers[0]?.name || 'Provider',
-                service: apptForm.type === 'video' ? 'Follow-up (Video)' : 'Initial Consultation'
+        setScheduleSaving(true);
+        try {
+            const selectedPatient = patients.find((patient) => patient.id === apptForm.patientId);
+            const response = await apiFetchJson<{ success?: boolean; error?: string }>('/api/dashboard/appointments', {
+                method: 'POST',
+                user: activeUser,
+                body: {
+                    patientId: apptForm.patientId,
+                    patientName: selectedPatient?.name,
+                    date: apptForm.date,
+                    time: apptForm.time,
+                    visitType: apptForm.type === 'video' ? 'video' : 'in_person',
+                    notes: apptForm.notes.trim() || 'Scheduled from calendar.'
+                }
             });
 
-            // TRIGGER BACKEND NOTIFICATION
-            try {
-                const { auth } = await import('@/lib/firebase');
-                const tok = await auth.currentUser?.getIdToken();
-                await fetch('/api/notifications/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
-                    body: JSON.stringify({
-                        type: 'appointment_booked',
-                        appointmentId: newRef.id
-                    })
-                });
-            } catch (err) {
-                console.error("Notification error:", err);
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to schedule visit.');
             }
 
             setIsModalOpen(false);
-            setApptForm({ patientName: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', type: 'video', notes: '' });
+            setApptForm({ patientId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', type: 'video', notes: '' });
             showToast('Appointment scheduled!');
-        } catch (e) { showToast('Failed to schedule visit.'); }
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Failed to schedule visit.');
+        } finally {
+            setScheduleSaving(false);
+        }
     };
 
-    const toggleTeamMember = (id: string) =>
-        setTeamMembers(prev => prev.map(m => m.id === id ? { ...m, checked: !m.checked } : m));
+    const toggleTeamMember = (id: string) => {
+        setSelectedTeamMemberIds((current) => current.includes(id)
+            ? current.filter((entry) => entry !== id)
+            : [...current, id]);
+    };
 
-    const allSelected = teamMembers.every(m => m.checked);
+    const openWaitingRoom = (appt: any) => {
+        router.push(`/waiting-room?appointmentId=${encodeURIComponent(appt.id)}`);
+    };
+
+    const allSelected = teamMembers.length > 0 && selectedTeamMemberIds.length === teamMembers.length;
     const currentWeekRange = { start: startOfWeek(currentDate, { weekStartsOn: 0 }), end: endOfWeek(currentDate, { weekStartsOn: 0 }) };
 
     // â”€â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -887,6 +1207,8 @@ export default function CalendarPage() {
                 onStatusChange={handleStatusChange}
                 onOpenReschedule={openRescheduleModal}
                 onCancelAppointment={openCancelDialog}
+                onJoinWaitingRoom={openWaitingRoom}
+                canManage={canManageAppointment(selectedAppt)}
             />
 
             {isModalOpen && (
@@ -902,10 +1224,10 @@ export default function CalendarPage() {
                         <div className="p-6 space-y-4">
                             <div className="space-y-1.5">
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300">Patient</label>
-                                <select value={apptForm.patientName} onChange={e => setApptForm({ ...apptForm, patientName: e.target.value })}
+                                <select value={apptForm.patientId} onChange={e => setApptForm({ ...apptForm, patientId: e.target.value })}
                                     className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
                                     <option value="" disabled>Select patient...</option>
-                                    {patients.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -941,8 +1263,9 @@ export default function CalendarPage() {
                         <div className="p-6 bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-700 dark:border-slate-700 flex justify-end gap-3">
                             <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400">Cancel</button>
                             <button onClick={handleScheduleVisit}
+                                disabled={scheduleSaving || !apptForm.patientId}
                                 className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all">
-                                Schedule Visit
+                                {scheduleSaving ? 'Scheduling...' : 'Schedule Visit'}
                             </button>
                         </div>
                     </div>
@@ -982,7 +1305,7 @@ export default function CalendarPage() {
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     <FilterSection title="Team Members" defaultOpen>
-                        <div onClick={() => teamMembers.forEach(m => setTeamMembers(prev => prev.map(x => ({ ...x, checked: !allSelected }))))}
+                        <div onClick={() => setSelectedTeamMemberIds(allSelected ? [] : teamMembers.map((member) => member.id))}
                             className="flex items-center gap-3 mb-3 cursor-pointer">
                             <div className={`w-4 h-4 rounded border flex items-center justify-center ${allSelected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
                                 {allSelected && <Check size={10} className="text-white" />}
@@ -1053,13 +1376,29 @@ export default function CalendarPage() {
                             <Plus className="w-4 h-4" /> New Appt
                         </button>
                         <div className="h-6 w-px bg-slate-200" />
-                        <button className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 transition-all"><Filter className="w-5 h-5" /></button>
-                        <button className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 transition-all"><Settings className="w-5 h-5" /></button>
+                        <button
+                            onClick={() => {
+                                setShowFiltersPanel((current) => !current);
+                                setShowSettingsPanel(false);
+                            }}
+                            className={`p-2.5 rounded-xl transition-all ${showFiltersPanel ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50 text-slate-400 hover:text-slate-600'}`}
+                        >
+                            <Filter className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowSettingsPanel((current) => !current);
+                                setShowFiltersPanel(false);
+                            }}
+                            className={`p-2.5 rounded-xl transition-all ${showSettingsPanel ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50 text-slate-400 hover:text-slate-600'}`}
+                        >
+                            <Settings className="w-5 h-5" />
+                        </button>
                     </div>
                 </header>
 
                 <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-900/50 relative">
-                    {dbLoading && (
+                    {(dbLoading || appointmentWorkspaceQuery.isLoading || (!isReady && !activeUser)) && (
                         <div className="absolute inset-0 z-50 bg-white/80 flex items-center justify-center">
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -1068,12 +1407,62 @@ export default function CalendarPage() {
                         </div>
                     )}
 
+                    {(showFiltersPanel || showSettingsPanel) && (
+                        <div className="border-b border-slate-200 bg-white px-6 py-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            {showFiltersPanel && (
+                                <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr),auto,auto] lg:items-center">
+                                    <label className="relative block">
+                                        <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                        <input
+                                            value={searchInput}
+                                            onChange={(event) => setSearchInput(event.target.value)}
+                                            placeholder="Search patient, provider, or service"
+                                            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm font-medium text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white"
+                                        />
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['all', 'video', 'in-person'].map((value) => (
+                                            <button
+                                                key={value}
+                                                onClick={() => setVisitTypeFilter(value as 'all' | 'video' | 'in-person')}
+                                                className={`rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wider transition ${visitTypeFilter === value ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                            >
+                                                {value === 'all' ? 'All Visits' : value}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['pending', 'confirmed', 'checked_in', 'completed', 'cancelled'].map((status) => (
+                                            <button
+                                                key={status}
+                                                onClick={() => setStatusFilters((current) => current.includes(status)
+                                                    ? current.filter((entry) => entry !== status)
+                                                    : [...current, status])}
+                                                className={`rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wider transition ${statusFilters.includes(status) ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                            >
+                                                {STATUS_CONFIG[status]?.label ?? status}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {showSettingsPanel && (
+                                <div className="flex flex-wrap gap-3">
+                                    <TogglePill label="Show blocked time" active={showBlockedSlots} onClick={() => setShowBlockedSlots((current) => !current)} />
+                                    <TogglePill label="Drag to reschedule" active={enableDragAndDrop} onClick={() => setEnableDragAndDrop((current) => !current)} />
+                                    <TogglePill label="Highlight join window" active={highlightJoinWindow} onClick={() => setHighlightJoinWindow((current) => !current)} />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="flex border-b border-slate-200 dark:border-slate-700 dark:border-slate-700 shrink-0 bg-white dark:bg-slate-800 dark:bg-slate-800 pl-14">
                         {viewDays.map((day, i) => {
                             const isCurrent = isToday(day);
                             const isSelected = isSameDay(day, currentDate);
                             // FIX: use getApptDate() to count appointments per day
-                            const dayApptCount = appointments.filter(a => {
+                            const dayApptCount = filteredAppointments.filter(a => {
                                 const d = getApptDate(a);
                                 return d ? isSameDay(d, day) : false;
                             }).length;
@@ -1121,15 +1510,16 @@ export default function CalendarPage() {
                             {viewDays.map((day, colIndex) => {
                                 const isSelected = isSameDay(day, currentDate);
                                 // FIX: Use getApptDate() to filter appointments for this day column
-                                const dayAppts = appointments.filter(a => {
+                                const dayAppts = filteredAppointments.filter(a => {
                                     const d = getApptDate(a);
                                     return d ? isSameDay(d, day) : false;
                                 });
-                                const dayBlocks = availability.filter(b => {
+                                const dayBlocks = filteredAvailability.filter(b => {
                                     const bDate = b.startTime?.toDate ? b.startTime.toDate() : new Date(b.startTime || 0);
                                     return isSameDay(bDate, day);
                                 });
                                 const hasAppts = dayAppts.length > 0;
+                                const visibleBlockCount = showBlockedSlots ? dayBlocks.length : 0;
 
                                 return (
                                     <div key={colIndex}
@@ -1149,7 +1539,10 @@ export default function CalendarPage() {
                                                         className={`absolute w-full border-t border-transparent group/slot ${isOff ? '' : 'hover:bg-indigo-50/30'} ${isBlocked ? 'cursor-not-allowed' : 'cursor-crosshair'} transition-colors`}
                                                         onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
                                                         onDrop={e => handleDrop(e, day, hour)}
-                                                        onClick={() => !isBlocked && !isOff && handleBlockTime(day, hour)}
+                                                        onClick={() => {
+                                                            if (draggedApptRef.current) return;
+                                                            if (!isBlocked && !isOff) handleBlockTime(day, hour);
+                                                        }}
                                                     >
                                                         {!isBlocked && !isOff && (
                                                             <div className="absolute inset-0 opacity-0 group-hover/slot:opacity-100 flex items-center justify-center pointer-events-none">
@@ -1161,13 +1554,13 @@ export default function CalendarPage() {
                                             })}
                                         </div>
 
-                                        {!hasAppts && !dayBlocks.length && (
+                                        {!hasAppts && visibleBlockCount === 0 && (
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                 <span className="text-[10px] font-bold text-slate-200 uppercase tracking-widest rotate-90">No appointments</span>
                                             </div>
                                         )}
 
-                                        {dayBlocks.map(block => {
+                                        {showBlockedSlots && dayBlocks.map(block => {
                                             const bDate = block.startTime?.toDate ? block.startTime.toDate() : new Date(block.startTime || 0);
                                             const bTop = ((bDate.getHours() - 7) * SLOT_HEIGHT);
                                             return (
@@ -1209,6 +1602,10 @@ export default function CalendarPage() {
                                                 onClickCard={setSelectedAppt}
                                                 onStatusChange={handleStatusChange}
                                                 onDragStart={handleDragStart}
+                                                onDragEnd={handleDragEnd}
+                                                onJoinWaitingRoom={openWaitingRoom}
+                                                canManage={canManageAppointment(appt)}
+                                                highlightJoinWindow={highlightJoinWindow}
                                             />
                                         ))}
                                     </div>
@@ -1235,5 +1632,17 @@ function FilterSection({ title, children, defaultOpen = false }: any) {
                 {children}
             </div>
         </div>
+    );
+}
+
+function TogglePill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition ${active ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+        >
+            {label}
+        </button>
     );
 }

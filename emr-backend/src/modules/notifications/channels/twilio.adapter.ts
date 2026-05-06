@@ -1,10 +1,7 @@
-import { sendSms } from '../../../services/twilio';
+import { sendTelnyxSms } from '../../../services/telnyx';
 
 export class TwilioAdapter {
-    async send(to: string, body: string): Promise<{ providerMessageId: string | null }> {
-        await sendSms(to, body);
-        return {
-            providerMessageId: null,
-        };
+    async send(recipientId: string, to: string, body: string): Promise<{ providerMessageId: string | null }> {
+        return sendTelnyxSms({ recipientId, to, text: body });
     }
 }

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Activity,
     ArrowLeft,
@@ -345,8 +345,11 @@ function applyOptimisticPatientUpdate(
 
 export function PatientDetailClient({ patientId }: { patientId: string }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const queryClient = useQueryClient();
     const { user: activeUser, isReady } = useAuthUser();
+    const scope = searchParams.get('scope') === 'global' ? 'global' : 'assigned';
+    const scopeSuffix = scope === 'global' ? '?scope=global' : '';
     const [activeTab, setActiveTab] = React.useState<PatientDetailTab>('Overview');
     const [isEditingDemographics, setIsEditingDemographics] = React.useState(false);
     const [showProblemForm, setShowProblemForm] = React.useState(false);
@@ -436,15 +439,15 @@ export function PatientDetailClient({ patientId }: { patientId: string }) {
     });
 
     const detailQueryKey = React.useMemo(
-        () => ['patient-detail', activeUser?.uid ?? 'anonymous', patientId] as const,
-        [activeUser?.uid, patientId]
+        () => ['patient-detail', scope, activeUser?.uid ?? 'anonymous', patientId] as const,
+        [activeUser?.uid, patientId, scope]
     );
 
     const detailQuery = useQuery({
         queryKey: detailQueryKey,
         enabled: isReady && Boolean(activeUser),
         queryFn: async () => {
-            const payload = await apiFetchJson<PatientDetailResponse>(`/api/patients/${patientId}`, {
+            const payload = await apiFetchJson<PatientDetailResponse>(`/api/patients/${patientId}${scopeSuffix}`, {
                 method: 'GET',
                 user: activeUser,
                 cache: 'no-store'
@@ -484,7 +487,7 @@ export function PatientDetailClient({ patientId }: { patientId: string }) {
 
     const updateMutation = useMutation({
         mutationFn: async (payload: MutationPayload) => {
-            const response = await apiFetchJson<PatientDetailResponse>(`/api/patients/${patientId}`, {
+            const response = await apiFetchJson<PatientDetailResponse>(`/api/patients/${patientId}${scopeSuffix}`, {
                 method: 'PATCH',
                 user: activeUser,
                 body: payload
@@ -556,7 +559,7 @@ export function PatientDetailClient({ patientId }: { patientId: string }) {
             <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                 <button
                     type="button"
-                    onClick={() => router.push('/patients')}
+                    onClick={() => router.push(scope === 'global' ? '/patients/global' : '/patients')}
                     className="mb-4 inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-brand"
                 >
                     <ArrowLeft className="h-4 w-4" />

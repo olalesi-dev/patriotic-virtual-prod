@@ -3,6 +3,10 @@ import { Request, Response, NextFunction } from 'express';
 import * as admin from 'firebase-admin';
 import { db } from '../config/database';
 
+const FIRESTORE_ONLY_PATH_PREFIXES = [
+    '/api/v1/phone-verification',
+];
+
 export const verifyFirebaseToken = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.headers.authorization?.split('Bearer ')[1];
     if (!token) return res.status(401).json({ error: 'Unauthorized: No token provided' });
@@ -20,6 +24,10 @@ export const verifyFirebaseToken = async (req: Request, res: Response, next: Nex
 };
 
 export const loadUserContext = async (req: Request, res: Response, next: NextFunction) => {
+    if (FIRESTORE_ONLY_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix) || req.originalUrl.startsWith(prefix))) {
+        return next();
+    }
+
     const firebaseUid = req['user']?.uid;
     if (!firebaseUid) return res.status(401).send('Unauthorized');
 

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import type { User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import {
@@ -26,10 +26,12 @@ import { PatientDetailResponse } from '@/lib/patient-registry-types';
 import { usePracticeModules, initializeModulesListener } from '@/hooks/usePracticeModules';
 import { initializeModuleAccessListener } from '@/hooks/useModuleAccess';
 import { SPECIALTY_MODULES } from '@/lib/module-registry';
+import { fetchAppointmentWorkspace } from '@/lib/appointment-workspace';
 import { db } from '@/lib/firebase';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [bookingNote, setBookingNote] = useState('');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -89,27 +91,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [time, setTime] = useState('10:00');
     const [type, setType] = useState('video');
+    const [isScheduling, setIsScheduling] = useState(false);
 
-    const usersQuery = useQuery({
-        queryKey: ['admin-users-patients'],
-        queryFn: async () => {
-            const data = await apiFetchJson<{
-                success?: boolean;
-                users?: any[];
-                error?: string;
-            }>('/api/admin/users', {
-                method: 'GET',
-                cache: 'no-store'
-            });
-            if (!data.success || !data.users) return [];
-            return data.users.filter((u: any) => u.role?.toLowerCase() === 'patient' || !u.role);
-        }
+    const appointmentWorkspaceQuery = useQuery({
+        queryKey: ['appointment-workspace', activeUser?.uid ?? 'anonymous'],
+        enabled: Boolean(activeUser),
+        queryFn: () => fetchAppointmentWorkspace(activeUser)
     });
-    const patients = usersQuery.data || [];
+    const patients = React.useMemo(
+        () => appointmentWorkspaceQuery.data?.patients ?? [],
+        [appointmentWorkspaceQuery.data?.patients]
+    );
 
     React.useEffect(() => {
         if (patients.length > 0 && !patient) {
-            setPatient(patients[0].uid || patients[0].displayName);
+            setPatient(patients[0].id);
         }
     }, [patients, patient]);
 
@@ -118,6 +114,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     usePushNotifications(activeUser);
 
     const profile = useUserProfile();
+    const globalPatientScope = searchParams.get('scope') === 'global';
     const patientDetailId = React.useMemo(() => {
         const match = pathname.match(/^\/patients\/([^/]+)$/);
         return match?.[1] ?? null;
@@ -249,24 +246,46 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     }, [profile, router]);
 
 
-    const handleSchedule = () => {
-        const newAppointment = {
-            id: Date.now(),
-            patient,
-            date,
-            time,
-            type,
-            status: 'Scheduled'
-        };
+    const handleSchedule = async () => {
+        if (!activeUser) {
+            return;
+        }
 
-        const existing = JSON.parse(localStorage.getItem('emr_appointments') || '[]');
-        localStorage.setItem('emr_appointments', JSON.stringify([...existing, newAppointment]));
+        if (!patient) {
+            return;
+        }
 
-        setIsBookingModalOpen(false);
-        if (pathname !== '/calendar') {
-            router.push('/calendar');
-        } else {
-            window.location.reload();
+        setIsScheduling(true);
+        try {
+            const selectedPatient = patients.find((entry) => entry.id === patient);
+            const response = await apiFetchJson<{ success?: boolean; error?: string }>('/api/dashboard/appointments', {
+                method: 'POST',
+                user: activeUser,
+                body: {
+                    patientId: patient,
+                    patientName: selectedPatient?.name,
+                    date,
+                    time,
+                    visitType: type === 'video' ? 'video' : 'in_person',
+                    notes: bookingNote.trim() || 'Scheduled from the global appointment menu.'
+                }
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to schedule appointment.');
+            }
+
+            setIsBookingModalOpen(false);
+            setBookingNote('');
+            if (pathname !== '/calendar') {
+                router.push('/calendar');
+            } else {
+                router.refresh();
+            }
+        } catch (error) {
+            console.error('Global appointment scheduling failed:', error);
+        } finally {
+            setIsScheduling(false);
         }
     };
 
@@ -299,13 +318,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             .join(' / ');
     })();
 
+    const isPatientDetailRoute = /^\/patients\/[^/]+$/.test(pathname) && pathname !== '/patients/global';
+
     const allMenuGroups = [
         {
             label: "Clinical",
             items: [
                 { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', active: pathname === '/dashboard' },
                 { href: '/calendar', icon: Calendar, label: 'Calendar', active: pathname.startsWith('/calendar') },
-                { href: '/patients', icon: User, label: 'Patients', active: pathname.startsWith('/patients') },
+                { href: '/patients', icon: User, label: 'Patients', active: pathname === '/patients' || (isPatientDetailRoute && !globalPatientScope) },
+                { href: '/patients/global', icon: Users, label: 'Global Patients', active: pathname.startsWith('/patients/global') || (isPatientDetailRoute && globalPatientScope) },
                 { href: '/soap', icon: ClipboardList, label: 'SOAP Notes', active: pathname.startsWith('/soap') },
                 { href: '/team', icon: Users, label: 'Team', active: pathname.startsWith('/team') },
                 { href: '/inbox', icon: MessageSquare, label: 'Inbox / Messages', badge: unreadInbox > 0 ? unreadInbox.toString() : undefined, active: pathname.startsWith('/inbox') },
@@ -619,14 +641,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                         onChange={(e) => setPatient(e.target.value)}
                                         className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:bg-slate-700 text-slate-800 dark:text-slate-100 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
                                     >
-                                        {usersQuery.isLoading ? (
+                                        {appointmentWorkspaceQuery.isLoading ? (
                                             <option value="">Loading patients...</option>
                                         ) : patients.length === 0 ? (
                                             <option value="">No patients found</option>
                                         ) : (
-                                            patients.map((p: any) => (
-                                                <option key={p.uid} value={p.uid || p.displayName}>
-                                                    {p.displayName || p.email}
+                                            patients.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.name}
                                                 </option>
                                             ))
                                         )}
@@ -695,9 +717,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                                 </button>
                                 <button
                                     onClick={handleSchedule}
+                                    disabled={isScheduling || !patient}
                                     className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all active:scale-95"
                                 >
-                                    Schedule Visit
+                                    {isScheduling ? 'Scheduling...' : 'Schedule Visit'}
                                 </button>
                             </div>
                         </div>

@@ -19,6 +19,7 @@ import type {
     PatientRegistryTag,
     PatientRegistryTeam
 } from '@/lib/patient-registry-types';
+import { loadMergedUserRecords } from '@/lib/server-teams';
 
 type SortField = 'name' | 'lastActivityAt' | 'statusLabel';
 type SortDirection = 'asc' | 'desc';
@@ -930,6 +931,110 @@ async function loadProviderScopedPatientContext(
     };
 }
 
+async function loadGlobalPatientContext(
+    firestore: FirebaseFirestore.Firestore
+): Promise<ProviderScopedPatientContext> {
+    const [appointmentsSnap, threadsSnap, teamsSnap, mergedUserRecords] = await Promise.all([
+        firestore.collection('appointments').limit(1000).get(),
+        firestore.collection('threads').limit(1000).get(),
+        firestore.collection('teams').limit(500).get(),
+        loadMergedUserRecords(firestore, 1000)
+    ]);
+
+    const accessiblePatientIds = new Set<string>();
+    const appointmentRows = new Map<string, Record<string, unknown>[]>();
+    const teamMemberships = new Map<string, PatientRegistryTeam[]>();
+    const draftRows = new Map<string, PatientDraftRow>();
+
+    mergedUserRecords.forEach((record) => {
+        const role = asNonEmptyString(record.data.role)?.toLowerCase() ?? null;
+        if (role && role !== 'patient') return;
+        accessiblePatientIds.add(record.id);
+        draftRows.set(record.id, draftRows.get(record.id) ?? {});
+    });
+
+    appointmentsSnap.docs.forEach((docSnap) => {
+        const data = {
+            id: docSnap.id,
+            ...docSnap.data()
+        } as Record<string, unknown>;
+        const patientId = asNonEmptyString(data.patientId) ?? asNonEmptyString(data.patientUid);
+        if (!patientId) return;
+
+        accessiblePatientIds.add(patientId);
+        const existingRows = appointmentRows.get(patientId) ?? [];
+        existingRows.push(data);
+        appointmentRows.set(patientId, existingRows);
+
+        const draft = draftRows.get(patientId) ?? {};
+        const appointmentDate =
+            asDate(data.startTime) ??
+            toDateTime(data.date, data.time) ??
+            asDate(data.updatedAt) ??
+            asDate(data.createdAt);
+        const rawStatus = asNonEmptyString(data.status);
+
+        draftRows.set(patientId, {
+            ...draft,
+            name: asNonEmptyString(data.patientName) ?? asNonEmptyString(data.patient) ?? draft.name ?? `Patient ${patientId.slice(0, 6)}`,
+            email: asNonEmptyString(data.patientEmail) ?? draft.email ?? null,
+            serviceLine: asNonEmptyString(data.service) ?? asNonEmptyString(data.type) ?? draft.serviceLine ?? 'General Consultation',
+            lastActivityAt: appointmentDate?.toISOString() ?? draft.lastActivityAt ?? null,
+            _rawStatuses: rawStatus ? [...(draft._rawStatuses ?? []), rawStatus] : (draft._rawStatuses ?? []),
+            _sources: Array.from(new Set([...(draft._sources ?? []), 'appointment']))
+        });
+    });
+
+    threadsSnap.docs.forEach((docSnap) => {
+        const data = docSnap.data() as Record<string, unknown>;
+        const patientId = asNonEmptyString(data.patientId) ?? asNonEmptyString(data.patientUid);
+        if (!patientId) return;
+
+        accessiblePatientIds.add(patientId);
+        const draft = draftRows.get(patientId) ?? {};
+        const lastMessageAt = asDate(data.lastMessageAt) ?? asDate(data.updatedAt) ?? asDate(data.createdAt);
+
+        draftRows.set(patientId, {
+            ...draft,
+            name: asNonEmptyString(data.patientName) ?? draft.name ?? `Patient ${patientId.slice(0, 6)}`,
+            email: asNonEmptyString(data.patientEmail) ?? draft.email ?? null,
+            lastActivityAt: lastMessageAt?.toISOString() ?? draft.lastActivityAt ?? null,
+            _sources: Array.from(new Set([...(draft._sources ?? []), 'thread']))
+        });
+    });
+
+    teamsSnap.docs.forEach((docSnap) => {
+        const data = docSnap.data() as Record<string, unknown>;
+        const teamId = docSnap.id;
+        const teamName = asNonEmptyString(data.name) ?? `Team ${teamId.slice(0, 6)}`;
+        const team: PatientRegistryTeam = { id: teamId, name: teamName };
+
+        asStringArray(data.patientIds).forEach((patientId) => {
+            if (!patientId) return;
+
+            accessiblePatientIds.add(patientId);
+            const currentTeams = teamMemberships.get(patientId) ?? [];
+            if (!currentTeams.some((currentTeam) => currentTeam.id === teamId)) {
+                currentTeams.push(team);
+            }
+            teamMemberships.set(patientId, currentTeams);
+
+            const draft = draftRows.get(patientId) ?? {};
+            draftRows.set(patientId, {
+                ...draft,
+                _sources: Array.from(new Set([...(draft._sources ?? []), 'team']))
+            });
+        });
+    });
+
+    return {
+        patientIds: Array.from(accessiblePatientIds),
+        draftRows,
+        teamMemberships,
+        appointmentRows
+    };
+}
+
 async function loadPatientDocumentMaps(
     firestore: FirebaseFirestore.Firestore,
     patientIds: string[]
@@ -1029,12 +1134,11 @@ function buildSummaryRow({
     };
 }
 
-export async function loadProviderScopedPatients(
+async function buildPatientRegistryResult(
     firestore: FirebaseFirestore.Firestore,
-    providerId: string,
+    context: ProviderScopedPatientContext,
     options: LoadScopedPatientsOptions = {}
 ): Promise<ProviderScopedPatientsResult> {
-    const context = await loadProviderScopedPatientContext(firestore, providerId);
     if (context.patientIds.length === 0) {
         return {
             patients: [],
@@ -1163,12 +1267,11 @@ export async function loadProviderScopedPatients(
     };
 }
 
-export async function loadProviderScopedPatientSummary(
+async function buildPatientSummaryFromContext(
     firestore: FirebaseFirestore.Firestore,
-    providerId: string,
+    context: ProviderScopedPatientContext,
     patientId: string
 ): Promise<PatientRegistryRow | null> {
-    const context = await loadProviderScopedPatientContext(firestore, providerId);
     if (!context.patientIds.includes(patientId)) {
         return null;
     }
@@ -1183,29 +1286,18 @@ export async function loadProviderScopedPatientSummary(
     });
 }
 
-export async function loadProviderScopedPatientDetail(
+async function loadPatientDetailFromContext(
     firestore: FirebaseFirestore.Firestore,
+    context: ProviderScopedPatientContext,
     providerId: string,
     patientId: string
 ): Promise<PatientDetailRecord | null> {
-    const context = await loadProviderScopedPatientContext(firestore, providerId);
-    if (!context.patientIds.includes(patientId)) {
-        return null;
-    }
-
-    const { patientDocsById, userDocsById } = await loadPatientDocumentMaps(firestore, [patientId]);
-    const summary = buildSummaryRow({
-        patientId,
-        patientDoc: patientDocsById.get(patientId),
-        userDoc: userDocsById.get(patientId),
-        draft: context.draftRows.get(patientId) ?? {},
-        teamRows: context.teamMemberships.get(patientId) ?? []
-    });
-
+    const summary = await buildPatientSummaryFromContext(firestore, context, patientId);
     if (!summary) {
         return null;
     }
 
+    const { patientDocsById, userDocsById } = await loadPatientDocumentMaps(firestore, [patientId]);
     const merged = {
         ...(userDocsById.get(patientId) ?? {}),
         ...(patientDocsById.get(patientId) ?? {})
@@ -1272,4 +1364,56 @@ export async function loadProviderScopedPatientDetail(
         messages,
         billing
     };
+}
+
+export async function loadProviderScopedPatients(
+    firestore: FirebaseFirestore.Firestore,
+    providerId: string,
+    options: LoadScopedPatientsOptions = {}
+): Promise<ProviderScopedPatientsResult> {
+    const context = await loadProviderScopedPatientContext(firestore, providerId);
+    return buildPatientRegistryResult(firestore, context, options);
+}
+
+export async function loadGlobalPatients(
+    firestore: FirebaseFirestore.Firestore,
+    options: LoadScopedPatientsOptions = {}
+): Promise<ProviderScopedPatientsResult> {
+    const context = await loadGlobalPatientContext(firestore);
+    return buildPatientRegistryResult(firestore, context, options);
+}
+
+export async function loadProviderScopedPatientSummary(
+    firestore: FirebaseFirestore.Firestore,
+    providerId: string,
+    patientId: string
+): Promise<PatientRegistryRow | null> {
+    const context = await loadProviderScopedPatientContext(firestore, providerId);
+    return buildPatientSummaryFromContext(firestore, context, patientId);
+}
+
+export async function loadGlobalPatientSummary(
+    firestore: FirebaseFirestore.Firestore,
+    patientId: string
+): Promise<PatientRegistryRow | null> {
+    const context = await loadGlobalPatientContext(firestore);
+    return buildPatientSummaryFromContext(firestore, context, patientId);
+}
+
+export async function loadProviderScopedPatientDetail(
+    firestore: FirebaseFirestore.Firestore,
+    providerId: string,
+    patientId: string
+): Promise<PatientDetailRecord | null> {
+    const context = await loadProviderScopedPatientContext(firestore, providerId);
+    return loadPatientDetailFromContext(firestore, context, providerId, patientId);
+}
+
+export async function loadGlobalPatientDetail(
+    firestore: FirebaseFirestore.Firestore,
+    providerId: string,
+    patientId: string
+): Promise<PatientDetailRecord | null> {
+    const context = await loadGlobalPatientContext(firestore);
+    return loadPatientDetailFromContext(firestore, context, providerId, patientId);
 }

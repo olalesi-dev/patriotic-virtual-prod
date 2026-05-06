@@ -16,6 +16,8 @@ import vouchedRoutes from './routes/vouched';
 import consultationRoutes from './routes/consultations';
 import paymentRoutes from './routes/payments';
 import webhookRoutes from './routes/webhooks';
+import phoneVerificationRoutes from './routes/phone-verification';
+import telnyxRoutes from './routes/telnyx';
 import { logger } from './utils/logger';
 import { generateSSOUrl } from './utils/dosespot';
 import { ensureDoseSpotPatientForUid } from './services/dosespot-patients';
@@ -84,7 +86,9 @@ app.use('/api/v1/payments', verifyFirebaseToken, paymentRoutes);
 // Payment webhooks (Public)
 app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/notifications', notificationWorkerRoutes);
+app.use('/telnyx', telnyxRoutes);
 app.use('/api/v1/notifications', verifyFirebaseToken, notificationV1Routes);
+app.use('/api/v1/phone-verification', verifyFirebaseToken, phoneVerificationRoutes);
 
 // DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
 app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {

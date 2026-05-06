@@ -10,6 +10,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from 'sonner';
 import { syncDoseSpotPatientBestEffort } from '@/lib/dosespot-patient-sync';
 import { US_STATE_OPTIONS, normalizeUsStateCode } from '@/lib/us-states';
+import { PhoneVerificationModal } from '@/components/common/PhoneVerificationModal';
 
 type FieldOption = string | { value: string; label: string };
 
@@ -68,6 +69,8 @@ const EMPTY: ProfileData = {
 export default function PatientProfilePage() {
     const userProfile = useUserProfile();
     const [data, setData] = useState<ProfileData>(EMPTY);
+    const [phoneVerification, setPhoneVerification] = useState({ verified: false, phone: '' });
+    const [verifyModalOpen, setVerifyModalOpen] = useState(false);
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -104,6 +107,10 @@ export default function PatientProfilePage() {
                         height: d.height || '',
                         weight: d.weight || '',
                         photoURL: d.photoURL || userProfile.photoURL || '',
+                    });
+                    setPhoneVerification({
+                        verified: d.phoneVerified === true,
+                        phone: typeof d.phoneVerification?.phone === 'string' ? d.phoneVerification.phone : (d.phone || d.phoneNumber || '')
                     });
                 } else {
                     setData(prev => ({
@@ -155,6 +162,8 @@ export default function PatientProfilePage() {
             const lastName = data.lastName.trim();
             const normalizedGender = normalizeDoseSpotGender(data.gender);
             const normalizedPhone = data.phone ? normalizeUsPhone(data.phone) : null;
+            const previousPhone = phoneVerification.phone.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+            const phoneChanged = (normalizedPhone ?? '') !== previousPhone;
             const normalizedZip = data.zip ? normalizeUsZip(data.zip) : null;
             const normalizedState = data.state ? normalizeUsStateCode(data.state) : null;
             const address = data.address.trim();
@@ -201,23 +210,47 @@ export default function PatientProfilePage() {
                 zipCode: normalizedZip,
                 role: 'patient'
             };
+            const verificationPayload = normalizedPhone
+                ? {
+                    phoneVerified: phoneChanged ? false : phoneVerification.verified,
+                    phoneVerification: {
+                        status: phoneChanged ? 'unverified' : (phoneVerification.verified ? 'verified' : 'unverified'),
+                        phone: normalizedPhone,
+                        updatedAt: serverTimestamp(),
+                    }
+                }
+                : {
+                    phoneVerified: false,
+                    phoneVerification: {
+                        status: 'unverified',
+                        phone: null,
+                        updatedAt: serverTimestamp(),
+                    }
+                };
 
             await Promise.all([
                 setDoc(doc(db, 'users', auth.currentUser.uid), {
                     ...data,
                     ...doseSpotReadyProfile,
+                    ...verificationPayload,
                     updatedAt: serverTimestamp(),
                 }, { merge: true }),
                 setDoc(doc(db, 'patients', auth.currentUser.uid), {
                     ...doseSpotReadyProfile,
+                    ...verificationPayload,
                     updatedAt: serverTimestamp(),
                 }, { merge: true })
             ]);
             // Update Firebase Auth display name
             if (fullName) await updateProfile(auth.currentUser, { displayName: fullName });
             void syncDoseSpotPatientBestEffort(auth.currentUser, { updateExisting: true });
+            setPhoneVerification({ verified: !phoneChanged && phoneVerification.verified, phone: normalizedPhone || '' });
             setEditing(false);
             toast.success('Profile saved successfully!');
+            if (phoneChanged && normalizedPhone) {
+                setVerifyModalOpen(true);
+                toast.info('Your phone number changed. Verify it to receive SMS reminders.');
+            }
         } catch (e) {
             toast.error('Failed to save profile');
             console.error(e);
@@ -265,6 +298,12 @@ export default function PatientProfilePage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-20">
+            <PhoneVerificationModal
+                open={verifyModalOpen}
+                phoneNumber={data.phone}
+                onClose={() => setVerifyModalOpen(false)}
+                onVerified={() => setPhoneVerification({ verified: true, phone: data.phone })}
+            />
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -272,12 +311,22 @@ export default function PatientProfilePage() {
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Manage your health record</p>
                 </div>
                 {!editing ? (
-                    <button
-                        onClick={() => setEditing(true)}
-                        className="flex items-center gap-2 bg-[#0EA5E9] text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-100 hover:bg-sky-500 transition-all"
-                    >
-                        <Edit3 className="w-4 h-4" /> Edit Profile
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {data.phone && !phoneVerification.verified && (
+                            <button
+                                onClick={() => setVerifyModalOpen(true)}
+                                className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-amber-700 transition hover:bg-amber-100"
+                            >
+                                <Shield className="w-4 h-4" /> Verify Phone
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setEditing(true)}
+                            className="flex items-center gap-2 bg-[#0EA5E9] text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-100 hover:bg-sky-500 transition-all"
+                        >
+                            <Edit3 className="w-4 h-4" /> Edit Profile
+                        </button>
+                    </div>
                 ) : (
                     <div className="flex gap-2">
                         <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all">
