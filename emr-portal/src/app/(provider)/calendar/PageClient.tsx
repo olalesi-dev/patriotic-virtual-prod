@@ -738,6 +738,8 @@ export default function CalendarPage() {
         return payload;
     };
 
+    const hasNotificationFailure = (payload: any) => payload?.notification && payload.notification.queued === false && payload.notification.error;
+
     // â”€â”€â”€ REALTIME SYNC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     useEffect(() => {
@@ -939,12 +941,14 @@ export default function CalendarPage() {
         }
 
         try {
-            await callAppointmentUpdate(id, {
+            const payload = await callAppointmentUpdate(id, {
                 action: 'status',
                 status,
             });
             if (selectedAppt?.id === id) setSelectedAppt((prev: any) => ({ ...prev, status }));
-            showToast(`Status updated to "${STATUS_CONFIG[status]?.label}"`);
+            showToast(hasNotificationFailure(payload)
+                ? `Status updated, but notification failed: ${payload.notification.error}`
+                : `Status updated to "${STATUS_CONFIG[status]?.label}"`);
         } catch (e) { showToast('Failed to update status.'); }
     };
 
@@ -996,7 +1000,7 @@ export default function CalendarPage() {
             const previousDate = previousStart ? format(previousStart, 'yyyy-MM-dd') : rescheduleAppt.date;
             const previousTime = previousStart ? format(previousStart, 'HH:mm') : rescheduleAppt.time;
 
-            await callAppointmentUpdate(rescheduleAppt.id, {
+            const payload = await callAppointmentUpdate(rescheduleAppt.id, {
                 action: 'reschedule',
                 date,
                 time,
@@ -1014,7 +1018,9 @@ export default function CalendarPage() {
                 }));
             }
 
-            showToast(`Appointment rescheduled to ${format(new Date(`${date}T${time}:00`), 'EEE MMM d')} at ${time}`);
+            showToast(hasNotificationFailure(payload)
+                ? `Appointment rescheduled, but notification failed: ${payload.notification.error}`
+                : `Appointment rescheduled to ${format(new Date(`${date}T${time}:00`), 'EEE MMM d')} at ${time}`);
             setRescheduleAppt(null);
         } catch (error) {
             setRescheduleError(error instanceof Error ? error.message : 'Reschedule failed.');
@@ -1069,7 +1075,7 @@ export default function CalendarPage() {
             : (typeof activeDraggedAppt.time === 'string' ? activeDraggedAppt.time : undefined);
 
         try {
-            await callAppointmentUpdate(activeDraggedAppt.id, {
+            const payload = await callAppointmentUpdate(activeDraggedAppt.id, {
                 action: 'reschedule',
                 date: newDate,
                 time: newTime,
@@ -1077,7 +1083,9 @@ export default function CalendarPage() {
                 previousTime,
             });
 
-            showToast(`Appointment rescheduled to ${format(day, 'EEE MMM d')} at ${newTime}`);
+            showToast(hasNotificationFailure(payload)
+                ? `Appointment rescheduled, but notification failed: ${payload.notification.error}`
+                : `Appointment rescheduled to ${format(day, 'EEE MMM d')} at ${newTime}`);
         } catch (e) { showToast('Reschedule failed.'); }
         setDraggedAppt(null);
         draggedApptRef.current = null;
@@ -1122,7 +1130,7 @@ export default function CalendarPage() {
         setScheduleSaving(true);
         try {
             const selectedPatient = patients.find((patient) => patient.id === apptForm.patientId);
-            const response = await apiFetchJson<{ success?: boolean; error?: string }>('/api/dashboard/appointments', {
+            const response = await apiFetchJson<{ success?: boolean; error?: string; notification?: { queued: boolean; error?: string } }>('/api/dashboard/appointments', {
                 method: 'POST',
                 user: activeUser,
                 body: {
@@ -1141,7 +1149,9 @@ export default function CalendarPage() {
 
             setIsModalOpen(false);
             setApptForm({ patientId: '', date: format(new Date(), 'yyyy-MM-dd'), time: '10:00', type: 'video', notes: '' });
-            showToast('Appointment scheduled!');
+            showToast(hasNotificationFailure(response)
+                ? `Appointment scheduled, but notification failed: ${response.notification?.error}`
+                : 'Appointment scheduled!');
         } catch (error) {
             showToast(error instanceof Error ? error.message : 'Failed to schedule visit.');
         } finally {

@@ -42,11 +42,20 @@ export async function enqueueDispatchTask(
     const queueConfig = getQueueConfig();
 
     if (!queueConfig) {
-        if (!options.onInlineDispatch || !canUseInlineFallback()) {
+        const isImmediateDispatch = !options.scheduleAt || options.scheduleAt.getTime() <= Date.now();
+
+        if (!options.onInlineDispatch || (!isImmediateDispatch && !canUseInlineFallback())) {
             throw new Error('Notification Cloud Tasks configuration is incomplete.');
         }
 
         const inlineDispatch = options.onInlineDispatch;
+        if (isImmediateDispatch) {
+            await inlineDispatch();
+            return {
+                taskName: null,
+            };
+        }
+
         const delayMs = options.scheduleAt ? Math.max(options.scheduleAt.getTime() - Date.now(), 0) : 0;
         setTimeout(() => {
             void inlineDispatch().catch((error) => {
