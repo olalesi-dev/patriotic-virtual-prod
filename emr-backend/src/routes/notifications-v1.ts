@@ -73,32 +73,42 @@ router.post('/notify', async (req, res) => {
         });
 
         const followUps = [];
+        const followUpErrors = [];
         for (const followUp of body.followUpSchedules ?? []) {
             const sendAt = new Date(followUp.sendAt);
             if (Number.isNaN(sendAt.getTime()) || sendAt <= new Date()) {
                 continue;
             }
 
-            const followUpResult = await notificationService.schedule({
-                topicKey: followUp.topicKey as NotificationTopicKey,
-                entityId: followUp.entityId,
-                recipientIds: followUp.recipientIds ?? body.recipientIds,
-                templateData: followUp.templateData,
-                metadata: followUp.metadata,
-                dedupeKey: followUp.dedupeKey,
-                channels: followUp.channels as NotificationChannel[] | undefined,
-                actorId: body.actorId ?? req.user?.uid ?? null,
-                actorName: body.actorName ?? null,
-                source: body.source ?? null,
-                sendAt,
-            });
-            followUps.push(followUpResult);
+            try {
+                const followUpResult = await notificationService.schedule({
+                    topicKey: followUp.topicKey as NotificationTopicKey,
+                    entityId: followUp.entityId,
+                    recipientIds: followUp.recipientIds ?? body.recipientIds,
+                    templateData: followUp.templateData,
+                    metadata: followUp.metadata,
+                    dedupeKey: followUp.dedupeKey,
+                    channels: followUp.channels as NotificationChannel[] | undefined,
+                    actorId: body.actorId ?? req.user?.uid ?? null,
+                    actorName: body.actorName ?? null,
+                    source: body.source ?? null,
+                    sendAt,
+                });
+                followUps.push(followUpResult);
+            } catch (error) {
+                followUpErrors.push({
+                    dedupeKey: followUp.dedupeKey,
+                    sendAt: followUp.sendAt,
+                    error: error instanceof Error ? error.message : 'Failed to schedule follow-up notification.',
+                });
+            }
         }
 
         return res.json({
             success: true,
             result,
             followUps,
+            followUpErrors,
         });
     } catch (error) {
         return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to create notification.' });

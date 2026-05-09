@@ -48,41 +48,55 @@ function formatDisplayTime(startAt: Date): string {
     }).format(startAt);
 }
 
-function dispatchAppointmentNotificationInBackground(
+interface AppointmentNotificationDispatchResult {
+    queued: boolean;
+    error?: string;
+}
+
+async function dispatchAppointmentNotification(
     request: Request,
     payload: Record<string, unknown>,
     logContext: string,
-): void {
+): Promise<AppointmentNotificationDispatchResult> {
     const url = new URL('/api/notifications/send', request.url);
 
-    void fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: request.headers.get('authorization') ?? ''
-        },
-        body: JSON.stringify(payload),
-        cache: 'no-store'
-    })
-        .then(async (response) => {
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`${logContext} notification failed`, {
-                    status: response.status,
-                    body: errorText,
-                    payload,
-                });
-                return;
-            }
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: request.headers.get('authorization') ?? ''
+            },
+            body: JSON.stringify(payload),
+            cache: 'no-store'
+        });
 
-            console.info(`${logContext} notification queued`, payload);
-        })
-        .catch((error) => {
-            console.error(`${logContext} notification request failed`, {
-                error: error instanceof Error ? error.message : String(error),
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`${logContext} notification failed`, {
+                status: response.status,
+                body: errorText,
                 payload,
             });
+            return {
+                queued: false,
+                error: errorText || `Notification request failed with status ${response.status}.`,
+            };
+        }
+
+        console.info(`${logContext} notification queued`, payload);
+        return { queued: true };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`${logContext} notification request failed`, {
+            error: message,
+            payload,
         });
+        return {
+            queued: false,
+            error: message,
+        };
+    }
 }
 
 export async function POST(request: Request) {
@@ -229,7 +243,7 @@ export async function POST(request: Request) {
 
         await batch.commit();
 
-        dispatchAppointmentNotificationInBackground(
+        const notification = await dispatchAppointmentNotification(
             request,
             {
                 type: 'appointment_booked',
@@ -240,6 +254,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
+            notification,
             appointment: {
                 id: appointmentRef.id,
                 patient: patientName,

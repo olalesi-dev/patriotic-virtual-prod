@@ -36,6 +36,24 @@ function readPortalLink(data: Record<string, unknown>, fallback: string): string
     return asOptionalString(data.portalLink) ?? fallback;
 }
 
+function readMeetingLink(data: Record<string, unknown>): string | null {
+    return asOptionalString(data.meetingUrl) ?? asOptionalString(data.meeting_url);
+}
+
+function buildAppointmentSmsBody(data: Record<string, unknown>, verb: string): string {
+    const recipientType = readRecipientType(data);
+    const appointmentAt = formatDateTime(data.appointmentAt);
+    const providerName = readProviderName(data);
+    const patientName = readPatientName(data);
+    const meetingLink = readMeetingLink(data);
+
+    const base = recipientType === 'provider'
+        ? `Patriotic Telehealth: ${patientName} ${verb} for ${appointmentAt}.`
+        : `Patriotic Telehealth: your appointment with ${providerName} is ${verb} for ${appointmentAt}.`;
+
+    return meetingLink ? `${base} Join: ${meetingLink}` : base;
+}
+
 function buildReminderBody(data: Record<string, unknown>, leadTimeLabel: string): string {
     const recipientType = readRecipientType(data);
     const patientName = readPatientName(data);
@@ -133,8 +151,8 @@ export const notificationRegistry: Record<NotificationTopicKey, NotificationTopi
         topicKey: 'APPOINTMENT_BOOKED',
         category: 'scheduling',
         priority: 'high',
-        allowedChannels: ['email', 'in_app'],
-        defaultChannels: ['email', 'in_app'],
+        allowedChannels: ['email', 'sms', 'in_app'],
+        defaultChannels: ['email', 'sms', 'in_app'],
         templateKey: 'appointment_booked',
         containsPHI: false,
         requiresAudit: true,
@@ -152,14 +170,15 @@ export const notificationRegistry: Record<NotificationTopicKey, NotificationTopi
 
             return `Your appointment with ${readProviderName(data)} is scheduled for ${formatDateTime(data.appointmentAt)}.`;
         },
+        buildSmsBody: (data) => buildAppointmentSmsBody(data, 'scheduled'),
         buildHref: (data) => readPortalLink(data, '/patient/scheduled'),
     },
     APPOINTMENT_RESCHEDULED: {
         topicKey: 'APPOINTMENT_RESCHEDULED',
         category: 'scheduling',
         priority: 'high',
-        allowedChannels: ['email', 'in_app'],
-        defaultChannels: ['email', 'in_app'],
+        allowedChannels: ['email', 'sms', 'in_app'],
+        defaultChannels: ['email', 'sms', 'in_app'],
         templateKey: 'appointment_rescheduled',
         containsPHI: false,
         requiresAudit: true,
@@ -173,14 +192,15 @@ export const notificationRegistry: Record<NotificationTopicKey, NotificationTopi
         buildInboxBody: (data) => readRecipientType(data) === 'provider'
             ? `${readPatientName(data)} was moved to ${formatDateTime(data.appointmentAt)}.`
             : `Your appointment has been moved to ${formatDateTime(data.appointmentAt)}.`,
+        buildSmsBody: (data) => buildAppointmentSmsBody(data, 'rescheduled'),
         buildHref: (data) => readPortalLink(data, '/patient/scheduled'),
     },
     APPOINTMENT_CANCELLED: {
         topicKey: 'APPOINTMENT_CANCELLED',
         category: 'scheduling',
         priority: 'high',
-        allowedChannels: ['email', 'in_app'],
-        defaultChannels: ['email', 'in_app'],
+        allowedChannels: ['email', 'sms', 'in_app'],
+        defaultChannels: ['email', 'sms', 'in_app'],
         templateKey: 'appointment_cancelled',
         containsPHI: false,
         requiresAudit: true,
@@ -194,14 +214,15 @@ export const notificationRegistry: Record<NotificationTopicKey, NotificationTopi
         buildInboxBody: (data) => readRecipientType(data) === 'provider'
             ? `${readPatientName(data)} was cancelled for ${formatDateTime(data.appointmentAt)}.`
             : `Your appointment scheduled for ${formatDateTime(data.appointmentAt)} was cancelled.`,
+        buildSmsBody: (data) => buildAppointmentSmsBody(data, 'cancelled'),
         buildHref: (data) => readPortalLink(data, '/patient/appointments'),
     },
     APPOINTMENT_REMINDER_24H: {
         topicKey: 'APPOINTMENT_REMINDER_24H',
         category: 'scheduling',
         priority: 'medium',
-        allowedChannels: ['email', 'in_app'],
-        defaultChannels: ['email'],
+        allowedChannels: ['email', 'sms', 'in_app'],
+        defaultChannels: ['email', 'sms'],
         templateKey: 'appointment_reminder_24h',
         containsPHI: false,
         requiresAudit: true,
@@ -211,6 +232,7 @@ export const notificationRegistry: Record<NotificationTopicKey, NotificationTopi
         inboxType: 'appointment_reminder',
         buildInboxTitle: () => 'Appointment reminder: 24 hours',
         buildInboxBody: (data) => buildReminderBody(data, '24 hours'),
+        buildSmsBody: (data) => buildAppointmentSmsBody(data, 'coming up in 24 hours'),
         buildHref: (data) => readPortalLink(data, '/patient/scheduled'),
     },
     APPOINTMENT_REMINDER_8H: {
@@ -234,8 +256,8 @@ export const notificationRegistry: Record<NotificationTopicKey, NotificationTopi
         topicKey: 'APPOINTMENT_REMINDER_1H',
         category: 'scheduling',
         priority: 'high',
-        allowedChannels: ['email', 'in_app'],
-        defaultChannels: ['email'],
+        allowedChannels: ['email', 'sms', 'in_app'],
+        defaultChannels: ['email', 'sms'],
         templateKey: 'appointment_reminder_1h',
         containsPHI: false,
         requiresAudit: true,
@@ -245,6 +267,7 @@ export const notificationRegistry: Record<NotificationTopicKey, NotificationTopi
         inboxType: 'appointment_reminder',
         buildInboxTitle: () => 'Appointment reminder: 1 hour',
         buildInboxBody: (data) => buildReminderBody(data, '1 hour'),
+        buildSmsBody: (data) => buildAppointmentSmsBody(data, 'starting in 1 hour'),
         buildHref: (data) => readPortalLink(data, '/patient/scheduled'),
     },
     SECURE_MESSAGE_RECEIVED_PATIENT: {

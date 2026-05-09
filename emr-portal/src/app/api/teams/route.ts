@@ -26,6 +26,17 @@ function asNonEmptyString(value: unknown): string | null {
     return normalized.length > 0 ? normalized : null;
 }
 
+function readTeamReferenceIds(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return Array.from(new Set(value
+            .map((entry) => asNonEmptyString(entry))
+            .filter((entry): entry is string => Boolean(entry))));
+    }
+
+    const directValue = asNonEmptyString(value);
+    return directValue ? [directValue] : [];
+}
+
 export async function GET(request: Request) {
     const { user, errorResponse } = await requireAuthenticatedUser(request, { resolveRole: false });
     if (errorResponse) return errorResponse;
@@ -60,9 +71,24 @@ export async function GET(request: Request) {
         const resolvedProviderAccessError = ensureProviderAccess(user, effectiveRole);
         if (resolvedProviderAccessError) return resolvedProviderAccessError;
 
-        const uniqueTeamDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+        const uniqueTeamDocs = new Map<string, FirebaseFirestore.DocumentSnapshot | FirebaseFirestore.QueryDocumentSnapshot>();
         ownerTeamsSnapshot.docs.forEach((doc) => uniqueTeamDocs.set(doc.id, doc));
         memberTeamsSnapshot.docs.forEach((doc) => uniqueTeamDocs.set(doc.id, doc));
+
+        const referencedTeamIds = Array.from(new Set([
+            ...readTeamReferenceIds(mergedCurrentUser?.teamId),
+            ...readTeamReferenceIds(mergedCurrentUser?.teamIds)
+        ])).filter((teamId) => !uniqueTeamDocs.has(teamId));
+
+        if (referencedTeamIds.length > 0) {
+            const referencedTeamDocs = await Promise.all(
+                referencedTeamIds.map((teamId) => firestore.collection('teams').doc(teamId).get())
+            );
+            referencedTeamDocs.forEach((teamDoc) => {
+                if (!teamDoc.exists) return;
+                uniqueTeamDocs.set(teamDoc.id, teamDoc);
+            });
+        }
 
         const teamDocs = Array.from(uniqueTeamDocs.values());
         const teams = teamDocs

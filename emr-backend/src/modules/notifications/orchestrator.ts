@@ -61,6 +61,7 @@ export class NotificationOrchestrator {
                 if (!preferences) return true;
                 if (channel === 'email') return preferences.email;
                 if (channel === 'in_app') return preferences.inApp;
+                if (channel === 'sms') return recipient.phoneVerified;
                 return true;
             });
 
@@ -84,7 +85,7 @@ export class NotificationOrchestrator {
                     dedupeKey,
                     status: 'queued',
                     attemptCount: 0,
-                    provider: channel === 'email' ? 'sendgrid' : channel === 'sms' ? 'twilio' : 'firestore',
+                    provider: channel === 'email' ? 'sendgrid' : channel === 'sms' ? 'telnyx' : 'firestore',
                     providerMessageId: null,
                     providerResponseCode: null,
                     taskName: null,
@@ -116,4 +117,3 @@ export class NotificationOrchestrator {
         };
     }
 }
-

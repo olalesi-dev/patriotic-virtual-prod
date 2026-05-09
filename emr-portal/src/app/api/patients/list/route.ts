@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, FIREBASE_ADMIN_SETUP_HINT } from '@/lib/firebase-admin';
-import { loadProviderScopedPatients } from '@/lib/server-patients';
+import { loadGlobalPatients, loadProviderScopedPatients } from '@/lib/server-patients';
 import { ensureProviderAccess, normalizeRole, requireAuthenticatedUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
@@ -38,11 +38,12 @@ export async function GET(request: Request) {
         if (resolvedAccessError) return resolvedAccessError;
 
         const { searchParams } = new URL(request.url);
+        const scope = searchParams.get('scope') === 'global' ? 'global' : 'assigned';
         const pageSize = Number(searchParams.get('pageSize') ?? '25');
         const sortField = (searchParams.get('sortField') ?? 'name') as 'name' | 'lastActivityAt' | 'statusLabel';
         const sortDir = (searchParams.get('sortDir') ?? 'asc') as 'asc' | 'desc';
 
-        const payload = await loadProviderScopedPatients(firestore, user.uid, {
+        const payload = await (scope === 'global' ? loadGlobalPatients(firestore, {
             query: searchParams.get('q') ?? '',
             statuses: readArray(searchParams, 'status'),
             teamIds: readArray(searchParams, 'teamId'),
@@ -52,7 +53,17 @@ export async function GET(request: Request) {
             pageSize: Number.isFinite(pageSize) ? pageSize : 25,
             sortField,
             sortDir
-        });
+        }) : loadProviderScopedPatients(firestore, user.uid, {
+            query: searchParams.get('q') ?? '',
+            statuses: readArray(searchParams, 'status'),
+            teamIds: readArray(searchParams, 'teamId'),
+            tags: readArray(searchParams, 'tag'),
+            excludeDoseSpotBlocked: searchParams.get('excludeDoseSpotBlocked') === 'true',
+            cursor: searchParams.get('cursor'),
+            pageSize: Number.isFinite(pageSize) ? pageSize : 25,
+            sortField,
+            sortDir
+        }));
 
         return NextResponse.json({
             success: true,

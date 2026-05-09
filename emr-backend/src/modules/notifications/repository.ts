@@ -7,6 +7,7 @@ import type {
     NotificationPreferenceCategory,
     RecipientProfile,
 } from './types';
+import { isPhoneVerified } from '../../services/telnyx';
 
 const MESSAGES_COLLECTION = 'notificationMessages';
 const DELIVERIES_COLLECTION = 'notificationDeliveries';
@@ -161,11 +162,13 @@ export class NotificationRepository {
             ]);
             const userData = userDoc.exists ? asRecord(userDoc.data()) : {};
             const patientData = patientDoc.exists ? asRecord(patientDoc.data()) : {};
+            const phone = asString(userData.phone) ?? asString(userData.phoneNumber) ?? asString(patientData.phone) ?? asString(patientData.phoneNumber);
 
             return {
                 uid,
                 email: asString(userData.email) ?? asString(patientData.email),
-                phone: asString(userData.phone) ?? asString(userData.phoneNumber) ?? asString(patientData.phone) ?? asString(patientData.phoneNumber),
+                phone,
+                phoneVerified: isPhoneVerified(userData, phone) || isPhoneVerified(patientData, phone),
                 displayName: toDisplayName(uid, userData, patientData),
                 role: asString(userData.role) ?? asString(patientData.role),
             } satisfies RecipientProfile;
@@ -375,6 +378,7 @@ export class NotificationRepository {
                 uid: docSnap.id,
                 email: asString(data.email),
                 phone: asString(data.phone) ?? asString(data.phoneNumber),
+                phoneVerified: isPhoneVerified(data, asString(data.phone) ?? asString(data.phoneNumber)),
                 displayName: toDisplayName(docSnap.id, data, {}),
                 role: asString(data.role),
             } satisfies RecipientProfile;
@@ -394,6 +398,7 @@ export class NotificationRepository {
                 uid: docSnap.id,
                 email: asString(data.email),
                 phone: asString(data.phone) ?? asString(data.phoneNumber),
+                phoneVerified: isPhoneVerified(data, asString(data.phone) ?? asString(data.phoneNumber)),
                 displayName: toDisplayName(docSnap.id, data, {}),
                 role: asString(data.role),
             };
@@ -412,6 +417,7 @@ export class NotificationRepository {
             uid: docSnap.id,
             email: asString(data.email),
             phone: asString(data.phone) ?? asString(data.phoneNumber),
+            phoneVerified: isPhoneVerified(data, asString(data.phone) ?? asString(data.phoneNumber)),
             displayName: toDisplayName(docSnap.id, {}, data),
             role: asString(data.role) ?? 'patient',
         };

@@ -116,7 +116,7 @@ export async function dispatchNotificationDelivery(deliveryId: string): Promise<
                 throw new Error(`Recipient ${recipient.uid} does not have a phone number.`);
             }
 
-            const result = await twilioAdapter.send(recipient.phone, smsBody);
+            const result = await twilioAdapter.send(recipient.uid, recipient.phone, smsBody);
             await repository.updateDelivery(delivery.id, {
                 status: 'sent',
                 sentAt: new Date(),

@@ -30,8 +30,10 @@
         "pg": "^8.11.3",
         "rate-limiter-flexible": "^4.0.0",
         "stripe": "^22.0.2",
+        "telnyx": "^6.48.0",
         "twilio": "^6.0.0",
         "winston": "^3.11.0",
+        "ws": "^8.20.0",
         "zod": "^3.22.4"
     },
     "devDependencies": {
