@@ -9740,7 +9740,7 @@ body:not(.light-theme) #landingPage .lp-footer {
 
 #landingPage .lp-footer-powered-copy {
   display: grid;
-  gap: 2px;
+  gap: 5px;
   justify-items: start;
 }
 
@@ -9752,23 +9752,26 @@ body:not(.light-theme) #landingPage .lp-footer {
 }
 
 #landingPage .lp-footer-powered-copy a {
+  display: inline-flex;
+  align-items: center;
   color: #0d0d0d !important;
   text-decoration: none;
 }
 
-#landingPage .lp-footer-powered-copy strong {
-  font-family: "Inter", sans-serif;
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 18px;
-  letter-spacing: -0.04em;
+#landingPage .lp-footer-riq-logo {
+  display: block;
+  width: 82px;
+  height: auto;
+  max-width: min(30vw, 82px);
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 #landingPage .lp-footer-powered-logo {
   display: block;
-  width: 74px;
+  width: 82px;
   height: auto;
-  max-width: min(28vw, 74px);
+  max-width: min(30vw, 82px);
   object-fit: contain;
   margin-left: 0;
 }
