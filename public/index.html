@@ -51,6 +51,20 @@
           </linearGradient>
         </defs>
       </symbol>
+      <symbol id="icon-facebook" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M14.2 8.2H16V5.1C15.7 5.1 14.6 5 13.3 5C10.6 5 8.8 6.6 8.8 9.6v2.6H6v3.5h2.8V23h3.5v-7.3H15l.5-3.5h-3.2V9.9c0-1 .3-1.7 1.9-1.7Z" />
+      </symbol>
+      <symbol id="icon-x" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M14.6 10.8 21.4 3h-1.6l-5.9 6.7L9.2 3H3.8l7.1 10.1L3.8 21h1.6l6.2-7 5 7H22l-7.4-10.2Zm-2.2 2.5-.7-1L6 4.2h2.4l4.6 6.5.7 1 6 8.4h-2.4l-4.9-6.8Z" />
+      </symbol>
+      <symbol id="icon-instagram" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="2" />
+        <circle cx="12" cy="12" r="3.25" fill="none" stroke="currentColor" stroke-width="2" />
+        <circle cx="17" cy="7" r="1.2" fill="currentColor" />
+      </symbol>
+      <symbol id="icon-tiktok" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M14.4 3c.3 2.3 1.6 3.8 3.8 4v3.1c-1.3 0-2.5-.4-3.7-1.1v6.4c0 3.2-2.1 5.6-5.3 5.6C6.3 21 4 18.9 4 16c0-3.1 2.4-5.2 5.5-5.2.4 0 .8 0 1.1.1v3.2c-.3-.1-.7-.2-1.1-.2-1.4 0-2.4.8-2.4 2.1 0 1.2 1 2 2.2 2 1.4 0 2.2-.8 2.2-2.6V3h2.9Z" />
+      </symbol>
     </defs>
   </svg>
 
@@ -63,10 +77,10 @@
 
       <div class="nav-links lp-nav-links">
         <a href="#" class="lp-nav-link" onclick="closeMobileNav(); openAboutUs(); return false;" data-i18n="nav-about">About Us</a>
-        <a href="#services" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-services">Services</a>
+        <a href="#services" class="lp-nav-link lp-nav-link--services" onclick="closeMobileNav()" data-i18n="nav-services">Services</a>
         <a href="#how-it-works" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-how">How It Works</a>
         <a href="#radiology" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-radiology">Radiology Education</a>
-        <a href="#diagnostic-radiology" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-clinicians">Diagnostic Radiology</a>
+        <a href="#diagnostic-radiology" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-clinicians">For Clinicians & Facilities</a>
         <a href="#reviews" class="lp-nav-link" onclick="closeMobileNav()" data-i18n="nav-reviews">Reviews</a>
       </div>
 
@@ -79,7 +93,11 @@
             <path d="M21 12.8A8.99 8.99 0 0 1 11.2 3a8.3 8.3 0 0 0-.2 1.8 9 9 0 1 0 10 10c0-.34 0-.67-.06-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
           </svg>
         </button>
-        <button class="lp-icon-btn" id="langBtn" onclick="toggleLanguage()" title="Switch to Spanish" aria-label="Toggle language">ES</button>
+        <button class="lp-lang-toggle" id="langBtn" onclick="toggleLanguage()" title="Switch to Spanish" aria-label="Language: English" aria-pressed="false">
+          <span class="lp-lang-thumb" aria-hidden="true"></span>
+          <span class="lp-lang-option lp-lang-option--en">English</span>
+          <span class="lp-lang-option lp-lang-option--es">Espanol</span>
+        </button>
         <button class="lp-nav-btn lp-nav-btn--outline hidden" id="logoutBtn" onclick="logout()" data-i18n="nav-logout">Log Out</button>
         <button class="lp-icon-btn lp-mobile-toggle" type="button" aria-expanded="false" aria-controls="mobileNavPanel" onclick="toggleMobileNav(this)">
           <span></span>
@@ -89,10 +107,10 @@
 
     <div class="lp-mobile-panel" id="mobileNavPanel">
       <a href="#" onclick="closeMobileNav(); openAboutUs(); return false;" data-i18n="nav-about">About Us</a>
-      <a href="#services" onclick="closeMobileNav()" data-i18n="nav-services">Services</a>
+      <a href="#services" class="lp-nav-link--services" onclick="closeMobileNav()" data-i18n="nav-services">Services</a>
       <a href="#how-it-works" onclick="closeMobileNav()" data-i18n="nav-how">How It Works</a>
       <a href="#radiology" onclick="closeMobileNav()" data-i18n="nav-radiology">Radiology Education</a>
-      <a href="#diagnostic-radiology" onclick="closeMobileNav()" data-i18n="nav-clinicians">Diagnostic Radiology</a>
+      <a href="#diagnostic-radiology" onclick="closeMobileNav()" data-i18n="nav-clinicians">For Clinicians & Facilities</a>
       <a href="#reviews" onclick="closeMobileNav()" data-i18n="nav-reviews">Reviews</a>
 
       <div class="lp-mobile-panel-actions">
@@ -121,57 +139,34 @@
         </div>
 
         <div class="lp-service-cards lp-section-anchor" id="services">
-          <button class="lp-service-card" type="button" onclick="startSvc('weight_loss')" aria-label="Start Medical Weight Loss">
+          <button class="lp-service-card lp-service-card--top" type="button" onclick="startSvc('weight_loss')" aria-label="Start Medical Weight Loss">
             <div class="lp-service-card-bg" aria-hidden="true">
               <img src="landing-page-demo/assets/hero-card-1.png" alt="" />
             </div>
             <div class="lp-service-card-header">
-              <h2 class="lp-service-card-title" data-i18n="hero-card-weight_loss-title"><span class="lp-service-title-accent">Medical<br />Weight Loss<br /></span><span>Start Your</span><br /><span>Journey Today</span></h2>
+              <h2 class="lp-service-card-title" data-i18n="hero-card-weight_loss-title"><span class="lp-service-title-accent">Medical<br />Weight Loss</span></h2>
               <span class="lp-service-card-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M5.63604 15.5355V5.63604M5.63604 5.63604H15.5355M5.63604 5.63604L18.364 18.364" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                 </svg>
               </span>
             </div>
-            <div class="lp-service-card-copy">
-              <p data-i18n="svc-weight_loss-desc">Comprehensive medical weight loss evaluation. Rx eligibility screening, personalized titration, dietary guidance. Medication cost separate.</p>
-              <div class="lp-service-card-price"><strong>$129</strong> / visit</div>
+            <div class="lp-service-card-bottom" data-i18n="hero-card-weight_loss-bottom">
+              <span>Start Your</span><br /><span>Journey Today</span><br /><span class="lp-service-card-bottom-note">and lose up to 20%</span>
             </div>
           </button>
 
-          <button class="lp-service-card" type="button" onclick="startSvc('membership_elite')" aria-label="Start All Access Elite">
+          <button class="lp-service-card lp-service-card--top" type="button" onclick="startSvc('weight_loss')" aria-label="Start Imaging-Guided Metabolic Wellness Optimization">
             <div class="lp-service-card-bg" aria-hidden="true">
-              <img src="landing-page-demo/assets/hero-card-2.png" alt="" />
+              <img src="landing-page-demo/assets/hero-card-1.png" alt="" />
             </div>
             <div class="lp-service-card-header">
-              <h2 class="lp-service-card-title" data-i18n="hero-card-membership_elite-title"><span>All Access -</span><br /><span class="lp-service-card-title">Elite</span></h2>
+              <h2 class="lp-service-card-title" data-i18n="hero-card-metabolic-title"><span class="lp-service-title-accent">Imaging-Guided</span><br /><span>Metabolic Wellness<br />Optimization</span></h2>
               <span class="lp-service-card-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M5.63604 15.5355V5.63604M5.63604 5.63604H15.5355M5.63604 5.63604L18.364 18.364" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                 </svg>
               </span>
-            </div>
-            <div class="lp-service-card-copy">
-              <p data-i18n="svc-membership_elite-desc">Everything: telehealth visits, specialty programs, priority radiology reviews, and priority scheduling.</p>
-              <div class="lp-service-card-price"><strong>$199</strong> / mo</div>
-            </div>
-          </button>
-
-          <button class="lp-service-card" type="button" onclick="startSvc('imaging_video')" aria-label="Start Imaging and Video Consult">
-            <div class="lp-service-card-bg" aria-hidden="true">
-              <img src="landing-page-demo/assets/hero-card-3.png" alt="" />
-            </div>
-            <div class="lp-service-card-header">
-              <h2 class="lp-service-card-title" data-i18n="hero-card-imaging_video-title"><span>Imaging + </span><br /><span class="lp-service-card-title">Video Consult</span></h2>
-              <span class="lp-service-card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M5.63604 15.5355V5.63604M5.63604 5.63604H15.5355M5.63604 5.63604L18.364 18.364" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                </svg>
-              </span>
-            </div>
-            <div class="lp-service-card-copy">
-              <p data-i18n="svc-imaging_video-desc">Full imaging review plus a 30 - 60 minute secure video consultation to discuss findings directly with a specialist.</p>
-              <div class="lp-service-card-price"><strong>$449</strong> / consult</div>
             </div>
           </button>
 
@@ -201,9 +196,23 @@
             </span>
           </button>
 
+            <button class="lp-service-mini-card lp-service-mini-card--hair" type="button" onclick="startSvc('imaging_video')" aria-label="Start hair regrowth support">
+            <span class="lp-service-mini-copy">
+              <span class="lp-service-mini-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--brown">Recharge</span> your health</span>
+              <span class="lp-service-mini-sub">Care options for thinning hair.</span>
+            </span>
+            <img class="lp-service-mini-art" src="landing-page-demo/assets/rechargehealth.png" alt="" aria-hidden="true" loading="lazy" decoding="async" />
+            <span class="lp-service-mini-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </span>
+          </button>
+
+
           <button class="lp-service-mini-card lp-service-mini-card--checkup" type="button" onclick="startSvc('imaging_video')" aria-label="Start a health check visit">
             <span class="lp-service-mini-copy">
-              <span class="lp-service-mini-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--brown">Recharge</span> your scans</span>
+              <span class="lp-service-mini-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--darkblue">Review</span> your scans</span>
               <span class="lp-service-mini-sub">A simple online review of your concerns.</span>
             </span>
             <img class="lp-service-mini-art" src="landing-page-demo/assets/scans.png" alt="" aria-hidden="true" loading="lazy" decoding="async" />
@@ -237,8 +246,8 @@
             <span class="lp-med-badges"><span>New</span><span>High dose option</span></span>
             <span class="lp-med-approval">FDA<br />approved</span>
             <img src="landing-page-demo/assets/card1.png" alt="" />
-            <span class="lp-med-name">Wegovy<sup>&reg;</sup> Pen</span>
-            <span class="lp-med-price">From $199/mo*</span>
+            <span class="lp-med-name">Wegovy<sup>&reg;</sup> Pill</span>
+            <span class="lp-med-price">From $149/mo*</span>
             <span class="lp-med-type">Semaglutide</span>
           </button>
 
@@ -246,38 +255,38 @@
             <span class="lp-med-badges"><span>New</span></span>
             <span class="lp-med-approval">FDA<br />approved</span>
             <img src="landing-page-demo/assets/card2.png" alt="" />
-            <span class="lp-med-name">Wegovy<sup>&reg;</sup> Pill</span>
-            <span class="lp-med-price">From $149/mo*</span>
-            <span class="lp-med-type">Semaglutide</span>
+            <span class="lp-med-name">Zepbound<sup>&reg;</sup> KwikPen</span>
+            <span class="lp-med-price">From $299/mo*</span>
+            <span class="lp-med-type">Tirzepatide</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
             <img src="landing-page-demo/assets/card3.png" alt="" />
-            <span class="lp-med-name">Ozempic<sup>&reg;</sup></span>
-            <span class="lp-med-price">From $199/mo*</span>
-            <span class="lp-med-type">Semaglutide</span>
+            <span class="lp-med-name">Foundayo<sup>&reg;</sup></span>
+            <span class="lp-med-price">From $149/mo*</span>
+            <span class="lp-med-type">Orforglipron</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
             <img src="landing-page-demo/assets/card4.png" alt="" />
-            <span class="lp-med-name">Mounjaro<sup>&reg;</sup></span>
-            <span class="lp-med-price">$1,899/mo*</span>
-            <span class="lp-med-type">Tirzepatide</span>
+            <span class="lp-med-name">Wegovy<sup>&reg;</sup> Pen</span>
+            <span class="lp-med-price">$199/mo*</span>
+            <span class="lp-med-type">Semaglutide</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
             <span class="lp-med-badges"><span>Popular</span></span>
             <img src="landing-page-demo/assets/card5.png" alt="" />
-            <span class="lp-med-name">Zepbound<sup>&reg;</sup></span>
-            <span class="lp-med-price">From $349/mo*</span>
+            <span class="lp-med-name">Zepbound<sup>&reg;</sup> Vial</span>
+            <span class="lp-med-price">From $299/mo*</span>
             <span class="lp-med-type">Tirzepatide</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
             <img src="landing-page-demo/assets/card6.png" alt="" />
-            <span class="lp-med-name">Generic Liraglutide</span>
-            <span class="lp-med-price">From $299/mo*</span>
-            <span class="lp-med-type">Daily injection</span>
+            <span class="lp-med-name">Ozempic</span>
+            <span class="lp-med-price">From $199/mo*</span>
+            <span class="lp-med-type">Semaglutide</span>
           </button>
         </div>
         <p class="lp-breakthrough-note">*Pricing and eligibility are placeholders for review. Medication access depends on provider evaluation and clinical appropriateness.</p>
@@ -295,7 +304,7 @@
         <article class="lp-dose-panel">
           <span class="lp-dose-badge">New high dose</span>
           <h3>Lose 25% or more<br />body weight*</h3>
-          <img src="landing-page-demo/assets/all-access.png" alt="" />
+          <img src="landing-page-demo/assets/card4.png" alt="" />
           <div class="lp-dose-gauge" aria-hidden="true">
             <span>7.2 mg</span>
           </div>
@@ -314,7 +323,7 @@
       </div>
 
       <div class="lp-edge-hero">
-        <h2>Get your edge back with<br />testosterone support</h2>
+        <h2>Reignite<br />Your sex life</h2>
         <div class="lp-edge-visual" aria-hidden="true">
           <img src="landing-page-demo/assets/your-edge.png" alt="" />
         </div>
@@ -327,8 +336,8 @@
       <div class="lp-edge-card-grid">
         <article class="lp-edge-card">
           <div class="lp-edge-card-copy">
-            <h3>Testosterone Rx</h3>
-            <p>to support your energy</p>
+            <h3>Discreet, doctor-led</h3>
+            <p>ED care</p>
           </div>
           <img src="landing-page-demo/assets/all-access.png" alt="" />
           <button class="lp-edge-card-btn" type="button" onclick="startSvc('imaging_video')">Learn more</button>
@@ -336,8 +345,8 @@
 
         <article class="lp-edge-card">
           <div class="lp-edge-card-copy">
-            <h3>At-home labs</h3>
-            <p>to check your T levels</p>
+            <h3>Clinically proven</h3>
+            <p>ED therapy</p>
           </div>
           <img src="landing-page-demo/assets/all-access.png" alt="" />
           <button class="lp-edge-card-btn" type="button" onclick="startSvc('imaging_video')">Start testing</button>
@@ -493,13 +502,13 @@
           <article class="lp-step-card">
             <span class="lp-step-number">1</span>
             <h3 data-i18n="step1-title">Intake</h3>
-            <p data-i18n="step1-desc">Complete a brief health questionnaire about your goals and medical history.</p>
+            <p data-i18n="step1-desc">Complete your health intake and secure payment via Stripe&trade;.</p>
           </article>
 
           <article class="lp-step-card">
             <span class="lp-step-number">2</span>
             <h3 data-i18n="step2-title">Provider Evaluation</h3>
-            <p data-i18n="step2-desc">A licensed U.S. provider reviews your case and conducts a clinical evaluation.</p>
+            <p data-i18n="step2-desc">Complete ID verification via Vouched&trade; and, when needed, a video consult via Doxy.me&trade;.</p>
           </article>
 
           <article class="lp-step-card">
@@ -511,13 +520,13 @@
           <article class="lp-step-card">
             <span class="lp-step-number">4</span>
             <h3 data-i18n="step4-title">Prescription</h3>
-            <p data-i18n="step4-desc">If eligible, your provider issues a prescription through our certified pharmacy partner.</p>
+            <p data-i18n="step4-desc">If eligible, your provider sends Rx orders through licensed/certified compounding pharmacies, or to almost any U.S. pharmacy of choice for brand-name and other prescriptions.</p>
           </article>
 
           <article class="lp-step-card">
             <span class="lp-step-number">5</span>
             <h3 data-i18n="step5-title">Follow-Up</h3>
-            <p data-i18n="step5-desc">Ongoing check-ins with your provider to monitor progress and adjust your plan.</p>
+            <p data-i18n="step5-desc">Close personal follow-up by PVT staff helps monitor progress, answer questions, and coordinate next steps.</p>
           </article>
         </div>
       </div>
@@ -651,67 +660,67 @@
 
         <div class="lp-providers-grid">
           <article class="lp-provider-card">
-            <img src="/assets/dr_osunsade_new.jpg" alt="Dr. Olalesi Osunsade" />
+            <div class="lp-provider-visual">
+              <img src="/assets/dr_osunsade_new.png" alt="Dr. Olalesi Osunsade" />
+              <div class="lp-provider-visual-copy">
+                <div class="lp-provider-role" data-i18n="provider-1-role">Medical Director</div>
+                <ul class="lp-provider-focus-list" aria-label="Provider specialties">
+                  <li data-i18n="provider-1-focus-1">Diagnostic Radiology</li>
+                  <li data-i18n="provider-1-focus-2">Interventional Radiology</li>
+                  <li data-i18n="provider-1-focus-3">Medical Oversight</li>
+                </ul>
+              </div>
+            </div>
             <div class="lp-provider-card-body">
               <div class="lp-provider-card-copy">
                 <div>
                   <h3>Dr. Olalesi Osunsade, MD, DABR</h3>
-                  <div class="lp-provider-role" data-i18n="provider-1-role">Medical Director</div>
                 </div>
                 <p data-i18n="provider-1-body">Board Certified - Diagnostic Radiology &amp; Interventional Radiology (ABMS), providing medical oversight and direct patient care at Patriotic Virtual Telehealth.<br />Licensed in: FL, MI, DC, CA, MD, OH, NY, WI</p>
-              </div>
-              <div class="lp-provider-tag">
-                <span class="lp-check-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"></circle>
-                    <path d="m8 12.5 2.6 2.6 5.4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-                  </svg>
-                </span>
-                <span data-i18n="provider-license-tag">Active Florida Medical License</span>
               </div>
             </div>
           </article>
 
           <article class="lp-provider-card">
-            <img src="/assets/alvaro_berrios.jpg" alt="Alvaro Berrios" />
+            <div class="lp-provider-visual">
+              <img src="/assets/alvaro_berrios.png" alt="Alvaro Berrios" />
+              <div class="lp-provider-visual-copy">
+                <div class="lp-provider-role" data-i18n="provider-2-role">Head of Wellness &amp; Functional Medicine</div>
+                <ul class="lp-provider-focus-list" aria-label="Provider specialties">
+                  <li data-i18n="provider-2-focus-1">Primary Care</li>
+                  <li data-i18n="provider-2-focus-2">Medical Weight Management</li>
+                  <li data-i18n="provider-2-focus-3">Family Health</li>
+                </ul>
+              </div>
+            </div>
             <div class="lp-provider-card-body">
               <div class="lp-provider-card-copy">
                 <div>
                   <h3>Alvaro Berrios, MS, FNP-BC</h3>
-                  <div class="lp-provider-role" data-i18n="provider-2-role">Nurse Practitioner</div>
                 </div>
                 <p data-i18n="provider-2-body">Board Certified - Family Nurse Practitioner (ANCC), dedicated to comprehensive primary care, evaluation, and medical weight management at Patriotic Virtual Telehealth.<br />Licensed in: FL, CA</p>
-              </div>
-              <div class="lp-provider-tag">
-                <span class="lp-check-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"></circle>
-                    <path d="m8 12.5 2.6 2.6 5.4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-                  </svg>
-                </span>
-                <span data-i18n="provider-license-tag">Active Florida Medical License</span>
               </div>
             </div>
           </article>
 
           <article class="lp-provider-card lp-provider-card--centered">
-            <img src="/assets/l_lue_winston.jpg" alt="La Donna L. Lue Winston" />
+            <div class="lp-provider-visual">
+              <img src="/assets/l_lue_winston.png" alt="La Donna L. Lue Winston" />
+              <div class="lp-provider-visual-copy">
+                <div class="lp-provider-role" data-i18n="provider-3-role">Nurse Practitioner</div>
+                <ul class="lp-provider-focus-list" aria-label="Provider specialties">
+                  <li data-i18n="provider-3-focus-1">Acute Care</li>
+                  <li data-i18n="provider-3-focus-2">Stroke Certified</li>
+                  <li data-i18n="provider-3-focus-3">Clinical Guidance</li>
+                </ul>
+              </div>
+            </div>
             <div class="lp-provider-card-body">
               <div class="lp-provider-card-copy">
                 <div>
                   <h3>La Donna L. Lue Winston, MSN, APRN, SCRN</h3>
-                  <div class="lp-provider-role" data-i18n="provider-3-role">Nurse Practitioner</div>
                 </div>
-                <p data-i18n="provider-3-body">Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in nursing. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and delivering expert clinical guidance in critical care and stroke programs.</p>
-              </div>
-              <div class="lp-provider-tag">
-                <span class="lp-check-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"></circle>
-                    <path d="m8 12.5 2.6 2.6 5.4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-                  </svg>
-                </span>
-                <span data-i18n="provider-license-tag">Active Florida Medical License</span>
+                <p data-i18n="provider-3-body">Board-Certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse, providing evidence-based clinical care and patient guidance at Patriotic Virtual Telehealth. 15+ years experience.</p>
               </div>
             </div>
           </article>
@@ -766,7 +775,21 @@
               <img src="assets/logo.png" alt="Patriotic Virtual Telehealth" class="brand-logo-img brand-logo-light" />
               <img src="assets/logomarkdark.png" alt="Patriotic Virtual Telehealth" class="brand-logo-img brand-logo-dark" />
             </a>
-            <p data-i18n="footer-brand">Board-certified telehealth and radiology services. Currently accepting patients in Florida. No controlled substances are prescribed through this platform.</p>
+            <p data-i18n="footer-brand">Telehealth and radiology education consultation</p>
+            <div class="lp-footer-seal-row">
+              <a href="https://www.legitscript.com/websites/?checker_keywords=patriotictelehealth.com" target="_blank" rel="noopener noreferrer" title="Verify LegitScript Approval for www.patriotictelehealth.com">
+                <img src="https://static.legitscript.com/seals/49631054.png" alt="Verify Approval for www.patriotictelehealth.com" width="73" height="79" />
+              </a>
+              <div class="lp-footer-powered">
+                <div class="lp-footer-powered-copy">
+                  <span data-i18n="hero-powered-label">Powered by:</span>
+                  <a href="https://radiantlogiq.com/" target="_blank" rel="noopener noreferrer">
+                    <strong data-i18n="hero-powered">RadiantLogiq</strong>
+                  </a>
+                  <img class="lp-footer-powered-logo" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="lp-footer-column">
@@ -800,22 +823,23 @@
           </div>
         </div>
 
-        <div class="lp-footer-powered">
-          <div class="lp-footer-powered-main">
-            <div class="lp-footer-powered-copy">
-              <span data-i18n="hero-powered-label">Powered by:</span>
-              <a href="https://radiantlogiq.com/" target="_blank" rel="noopener noreferrer">
-                <strong data-i18n="hero-powered">RadiantLogiq</strong>
-              </a>
-            </div>
-            <img class="lp-footer-powered-logo" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" />
-          </div>
-          <p>Member, NVIDIA Inception Program</p>
-        </div>
-
         <div class="lp-footer-bottom">
           <span data-i18n="footer-copy">© 2026 Patriotic Virtual Telehealth. All rights reserved.</span>
           <span data-i18n="footer-badges">HIPAA Compliant · Florida-Licensed Providers · Board-Certified Review · Encrypted</span>
+          <div class="lp-footer-socials" aria-label="Social media">
+            <button class="lp-footer-social-btn" type="button" onclick="toast('Facebook page coming soon!')" aria-label="Facebook">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-facebook"></use></svg>
+            </button>
+            <button class="lp-footer-social-btn" type="button" onclick="toast('X page coming soon!')" aria-label="X">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-x"></use></svg>
+            </button>
+            <button class="lp-footer-social-btn" type="button" onclick="toast('Instagram page coming soon!')" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-instagram"></use></svg>
+            </button>
+            <button class="lp-footer-social-btn" type="button" onclick="toast('TikTok page coming soon!')" aria-label="TikTok">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
+            </button>
+          </div>
         </div>
       </div>
     </footer>
@@ -1148,14 +1172,14 @@
             <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">1</div>
             <div>
               <strong class="theme-text" style="font-size:1.15rem;">Intake</strong><br>
-              <span class="theme-subtext" style="font-size:0.95rem;">Complete a brief health questionnaire about your goals and medical history.</span>
+              <span class="theme-subtext" style="font-size:0.95rem;">Complete your health intake and secure payment via Stripe&trade;.</span>
             </div>
           </div>
           <div style="display:flex;gap:1.5rem;align-items:flex-start;">
             <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">2</div>
             <div>
               <strong class="theme-text" style="font-size:1.15rem;">Provider Evaluation</strong><br>
-              <span class="theme-subtext" style="font-size:0.95rem;">A licensed U.S. provider reviews your case and conducts a clinical evaluation.</span>
+              <span class="theme-subtext" style="font-size:0.95rem;">Complete ID verification via Vouched&trade; and, when needed, a video consult via Doxy.me&trade;.</span>
             </div>
           </div>
           <div style="display:flex;gap:1.5rem;align-items:flex-start;">
@@ -1169,14 +1193,14 @@
             <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">4</div>
             <div>
               <strong class="theme-text" style="font-size:1.15rem;">Prescription</strong><br>
-              <span class="theme-subtext" style="font-size:0.95rem;">If eligible, your provider issues a prescription through our certified pharmacy partner.</span>
+              <span class="theme-subtext" style="font-size:0.95rem;">If eligible, your provider sends Rx orders through licensed/certified compounding pharmacies, or to almost any U.S. pharmacy of choice for brand-name and other prescriptions.</span>
             </div>
           </div>
           <div style="display:flex;gap:1.5rem;align-items:flex-start;">
             <div style="width:2.5rem;height:2.5rem;background:#3B82F6;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:1.1rem;">5</div>
             <div>
               <strong class="theme-text" style="font-size:1.15rem;">Follow-Up</strong><br>
-              <span class="theme-subtext" style="font-size:0.95rem;">Ongoing check-ins with your provider to monitor progress and adjust your plan.</span>
+              <span class="theme-subtext" style="font-size:0.95rem;">Close personal follow-up by PVT staff helps monitor progress, answer questions, and coordinate next steps.</span>
             </div>
           </div>
         </div>
@@ -1375,7 +1399,7 @@
         <div class="provider-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 40px;">
           <div class="provider-card theme-panel" style="padding: 32px; border: 1px solid var(--border-soft); border-radius: 12px;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-              <img src="assets/dr_osunsade_new.jpg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="Dr. Osunsade" />
+              <img src="assets/dr_osunsade_new.png" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="Dr. Osunsade" />
               <div>
                 <h3 style="margin: 0; font-size: 18px; color: var(--txt-main);">Dr. Olalesi Osunsade, MD, DABR</h3>
                 <div style="font-size: 14px; color: var(--g500);">Medical Director</div>
@@ -1388,10 +1412,10 @@
           </div>
           <div class="provider-card theme-panel" style="padding: 32px; border: 1px solid var(--border-soft); border-radius: 12px;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-              <img src="assets/alvaro_berrios.jpg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="Alvaro Berrios" />
+              <img src="assets/alvaro_berrios.png" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="Alvaro Berrios" />
               <div>
                 <h3 style="margin: 0; font-size: 18px; color: var(--txt-main);">Alvaro Berrios, MS, FNP-BC</h3>
-                <div style="font-size: 14px; color: var(--g500);">Nurse Practitioner</div>
+                <div style="font-size: 14px; color: var(--g500);">Head of Wellness &amp; Functional Medicine</div>
               </div>
             </div>
             <p style="font-size: 14px; color: var(--g200); line-height: 1.6;">Board Certified — Family Nurse Practitioner (ANCC®), dedicated to comprehensive primary care, evaluation, and medical weight management at Patriotic Virtual Telehealth.<br>Licensed in: FL, CA</p>
@@ -1401,7 +1425,7 @@
           </div>
           <div class="provider-card theme-panel provider-card--centered" style="padding: 32px; border: 1px solid var(--border-soft); border-radius: 12px;">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-              <img src="assets/l_lue_winston.jpg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="La Donna L. Lue Winston" />
+              <img src="assets/l_lue_winston.png" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-soft); box-sizing: border-box;" alt="La Donna L. Lue Winston" />
               <div>
                 <h3 style="margin: 0; font-size: 18px; color: var(--txt-main);">La Donna L. Lue Winston, MSN, APRN, SCRN</h3>
                 <div style="font-size: 14px; color: var(--g500);">Nurse Practitioner</div>
@@ -1469,6 +1493,16 @@
             </a>
             <p class="footer-brand-text" data-i18n="footer-brand">Board-certified telehealth and radiology services.
               Protocol-driven care, delivered to your door. Currently serving Florida.</p>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <a href="https://www.legitscript.com/websites/?checker_keywords=patriotictelehealth.com" target="_blank" rel="noopener noreferrer" title="Verify LegitScript Approval for www.patriotictelehealth.com">
+                <img src="https://static.legitscript.com/seals/49631054.png" alt="Verify Approval for www.patriotictelehealth.com" width="73" height="79" />
+              </a>
+              <div style="display:grid;gap:2px;justify-items:start;">
+                <p style="font-size:0.8rem;color:#9ca3af;font-weight:600;margin:0;">Powered by:</p>
+                <p style="font-size:0.85rem;color:#9ca3af;font-weight:700;margin:0;">RadiantLogiq</p>
+                <img src="assets/nvidia-inception.jpg" alt="NVIDIA Inception Program" style="height:24px;width:auto;border-radius:4px;" />
+              </div>
+            </div>
           </div>
 
           <div class="footer-col">
@@ -1498,11 +1532,19 @@
           Not all patients qualify. Results may vary.
         </p>
         <div style="display:flex;flex-direction:column;align-items:center;margin-top:2rem;gap:12px;border-top:1px solid #374151;padding-top:2rem;">
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;">
-            <p style="font-size:0.85rem;color:#9ca3af;font-weight:600;margin:0;">Powered by RadiantLogiq</p>
-            <span style="color:#4b5563;">|</span>
-            <p style="font-size:0.85rem;color:#9ca3af;margin:0;">Member, NVIDIA Inception Program</p>
-            <img src="assets/nvidia-inception.jpg" alt="NVIDIA Inception Program" style="height:24px;width:auto;border-radius:4px;margin-left:8px;" />
+          <div class="footer-socials" aria-label="Social media">
+            <button class="footer-social-btn" type="button" onclick="toast('Facebook page coming soon!')" aria-label="Facebook">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-facebook"></use></svg>
+            </button>
+            <button class="footer-social-btn" type="button" onclick="toast('X page coming soon!')" aria-label="X">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-x"></use></svg>
+            </button>
+            <button class="footer-social-btn" type="button" onclick="toast('Instagram page coming soon!')" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-instagram"></use></svg>
+            </button>
+            <button class="footer-social-btn" type="button" onclick="toast('TikTok page coming soon!')" aria-label="TikTok">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
+            </button>
           </div>
           <p style="font-size:0.75rem;color:#6b7280;margin:0;max-width:600px;text-align:center;">© 2025 NVIDIA, the NVIDIA logo, and NVIDIA Inception Program are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries.</p>
         </div>
@@ -2236,7 +2278,7 @@
       <!-- PROFILE: DR. OSUNSADE -->
       <div id="aboutProfile1" style="display:flex;gap:24px;flex-direction:column;align-items:center;text-align:center;">
         <div style="width:200px;height:200px;border-radius:50%;overflow:hidden;border:3px solid var(--blue);">
-          <img src="assets/dr_osunsade_new.jpg" style="width:100%;height:100%;object-fit:cover" alt="Dr. Osunsade" />
+          <img src="assets/dr_osunsade_new.png" style="width:100%;height:100%;object-fit:cover" alt="Dr. Osunsade" />
         </div>
         <div>
           <h2 style="margin-bottom:8px">Dr. Olalesi Osunsade, MD, DABR</h2>
@@ -2302,7 +2344,7 @@
       <!-- PROFILE: ALVARO BERRIOS -->
       <div id="aboutProfile2" style="display:none;gap:24px;flex-direction:column;align-items:center;text-align:center;">
         <div style="width:200px;height:200px;border-radius:50%;overflow:hidden;border:3px solid var(--blue);">
-          <img src="assets/alvaro_berrios.jpg" style="width:100%;height:100%;object-fit:cover" alt="Alvaro Berrios" />
+          <img src="assets/alvaro_berrios.png" style="width:100%;height:100%;object-fit:cover" alt="Alvaro Berrios" />
         </div>
         <div>
           <h2 style="margin-bottom:8px">Alvaro Berrios, MS, FNP-BC</h2>
@@ -2367,7 +2409,7 @@
       <!-- PROFILE: L. LUE WINSTON -->
       <div id="aboutProfile3" style="display:none;gap:24px;flex-direction:column;align-items:center;text-align:center;">
         <div style="width:200px;height:200px;border-radius:50%;overflow:hidden;border:3px solid var(--blue);">
-          <img src="assets/l_lue_winston.jpg" style="width:100%;height:100%;object-fit:cover" alt="L. Lue Winston" />
+          <img src="assets/l_lue_winston.png" style="width:100%;height:100%;object-fit:cover" alt="L. Lue Winston" />
         </div>
         <div>
           <h2 style="margin-bottom:8px">La Donna L. Lue Winston, MSN, APRN, SCRN</h2>

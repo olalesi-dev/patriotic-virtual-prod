@@ -26,7 +26,7 @@
         'nav-services': 'Services',
         'nav-how': 'How It Works',
         'nav-radiology': 'Radiology Education',
-        'nav-clinicians': 'Diagnostic Radiology',
+        'nav-clinicians': 'For Clinicians & Facilities',
         'nav-reviews': 'Reviews',
         'nav-login': 'Log In',
         'nav-get-started': 'Get Started',
@@ -60,13 +60,15 @@
         'how-title': 'Care in four<br />simple steps.',
         'how-sub': 'From first click to treatment at your door — protocol-driven at every step.',
         'step1-title': 'Pick Your Service',
-        'step1-desc': 'Choose from clinical visits, AI tools, and membership plans — general telehealth, weight loss, sexual health, hormone therapy, AI imaging, and much more.',
+        'step1-desc': 'Complete your health intake and secure payment via Stripe&trade;.',
         'step2-title': 'Safety Screening',
-        'step2-desc': 'Complete a secure intake. Our system automatically screens for contraindications to ensure safe, protocol-based treatment.',
+        'step2-desc': 'Complete ID verification via Vouched&trade; and, when needed, a video consult via Doxy.me&trade;.',
         'step3-title': 'Provider Reviews',
         'step3-desc': 'A board-certified physician or radiologist reviews your case against clinical protocols and creates a personalized plan.',
         'step4-title': 'Get Treated',
-        'step4-desc': 'Prescriptions ship to your door. Radiology reports delivered digitally. Video consults from anywhere. Ongoing support included.',
+        'step4-desc': 'If eligible, your provider sends Rx orders through licensed/certified compounding pharmacies, or to almost any U.S. pharmacy of choice for brand-name and other prescriptions.',
+        'step5-title': 'Follow-Up',
+        'step5-desc': 'Close personal follow-up by PVT staff helps monitor progress, answer questions, and coordinate next steps.',
         // Reviews
         'reviews-eyebrow': 'Reviews',
         'reviews-title': 'Real results,<br />real people.',
@@ -95,7 +97,7 @@
         'nav-services': 'Servicios',
         'nav-how': 'Cómo Funciona',
         'nav-radiology': 'Educación en Radiología',
-        'nav-clinicians': 'Radiología Diagnóstica',
+        'nav-clinicians': 'Para Clinicos y Centros',
         'nav-reviews': 'Opiniones',
         'nav-login': 'Iniciar Sesión',
         'nav-get-started': 'Comenzar',
@@ -129,13 +131,15 @@
         'how-title': 'Atención en cuatro<br />pasos sencillos.',
         'how-sub': 'Desde el primer clic hasta el tratamiento en su puerta — guiado por protocolos en cada paso.',
         'step1-title': 'Elige Tu Servicio',
-        'step1-desc': 'Elige entre consultas clínicas, herramientas de IA y planes de membresía — telesalud general, pérdida de peso, salud sexual, terapia hormonal, imágenes con IA y mucho más.',
+        'step1-desc': 'Complete su registro de salud y pago seguro mediante Stripe&trade;.',
         'step2-title': 'Evaluación de Seguridad',
-        'step2-desc': 'Completa un registro seguro. Nuestro sistema detecta automáticamente contraindicaciones para garantizar un tratamiento seguro basado en protocolos.',
+        'step2-desc': 'Complete verificación de identidad mediante Vouched&trade; y, cuando sea necesario, una consulta por video vía Doxy.me&trade;.',
         'step3-title': 'Revisión del Proveedor',
         'step3-desc': 'Un médico o radiólogo certificado revisa su caso según protocolos clínicos y crea un plan personalizado.',
         'step4-title': 'Recibe Atención',
-        'step4-desc': 'Las recetas llegan a su puerta. Informes de radiología entregados digitalmente. Consultas por video desde cualquier lugar. Soporte continuo incluido.',
+        'step4-desc': 'Si es elegible, su proveedor envía recetas a farmacias de preparación magistral con licencia/certificación, o a casi cualquier farmacia de EE. UU. de su elección para medicamentos de marca y otras recetas.',
+        'step5-title': 'Seguimiento',
+        'step5-desc': 'Seguimiento personal cercano por parte del equipo de PVT para monitorear progreso, responder preguntas y coordinar próximos pasos.',
         // Reviews
         'reviews-eyebrow': 'Opiniones',
         'reviews-title': 'Resultados reales,<br />personas reales.',
@@ -208,9 +212,12 @@
     function toggleLanguage() {
       currentLang = currentLang === 'en' ? 'es' : 'en';
       const btn = document.getElementById('langBtn');
-      btn.textContent = currentLang === 'en' ? 'ES' : 'EN';
-      btn.title = currentLang === 'en' ? 'Switch to Spanish' : 'Switch to English';
-      btn.style.opacity = currentLang === 'es' ? '1' : '0.7';
+      if (btn) {
+        btn.classList.toggle('is-es', currentLang === 'es');
+        btn.title = currentLang === 'en' ? 'Switch to Spanish' : 'Switch to English';
+        btn.setAttribute('aria-pressed', currentLang === 'es' ? 'true' : 'false');
+        btn.setAttribute('aria-label', currentLang === 'en' ? 'Language: English' : 'Language: Espanol');
+      }
       applyLanguage(currentLang);
       renderSvc('popular'); // re-render service cards in new language
     }

@@ -237,9 +237,8 @@
       }
     })();
 
-    (function initBreakthroughCarouselDrag() {
-      function setupCarouselDrag() {
-        const carousel = document.querySelector("#weight-breakthrough .lp-breakthrough-carousel");
+    (function initDragScrollCarousels() {
+      function setupDragScroll(carousel) {
         if (!carousel || carousel.dataset.dragScrollInit === "true") return;
 
         carousel.dataset.dragScrollInit = "true";
@@ -259,7 +258,7 @@
           carousel.setPointerCapture?.(event.pointerId);
         });
 
-        carousel.addEventListener("pointermove", function (event) {
+        function handlePointerMove(event) {
           if (!isPointerDown) return;
           const deltaX = event.clientX - startX;
           if (Math.abs(deltaX) > 4) {
@@ -267,7 +266,10 @@
             carousel.scrollLeft = startScrollLeft - deltaX;
             event.preventDefault();
           }
-        });
+        }
+
+        carousel.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointermove", handlePointerMove);
 
         function endDrag(event) {
           if (!isPointerDown) return;
@@ -284,6 +286,8 @@
 
         carousel.addEventListener("pointerup", endDrag);
         carousel.addEventListener("pointercancel", endDrag);
+        window.addEventListener("pointerup", endDrag);
+        window.addEventListener("pointercancel", endDrag);
         carousel.addEventListener("lostpointercapture", function () {
           isPointerDown = false;
           carousel.classList.remove("is-dragging");
@@ -299,6 +303,12 @@
           },
           true,
         );
+      }
+
+      function setupCarouselDrag() {
+        document
+          .querySelectorAll("#weight-breakthrough .lp-breakthrough-carousel, #landingPage .lp-providers-grid")
+          .forEach(setupDragScroll);
       }
 
       if (document.readyState === "loading") {

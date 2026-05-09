@@ -11,7 +11,7 @@ const firebaseConfig = {
 
 function extendLandingI18n() {
   Object.assign(i18n.en, {
-    "nav-clinicians": "Diagnostic Radiology",
+    "nav-clinicians": "For Clinicians & Facilities",
     "nav-get-started": "Start My Free Intake",
     "nav-provider-portal": "Provider Portal",
     "nav-emr-portal": "EMR Portal ↗",
@@ -50,19 +50,19 @@ function extendLandingI18n() {
       "From first click to physician review, every step is secure and protocol-driven.",
     "step1-title": "Intake",
     "step1-desc":
-      "Complete a brief health questionnaire about your goals and medical history.",
+      "Complete your health intake and secure payment via Stripe&trade;.",
     "step2-title": "Provider Evaluation",
     "step2-desc":
-      "A licensed U.S. provider reviews your case and conducts a clinical evaluation.",
+      "Complete ID verification via Vouched&trade; and, when needed, a video consult via Doxy.me&trade;.",
     "step3-title": "Eligibility",
     "step3-desc":
       "Your provider determines whether treatment is clinically appropriate for you.",
     "step4-title": "Prescription",
     "step4-desc":
-      "If eligible, your provider issues a prescription through our certified pharmacy partner.",
+      "If eligible, your provider sends Rx orders through licensed/certified compounding pharmacies, or to almost any U.S. pharmacy of choice for brand-name and other prescriptions.",
     "step5-title": "Follow-Up",
     "step5-desc":
-      "Ongoing check-ins with your provider to monitor progress and adjust your plan.",
+      "Close personal follow-up by PVT staff helps monitor progress, answer questions, and coordinate next steps.",
     "radiology-eyebrow": "Radiology Education",
     "radiology-title":
       'Expert <span class="accent">imaging</span><br />insights.<br />Clear understanding.',
@@ -97,12 +97,21 @@ function extendLandingI18n() {
     "providers-sub":
       "Get to know the specific medical professionals evaluating your health.",
     "provider-1-role": "Medical Director",
+    "provider-1-focus-1": "Diagnostic Radiology",
+    "provider-1-focus-2": "Interventional Radiology",
+    "provider-1-focus-3": "Medical Oversight",
     "provider-1-body":
       "Board Certified - Diagnostic Radiology &amp; Interventional Radiology (ABMS), providing medical oversight and direct patient care at Patriotic Virtual Telehealth.<br />Licensed in: FL, MI, DC, CA, MD, OH, NY, WI",
-    "provider-2-role": "Nurse Practitioner",
+    "provider-2-role": "Head of Wellness &amp; Functional Medicine",
+    "provider-2-focus-1": "Primary Care",
+    "provider-2-focus-2": "Medical Weight Management",
+    "provider-2-focus-3": "Family Health",
     "provider-2-body":
       "Board Certified - Family Nurse Practitioner (ANCC), dedicated to comprehensive primary care, evaluation, and medical weight management at Patriotic Virtual Telehealth.<br />Licensed in: FL, CA",
     "provider-3-role": "Nurse Practitioner",
+    "provider-3-focus-1": "Acute Care",
+    "provider-3-focus-2": "Stroke Certified",
+    "provider-3-focus-3": "Clinical Guidance",
     "provider-3-body":
       "Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.",
     "provider-license-tag": "Active Florida Medical License",
@@ -132,7 +141,11 @@ function extendLandingI18n() {
     "footer-badges":
       "HIPAA Compliant &middot; Florida-Licensed Providers &middot; Board-Certified Review &middot; Encrypted",
     "hero-card-weight_loss-title":
-      '<span class="lp-service-title-accent">Medical<br />Weight Loss<br /></span><span>Start Your</span><br /><span>Journey Today</span>',
+      '<span class="lp-service-title-accent">Medical<br />Weight Loss</span>',
+    "hero-card-weight_loss-bottom":
+      '<span>Start Your</span><br /><span>Journey Today</span><br /><span class="lp-service-card-bottom-note">and lose up to 20%</span>',
+    "hero-card-metabolic-title":
+      '<span class="lp-service-title-accent">Imaging-Guided</span><br /><span>Metabolic Wellness<br />Optimization</span>',
     "hero-card-membership_elite-title":
       '<span>All Access -</span><br /><span class="lp-service-title-accent">Elite</span>',
     "hero-card-imaging_video-title":
@@ -156,7 +169,7 @@ function extendLandingI18n() {
   });
 
   Object.assign(i18n.es, {
-    "nav-clinicians": "Radiologia Diagnostica",
+    "nav-clinicians": "Para Clinicos y Centros",
     "nav-get-started": "Comenzar Mi Evaluacion Gratis",
     "nav-provider-portal": "Portal del Proveedor",
     "nav-emr-portal": "Portal EMR ↗",
@@ -195,19 +208,19 @@ function extendLandingI18n() {
       "Desde el primer clic hasta la revision medica, cada paso es seguro y guiado por protocolos.",
     "step1-title": "Registro",
     "step1-desc":
-      "Complete un breve cuestionario de salud sobre sus metas e historial medico.",
+      "Complete su registro de salud y pago seguro mediante Stripe&trade;.",
     "step2-title": "Evaluacion del Proveedor",
     "step2-desc":
-      "Un proveedor con licencia en EE. UU. revisa su caso y realiza una evaluacion clinica.",
+      "Complete verificacion de identidad mediante Vouched&trade; y, cuando sea necesario, una consulta por video via Doxy.me&trade;.",
     "step3-title": "Elegibilidad",
     "step3-desc":
       "Su proveedor determina si el tratamiento es clinicamente apropiado para usted.",
     "step4-title": "Receta",
     "step4-desc":
-      "Si es elegible, su proveedor emite una receta a traves de nuestra farmacia certificada.",
+      "Si es elegible, su proveedor envia recetas a farmacias de preparacion magistral con licencia/certificacion, o a casi cualquier farmacia de EE. UU. de su eleccion para medicamentos de marca y otras recetas.",
     "step5-title": "Seguimiento",
     "step5-desc":
-      "Controles continuos con su proveedor para monitorear el progreso y ajustar su plan.",
+      "Seguimiento personal cercano por parte del equipo de PVT para monitorear progreso, responder preguntas y coordinar proximos pasos.",
     "radiology-eyebrow": "Radiologia Educativa",
     "radiology-title":
       'Perspectivas <span class="accent">de imagenes</span><br />expertas.<br />Mayor claridad.',
@@ -242,12 +255,21 @@ function extendLandingI18n() {
     "providers-sub":
       "Conozca a los profesionales medicos que evaluan su salud.",
     "provider-1-role": "Director Medico",
+    "provider-1-focus-1": "Radiologia Diagnostica",
+    "provider-1-focus-2": "Radiologia Intervencionista",
+    "provider-1-focus-3": "Supervision Medica",
     "provider-1-body":
       "Certificado en Radiologia Diagnostica e Intervencionista (ABMS), brinda supervision medica y atencion directa al paciente en Patriotic Virtual Telehealth.<br />Licencias en: FL, MI, DC, CA, MD, OH, NY, WI",
-    "provider-2-role": "Enfermero Practicante",
+    "provider-2-role": "Director de Bienestar y Medicina Funcional",
+    "provider-2-focus-1": "Atencion Primaria",
+    "provider-2-focus-2": "Manejo Medico del Peso",
+    "provider-2-focus-3": "Salud Familiar",
     "provider-2-body":
       "Certificado como Family Nurse Practitioner (ANCC), dedicado a la atencion primaria integral, evaluacion y manejo medico del peso en Patriotic Virtual Telehealth.<br />Licencias en: FL, CA",
     "provider-3-role": "Enfermera Practicante",
+    "provider-3-focus-1": "Cuidados Agudos",
+    "provider-3-focus-2": "Certificada en Stroke",
+    "provider-3-focus-3": "Orientacion Clinica",
     "provider-3-body":
       "Enfermera Practicante de Cuidados Agudos en Adultos y Gerontologia certificada (AGACNP-BC) y enfermera certificada en stroke, con mas de 15 anos de experiencia en enfermeria. La Donna se dedica a la practica basada en evidencia, a mejorar los resultados de los pacientes mediante planes de atencion integrales y a brindar orientacion clinica experta en cuidados criticos y programas de stroke.",
     "provider-license-tag": "Licencia Medica Activa en Florida",
@@ -277,7 +299,11 @@ function extendLandingI18n() {
     "footer-badges":
       "Compatible con HIPAA &middot; Proveedores con Licencia en Florida &middot; Revision Certificada &middot; Encriptado",
     "hero-card-weight_loss-title":
-      '<span class="lp-service-title-accent">Perdida<br />de Peso<br />Medica</span><br /><span>Empiece Hoy</span>',
+      '<span class="lp-service-title-accent">Perdida<br />de Peso<br />Medica</span>',
+    "hero-card-weight_loss-bottom":
+      '<span>Empiece</span><br /><span>Hoy</span><br /><span class="lp-service-card-bottom-note">y pierda hasta un 20%</span>',
+    "hero-card-metabolic-title":
+      '<span class="lp-service-title-accent">Guiada por Imagenes</span><br /><span>Optimizacion<br />del Bienestar Metabolico</span>',
     "hero-card-membership_elite-title":
       '<span>Acceso Total -</span><br /><span class="lp-service-title-accent">Elite</span>',
     "hero-card-imaging_video-title":
