@@ -102,10 +102,15 @@
         // Google Ads Conversion tracking for purchase
         try {
           if (typeof gtag === 'function') {
+            // First conversion event (purchase)
             gtag('event', 'purchase', {
               transaction_id: consultationId
             });
-            console.log("✅ Google Ads purchase conversion event triggered.");
+            // Second conversion event (from new email instructions)
+            gtag('event', 'conversion', {
+              'send_to': 'AW-18019342434/A_dTCKjiv6kcEOKwpZBD'
+            });
+            console.log("✅ Google Ads conversion events triggered.");
           }
         } catch (e) {
           console.error("Google Ads tracking error:", e);
