@@ -146,6 +146,7 @@
       <div class="lp-container lp-hero-content">
         <div class="lp-hero-copy">
           <h1 class="lp-hero-title" data-i18n="hero-h1">Welcome home to <span class="accent">better healthcare</span> </h1>
+          <p class="lp-hero-motto">Bienvenidos. Estamos aquí para servir a nuestra comunidad latina, día y noche.</p>
         </div>
 
         <div class="lp-service-cards lp-section-anchor" id="services">
@@ -182,8 +183,8 @@
 
           <button class="lp-service-mini-card lp-service-mini-card--intimacy" type="button" onclick="startSvc('imaging_video')" aria-label="Start sexual wellness support">
             <span class="lp-service-mini-copy">
-              <span class="lp-service-mini-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--red">Reignite</span> your sex life</span>
-              <span class="lp-service-mini-sub">Discreet guidance for intimacy concerns.</span>
+              <span class="lp-service-mini-title" data-i18n="mini-intimacy-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--red">Reignite</span> your sex life</span>
+              <span class="lp-service-mini-sub" data-i18n="mini-intimacy-sub">Discreet guidance for intimacy concerns.</span>
             </span>
             <img class="lp-service-mini-art" src="landing-page-demo/assets/reignite-sex.png" alt="" aria-hidden="true" loading="lazy" decoding="async" />
             <span class="lp-service-mini-arrow" aria-hidden="true">
@@ -195,8 +196,8 @@
 
           <button class="lp-service-mini-card lp-service-mini-card--hair" type="button" onclick="startSvc('imaging_video')" aria-label="Start hair regrowth support">
             <span class="lp-service-mini-copy">
-              <span class="lp-service-mini-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--blue">Restore</span> your hair</span>
-              <span class="lp-service-mini-sub">Care options for thinning hair.</span>
+              <span class="lp-service-mini-title" data-i18n="mini-hair-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--blue">Restore</span> your hair</span>
+              <span class="lp-service-mini-sub" data-i18n="mini-hair-sub">Care options for thinning hair.</span>
             </span>
             <img class="lp-service-mini-art" src="landing-page-demo/assets/hairfall.png" alt="" aria-hidden="true" loading="lazy" decoding="async" />
             <span class="lp-service-mini-arrow" aria-hidden="true">
@@ -208,8 +209,8 @@
 
             <button class="lp-service-mini-card lp-service-mini-card--hair" type="button" onclick="startSvc('imaging_video')" aria-label="Start hair regrowth support">
             <span class="lp-service-mini-copy">
-              <span class="lp-service-mini-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--brown">Recharge</span> your health</span>
-              <span class="lp-service-mini-sub">Care options for thinning hair.</span>
+              <span class="lp-service-mini-title" data-i18n="mini-health-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--brown">Recharge</span> your health</span>
+              <span class="lp-service-mini-sub" data-i18n="mini-health-sub">Support for energy, hormones, and whole-body wellness.</span>
             </span>
             <img class="lp-service-mini-art" src="landing-page-demo/assets/rechargehealth.png" alt="" aria-hidden="true" loading="lazy" decoding="async" />
             <span class="lp-service-mini-arrow" aria-hidden="true">
@@ -222,8 +223,8 @@
 
           <button class="lp-service-mini-card lp-service-mini-card--checkup" type="button" onclick="startSvc('imaging_video')" aria-label="Start a health check visit">
             <span class="lp-service-mini-copy">
-              <span class="lp-service-mini-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--darkblue">Review</span> your scans</span>
-              <span class="lp-service-mini-sub">A simple online review of your concerns.</span>
+              <span class="lp-service-mini-title" data-i18n="mini-scans-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--darkblue">Review</span> your scans</span>
+              <span class="lp-service-mini-sub" data-i18n="mini-scans-sub">A simple online review of your concerns.</span>
             </span>
             <img class="lp-service-mini-art" src="landing-page-demo/assets/scans.png" alt="" aria-hidden="true" loading="lazy" decoding="async" />
             <span class="lp-service-mini-arrow" aria-hidden="true">
@@ -232,6 +233,33 @@
               </svg>
             </span>
           </button>
+
+          <article class="lp-service-newsletter-card" aria-label="Join our newsletter">
+            <span class="lp-newsletter-badge" data-i18n="newsletter-badge">Exclusive</span>
+            <div class="lp-newsletter-head">
+              <span class="lp-newsletter-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4.75 7.75h14.5v10.5H4.75V7.75Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+                  <path d="m5.25 8.25 6.75 5 6.75-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="lp-newsletter-title" data-i18n="newsletter-title">Join Our Health Newsletter</h2>
+                <p class="lp-newsletter-desc" data-i18n="newsletter-desc">Subscriber discounts, treatment alerts, and evidence-based updates delivered monthly.</p>
+              </div>
+            </div>
+            <form class="lp-newsletter-form" onsubmit="event.preventDefault();">
+              <div class="lp-newsletter-input-row">
+                <input type="email" name="newsletterEmail" autocomplete="email" placeholder="Email address" aria-label="Email address" data-i18n-placeholder="newsletter-placeholder" />
+                <button type="button" data-i18n="newsletter-submit">Subscribe</button>
+              </div>
+              <label class="lp-newsletter-consent">
+                <input type="checkbox" />
+                <span data-i18n="newsletter-consent">I agree to receive marketing emails from Patriotic Virtual Telehealth.</span>
+              </label>
+              <p class="lp-newsletter-fine" data-i18n="newsletter-fine">Educational content only. You can unsubscribe anytime.</p>
+            </form>
+          </article>
         </div>
       </div>
     </section>
@@ -239,9 +267,9 @@
     <section class="lp-breakthrough lp-home-section" id="weight-breakthrough">
       <div class="lp-breakthrough-hero">
         <div class="lp-breakthrough-copy">
-          <h2>Your weight loss<br /><span>breakthrough is here</span></h2>
-          <p>Clinician-guided treatment options, online visits, and simple next steps from the same secure platform.</p>
-          <button class="lp-breakthrough-btn" type="button" onclick="openModal('register')">Get started</button>
+          <h2 data-i18n="breakthrough-title">Your weight loss<br /><span>breakthrough is here</span></h2>
+          <p data-i18n="breakthrough-sub">Clinician-guided treatment options, online visits, and simple next steps from the same secure platform.</p>
+          <button class="lp-breakthrough-btn" type="button" onclick="openModal('register')" data-i18n="breakthrough-cta">Get started</button>
         </div>
 
         <div class="lp-breakthrough-product" aria-hidden="true">
@@ -250,82 +278,82 @@
       </div>
 
       <div class="lp-breakthrough-carousel-wrap">
-        <h3>Access a range of GLP&#8209;1 medications</h3>
+        <h3 data-i18n="breakthrough-carousel-title">Access a range of GLP&#8209;1 medications</h3>
         <div class="lp-breakthrough-carousel" aria-label="Weight loss medication options">
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
-            <span class="lp-med-badges"><span>New</span><span>High dose option</span></span>
-            <span class="lp-med-approval">FDA<br />approved</span>
+            <span class="lp-med-badges"><span data-i18n="med-badge-new">New</span><span data-i18n="med-badge-high-dose-option">High dose option</span></span>
+            <span class="lp-med-approval" data-i18n="med-fda-approved">FDA<br />approved</span>
             <img src="landing-page-demo/assets/card1.png" alt="" />
-            <span class="lp-med-name">Wegovy<sup>&reg;</sup> Pill</span>
-            <span class="lp-med-price">From $149/mo*</span>
+            <span class="lp-med-name" data-i18n="med-wegovy-pill">Wegovy<sup>&reg;</sup> Pill</span>
+            <span class="lp-med-price" data-i18n="med-price-149">From $149/mo*</span>
             <span class="lp-med-type">Semaglutide</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
-            <span class="lp-med-badges"><span>New</span></span>
-            <span class="lp-med-approval">FDA<br />approved</span>
+            <span class="lp-med-badges"><span data-i18n="med-badge-new">New</span></span>
+            <span class="lp-med-approval" data-i18n="med-fda-approved">FDA<br />approved</span>
             <img src="landing-page-demo/assets/card2.png" alt="" />
-            <span class="lp-med-name">Zepbound<sup>&reg;</sup> KwikPen</span>
-            <span class="lp-med-price">From $299/mo*</span>
+            <span class="lp-med-name" data-i18n="med-zepbound-kwikpen">Zepbound<sup>&reg;</sup> KwikPen</span>
+            <span class="lp-med-price" data-i18n="med-price-299">From $299/mo*</span>
             <span class="lp-med-type">Tirzepatide</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
             <img src="landing-page-demo/assets/card3.png" alt="" />
-            <span class="lp-med-name">Foundayo<sup>&reg;</sup></span>
-            <span class="lp-med-price">From $149/mo*</span>
+            <span class="lp-med-name" data-i18n="med-foundayo">Foundayo<sup>&reg;</sup></span>
+            <span class="lp-med-price" data-i18n="med-price-149">From $149/mo*</span>
             <span class="lp-med-type">Orforglipron</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
             <img src="landing-page-demo/assets/card4.png" alt="" />
-            <span class="lp-med-name">Wegovy<sup>&reg;</sup> Pen</span>
-            <span class="lp-med-price">$199/mo*</span>
+            <span class="lp-med-name" data-i18n="med-wegovy-pen">Wegovy<sup>&reg;</sup> Pen</span>
+            <span class="lp-med-price" data-i18n="med-price-199-flat">$199/mo*</span>
             <span class="lp-med-type">Semaglutide</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
-            <span class="lp-med-badges"><span>Popular</span></span>
+            <span class="lp-med-badges"><span data-i18n="med-badge-popular">Popular</span></span>
             <img src="landing-page-demo/assets/card5.png" alt="" />
-            <span class="lp-med-name">Zepbound<sup>&reg;</sup> Vial</span>
-            <span class="lp-med-price">From $299/mo*</span>
+            <span class="lp-med-name" data-i18n="med-zepbound-vial">Zepbound<sup>&reg;</sup> Vial</span>
+            <span class="lp-med-price" data-i18n="med-price-299">From $299/mo*</span>
             <span class="lp-med-type">Tirzepatide</span>
           </button>
 
           <button class="lp-med-card" type="button" onclick="startSvc('imaging_video')">
             <img src="landing-page-demo/assets/card6.png" alt="" />
-            <span class="lp-med-name">Ozempic</span>
-            <span class="lp-med-price">From $199/mo*</span>
+            <span class="lp-med-name" data-i18n="med-ozempic">Ozempic</span>
+            <span class="lp-med-price" data-i18n="med-price-199">From $199/mo*</span>
             <span class="lp-med-type">Semaglutide</span>
           </button>
         </div>
-        <p class="lp-breakthrough-note">*Pricing and eligibility are placeholders for review. Medication access depends on provider evaluation and clinical appropriateness.</p>
+        <p class="lp-breakthrough-note" data-i18n="breakthrough-note">*Pricing and eligibility are placeholders for review. Medication access depends on provider evaluation and clinical appropriateness.</p>
       </div>
 
       <div class="lp-breakthrough-panels">
         <article class="lp-science-panel">
           <div class="lp-panel-top">
-            <h3>The perfect<br /><span>SNAC</span></h3>
-            <button class="lp-breakthrough-btn" type="button" onclick="startSvc('imaging_video')">See the science</button>
+            <h3 data-i18n="breakthrough-science-title">The perfect<br /><span>SNAC</span></h3>
+            <button class="lp-breakthrough-btn" type="button" onclick="startSvc('imaging_video')" data-i18n="breakthrough-science-cta">See the science</button>
           </div>
           <img src="landing-page-demo/assets/snac.png" alt="" />
         </article>
 
         <article class="lp-dose-panel">
-          <span class="lp-dose-badge">New high dose</span>
-          <h3>Lose 25% or more<br />body weight*</h3>
+          <span class="lp-dose-badge" data-i18n="breakthrough-dose-badge">New high dose</span>
+          <h3 data-i18n="breakthrough-dose-title">Lose 25% or more<br />body weight*</h3>
           <img src="landing-page-demo/assets/card4.png" alt="" />
           <div class="lp-dose-gauge" aria-hidden="true">
             <span>7.2 mg</span>
           </div>
-          <button class="lp-breakthrough-btn" type="button" onclick="startSvc('weight_loss')">Explore Wegovy Pen</button>
+          <button class="lp-breakthrough-btn" type="button" onclick="startSvc('weight_loss')" data-i18n="breakthrough-dose-cta">Explore Wegovy Pen</button>
         </article>
       </div>
 
-      <p class="lp-breakthrough-footnote">*Placeholder educational copy. Final claims should be reviewed against approved labeling and clinical/legal guidance.</p>
+      <p class="lp-breakthrough-footnote" data-i18n="breakthrough-footnote">*Placeholder educational copy. Final claims should be reviewed against approved labeling and clinical/legal guidance.</p>
     </section>
 
-    <section class="lp-edge lp-home-section" id="testosterone-edge">
+    <section class="lp-edge lp-home-section" id="testosterone-edge" hidden>
       <div class="lp-edge-track" aria-hidden="true">
         <span class="lp-edge-marker lp-edge-marker--one"></span>
         <span class="lp-edge-marker lp-edge-marker--two"></span>
@@ -406,6 +434,47 @@
         </div>
       </div>
     </section> -->
+
+    <section class="lp-section lp-home-section lp-section-anchor" id="how-it-works">
+      <div class="lp-container">
+        <div class="lp-section-header lp-section-header--narrow">
+          <h2 class="lp-section-title" data-i18n="how-title">Your Path to <span class="accent">Health</span></h2>
+          <p class="lp-section-copy" data-i18n="how-sub">From first click to physician review, every step is secure and protocol-driven.</p>
+        </div>
+
+        <div class="lp-steps-grid">
+          <article class="lp-step-card">
+            <span class="lp-step-number">1</span>
+            <h3 data-i18n="step1-title">Intake</h3>
+            <p data-i18n="step1-desc">Complete your health intake and secure payment via Stripe&trade;.</p>
+          </article>
+
+          <article class="lp-step-card">
+            <span class="lp-step-number">2</span>
+            <h3 data-i18n="step2-title">Provider Evaluation</h3>
+            <p data-i18n="step2-desc">Complete ID verification via Vouched&trade; and, when needed, a video consult via Doxy.me&trade;.</p>
+          </article>
+
+          <article class="lp-step-card">
+            <span class="lp-step-number">3</span>
+            <h3 data-i18n="step3-title">Eligibility</h3>
+            <p data-i18n="step3-desc">Your provider determines whether treatment is clinically appropriate for you.</p>
+          </article>
+
+          <article class="lp-step-card">
+            <span class="lp-step-number">4</span>
+            <h3 data-i18n="step4-title">Prescription</h3>
+            <p data-i18n="step4-desc">If eligible, your provider sends Rx orders through licensed/certified compounding pharmacies, or to almost any U.S. pharmacy of choice for brand-name and other prescriptions.</p>
+          </article>
+
+          <article class="lp-step-card">
+            <span class="lp-step-number">5</span>
+            <h3 data-i18n="step5-title">Follow-Up</h3>
+            <p data-i18n="step5-desc">Close personal follow-up by PVT staff helps monitor progress, answer questions, and coordinate next steps.</p>
+          </article>
+        </div>
+      </div>
+    </section>
 
     <section class="lp-section lp-home-section">
       <div class="lp-container">
@@ -497,47 +566,6 @@
             <h3 data-i18n="innovation-card-title">Secure Medication Management</h3>
             <p data-i18n="innovation-card-body">We utilize a secure, integrated e-prescribing platform (DoseSpot) to support safe, compliant, and efficient medication management.</p>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="lp-section lp-home-section lp-section-anchor" id="how-it-works">
-      <div class="lp-container">
-        <div class="lp-section-header lp-section-header--narrow">
-          <h2 class="lp-section-title" data-i18n="how-title">Your Path to <span class="accent">Health</span></h2>
-          <p class="lp-section-copy" data-i18n="how-sub">From first click to physician review, every step is secure and protocol-driven.</p>
-        </div>
-
-        <div class="lp-steps-grid">
-          <article class="lp-step-card">
-            <span class="lp-step-number">1</span>
-            <h3 data-i18n="step1-title">Intake</h3>
-            <p data-i18n="step1-desc">Complete your health intake and secure payment via Stripe&trade;.</p>
-          </article>
-
-          <article class="lp-step-card">
-            <span class="lp-step-number">2</span>
-            <h3 data-i18n="step2-title">Provider Evaluation</h3>
-            <p data-i18n="step2-desc">Complete ID verification via Vouched&trade; and, when needed, a video consult via Doxy.me&trade;.</p>
-          </article>
-
-          <article class="lp-step-card">
-            <span class="lp-step-number">3</span>
-            <h3 data-i18n="step3-title">Eligibility</h3>
-            <p data-i18n="step3-desc">Your provider determines whether treatment is clinically appropriate for you.</p>
-          </article>
-
-          <article class="lp-step-card">
-            <span class="lp-step-number">4</span>
-            <h3 data-i18n="step4-title">Prescription</h3>
-            <p data-i18n="step4-desc">If eligible, your provider sends Rx orders through licensed/certified compounding pharmacies, or to almost any U.S. pharmacy of choice for brand-name and other prescriptions.</p>
-          </article>
-
-          <article class="lp-step-card">
-            <span class="lp-step-number">5</span>
-            <h3 data-i18n="step5-title">Follow-Up</h3>
-            <p data-i18n="step5-desc">Close personal follow-up by PVT staff helps monitor progress, answer questions, and coordinate next steps.</p>
-          </article>
         </div>
       </div>
     </section>
@@ -660,7 +688,7 @@
       </div>
     </section>
 
-    <section class="lp-section lp-home-section">
+    <section class="lp-section lp-home-section lp-providers-section">
       <div class="lp-container">
         <div class="lp-section-header lp-section-header--narrow">
           <div class="lp-eyebrow" data-i18n="providers-eyebrow">Our Providers</div>
@@ -769,9 +797,17 @@
       <div class="lp-container">
         <div class="lp-cta-shell">
           <div class="lp-cta-box">
-            <h2 class="lp-section-title lp-cta-title" data-i18n="cta-title">Metabolic Optimization.<br />Imaging-Guided.<br />Fully Managed.</h2>
-            <p class="lp-section-copy" data-i18n="cta-desc">Imaging-Guided Metabolic Optimization - our concierge program bundles all imaging, full clinical management, and physician access. Limited enrollment.</p>
-            <button class="lp-cta-btn" type="button" onclick="openModal('register')" data-i18n="cta-btn">Join the waitlist</button>
+            <h2 class="lp-section-title lp-cta-title" data-i18n="cta-title">Explore the medications we offer.</h2>
+            <p class="lp-section-copy" data-i18n="cta-desc">See every medication available through our licensed pharmacy partner — with clinical guidelines and transparent pricing. View the catalog now, or have the complete list emailed to you.</p>
+            <div class="lp-cta-actions">
+              <button class="lp-cta-btn" type="button" onclick="startSvc('weight_loss')" data-i18n="cta-btn">View our medications →</button>
+              <div class="lp-cta-divider" data-i18n="cta-divider">Or get the list in your inbox</div>
+              <form class="lp-cta-email-form" onsubmit="event.preventDefault();">
+                <input type="email" name="medicationCatalogEmail" autocomplete="email" placeholder="Enter your email address" aria-label="Email address" data-i18n-placeholder="cta-email-placeholder" />
+                <button class="lp-cta-email-btn" type="button" data-i18n="cta-email-btn">Email me the list</button>
+              </form>
+            </div>
+            <p class="lp-cta-disclaimer" data-i18n="cta-disclaimer">All medications require evaluation by a licensed clinician. Compounded medications are not FDA-approved. Eligibility confirmed at consultation.</p>
           </div>
         </div>
       </div>
@@ -800,18 +836,20 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
               </button>
             </div>
-            <div class="lp-footer-seal-row" style="display:flex; align-items:flex-end; gap:20px; margin-top: 1rem;">
+            <div class="lp-footer-seal-row" style="display:flex; align-items:flex-end; gap:14px; flex-wrap:nowrap; margin-top: 1rem;">
               <a href="https://www.legitscript.com/websites/?checker_keywords=patriotictelehealth.com" target="_blank" rel="noopener noreferrer" title="Verify LegitScript Approval for www.patriotictelehealth.com">
                 <img src="https://static.legitscript.com/seals/49631054.png" alt="Verify Approval for www.patriotictelehealth.com" width="73" height="79" />
               </a>
-              <div style="display:flex; flex-direction:column; align-items:center;">
-                <span data-i18n="hero-powered-label" style="font-size:1.1rem; color:#6b7280; margin-bottom:4px;">Powered by:</span>
+              <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                <span class="lp-footer-powered-label" data-i18n="hero-powered-label">Powered by:</span>
                 <a href="https://app.radiantlogiq.ai/" target="_blank" rel="noopener noreferrer">
-                  <img class="lp-footer-riq-logo" src="landing-page-demo/assets/riq-logo.webp" alt="RadiantLogiq" style="height:79px; width:auto; display:block;" />
+                  <img class="lp-footer-riq-logo lp-theme-logo-light" src="landing-page-demo/assets/riq-logo.png" alt="RadiantLogiq" />
+                  <img class="lp-footer-riq-logo lp-theme-logo-dark" src="landing-page-demo/assets/riq-logo-dark.png" alt="RadiantLogiq" />
                 </a>
               </div>
               <a href="https://www.nvidia.com/en-us/data-center/innovation-lab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
-                <img class="lp-footer-powered-logo" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" style="height:79px; width:auto;" />
+                <img class="lp-footer-powered-logo lp-theme-logo-light" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" />
+                <img class="lp-footer-powered-logo lp-theme-logo-dark" src="landing-page-demo/assets/nviida-dark.png" alt="NVIDIA Inception Program" />
               </a>
             </div>
           </div>
@@ -867,7 +905,7 @@
       <div class="container hero-inner">
         <div class="hero-grid">
           <div class="hero-copy">
-            <h1 data-i18n="hero-h1">Doctor-Supervised Medical Weight Loss</h1>
+            <h1 data-i18n="hero-h1">Welcome home to <span class="accent">better healthcare</span></h1>
             <p style="font-size:0.875rem;color:#6b7280;margin-top:0.75rem;color:white;">
               Prescription medications are provided only if clinically appropriate following a medical consultation.
             </p>
@@ -1518,18 +1556,20 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
               </button>
             </div>
-            <div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap; margin-top:1rem;">
+            <div class="lp-footer-seal-row" style="display:flex;align-items:flex-end;gap:14px;flex-wrap:nowrap; margin-top:1rem;">
               <a href="https://www.legitscript.com/websites/?checker_keywords=patriotictelehealth.com" target="_blank" rel="noopener noreferrer" title="Verify LegitScript Approval for www.patriotictelehealth.com">
                 <img src="https://static.legitscript.com/seals/49631054.png" alt="Verify Approval for www.patriotictelehealth.com" width="73" height="79" />
               </a>
-              <div style="display:flex; flex-direction:column; align-items:center;">
-                <p style="font-size:1.1rem;color:#9ca3af;font-weight:600;margin:0 0 4px 0;">Powered by:</p>
+              <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                <p class="lp-footer-powered-label">Powered by:</p>
                 <a href="https://app.radiantlogiq.ai/" target="_blank" rel="noopener noreferrer">
-                  <img src="landing-page-demo/assets/riq-logo.webp" alt="RadiantLogiq" style="height:79px; width:auto; display:block; border-radius:4px;" />
+                  <img class="lp-footer-riq-logo lp-theme-logo-light" src="landing-page-demo/assets/riq-logo.png" alt="RadiantLogiq" />
+                  <img class="lp-footer-riq-logo lp-theme-logo-dark" src="landing-page-demo/assets/riq-logo-dark.png" alt="RadiantLogiq" />
                 </a>
               </div>
               <a href="https://www.nvidia.com/en-us/data-center/innovation-lab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
-                <img src="assets/nvidia-inception.jpg" alt="NVIDIA Inception Program" style="height:79px; width:auto; border-radius:4px;" />
+                <img class="lp-footer-powered-logo lp-theme-logo-light" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" />
+                <img class="lp-footer-powered-logo lp-theme-logo-dark" src="landing-page-demo/assets/nviida-dark.png" alt="NVIDIA Inception Program" />
               </a>
             </div>
           </div>
@@ -3214,14 +3254,14 @@
   <div class="toast" id="toast"></div>
 
   <!-- AI NAVIGATOR FAB + CHAT -->
-  <button class="ai-fab" id="aiFab" onclick="toggleAI()">
+  <button class="ai-fab" id="aiFab" onclick="toggleAI()" hidden aria-hidden="true">
     <div class="ai-pulse"></div>
     <span class="fab-icon">💬</span>
     <span class="fab-close">✕</span>
     <div class="ai-label">AI Health Navigator</div>
   </button>
 
-  <div class="ai-chat" id="aiChat">
+  <div class="ai-chat" id="aiChat" hidden aria-hidden="true">
     <div class="ai-chat-head">
       <div class="ai-chat-dot">🤖</div>
       <div>

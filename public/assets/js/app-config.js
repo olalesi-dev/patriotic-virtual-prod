@@ -19,7 +19,7 @@ function extendLandingI18n() {
     "hero-serving-state": "FLORIDA, USA",
     "hero-online": "Board-Certified Physicians Online Now",
     "hero-h1":
-      '<span class="accent">Doctor-Supervised</span> Medical Weight Loss',
+      'Welcome home to <span class="accent">better healthcare</span>',
     "hero-sub":
       "Get evaluated by a licensed provider. Rx treatment available if clinically appropriate.",
     "hero-cta": "Start Your Consultation",
@@ -124,11 +124,16 @@ function extendLandingI18n() {
     "testimonial-3-quote":
       '"The physician noticed something on my chest X-ray, confirmed the diagnosis, and walked me through next steps. Protocol-driven and professional."',
     "testimonial-3-detail": "Radiology Review &middot; Orlando, FL",
-    "cta-eyebrow": "Metabolic Optimization",
-    "cta-title": "Metabolic Optimization.<br />Imaging-Guided.<br />Fully Managed.",
+    "cta-eyebrow": "Medication Catalog",
+    "cta-title": "Explore the medications we offer.",
     "cta-desc":
-      "Imaging-Guided Metabolic Optimization - our concierge program bundles all imaging, full clinical management, and physician access. Limited enrollment.",
-    "cta-btn": "Join the waitlist",
+      "See every medication available through our licensed pharmacy partner — with clinical guidelines and transparent pricing. View the catalog now, or have the complete list emailed to you.",
+    "cta-btn": "View our medications →",
+    "cta-divider": "Or get the list in your inbox",
+    "cta-email-placeholder": "Enter your email address",
+    "cta-email-btn": "Email me the list",
+    "cta-disclaimer":
+      "All medications require evaluation by a licensed clinician. Compounded medications are not FDA-approved. Eligibility confirmed at consultation.",
     "footer-brand":
       "Board-certified telehealth and radiology services. Currently accepting patients in Florida. No controlled substances are prescribed through this platform.",
     "footer-contact-info": "Contact Info",
@@ -150,6 +155,57 @@ function extendLandingI18n() {
       '<span>All Access -</span><br /><span class="lp-service-title-accent">Elite</span>',
     "hero-card-imaging_video-title":
       '<span>Imaging + </span><br /><span class="lp-service-title-accent">Video Consult</span>',
+    "mini-intimacy-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--red">Reignite</span> your sex life',
+    "mini-intimacy-sub": "Discreet guidance for intimacy concerns.",
+    "mini-hair-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--blue">Restore</span> your hair',
+    "mini-hair-sub": "Care options for thinning hair.",
+    "mini-health-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--brown">Recharge</span> your health',
+    "mini-health-sub": "Support for energy, hormones, and whole-body wellness.",
+    "mini-scans-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--darkblue">Review</span> your scans',
+    "mini-scans-sub": "A simple online review of your concerns.",
+    "newsletter-badge": "Exclusive",
+    "newsletter-title": "Join Our Health Newsletter",
+    "newsletter-desc":
+      "Subscriber discounts, treatment alerts, and evidence-based updates delivered monthly.",
+    "newsletter-placeholder": "Email address",
+    "newsletter-submit": "Subscribe",
+    "newsletter-consent":
+      "I agree to receive marketing emails from Patriotic Virtual Telehealth.",
+    "newsletter-fine":
+      "Educational content only. You can unsubscribe anytime.",
+    "breakthrough-title":
+      'Your weight loss<br /><span>breakthrough is here</span>',
+    "breakthrough-sub":
+      "Clinician-guided treatment options, online visits, and simple next steps from the same secure platform.",
+    "breakthrough-cta": "Get started",
+    "breakthrough-carousel-title": "Access a range of GLP&#8209;1 medications",
+    "med-badge-new": "New",
+    "med-badge-high-dose-option": "High dose option",
+    "med-badge-popular": "Popular",
+    "med-fda-approved": "FDA<br />approved",
+    "med-wegovy-pill": "Wegovy<sup>&reg;</sup> Pill",
+    "med-zepbound-kwikpen": "Zepbound<sup>&reg;</sup> KwikPen",
+    "med-foundayo": "Foundayo<sup>&reg;</sup>",
+    "med-wegovy-pen": "Wegovy<sup>&reg;</sup> Pen",
+    "med-zepbound-vial": "Zepbound<sup>&reg;</sup> Vial",
+    "med-ozempic": "Ozempic",
+    "med-price-149": "From $149/mo*",
+    "med-price-299": "From $299/mo*",
+    "med-price-199": "From $199/mo*",
+    "med-price-199-flat": "$199/mo*",
+    "breakthrough-note":
+      "*Pricing and eligibility are placeholders for review. Medication access depends on provider evaluation and clinical appropriateness.",
+    "breakthrough-science-title": "The perfect<br /><span>SNAC</span>",
+    "breakthrough-science-cta": "See the science",
+    "breakthrough-dose-badge": "New high dose",
+    "breakthrough-dose-title": "Lose 25% or more<br />body weight*",
+    "breakthrough-dose-cta": "Explore Wegovy Pen",
+    "breakthrough-footnote":
+      "*Placeholder educational copy. Final claims should be reviewed against approved labeling and clinical/legal guidance.",
     "svc-general_visit-name": "General Health Visit",
     "svc-general_visit-desc":
       "Virtual visits for non-emergent health concerns - medication management, wellness checks, health advice. Convenient care from home.",
@@ -177,7 +233,7 @@ function extendLandingI18n() {
     "hero-serving-state": "FLORIDA, USA",
     "hero-online": "Medicos Certificados en Linea Ahora",
     "hero-h1":
-      '<span class="accent">Bienvenidos A Casa</span> - Su Salud, 24/7',
+      'Bienvenidos a casa a una <span class="accent">mejor atencion medica</span>',
     "hero-sub":
       "Sea evaluado por un proveedor con licencia. Tratamiento con receta disponible si es clinicamente apropiado.",
     "hero-cta": "Comenzar Consulta",
@@ -282,11 +338,16 @@ function extendLandingI18n() {
     "testimonial-3-quote":
       '"El medico detecto algo en mi radiografia de pecho, confirmo el diagnostico y me explico los siguientes pasos. Profesional y guiado por protocolos."',
     "testimonial-3-detail": "Revision Radiologica &middot; Orlando, FL",
-    "cta-eyebrow": "Optimizacion Metabolica",
-    "cta-title": "Optimizacion Metabolica.<br />Guiada por Imagenes.<br />Gestion Completa.",
+    "cta-eyebrow": "Catalogo de Medicamentos",
+    "cta-title": "Explore los medicamentos que ofrecemos.",
     "cta-desc":
-      "Optimizacion metabolica guiada por imagenes: nuestro programa concierge incluye imagenes, gestion clinica completa y acceso medico. Cupos limitados.",
-    "cta-btn": "Unirme a la lista",
+      "Vea cada medicamento disponible a traves de nuestro socio farmaceutico con licencia, con guias clinicas y precios transparentes. Consulte el catalogo ahora o reciba la lista completa por correo.",
+    "cta-btn": "Ver medicamentos →",
+    "cta-divider": "O reciba la lista en su correo",
+    "cta-email-placeholder": "Ingrese su correo electronico",
+    "cta-email-btn": "Enviarme la lista",
+    "cta-disclaimer":
+      "Todos los medicamentos requieren evaluacion por un clinico con licencia. Los medicamentos compuestos no estan aprobados por la FDA. La elegibilidad se confirma en la consulta.",
     "footer-brand":
       "Servicios de telesalud y radiologia certificados. Actualmente aceptando pacientes en Florida. No se recetan sustancias controladas por esta plataforma.",
     "footer-contact-info": "Informacion de Contacto",
@@ -308,6 +369,57 @@ function extendLandingI18n() {
       '<span>Acceso Total -</span><br /><span class="lp-service-title-accent">Elite</span>',
     "hero-card-imaging_video-title":
       '<span>Imagenes + </span><br /><span class="lp-service-title-accent">Consulta Video</span>',
+    "mini-intimacy-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--red">Reaviva</span> tu vida sexual',
+    "mini-intimacy-sub": "Orientacion discreta para inquietudes de intimidad.",
+    "mini-hair-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--blue">Restaura</span> tu cabello',
+    "mini-hair-sub": "Opciones de atencion para el adelgazamiento del cabello.",
+    "mini-health-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--brown">Recarga</span> tu salud',
+    "mini-health-sub": "Apoyo para energia, hormonas y bienestar integral.",
+    "mini-scans-title":
+      '<span class="lp-service-mini-emphasis lp-service-mini-emphasis--darkblue">Revisa</span> tus estudios',
+    "mini-scans-sub": "Una revision sencilla en linea de sus inquietudes.",
+    "newsletter-badge": "Exclusivo",
+    "newsletter-title": "Boletin de Salud",
+    "newsletter-desc":
+      "Descuentos para suscriptores, alertas de tratamiento y actualizaciones basadas en evidencia cada mes.",
+    "newsletter-placeholder": "Correo electronico",
+    "newsletter-submit": "Suscribirse",
+    "newsletter-consent":
+      "Acepto recibir correos de marketing de Patriotic Virtual Telehealth.",
+    "newsletter-fine":
+      "Contenido educativo solamente. Puede cancelar la suscripcion cuando quiera.",
+    "breakthrough-title":
+      'Tu avance en perdida<br /><span>de peso ya esta aqui</span>',
+    "breakthrough-sub":
+      "Opciones de tratamiento guiadas por clinicos, visitas en linea y pasos simples desde la misma plataforma segura.",
+    "breakthrough-cta": "Comenzar",
+    "breakthrough-carousel-title": "Acceda a una variedad de medicamentos GLP&#8209;1",
+    "med-badge-new": "Nuevo",
+    "med-badge-high-dose-option": "Opcion de dosis alta",
+    "med-badge-popular": "Popular",
+    "med-fda-approved": "Aprobado<br />por FDA",
+    "med-wegovy-pill": "Wegovy<sup>&reg;</sup> en pastilla",
+    "med-zepbound-kwikpen": "Zepbound<sup>&reg;</sup> KwikPen",
+    "med-foundayo": "Foundayo<sup>&reg;</sup>",
+    "med-wegovy-pen": "Wegovy<sup>&reg;</sup> Pen",
+    "med-zepbound-vial": "Zepbound<sup>&reg;</sup> Vial",
+    "med-ozempic": "Ozempic",
+    "med-price-149": "Desde $149/mes*",
+    "med-price-299": "Desde $299/mes*",
+    "med-price-199": "Desde $199/mes*",
+    "med-price-199-flat": "$199/mes*",
+    "breakthrough-note":
+      "*Los precios y la elegibilidad son textos provisionales para revision. El acceso a medicamentos depende de la evaluacion del proveedor y de la idoneidad clinica.",
+    "breakthrough-science-title": "El SNAC<br /><span>perfecto</span>",
+    "breakthrough-science-cta": "Ver la ciencia",
+    "breakthrough-dose-badge": "Nueva dosis alta",
+    "breakthrough-dose-title": "Pierda 25% o mas<br />de peso corporal*",
+    "breakthrough-dose-cta": "Explorar Wegovy Pen",
+    "breakthrough-footnote":
+      "*Texto educativo provisional. Las afirmaciones finales deben revisarse segun el etiquetado aprobado y la orientacion clinica/legal.",
     "svc-general_visit-name": "Visita General de Salud",
     "svc-general_visit-desc":
       "Visitas virtuales para problemas de salud no emergentes: manejo de medicamentos, controles de bienestar y orientacion de salud. Atencion conveniente desde casa.",
