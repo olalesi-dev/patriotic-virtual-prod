@@ -99,6 +99,23 @@
         await Promise.all(updateTasks);
         console.log("✅ Appointment written to all EMR collections successfully.");
 
+        // Google Ads Conversion tracking for purchase
+        try {
+          if (typeof gtag === 'function') {
+            // First conversion event (purchase)
+            gtag('event', 'purchase', {
+              transaction_id: consultationId
+            });
+            // Second conversion event (from new email instructions)
+            gtag('event', 'conversion', {
+              'send_to': 'AW-18019342434/A_dTCKjiv6kcEOKwpZBD'
+            });
+            console.log("✅ Google Ads conversion events triggered.");
+          }
+        } catch (e) {
+          console.error("Google Ads tracking error:", e);
+        }
+
         // Redirect patient to EMR portal success page with a bridge token for auto-login
         await redirectToEMRSuccess(consultationId);
 
