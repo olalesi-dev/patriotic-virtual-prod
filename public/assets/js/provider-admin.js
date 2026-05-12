@@ -38,6 +38,14 @@
       if (tabSched) tabSched.classList.toggle("active", tab === "schedule");
     }
 
+    function buildPacsUrl(studyUid) {
+      const pacsOrigin = getPacsOrigin();
+      if (!studyUid) {
+        return `${pacsOrigin}/`;
+      }
+      return `${pacsOrigin}/viewer?StudyInstanceUID=${encodeURIComponent(studyUid)}`;
+    }
+
     window.openPACS = function (url) {
       console.log("Opening PACS with URL:", url);
       // Hide all other views
@@ -553,8 +561,7 @@
                 ? "blue"
                 : "orange";
 
-          // Viewer Link (Mocked for now until PACS fully integrated with StudyUIDs)
-          const viewerLink = `http://136.111.99.153/viewer?StudyInstanceUID=${c.studyUid || ""}`; // Replace IP with Domain if set
+          const viewerLink = buildPacsUrl(c.studyUid);
 
           return `
           <tr style="border-bottom:1px solid var(--border-soft)">
@@ -568,7 +575,7 @@
             }</span></td>
             <td style="padding:12px;display:flex;gap:8px">
               <button class="btn btn-outline" style="padding:6px 12px;font-size:12px" onclick="viewIntake('${c.id}')">View Intake</button>
-              <a href="javascript:void(0)" onclick="openPACS('https://patriotictelehealth.cloudflareaccess.com/cdn-cgi/access/login/pacs.patriotictelehealth.com?kid=50d12b77a557150adfb69118eca44c243524d89794459b29611a7326d9485b5c&amp;meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImQwNDZhODYwMmEyNzlmZTg2ZDZhNWE2MzlkMmYwMjE0YmRmNDlhMmM0YTFjM2I5YTdiNmRmNDZjYjJkMmQ0MGMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjUwZDEyYjc3YTU1NzE1MGFkZmI2OTExOGVjYTQ0YzI0MzUyNGQ4OTc5NDQ1OWIyOTYxMWE3MzI2ZDk0ODViNWMiLCJob3N0bmFtZSI6InBhY3MucGF0cmlvdGljdGVsZWhlYWx0aC5jb20iLCJyZWRpcmVjdF91cmwiOiIvIiwic2VydmljZV90b2tlbl9zdGF0dXMiOmZhbHNlLCJpc193YXJwIjpmYWxzZSwiaXNfZ2F0ZXdheSI6ZmFsc2UsImV4cCI6MTc3MTY0Mzc1NywibmJmIjoxNzcxNjQzNDU3LCJpYXQiOjE3NzE2NDM0NTcsImF1dGhfc3RhdHVzIjoiTk9ORSIsIm10bHNfYXV0aCI6eyJjZXJ0X2lzc3Vlcl9kbiI6IiIsImNlcnRfc2VyaWFsIjoiIiwiY2VydF9pc3N1ZXJfc2tpIjoiIiwiY2VydF9wcmVzZW50ZWQiOmZhbHNlLCJjb21tb25fbmFtZSI6IiIsImF1dGhfc3RhdHVzIjoiTk9ORSJ9LCJyZWFsX2NvdW50cnkiOiJVUyIsImFwcF9zZXNzaW9uX2hhc2giOiJjOTZiNjhmOGEyZjYzNzhmYzhhYzA0OTM3YWJkMzkyMDIyN2U4ZWVmZDUzYmNkOGRkZTUxOGQwMTQ2MGZjMDZjIn0.Hz2Svg-SbF3Oi_P_CzJFodwLybyBgJ24PTka6dFjr1v5KjfbNsHVWsyjUvPTrZgJJ0de-0nktzr-rysESAc1EeqA_YotbvPuIkS-W40nJoLfbHwK22f_3RGfGUbnH8sgpIImbggoTBSyUqznLDVMF4uj9pe2KFDnobEtJoprONe1qGT_zwzB8fyVwGaWTNUe74U5EL4paLV88HbV6_0N_ekgFsXuYO5aL_dguN75xq2FeGu8zldtnpKI2FZ9h-3CZ0FSWSPYLPVu1DmhI-lhjQO-7TXmbK4isQNG-x837taraPnaEWZjhk_j7wbm1eI4rJV44H2vJjLZ4dbkFqHl5g&amp;redirect_url=%2F')" class="btn btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none">View PACS</a>
+              <a href="javascript:void(0)" onclick="openPACS('${viewerLink}')" class="btn btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none">View PACS</a>
               <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="markReviewed('${c.id}')">Start Review</button>
             </td>
           </tr>
@@ -1269,4 +1276,3 @@
       window.scrollTo(0, 0);
       loadAdminConsults();
     };
-

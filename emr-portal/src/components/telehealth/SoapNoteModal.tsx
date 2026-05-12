@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Loader2, Save } from 'lucide-react';
 import { AITextarea } from '@/components/ui/AITextarea';

@@ -103,7 +103,7 @@
       <div class="nav-actions lp-nav-actions">
         <button class="lp-nav-btn lp-nav-btn--ghost" id="loginBtn" onclick="openModal('login')" data-i18n="nav-login">Log In</button>
         <button class="lp-nav-btn lp-nav-btn--primary" id="signupBtn" onclick="openModal('register')" data-i18n="nav-get-started">Start My Free Intake</button>
-        <a class="lp-nav-btn lp-nav-btn--ghost hidden" id="dashBtn" href="https://patriotic-virtual-emr.web.app/patient" data-i18n="nav-dashboard">Dashboard</a>
+        <a class="lp-nav-btn lp-nav-btn--ghost hidden" id="dashBtn" href="#" onclick="showDashboard(); return false;" data-i18n="nav-dashboard">Dashboard</a>
         <button class="lp-icon-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to Light Mode" aria-label="Toggle theme">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M21 12.8A8.99 8.99 0 0 1 11.2 3a8.3 8.3 0 0 0-.2 1.8 9 9 0 1 0 10 10c0-.34 0-.67-.06-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -132,7 +132,7 @@
       <div class="lp-mobile-panel-actions">
         <button class="lp-nav-btn lp-nav-btn--ghost" id="mobileLoginBtn" onclick="closeMobileNav(); openModal('login')" data-i18n="nav-login">Log In</button>
         <button class="lp-nav-btn lp-nav-btn--primary" id="mobileSignupBtn" onclick="closeMobileNav(); openModal('register')" data-i18n="nav-get-started">Start My Free Intake</button>
-        <a class="lp-nav-btn lp-nav-btn--ghost hidden" id="mobileDashBtn" href="https://patriotic-virtual-emr.web.app/patient" onclick="closeMobileNav()" data-i18n="nav-dashboard">Dashboard</a>
+        <a class="lp-nav-btn lp-nav-btn--ghost hidden" id="mobileDashBtn" href="#" onclick="closeMobileNav(); showDashboard(); return false;" data-i18n="nav-dashboard">Dashboard</a>
         <button class="lp-nav-btn lp-nav-btn--outline hidden" id="mobileLogoutBtn" onclick="closeMobileNav(); logout()" data-i18n="nav-logout">Log Out</button>
       </div>
     </div>

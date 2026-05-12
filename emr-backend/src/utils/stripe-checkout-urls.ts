@@ -1,4 +1,6 @@
-const DEFAULT_APP_URL = 'https://patriotic-virtual-emr.web.app';
+import { DEFAULT_EMR_ORIGIN } from '../config/app-origins';
+
+const DEFAULT_APP_URL = DEFAULT_EMR_ORIGIN;
 const STRIPE_CHECKOUT_SESSION_TOKEN = '{CHECKOUT_SESSION_ID}';
 
 export function normalizeAbsoluteUrl(value?: string | null): string | null {

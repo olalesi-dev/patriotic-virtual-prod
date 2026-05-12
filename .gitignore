@@ -32,3 +32,12 @@ dosespot-docs
 .agents
 .turbo
 docs
+!/.worktrees/rebuild-v2/docs/
+!/.worktrees/rebuild-v2/docs/auth.md
+!docs/
+docs/*
+!docs/DEPLOYMENT_SETUP_CHECKLIST.md
+!docs/DEPLOYMENT_REQUIREMENTS_AUDIT.md
+!docs/DEPLOYMENT_OPERATOR_RUNBOOK.md
+!docs/DEPLOYMENT_PROMPT_ARTIFACT_CHECKLIST.md
+!docs/DEPLOYMENT_HANDOFF.md

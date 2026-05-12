@@ -23,6 +23,7 @@ import { generateSSOUrl } from './utils/dosespot';
 import { ensureDoseSpotPatientForUid } from './services/dosespot-patients';
 import { assertDoseSpotWebhookRuntimeConfig } from './services/dosespot-push';
 import { admin } from './config/firebase';
+import { getEmrOrigin, getMarketingOrigin, normalizeOrigin } from './config/app-origins';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -30,20 +31,9 @@ const PORT = process.env.PORT || 8080;
 // Security & Metrics
 app.use(helmet());
 
-function normalizeOrigin(value?: string | null): string | null {
-    const trimmed = value?.trim();
-    if (!trimmed) return null;
-
-    try {
-        return new URL(trimmed).origin;
-    } catch {
-        return null;
-    }
-}
-
 const allowedOrigins = [
-    'https://patriotic-virtual-emr.web.app',
-    'https://patriotictelehealth.com',
+    getEmrOrigin(),
+    getMarketingOrigin(),
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:5173',

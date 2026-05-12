@@ -6,6 +6,7 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { Copy, Gift, Users, CheckCircle2, TrendingUp, Sparkles, AlertCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { getMarketingUrl } from '@/lib/app-origins';
 
 export default function ReferralsClient() {
     const profile = useUserProfile();
@@ -13,6 +14,7 @@ export default function ReferralsClient() {
     const [stats, setStats] = useState({ total: 0, pending: 0, converted: 0 });
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
+    const referralBaseUrl = getMarketingUrl('/');
 
     useEffect(() => {
         if (!profile.authenticated || profile.loading || !auth.currentUser) return;
@@ -59,7 +61,13 @@ export default function ReferralsClient() {
         return () => unsub();
     }, [profile]);
 
-    const referralLink = referralCode ? `https://patriotictelehealth.com?ref=${referralCode}` : '';
+    const referralLink = referralCode
+        ? (() => {
+            const referralUrl = new URL(referralBaseUrl);
+            referralUrl.searchParams.set('ref', referralCode);
+            return referralUrl.toString();
+        })()
+        : '';
 
     const copyToClipboard = () => {
         if (!referralLink) return;

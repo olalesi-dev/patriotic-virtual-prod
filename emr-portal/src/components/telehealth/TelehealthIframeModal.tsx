@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Mic, BrainCircuit, Activity, CheckCircle, Video, Loader2, ExternalLink } from 'lucide-react';
 import { embedDoxyMe } from 'doxy.me';

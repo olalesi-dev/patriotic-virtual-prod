@@ -34,6 +34,7 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { loadStripe } from '@stripe/stripe-js';
+import { getApiOrigin } from '@/lib/api-origin';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -110,7 +111,7 @@ export default function BillingPage() {
         setIsProcessingPayment(true);
         try {
             const token = await auth.currentUser?.getIdToken();
-            const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+            const apiOrigin = getApiOrigin();
             const response = await fetch(`${apiOrigin}/api/v1/billing/create-balance-checkout`, {
                 method: 'POST',
                 headers: {
@@ -144,7 +145,7 @@ export default function BillingPage() {
 
         try {
             const token = await auth.currentUser?.getIdToken();
-            const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+            const apiOrigin = getApiOrigin();
             const response = await fetch(`${apiOrigin}/api/v1/insurance/update`, {
                 method: 'POST',
                 headers: {

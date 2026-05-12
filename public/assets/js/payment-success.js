@@ -135,7 +135,7 @@
 
     // Redirect to EMR portal with Firebase custom token for cross-domain SSO
     async function redirectToEMRSuccess(consultationId) {
-      const EMR_BASE = 'https://patriotic-virtual-emr.web.app';
+      const EMR_BASE = getEmrOrigin();
       try {
         const name = encodeURIComponent(
           ((user && user.firstName) || '') + ' ' + ((user && user.lastName) || '')
@@ -164,5 +164,4 @@
         showBookingSuccess(); // Fallback to local page
       }
     }
-
 

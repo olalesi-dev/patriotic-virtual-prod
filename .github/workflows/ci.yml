@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - staging
+      - production
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tracked-env-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if tracked non-example env files exist
+        run: bash ./scripts/check-tracked-envs.sh
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      public: ${{ steps.filter.outputs.public }}
+      emr_portal: ${{ steps.filter.outputs.emr_portal }}
+      emr_backend: ${{ steps.filter.outputs.emr_backend }}
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            public:
+              - 'public/**'
+            emr_portal:
+              - 'emr-portal/**'
+            emr_backend:
+              - 'emr-backend/**'
+            infra:
+              - '.github/workflows/**'
+              - 'firebase.json'
+              - '.firebaserc'
+              - 'firestore.rules'
+              - 'firestore.indexes.json'
+              - 'deploy-backend.sh'
+              - 'deploy.sh'
+
+  validate-public:
+    needs: [tracked-env-guard, changes]
+    if: needs.changes.outputs.public == 'true' || needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate landing assets exist
+        run: |
+          test -f public/index.html
+          test -f public/assets/js/app-config.js
+          test -f public/assets/js/dashboard.js
+
+  build-emr-portal:
+    needs: [tracked-env-guard, changes]
+    if: needs.changes.outputs.emr_portal == 'true' || needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: emr-portal
+    env:
+      NEXT_PUBLIC_FIREBASE_API_KEY: test-api-key
+      NEXT_PUBLIC_APP_ENV: test
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: test-project
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: test-project.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "1234567890"
+      NEXT_PUBLIC_FIREBASE_APP_ID: 1:1234567890:web:test
+      NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: G-TEST1234
+      NEXT_PUBLIC_FIREBASE_VAPID_KEY: test-vapid-key
+      NEXT_PUBLIC_BASE_URL: https://example.com
+      NEXT_PUBLIC_APP_URL: https://example.com
+      NEXT_PUBLIC_MARKETING_URL: https://example.com
+      NEXT_PUBLIC_API_URL: https://example.com
+      NEXT_PUBLIC_PACS_URL: https://pacs.patriotictelehealth.com
+      NEXT_PUBLIC_DOSESPOT_BACKEND_URL: https://example.com
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_dummy
+      NEXT_PUBLIC_VOUCHED_PUBLIC_KEY: test-vouched-key
+      NEXT_PUBLIC_VOUCHED_WEBHOOK_ORIGIN: https://example.com
+      STRIPE_SECRET_KEY: sk_test_dummy
+      DOSESPOT_BACKEND_URL: https://example.com
+      DICOM_BASE_URL: https://example.com
+      FIREBASE_PROJECT_ID: test-project
+      FIREBASE_CLIENT_EMAIL: firebase-adminsdk@test-project.iam.gserviceaccount.com
+      FIREBASE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n"
+      FIREBASE_VERIFY_REVOKED_TOKENS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: emr-portal/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build EMR portal
+        run: npm run build
+
+  build-emr-backend:
+    needs: [tracked-env-guard, changes]
+    if: needs.changes.outputs.emr_backend == 'true' || needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: emr-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: emr-backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build backend
+        run: npm run build

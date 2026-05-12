@@ -14,7 +14,6 @@ const BRAND = {
     navyLight: '#152138',
     phone: '(844) 747-4059',
     email: 'hello@patriotictelehealth.com',
-    baseUrl: 'https://patriotictelehealth.com',
 };
 
 // ─── Types ───────────────────────────────────────────────────

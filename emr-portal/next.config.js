@@ -10,7 +10,7 @@ function getOriginFromEnv(url) {
 const apiOrigin = getOriginFromEnv(process.env.NEXT_PUBLIC_API_URL?.trim());
 const doseSpotPublicOrigin = getOriginFromEnv(process.env.NEXT_PUBLIC_DOSESPOT_BACKEND_URL?.trim());
 const doseSpotBackendOrigin = getOriginFromEnv(process.env.DOSESPOT_BACKEND_URL?.trim());
-const defaultBackendUrl = 'https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app';
+const defaultBackendUrl = 'https://api.patriotictelehealth.com';
 const publicBackendUrl = process.env.NEXT_PUBLIC_DOSESPOT_BACKEND_URL?.trim();
 const serverBackendUrl = process.env.DOSESPOT_BACKEND_URL?.trim();
 const doseSpotBackendUrl = (

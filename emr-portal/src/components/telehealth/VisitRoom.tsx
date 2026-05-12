@@ -1,3 +1,5 @@
+"use client";
+
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Mic, Settings, UserCheck, Clock, ShieldCheck, Video, Bot, StopCircle } from 'lucide-react';

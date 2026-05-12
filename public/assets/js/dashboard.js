@@ -1,7 +1,7 @@
     async function showDashboard() {
       toast("Redirecting to your EMR portal...");
       document.getElementById("landingPage").style.display = "none";
-      const EMR_BASE = 'https://patriotic-virtual-emr.web.app';
+      const EMR_BASE = getEmrOrigin();
       const isAdmin = user && ['admin', 'provider', 'doctor'].includes(user.role);
       const endpoint = isAdmin ? '/admin' : '/patient';
       
@@ -324,4 +324,3 @@
         console.error("Failed to fetch visits", e);
       }
     }
-

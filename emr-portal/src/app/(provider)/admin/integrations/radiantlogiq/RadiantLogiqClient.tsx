@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { Network, DatabaseZap, Eye, EyeOff, Save, RefreshCw, Activity, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { getBackendUrl } from '@/lib/app-origins';
 
 export function RadiantLogiqClient() {
     const profile = useUserProfile();
     const [environment, setEnvironment] = useState('production');
     const [endpoint, setEndpoint] = useState('https://api.radiantlogiq.com/v1');
     const [apiKey, setApiKey] = useState('rl_live_8f7d92ja0s8df7g6h5j4k3l2z1x0c9');
-    const [webhookUrl, setWebhookUrl] = useState('https://patriotic-virtual-backend-189906910824.us-central1.run.app/webhooks/radiant');
+    const [webhookUrl, setWebhookUrl] = useState(() => getBackendUrl('/webhooks/radiant'));
     const [showKey, setShowKey] = useState(false);
     const [testing, setTesting] = useState(false);
     const [status, setStatus] = useState<null | 'success' | 'error'>(null);

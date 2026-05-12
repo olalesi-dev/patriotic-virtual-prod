@@ -35,10 +35,7 @@
             ? mobilePanel.querySelector(".lp-mobile-panel-actions")
             : null;
           const dict = i18n[currentLang] || i18n.en;
-          const isStaging = window.location.host.includes("fresh");
-          const emrHref = isStaging
-            ? "https://patriotic-virtual-emr--emr-fresh-lq8cdyzq.web.app/login"
-            : "https://patriotic-virtual-emr.web.app/login";
+          const emrHref = getEmrLoginUrl();
 
           if (isStaff) {
             // 1. Provider Portal (Internal Admin)
@@ -136,4 +133,3 @@
         showLanding();
       }
     });
-

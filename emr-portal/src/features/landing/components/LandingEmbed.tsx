@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { apiFetchJson } from "@/lib/api-client";
+import { getEmrAppOrigin } from "@/lib/app-origins";
 import { getApiUrl } from "@/lib/api-origin";
 import { auth, db } from "@/lib/firebase";
 import { LandingModals } from "./LandingModals";
@@ -491,9 +492,10 @@ export function LandingEmbed() {
   const copy = COPY[locale];
 
   const replaceLandingUrl = (mutate: (params: URLSearchParams) => void) => {
+    const fallbackOrigin = getEmrAppOrigin();
     const currentUrl = typeof window !== "undefined"
       ? new URL(window.location.href)
-      : new URL(`${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`, "https://patriotic-virtual-emr.web.app");
+      : new URL(`${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`, fallbackOrigin);
     const nextParams = new URLSearchParams(currentUrl.search);
     mutate(nextParams);
     const query = nextParams.toString();

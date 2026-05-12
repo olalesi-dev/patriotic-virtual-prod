@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db as adminDb } from '@/lib/firebase-admin';
+import { getEmrAppOrigin } from '@/lib/app-origins';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
     apiVersion: '2023-10-16' as any,
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
             updatedAt: new Date()
         });
 
-        const baseUrl = originUrl || 'https://patriotic-virtual-emr.web.app';
+        const baseUrl = originUrl || getEmrAppOrigin();
 
         // 4. Create Stripe Checkout Session
         const session = await stripe.checkout.sessions.create({

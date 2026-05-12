@@ -47,7 +47,7 @@
 
         // Cross-domain SSO Interceptor
         const anchor = e.target.closest("a");
-        if (anchor && anchor.href && anchor.href.includes("patriotic-virtual-emr.web.app")) {
+        if (anchor && anchor.href && anchor.href.startsWith(getEmrOrigin())) {
           // If logged in, generate a custom token to carry over the session
           if (auth && auth.currentUser) {
             e.preventDefault();

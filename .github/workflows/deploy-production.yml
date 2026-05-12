@@ -1,0 +1,177 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      public: ${{ steps.filter.outputs.public }}
+      emr_portal: ${{ steps.filter.outputs.emr_portal }}
+      emr_backend: ${{ steps.filter.outputs.emr_backend }}
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            public:
+              - 'public/**'
+            emr_portal:
+              - 'emr-portal/**'
+            emr_backend:
+              - 'emr-backend/**'
+            infra:
+              - 'firebase.json'
+              - '.firebaserc'
+              - 'firestore.rules'
+              - 'firestore.indexes.json'
+              - '.github/workflows/**'
+              - 'deploy-backend.sh'
+
+  deploy-firestore:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      - name: Deploy Firestore rules and indexes
+        run: firebase deploy --only firestore --project "${{ vars.FIREBASE_PROJECT_ID }}"
+
+  deploy-backend:
+    needs: changes
+    if: needs.changes.outputs.emr_backend == 'true' || needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Fetch backend env file from Secret Manager
+        run: |
+          gcloud secrets versions access latest \
+            --secret="${{ vars.BACKEND_ENV_SECRET_NAME }}" \
+            --project="${{ vars.GCP_PROJECT_ID }}" \
+            > /tmp/emr-backend.env
+      - name: Deploy backend to Cloud Run
+        run: |
+          BACKEND_ENV_FILE=/tmp/emr-backend.env \
+          CLOUD_RUN_SERVICE="${{ vars.CLOUD_RUN_SERVICE }}" \
+          BACKEND_SOURCE_DIR=emr-backend \
+          GCP_PROJECT_ID="${{ vars.GCP_PROJECT_ID }}" \
+          GCP_REGION="${{ vars.GCP_REGION }}" \
+          bash ./deploy-backend.sh
+
+  deploy-public:
+    needs: changes
+    if: needs.changes.outputs.public == 'true' || needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      - name: Deploy landing hosting target
+        run: firebase deploy --only hosting:landing --project "${{ vars.FIREBASE_PROJECT_ID }}"
+
+  deploy-emr:
+    needs: changes
+    if: needs.changes.outputs.emr_portal == 'true' || needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      FIREBASE_CLI_EXPERIMENTS: webframeworks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Fetch EMR portal env file from Secret Manager
+        run: |
+          gcloud secrets versions access latest \
+            --secret="${{ vars.EMR_PORTAL_ENV_SECRET_NAME }}" \
+            --project="${{ vars.GCP_PROJECT_ID }}" \
+            > emr-portal/.env.production.local
+          echo "NEXT_PUBLIC_APP_ENV=${{ vars.NEXT_PUBLIC_APP_ENV }}" >> emr-portal/.env.production.local
+      - name: Install root dependencies
+        run: npm ci
+      - name: Install EMR portal dependencies
+        run: npm ci
+        working-directory: emr-portal
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools esbuild
+      - name: Deploy EMR hosting target
+        run: firebase deploy --only hosting:emr --project "${{ vars.FIREBASE_PROJECT_ID }}"
+
+  smoke-checks:
+    needs: [deploy-backend, deploy-public, deploy-emr]
+    if: |
+      always() &&
+      needs.deploy-backend.result != 'failure' &&
+      needs.deploy-backend.result != 'cancelled' &&
+      needs.deploy-public.result != 'failure' &&
+      needs.deploy-public.result != 'cancelled' &&
+      needs.deploy-emr.result != 'failure' &&
+      needs.deploy-emr.result != 'cancelled'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Smoke test landing
+        run: curl --fail --silent --show-error "${{ vars.PUBLIC_URL }}"
+      - name: Smoke test landing runtime config
+        run: |
+          curl --fail --silent --show-error "${{ vars.PUBLIC_URL }}/assets/js/app-config.js" | grep -F "${{ vars.EMR_URL }}"
+          curl --fail --silent --show-error "${{ vars.PUBLIC_URL }}/assets/js/app-config.js" | grep -F "${{ vars.API_URL }}"
+      - name: Smoke test EMR login
+        run: curl --fail --silent --show-error "${{ vars.EMR_URL }}/login"
+      - name: Smoke test backend health
+        run: curl --fail --silent --show-error "${{ vars.API_URL }}/health"

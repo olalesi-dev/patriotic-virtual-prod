@@ -7,6 +7,7 @@ import { Info, AlertTriangle, AlertCircle, Sparkles, X, HeartHandshake, Construc
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { getMarketingUrl } from '@/lib/app-origins';
 
 interface BannerConfig {
     message: string;
@@ -27,6 +28,7 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
     const [isVisible, setIsVisible] = useState(false);
     const router = useRouter();
     const profile = useUserProfile();
+    const referralBaseUrl = getMarketingUrl('/');
 
     useEffect(() => {
         // Hydrate dismissal state
@@ -117,9 +119,9 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
         }
     };
 
-    const envFlag = process.env.NEXT_PUBLIC_APP_ENV || process.env.REACT_APP_ENV;
-    const isDev = envFlag === 'dev';
-    const isTest = envFlag === 'test';
+    const envFlag = (process.env.NEXT_PUBLIC_APP_ENV || process.env.REACT_APP_ENV || '').toLowerCase();
+    const isDev = envFlag === 'dev' || envFlag === 'development';
+    const isTest = envFlag === 'test' || envFlag === 'staging';
 
     return (
         <>
@@ -156,7 +158,10 @@ export function GlobalBanner({ surface }: { surface: 'emr' | 'marketing' }) {
                                 <span>Refer a friend & get $50!</span>
                                 <button 
                                     onClick={async () => {
-                                        await navigator.clipboard.writeText(`https://patriotictelehealth.com?ref=${profile.referralCode}`);
+                                        if (!profile.referralCode) return;
+                                        const referralUrl = new URL(referralBaseUrl);
+                                        referralUrl.searchParams.set('ref', profile.referralCode);
+                                        await navigator.clipboard.writeText(referralUrl.toString());
                                         toast.success("Referral link copied to clipboard!");
                                     }}
                                     className="bg-white text-indigo-600 rounded px-2 py-0.5 hover:bg-indigo-50 ml-1 transition-colors"

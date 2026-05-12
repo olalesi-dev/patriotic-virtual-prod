@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
+import { getEmrAppOrigin, getMarketingOrigin } from '@/lib/app-origins';
 import { doc, getDoc, setDoc, query, collection, orderBy, onSnapshot, getCountFromServer, where } from 'firebase/firestore';
 import { Megaphone, Send, Clock, Calendar, AlertTriangle, Info, Sparkles, X, History, Filter, Loader2, RefreshCw, User } from 'lucide-react';
 import { toast } from 'sonner';
@@ -55,6 +56,8 @@ export function CommunicationsAdminClient() {
 }
 
 function BannerManagerTab() {
+    const emrOrigin = getEmrAppOrigin();
+    const marketingOrigin = getMarketingOrigin();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     
@@ -244,14 +247,14 @@ function BannerManagerTab() {
                         <div className="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900">
                             <div>
                                 <span className="font-bold text-slate-800 dark:text-white block">EMR Portal</span>
-                                <span className="text-xs text-slate-500">Providers & Patients (patriotic-virtual-emr.web.app)</span>
+                                <span className="text-xs text-slate-500">{`Providers & Patients (${emrOrigin})`}</span>
                             </div>
                             <input type="checkbox" checked={showOnEmr} onChange={e => setShowOnEmr(e.target.checked)} className="w-5 h-5 accent-indigo-600 rounded" />
                         </div>
                         <div className="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900">
                             <div>
                                 <span className="font-bold text-slate-800 dark:text-white block">Marketing Site</span>
-                                <span className="text-xs text-slate-500">Public visitors (patriotictelehealth.com)</span>
+                                <span className="text-xs text-slate-500">{`Public visitors (${marketingOrigin})`}</span>
                             </div>
                             <input type="checkbox" checked={showOnMarketing} onChange={e => setShowOnMarketing(e.target.checked)} className="w-5 h-5 accent-indigo-600 rounded" />
                         </div>

@@ -9,6 +9,75 @@ const firebaseConfig = {
   measurementId: "G-FY48JCRQ4D",
 };
 
+function normalizeRuntimeOrigin(value) {
+  if (!value) return null;
+  try {
+    return new URL(value).toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
+function resolveRuntimeConfig() {
+  const host = window.location.hostname;
+  const isFirebasePreview = host.includes("-fresh") || host.includes("--");
+  const isDevLanding = host === "dev.patriotictelehealth.com";
+  const isCustomProdLanding = host === "patriotictelehealth.com" || host === "www.patriotictelehealth.com";
+
+  const defaults = isDevLanding || isFirebasePreview
+    ? {
+        environment: "staging",
+        emrOrigin: "https://emr-dev.patriotictelehealth.com",
+        apiOrigin: "https://api.patriotictelehealth.com",
+        pacsOrigin: "https://pacs.patriotictelehealth.com",
+      }
+    : isCustomProdLanding
+      ? {
+          environment: "production",
+          emrOrigin: "https://emr.patriotictelehealth.com",
+          apiOrigin: "https://api.patriotictelehealth.com",
+          pacsOrigin: "https://pacs.patriotictelehealth.com",
+        }
+      : {
+          environment: "default",
+          emrOrigin: "https://emr.patriotictelehealth.com",
+          apiOrigin: "https://api.patriotictelehealth.com",
+          pacsOrigin: "https://pacs.patriotictelehealth.com",
+        };
+
+  const overrides = window.PVT_RUNTIME_OVERRIDES || {};
+  const emrOrigin = normalizeRuntimeOrigin(overrides.emrOrigin) || defaults.emrOrigin;
+  const apiOrigin = normalizeRuntimeOrigin(overrides.apiOrigin) || defaults.apiOrigin;
+  const pacsOrigin = normalizeRuntimeOrigin(overrides.pacsOrigin) || defaults.pacsOrigin;
+
+  return {
+    environment: defaults.environment,
+    emrOrigin,
+    emrLoginUrl: `${emrOrigin}/login`,
+    apiOrigin,
+    pacsOrigin,
+  };
+}
+
+const APP_RUNTIME_CONFIG = resolveRuntimeConfig();
+window.PVT_RUNTIME_CONFIG = APP_RUNTIME_CONFIG;
+
+function getEmrOrigin() {
+  return APP_RUNTIME_CONFIG.emrOrigin;
+}
+
+function getEmrLoginUrl() {
+  return APP_RUNTIME_CONFIG.emrLoginUrl;
+}
+
+function getApiOrigin() {
+  return APP_RUNTIME_CONFIG.apiOrigin;
+}
+
+function getPacsOrigin() {
+  return APP_RUNTIME_CONFIG.pacsOrigin;
+}
+
 function extendLandingI18n() {
   Object.assign(i18n.en, {
     "nav-clinicians": "For Clinicians & Facilities",
@@ -450,7 +519,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // Fallback to Next.js API URL if available, otherwise absolute Cloud Run backend
-const API = "https://patriotic-virtual-backend-ckia3at3ra-uc.a.run.app";
+const API = getApiOrigin();
 const ACTIVE_STATES = ["FL"];
 const COMING_STATES = ["IN", "VA"];
 let token = null,

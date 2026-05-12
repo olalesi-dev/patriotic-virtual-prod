@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Video, Eye, EyeOff, Save, RefreshCw, Activity, AlertTriangle, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { getBackendUrl } from '@/lib/app-origins';
 
 export function DoxyClient() {
     const [environment, setEnvironment] = useState('production');
@@ -11,7 +12,7 @@ export function DoxyClient() {
     const [apiKey, setApiKey] = useState('');
     const [clinicName, setClinicName] = useState('Patriotic Virtual Telehealth');
     const [isActive, setIsActive] = useState(true);
-    const [webhookUrl] = useState('https://patriotic-virtual-backend-189906910824.us-central1.run.app/webhooks/doxyme');
+    const [webhookUrl] = useState(() => getBackendUrl('/webhooks/doxyme'));
     const [showKey, setShowKey] = useState(false);
     const [testing, setTesting] = useState(false);
     const [saving, setSaving] = useState(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import { getApiOrigin } from '@/lib/api-origin';
 import {
     Download, Plus, Search, Filter, Calendar, X,
     DollarSign, User, MoreHorizontal, ChevronDown,
@@ -74,7 +75,7 @@ export default function BillingPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+                const apiOrigin = getApiOrigin();
                 const API_BASE = `${apiOrigin}/api/v1/billing`;
 
                 // Get Token (Dynamically import to avoid SSR issues if any, though allow auth from lib is fine)
@@ -178,7 +179,7 @@ export default function BillingPage() {
             if (!user) throw new Error("Not logged in");
 
             const token = await user.getIdToken();
-            const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-virtual-backend-189906910824.us-central1.run.app';
+            const apiOrigin = getApiOrigin();
             const res = await fetch(`${apiOrigin}/api/v1/billing/invoices`, {
                 method: 'POST',
                 headers: {

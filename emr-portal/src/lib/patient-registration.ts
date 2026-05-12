@@ -2,6 +2,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import { sendEmailVerification, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getApiUrl } from '@/lib/api-origin';
+import { getEmrAppOrigin } from '@/lib/app-origins';
 import { logAuditEvent } from '@/lib/audit';
 import { syncDoseSpotPatientBestEffort } from '@/lib/dosespot-patient-sync';
 import { db } from '@/lib/firebase';
@@ -162,7 +163,7 @@ async function triggerPatientWelcomeNotification(
     const authToken = await user.getIdToken();
     const portalBaseUrl = typeof window !== 'undefined'
         ? window.location.origin
-        : (process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://patriotictelehealth.com');
+        : getEmrAppOrigin();
 
     const response = await fetch(getApiUrl('/api/v1/notifications/notify'), {
         method: 'POST',

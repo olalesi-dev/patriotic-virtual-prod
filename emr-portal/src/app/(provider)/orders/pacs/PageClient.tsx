@@ -5,6 +5,7 @@ import { Scan, ExternalLink, Info } from "lucide-react";
 import * as SpeechSDK from "microsoft-cognitiveservices-speech-sdk";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
+import { getPacsOrigin, getPacsViewerUrl } from "@/lib/app-origins";
 
 const DICOM_TAGS: Record<string, string> = {
     "00080005": "SpecificCharacterSet",
@@ -37,7 +38,7 @@ type Study = {
 };
 
 export default function PacsPage() {
-    const pacsUrl = "https://pacs.patriotictelehealth.com/";
+    const pacsUrl = `${getPacsOrigin()}/`;
 
     // Speech State
     const [isRecording, setIsRecording] = useState(false);
@@ -758,7 +759,7 @@ export default function PacsPage() {
                                 onClick={() => {
                                     if (!pendingStudy) return;
 
-                                    const viewerUrl = `${pacsUrl}?StudyInstanceUIDs=${pendingStudy.studyUID}`;
+                                    const viewerUrl = getPacsViewerUrl(pendingStudy.studyUID);
 
                                     setShowConfirm(false);
                                     setShowDictation(true);

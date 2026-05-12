@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from 'crypto';
 import Telnyx from 'telnyx';
+import { getBackendPublicOrigin } from '../config/app-origins';
 import { firestore } from '../config/firebase';
 import { logger } from '../utils/logger';
 
@@ -7,7 +8,8 @@ const apiKey = process.env.TELNYX_API_KEY?.trim() || process.env.TELNYX_SECRET_K
 const configuredFromNumber = process.env.TELNYX_FROM_NUMBER?.trim();
 const configuredMessagingProfileId = process.env.TELNYX_MESSAGING_PROFILE_ID?.trim();
 const fallbackFromNumbers = ['+13056862017', '+13056863679'];
-const verifyWebhookUrl = process.env.TELNYX_VERIFY_WEBHOOK_URL?.trim() || 'https://api.patriotictelehealth.com/telnyx/webhook';
+const verifyWebhookUrl = process.env.TELNYX_VERIFY_WEBHOOK_URL?.trim()
+    || `${getBackendPublicOrigin()}/telnyx/webhook`;
 const verifyWhitelistedDestinations = (process.env.TELNYX_VERIFY_WHITELISTED_DESTINATIONS ?? 'US,CA,NP')
     .split(',')
     .map((value) => value.trim().toUpperCase())

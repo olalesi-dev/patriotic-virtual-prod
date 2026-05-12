@@ -7,10 +7,11 @@ import {
     completeTelehealthConsultationPayment,
     CONSULTATION_CATALOG,
 } from '../services/consultation-payments';
-import { buildCheckoutRedirectUrl, normalizeAbsoluteUrl } from '../utils/stripe-checkout-urls';
+import { DEFAULT_EMR_ORIGIN, normalizeAbsoluteUrl } from '../config/app-origins';
+import { buildCheckoutRedirectUrl } from '../utils/stripe-checkout-urls';
 import { logger } from '../utils/logger';
 
-const DEFAULT_APP_URL = 'https://patriotic-virtual-emr.web.app';
+const DEFAULT_APP_URL = DEFAULT_EMR_ORIGIN;
 const router = Router();
 
 function resolveCheckoutBaseUrl(req: Request): string {
