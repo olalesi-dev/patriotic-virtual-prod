@@ -9,10 +9,16 @@ if [[ -z "${origin_url}" ]]; then
   origin_url="git@github.com:OWNER/REPO.git"
 fi
 
+readarray -t history_refs < <(
+  git for-each-ref --format='%(refname)' refs/heads refs/remotes refs/tags
+)
+
 readarray -t cleanup_targets < <(
   {
     git ls-files
-    git log --all --name-only --pretty=format:
+    if (( ${#history_refs[@]} > 0 )); then
+      git log "${history_refs[@]}" --name-only --pretty=format:
+    fi
   } \
     | grep -E '(^|/)\.env($|(\.[^/]+)$)' \
     | grep -vE '(^|/)\.env\.example$' \

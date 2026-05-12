@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+readarray -t history_refs < <(
+  git for-each-ref --format='%(refname)' refs/heads refs/remotes refs/tags
+)
+
 readarray -t tracked_env_paths < <(
   {
     git ls-files
-    git log --all --name-only --pretty=format:
+    if (( ${#history_refs[@]} > 0 )); then
+      git log "${history_refs[@]}" --name-only --pretty=format:
+    fi
   } \
     | grep -E '(^|/)\.env($|(\.[^/]+)$)' \
     | grep -vE '(^|/)\.env\.example$' \
@@ -38,7 +44,7 @@ if (( ${#tracked_env_paths[@]} == 0 )); then
 fi
 
 for path in "${tracked_env_paths[@]}"; do
-  if [[ -n "$(git rev-list -n 1 --all -- "${path}")" ]]; then
+  if (( ${#history_refs[@]} > 0 )) && [[ -n "$(git rev-list -n 1 "${history_refs[@]}" -- "${path}")" ]]; then
     fail "Git history still contains ${path}"
   else
     pass "Git history no longer contains ${path}"
