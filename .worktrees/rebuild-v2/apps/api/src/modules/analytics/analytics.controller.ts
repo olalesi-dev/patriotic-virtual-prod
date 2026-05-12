@@ -13,35 +13,21 @@ export const analyticsController = new Elysia({ prefix: '/analytics' })
   // Clinical Analytics
   .group('/clinical', { isSignIn: true }, (app) =>
     app
-      .get('/stats', async ({ user }) => {
-        return await clinicalService.getSummaryStats(user.organizationId!);
-      })
-      .get('/weight-loss-trend', async ({ user }) => {
-        return await clinicalService.getWeightLossTrend(user.organizationId!);
-      })
-      .get('/overdue-labs', async ({ user }) => {
-        return await clinicalService.getOverdueLabs(user.organizationId!);
-      }),
+      .get('/stats', async ({ user }) => await clinicalService.getSummaryStats(user.organizationId!))
+      .get('/weight-loss-trend', async ({ user }) => await clinicalService.getWeightLossTrend(user.organizationId!))
+      .get('/overdue-labs', async ({ user }) => await clinicalService.getOverdueLabs(user.organizationId!)),
   )
   // Business Analytics
   .group('/business', { isSignIn: true }, (app) =>
     app
-      .get('/stats', async ({ user }) => {
-        return await businessService.getSummaryStats(user.organizationId!);
-      })
-      .get('/revenue-trend', async ({ user }) => {
-        return await businessService.getRevenueTrend(user.organizationId!);
-      })
-      .get('/acquisition-channels', async ({ user }) => {
-        return await businessService.getAcquisitionChannels(user.organizationId!);
-      }),
+      .get('/stats', async ({ user }) => await businessService.getSummaryStats(user.organizationId!))
+      .get('/revenue-trend', async ({ user }) => await businessService.getRevenueTrend(user.organizationId!))
+      .get('/acquisition-channels', async ({ user }) => await businessService.getAcquisitionChannels(user.organizationId!)),
   )
   // Google Analytics
   .get(
     '/google',
-    async () => {
-      return await googleService.getTrafficReport();
-    },
+    async () => await googleService.getTrafficReport(),
     {
       isSignIn: true,
       requirePermissions: ['admin:audit:read'],

@@ -6,14 +6,14 @@
   "types": "src/index.ts",
   "scripts": {
     "lint": "oxlint --fix --deny-warnings",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@workspace/env": "workspace:*"
   },
   "devDependencies": {
+    "@typescript/native-preview": "catalog:dev",
     "bun-types": "catalog:dev",
-    "oxlint": "catalog:dev",
-    "typescript": "catalog:dev"
+    "oxlint": "catalog:dev"
   }
 }

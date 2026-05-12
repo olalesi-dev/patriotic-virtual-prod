@@ -1,6 +1,7 @@
 import { db } from '../../db';
-import { auditLogs, organizations } from '@workspace/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { auditLogs, generateId, organizations } from '@workspace/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
+import { buildAuditIntegrityHash, shouldExportAuditRecord } from './integrity';
 
 /**
  * Generates a formatted, human-readable audit summary.
@@ -9,10 +10,12 @@ export function generateAuditSummary(
   actorName: string,
   action: 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE' | string,
   resourceType: string,
-  resourceId?: string
+  resourceId?: string,
 ): string {
   const actionPast = getPastTense(action);
-  const resourcePart = resourceId ? `${resourceType} ID ${resourceId}` : resourceType;
+  const resourcePart = resourceId
+    ? `${resourceType} ID ${resourceId}`
+    : resourceType;
   return `${actorName} ${actionPast} ${resourcePart}`;
 }
 
@@ -22,21 +25,26 @@ export function generateAuditSummary(
 function getPastTense(action: string): string {
   const upperAction = action.toUpperCase();
   switch (upperAction) {
-    case 'VIEW':
+    case 'VIEW': {
       return 'viewed';
-    case 'CREATE':
+    }
+    case 'CREATE': {
       return 'created';
-    case 'UPDATE':
+    }
+    case 'UPDATE': {
       return 'updated';
-    case 'DELETE':
+    }
+    case 'DELETE': {
       return 'deleted';
-    default:
+    }
+    default: {
       // Fallback for custom actions
       const lowerAction = action.toLowerCase();
       if (lowerAction.endsWith('e')) {
         return `${lowerAction}d`;
       }
       return `${lowerAction}ed`;
+    }
   }
 }
 
@@ -49,7 +57,9 @@ interface CreateAuditLogParams {
   resourceId?: string;
   details?: Record<string, unknown>;
   ipAddress: string;
+  userAgent?: string;
   organizationId?: string;
+  isPhiAccess?: boolean;
 }
 
 /**
@@ -64,7 +74,9 @@ export async function createAuditLog({
   resourceId,
   details,
   ipAddress,
+  userAgent,
   organizationId,
+  isPhiAccess,
 }: CreateAuditLogParams) {
   let finalOrganizationId = organizationId;
 
@@ -78,27 +90,77 @@ export async function createAuditLog({
     }
   }
 
-  const summary = generateAuditSummary(actorName, action, resourceType, resourceId);
+  const summary = generateAuditSummary(
+    actorName,
+    action,
+    resourceType,
+    resourceId,
+  );
 
   if (!finalOrganizationId) {
     throw new Error('No organization context for audit log');
   }
 
+  const [previousLog] = await db
+    .select({ hash: auditLogs.hash })
+    .from(auditLogs)
+    .where(sql`${auditLogs.hash} is not null`)
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(1);
+
+  const id = generateId();
+  const previousHash = previousLog?.hash ?? null;
+  const recordId = resourceId ?? 'N/A';
+  const tableName = resourceType;
+  const fullDetails = {
+    ...details,
+    ipAddress,
+  };
+  const isPhi = isPhiAccess ?? false;
+  const hash = buildAuditIntegrityHash({
+    id,
+    previousHash,
+    organizationId: finalOrganizationId,
+    actorId,
+    actorName,
+    actorRole,
+    action,
+    tableName,
+    recordId,
+    summary,
+    details: fullDetails,
+    ipAddress,
+    userAgent,
+    isPhiAccess: isPhi,
+  });
+  const exportStatus = shouldExportAuditRecord({
+    tableName,
+    isPhiAccess: isPhi,
+    details: fullDetails,
+  })
+    ? 'pending'
+    : 'not_required';
+
   const [log] = await db
     .insert(auditLogs)
     .values({
-      tableName: resourceType,
-      recordId: resourceId ?? 'N/A',
+      id,
+      tableName,
+      recordId,
       action,
       summary,
       actorId,
       actorName,
       actorRole,
       organizationId: finalOrganizationId,
-      details: {
-        ...details,
-        ipAddress,
-      },
+      details: fullDetails,
+      ipAddress,
+      userAgent,
+      previousHash,
+      hash,
+      hashAlgorithm: 'sha256',
+      exportStatus,
+      isPhiAccess: isPhi,
     })
     .returning();
 

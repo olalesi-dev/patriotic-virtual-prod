@@ -54,8 +54,8 @@ export const patientsController = new Elysia({ prefix: '/patients' })
         sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')], { description: 'Sort direction' })),
       }),
       transform({ query }) {
-        if (query.limit) query.limit = +query.limit;
-        if (query.offset) query.offset = +query.offset;
+        if (query.limit) {query.limit = +query.limit;}
+        if (query.offset) {query.offset = +query.offset;}
       },
       detail: { summary: 'List Patients', tags: ['Clinical'] },
     }
@@ -74,7 +74,7 @@ export const patientsController = new Elysia({ prefix: '/patients' })
         )
         .limit(1);
 
-      if (!patient) throw new Error('Patient not found');
+      if (!patient) {throw new Error('Patient not found');}
       return patient;
     },
     {
@@ -132,7 +132,7 @@ export const patientsController = new Elysia({ prefix: '/patients' })
         )
         .returning();
       
-      if (!patient) throw new Error('Patient not found or unauthorized');
+      if (!patient) {throw new Error('Patient not found or unauthorized');}
       return patient;
     },
     {

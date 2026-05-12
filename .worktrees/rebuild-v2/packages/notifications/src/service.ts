@@ -10,8 +10,19 @@ import type {
   NotificationRequest,
   NotificationChannel,
   RecipientProfile,
+  ScheduleNotificationRequest,
 } from './types';
 import { sendTemplateEmail } from '@workspace/email/send-template-email';
+import { sendTelnyxSms } from './channels/telnyx';
+
+const readScheduledFor = (
+  request: NotificationRequest | ScheduleNotificationRequest,
+): Date | undefined => {
+  const value = (request as ScheduleNotificationRequest).sendAt;
+  if (!value) return undefined;
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
 
 export class NotificationService {
   private readonly repo: ReturnType<typeof notificationRepository>;
@@ -23,11 +34,12 @@ export class NotificationService {
     this.repo = notificationRepository(db);
   }
 
-  async notify(request: NotificationRequest) {
+  async notify(request: NotificationRequest | ScheduleNotificationRequest) {
     const topic = getNotificationTopic(request.topicKey);
     if (!topic) {
       throw new Error(`Unknown notification topic: ${request.topicKey}`);
     }
+    const scheduledFor = readScheduledFor(request);
 
     const dedupeKey =
       request.dedupeKey ??
@@ -63,6 +75,7 @@ export class NotificationService {
       actorId: request.actorId,
       actorName: request.actorName,
       source: request.source,
+      scheduledFor,
       status: 'queued',
     });
 
@@ -74,6 +87,7 @@ export class NotificationService {
       const recipient = await this.repo.addRecipient({
         messageId: message.id,
         recipientId: profile.uid,
+        userId: profile.userId,
         email: profile.email,
         phone: profile.phone,
         displayName: profile.displayName,
@@ -94,7 +108,9 @@ export class NotificationService {
 
         // Check user preferences unless bypassed
         if (!topic.bypassPreferences) {
-          const prefs = await this.repo.getUserPreferences(recipientId);
+          const prefs = await this.repo.getUserPreferences(
+            profile.userId ?? recipientId,
+          );
           const categoryPrefs = prefs.find((p) => p.category === topic.category);
           if (categoryPrefs) {
             if (channel === 'email' && !categoryPrefs.emailEnabled) continue;
@@ -112,11 +128,13 @@ export class NotificationService {
           messageRecipientId: recipient.id,
           channel,
           status: 'queued',
+          scheduledFor,
         });
 
         const enqueueResult = await this.queue.enqueue(
           { deliveryId: delivery.id },
           {
+            scheduleAt: scheduledFor,
             onInlineDispatch: () => this.processDelivery(delivery.id),
           },
         );
@@ -188,6 +206,30 @@ export class NotificationService {
               updatedAt: new Date(),
             })
             .where(eq(schema.notificationDeliveries.id, deliveryId));
+        } else if (delivery.channel === 'sms') {
+          if (!recipient.phone) throw new Error('Recipient has no phone');
+          if (!topic.buildSmsBody) throw new Error('Topic has no SMS body');
+
+          const text = topic.buildSmsBody(message.templateData);
+          if (!text) throw new Error('Topic generated an empty SMS body');
+
+          const result = await sendTelnyxSms({
+            recipientId: recipient.recipientId,
+            to: recipient.phone,
+            text,
+          });
+
+          await tx
+            .update(schema.notificationDeliveries)
+            .set({
+              status: 'sent',
+              provider: 'telnyx',
+              providerMessageId: result.providerMessageId,
+              providerResponseCode: result.providerResponseCode,
+              sentAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(schema.notificationDeliveries.id, deliveryId));
         } else if (delivery.channel === 'in_app') {
           const title =
             topic.buildInboxTitle(message.templateData) ?? 'Notification';
@@ -249,6 +291,7 @@ export class NotificationService {
     if (user) {
       return {
         uid: user.id,
+        userId: user.id,
         email: user.email,
         phone: user.phone ?? undefined,
         displayName: user.name,
@@ -264,10 +307,19 @@ export class NotificationService {
       .limit(1);
 
     if (patient) {
+      const [patientUser] = patient.userId
+        ? await this.db
+            .select()
+            .from(schema.users)
+            .where(eq(schema.users.id, patient.userId))
+            .limit(1)
+        : [undefined];
+
       return {
         uid: patient.id,
-        email: undefined, // Might need to join with users if userId exists
-        phone: patient.phone ?? undefined,
+        userId: patient.userId ?? undefined,
+        email: patient.email ?? patientUser?.email ?? undefined,
+        phone: patient.phone ?? patientUser?.phone ?? undefined,
         displayName: `${patient.firstName} ${patient.lastName}`,
         role: 'patient',
       };
@@ -281,10 +333,19 @@ export class NotificationService {
       .limit(1);
 
     if (provider) {
+      const [providerUser] = provider.userId
+        ? await this.db
+            .select()
+            .from(schema.users)
+            .where(eq(schema.users.id, provider.userId))
+            .limit(1)
+        : [undefined];
+
       return {
         uid: provider.id,
-        email: undefined,
-        phone: provider.phone ?? undefined,
+        userId: provider.userId ?? undefined,
+        email: providerUser?.email ?? undefined,
+        phone: provider.phone ?? providerUser?.phone ?? undefined,
         displayName: `${provider.firstName} ${provider.lastName}`,
         role: 'provider',
       };

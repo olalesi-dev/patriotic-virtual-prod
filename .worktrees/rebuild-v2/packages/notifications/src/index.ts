@@ -8,3 +8,4 @@ export * from './policies/retry.policy';
 export * from './service';
 export * from './producers';
 export * from './sendgrid-webhook-security';
+export * from './channels/telnyx';

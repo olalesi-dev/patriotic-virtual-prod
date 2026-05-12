@@ -9,8 +9,7 @@ export const socialsController = new Elysia({ prefix: '/socials' })
   // Social Posts (Provider Broadcasts)
   .get(
     '/posts',
-    async ({ user }) => {
-      return await db
+    async ({ user }) => await db
         .select({
           post: schema.socialPosts,
           author: {
@@ -21,8 +20,7 @@ export const socialsController = new Elysia({ prefix: '/socials' })
         .from(schema.socialPosts)
         .innerJoin(schema.users, eq(schema.socialPosts.authorId, schema.users.id))
         .where(eq(schema.socialPosts.organizationId, user.organizationId!))
-        .orderBy(desc(schema.socialPosts.createdAt));
-    },
+        .orderBy(desc(schema.socialPosts.createdAt)),
     {
       isSignIn: true,
       requirePermissions: ['communications:read'],
@@ -144,8 +142,8 @@ export const socialsController = new Elysia({ prefix: '/socials' })
           .orderBy(orderDirection);
       }, {
         transform({ query }) {
-          if (query.limit) query.limit = +query.limit;
-          if (query.offset) query.offset = +query.offset;
+          if (query.limit) {query.limit = +query.limit;}
+          if (query.offset) {query.offset = +query.offset;}
         },
         query: t.Object({
           search: t.Optional(t.String()),
@@ -175,8 +173,7 @@ export const socialsController = new Elysia({ prefix: '/socials' })
           mediaType: t.Optional(t.String()),
         })
       })
-      .post('/posts/:id/like', async ({ params: { id }, user }) => {
-        return await db.transaction(async (tx) => {
+      .post('/posts/:id/like', async ({ params: { id }, user }) => await db.transaction(async (tx) => {
           const [existing] = await tx
             .select()
             .from(schema.communityLikes)
@@ -197,6 +194,5 @@ export const socialsController = new Elysia({ prefix: '/socials' })
           await tx.insert(schema.communityLikes).values({ postId: id, userId: user.id });
           await tx.update(schema.communityPosts).set({ likesCount: sql`${schema.communityPosts.likesCount} + 1` }).where(eq(schema.communityPosts.id, id));
           return { liked: true };
-        });
-      })
+        }))
   );

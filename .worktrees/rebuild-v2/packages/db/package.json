@@ -6,7 +6,7 @@
   "types": "src/index.ts",
   "scripts": {
     "lint": "oxlint --fix --deny-warnings",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "bun run src/migrate.ts",
@@ -22,9 +22,9 @@
     "postgres": "catalog:db"
   },
   "devDependencies": {
+    "@typescript/native-preview": "catalog:dev",
     "bun-types": "catalog:dev",
     "drizzle-kit": "catalog:db",
-    "oxlint": "catalog:dev",
-    "typescript": "catalog:dev"
+    "oxlint": "catalog:dev"
   }
 }

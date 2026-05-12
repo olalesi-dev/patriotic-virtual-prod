@@ -9,6 +9,7 @@ import {
   type DispatchTaskPayload,
   NotificationProducers,
 } from '@workspace/notifications/index';
+import { authMacro } from '../auth/macro';
 
 const queue = new NotificationQueue();
 const notificationService = new NotificationService(db, queue);
@@ -24,12 +25,13 @@ if (process.env.REDIS_URL && process.env.NODE_ENV !== 'test') {
 export const notificationController = new Elysia({
   prefix: '/notifications',
 })
+  .use(authMacro)
   .post(
     '/notify',
-    async ({ body }) => {
-      return await notificationService.notify(body as any);
-    },
+    async ({ body }) => await notificationService.notify(body as any),
     {
+      isSignIn: true,
+      requirePermissions: ['admin:communications:write'],
       body: t.Object({
         topicKey: t.String(),
         entityId: t.String(),
@@ -41,6 +43,7 @@ export const notificationController = new Elysia({
         actorId: t.Optional(t.String()),
         actorName: t.Optional(t.String()),
         source: t.Optional(t.String()),
+        sendAt: t.Optional(t.String()),
       }),
     },
   )
@@ -62,6 +65,8 @@ export const notificationController = new Elysia({
       };
     },
     {
+      isSignIn: true,
+      requirePermissions: ['admin:communications:write'],
       body: t.Object({
         patientName: t.String(),
         service: t.Optional(t.String()),

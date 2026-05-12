@@ -3,6 +3,231 @@ import { authMacro } from '../../auth/macro';
 import { db } from '../../../db';
 import * as schema from '@workspace/db/schema';
 import { eq, and, gte, lte, or, desc, asc, ilike, type SQL } from 'drizzle-orm';
+import { NotificationQueue } from '@workspace/queue/index';
+import {
+  NotificationService,
+  type NotificationChannel,
+  type NotificationTopicKey,
+} from '@workspace/notifications/index';
+
+const notificationQueue = new NotificationQueue();
+const notificationService = new NotificationService(db, notificationQueue);
+const appointmentNotificationChannels: NotificationChannel[] = [
+  'email',
+  'sms',
+  'in_app',
+];
+
+const fullName = (
+  person: { firstName?: string | null; lastName?: string | null } | null,
+  fallback: string,
+): string => {
+  const name = [person?.firstName, person?.lastName].filter(Boolean).join(' ');
+  return name || fallback;
+};
+
+const dateLabel = (value: Date | null): string =>
+  value
+    ? new Intl.DateTimeFormat('en-US', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(value)
+    : 'your scheduled date';
+
+const timeLabel = (value: Date | null): string =>
+  value
+    ? new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      }).format(value)
+    : 'your scheduled time';
+
+const loadAppointmentContext = async (
+  appointmentId: string,
+  organizationId: string,
+) => {
+  const [context] = await db
+    .select({
+      appointment: schema.appointments,
+      patient: schema.patients,
+      provider: schema.providers,
+    })
+    .from(schema.appointments)
+    .innerJoin(schema.patients, eq(schema.appointments.patientId, schema.patients.id))
+    .leftJoin(schema.providers, eq(schema.appointments.providerId, schema.providers.id))
+    .where(
+      and(
+        eq(schema.appointments.id, appointmentId),
+        eq(schema.patients.organizationId, organizationId),
+      ),
+    )
+    .limit(1);
+
+  return context;
+};
+
+type AppointmentContext = NonNullable<
+  Awaited<ReturnType<typeof loadAppointmentContext>>
+>;
+
+const scheduledTimeChanged = (
+  previous: Date | null,
+  next: Date | null,
+): boolean => previous?.getTime() !== next?.getTime();
+
+const appointmentTopicForUpdate = (
+  before: AppointmentContext,
+  after: AppointmentContext,
+  body: {
+    status?: string;
+    scheduledTime?: string;
+  },
+): NotificationTopicKey | undefined => {
+  if (body.status === 'cancelled' && before.appointment.status !== 'cancelled') {
+    return 'APPOINTMENT_CANCELLED';
+  }
+
+  if (
+    after.appointment.scheduledTime &&
+    before.appointment.status === 'pending_scheduling' &&
+    body.status &&
+    body.status !== before.appointment.status
+  ) {
+    return 'APPOINTMENT_BOOKED';
+  }
+
+  if (
+    body.scheduledTime &&
+    after.appointment.scheduledTime &&
+    scheduledTimeChanged(
+      before.appointment.scheduledTime,
+      after.appointment.scheduledTime,
+    )
+  ) {
+    return before.appointment.scheduledTime
+      ? 'APPOINTMENT_RESCHEDULED'
+      : 'APPOINTMENT_BOOKED';
+  }
+
+  return undefined;
+};
+
+const buildAppointmentTemplateData = (
+  context: AppointmentContext,
+  recipientType: 'patient' | 'provider',
+) => {
+  const appointmentAt = context.appointment.scheduledTime;
+  const patientName = fullName(context.patient, 'the patient');
+  const providerName = fullName(context.provider, 'your care team');
+
+  return {
+    recipient_type: recipientType,
+    patient_name: patientName,
+    patientName,
+    provider_name: providerName,
+    providerName,
+    appointment_date: dateLabel(appointmentAt),
+    appointment_time: timeLabel(appointmentAt),
+    appointmentAt: appointmentAt?.toISOString(),
+    meetingUrl: context.appointment.meetingUrl,
+    portalLink:
+      recipientType === 'provider' ? '/appointments' : '/patient/scheduled',
+  };
+};
+
+const notifyAppointmentUpdate = async (
+  topicKey: NotificationTopicKey,
+  context: AppointmentContext,
+  actor: { id: string; name?: string | null },
+) => {
+  const recipients: {
+    id: string;
+    type: 'patient' | 'provider';
+  }[] = [{ id: context.patient.id, type: 'patient' }];
+
+  if (context.provider?.id) {
+    recipients.push({ id: context.provider.id, type: 'provider' });
+  }
+
+  const results = await Promise.all(
+    recipients.map((recipient) =>
+      notificationService.notify({
+        topicKey,
+        entityId: context.appointment.id,
+        recipientIds: [recipient.id],
+        channels: appointmentNotificationChannels,
+        dedupeKey: `appointment:${topicKey}:${context.appointment.id}:${recipient.type}`,
+        templateData: buildAppointmentTemplateData(context, recipient.type),
+        metadata: {
+          appointmentId: context.appointment.id,
+          patientId: context.patient.id,
+          providerId: context.provider?.id,
+        },
+        actorId: actor.id,
+        actorName: actor.name ?? undefined,
+        source: 'appointments',
+      }),
+    ),
+  );
+
+  return { topicKey, results };
+};
+
+export interface AppointmentUpdateBody {
+  status?: string;
+  reason?: string;
+  scheduledTime?: string;
+  providerId?: string;
+  meetingUrl?: string;
+}
+
+export const updateAppointmentAndNotify = async (
+  id: string,
+  body: AppointmentUpdateBody,
+  user: { id: string; name?: string | null; organizationId?: string | null },
+  set?: { status?: number | string },
+) => {
+  const before = await loadAppointmentContext(id, user.organizationId!);
+  if (!before) {throw new Error('Appointment not found');}
+
+  const [appointment] = await db
+    .update(schema.appointments)
+    .set({
+      ...body,
+      scheduledTime: body.scheduledTime ? new Date(body.scheduledTime) : undefined,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.appointments.id, id))
+    .returning();
+
+  if (!appointment) {throw new Error('Appointment not found');}
+
+  const after = await loadAppointmentContext(id, user.organizationId!);
+  if (!after) {throw new Error('Appointment not found');}
+
+  const topicKey = appointmentTopicForUpdate(before, after, body);
+  if (!topicKey) {
+    return { ...appointment, notification: { status: 'not_applicable' } };
+  }
+
+  try {
+    const notification = await notifyAppointmentUpdate(topicKey, after, user);
+    return { ...appointment, notification: { status: 'sent', ...notification } };
+  } catch (error) {
+    if (set) {
+      set.status = 207;
+    }
+    return {
+      ...appointment,
+      notification: {
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Notification failed',
+      },
+    };
+  }
+};
 
 export const appointmentsController = new Elysia({ prefix: '/appointments' })
   .use(authMacro)
@@ -65,8 +290,8 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
       isSignIn: true,
       requirePermissions: ['appointments:read'],
       transform({ query }) {
-        if (query.limit) query.limit = +query.limit;
-        if (query.offset) query.offset = +query.offset;
+        if (query.limit) {query.limit = Number(query.limit);}
+        if (query.offset) {query.offset = Number(query.offset);}
       },
       query: t.Object({
         start: t.Optional(t.String()),
@@ -127,7 +352,7 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
         )
         .limit(1);
 
-      if (!appointment) throw new Error('Appointment not found');
+      if (!appointment) {throw new Error('Appointment not found');}
       return appointment;
     },
     {
@@ -139,20 +364,7 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
   )
   .patch(
     '/:id',
-    async ({ params: { id }, body }) => {
-      const [appointment] = await db
-        .update(schema.appointments)
-        .set({
-          ...body,
-          scheduledTime: body.scheduledTime ? new Date(body.scheduledTime) : undefined,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.appointments.id, id))
-        .returning();
-      
-      if (!appointment) throw new Error('Appointment not found');
-      return appointment;
-    },
+    async ({ params: { id }, body, user, set }) => updateAppointmentAndNotify(id, body, user, set),
     {
       isSignIn: true,
       requirePermissions: ['appointments:write'],
@@ -193,7 +405,7 @@ export const appointmentsController = new Elysia({ prefix: '/appointments' })
         .where(eq(schema.appointments.id, id))
         .limit(1);
       
-      if (!appointment) throw new Error('Appointment not found');
+      if (!appointment) {throw new Error('Appointment not found');}
 
       const [note] = await db
         .insert(schema.soapNotes)

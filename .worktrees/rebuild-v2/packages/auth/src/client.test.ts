@@ -6,5 +6,6 @@ describe('Better Auth Client Configuration', () => {
     expect(authClient).toBeDefined();
     expect(authClient.signIn).toBeDefined();
     expect(authClient.signUp).toBeDefined();
+    expect(authClient.passkey).toBeDefined();
   });
 });

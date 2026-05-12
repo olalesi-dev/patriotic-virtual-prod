@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["bun-types", "vite/client"],
+    "paths": {
+      "~/*": ["./src/*"],
+      "@workspace/ui/*": [
+        "../../packages/ui/src/components/*",
+        "../../packages/ui/src/forms/*",
+        "../../packages/ui/src/theme/*",
+        "../../packages/ui/src/store/*",
+        "../../packages/ui/src/lib/*"
+      ]
+    }
+  },
+  "include": ["src", "vite.config.ts"],
+  "exclude": ["dist", ".output", "node_modules"]
+}

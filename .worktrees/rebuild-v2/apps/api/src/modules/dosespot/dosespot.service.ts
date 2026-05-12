@@ -16,14 +16,14 @@ export async function ensurePatientSynced(patientId: string, onBehalfOfClinician
 
   // Check if all required fields are present
   const missingFields = [];
-  if (!patient.firstName) missingFields.push('firstName');
-  if (!patient.lastName) missingFields.push('lastName');
-  if (!patient.dateOfBirth) missingFields.push('dateOfBirth');
-  if (!patient.address1) missingFields.push('address1');
-  if (!patient.city) missingFields.push('city');
-  if (!patient.state) missingFields.push('state');
-  if (!patient.zipCode) missingFields.push('zipCode');
-  if (!patient.phone) missingFields.push('phone');
+  if (!patient.firstName) {missingFields.push('firstName');}
+  if (!patient.lastName) {missingFields.push('lastName');}
+  if (!patient.dateOfBirth) {missingFields.push('dateOfBirth');}
+  if (!patient.address1) {missingFields.push('address1');}
+  if (!patient.city) {missingFields.push('city');}
+  if (!patient.state) {missingFields.push('state');}
+  if (!patient.zipCode) {missingFields.push('zipCode');}
+  if (!patient.phone) {missingFields.push('phone');}
 
   if (missingFields.length > 0) {
     await db

@@ -94,13 +94,26 @@ export class NotificationQueue {
     options: EnqueueNotificationOptions = {},
   ): Promise<EnqueueNotificationResult> {
     if (!this.redisUrl) {
-      if (!this.inlineFallback || !options.onInlineDispatch) {
+      if (!options.onInlineDispatch) {
         throw new Error('REDIS_URL is required for notification queueing.');
       }
 
       const delayMs = options.scheduleAt
         ? Math.max(options.scheduleAt.getTime() - this.now(), 0)
         : 0;
+
+      if (delayMs === 0) {
+        await options.onInlineDispatch();
+        return {
+          mode: 'inline_fallback',
+        };
+      }
+
+      if (!this.inlineFallback) {
+        throw new Error(
+          'REDIS_URL is required for scheduled notification queueing.',
+        );
+      }
 
       this.setTimer(() => {
         void options.onInlineDispatch?.();

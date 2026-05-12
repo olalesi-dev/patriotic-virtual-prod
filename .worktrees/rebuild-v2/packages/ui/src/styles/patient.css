@@ -1,10 +1,52 @@
 @import './globals.css';
 
 @layer base {
-  :root {
-    /* Patient specific overrides */
+  :root,
+  [data-theme='patient'] {
     --primary: #2563eb; /* Blue */
     --primary-foreground: #ffffff;
+    --secondary: #eff6ff;
+    --secondary-foreground: #1e3a8a;
+    --accent: #fdf2f8;
+    --accent-foreground: #831843;
     --ring: #2563eb;
+    --chart-1: #2563eb;
+    --chart-2: #db2777;
+    --chart-3: #0d9488;
+    --chart-4: #ca8a04;
+    --chart-5: #dc2626;
+    --sidebar-primary: #2563eb;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #eff6ff;
+    --sidebar-accent-foreground: #1e3a8a;
+  }
+
+  [data-theme='patient'].dark,
+  .dark [data-theme='patient'] {
+    --background: #07111f;
+    --foreground: #eff6ff;
+    --card: #0f1d33;
+    --card-foreground: #eff6ff;
+    --popover: #0f1d33;
+    --popover-foreground: #eff6ff;
+    --primary: #60a5fa;
+    --primary-foreground: #0b1220;
+    --secondary: #172554;
+    --secondary-foreground: #dbeafe;
+    --muted: #172554;
+    --muted-foreground: #bfdbfe;
+    --accent: #4a044e;
+    --accent-foreground: #fce7f3;
+    --border: #1e3a8a;
+    --input: #1e3a8a;
+    --ring: #93c5fd;
+    --sidebar: #0f1d33;
+    --sidebar-foreground: #eff6ff;
+    --sidebar-primary: #60a5fa;
+    --sidebar-primary-foreground: #0b1220;
+    --sidebar-accent: #172554;
+    --sidebar-accent-foreground: #dbeafe;
+    --sidebar-border: #1e3a8a;
+    --sidebar-ring: #93c5fd;
   }
 }

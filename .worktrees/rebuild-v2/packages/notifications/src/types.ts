@@ -38,6 +38,7 @@ export const notificationTopics = [
   'FAILED_PAYMENT_ALERT_ADMIN',
   'PRESCRIPTION_SENT_PATIENT',
   'PRESCRIPTION_ERROR_ADMIN',
+  'SECURITY_BREAK_GLASS_ACTIVATED',
 ] as const;
 export type NotificationTopicKey = (typeof notificationTopics)[number];
 
@@ -60,8 +61,7 @@ export const notificationTemplateKeys = [
   'prescription_sent_patient',
   'prescription_error_admin',
 ] as const;
-export type NotificationTemplateKey =
-  (typeof notificationTemplateKeys)[number];
+export type NotificationTemplateKey = (typeof notificationTemplateKeys)[number];
 
 export type InboxNotificationType =
   | 'account_created'
@@ -86,6 +86,7 @@ export type NotificationDeliveryStatus =
 
 export interface RecipientProfile {
   uid: string;
+  userId?: string;
   email?: string;
   phone?: string;
   displayName: string;

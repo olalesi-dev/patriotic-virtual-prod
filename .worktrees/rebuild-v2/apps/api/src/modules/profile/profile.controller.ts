@@ -2,8 +2,10 @@ import { Elysia, t } from 'elysia';
 import { authMacro } from '../auth/macro';
 import { db } from '../../db';
 import * as schema from '@workspace/db/schema';
+import { revokeUserAuth } from '@workspace/auth/session-security';
 import { eq, and } from 'drizzle-orm';
 import { NotFoundException } from '../../utils/errors';
+import { logAuthSecurityEvent } from '../auth/security-audit';
 
 export const profileController = new Elysia({ prefix: '/profile' })
   .use(authMacro)
@@ -16,7 +18,7 @@ export const profileController = new Elysia({ prefix: '/profile' })
         .where(eq(schema.users.id, user.id))
         .limit(1);
 
-      if (!userData) throw new NotFoundException('User not found');
+      if (!userData) {throw new NotFoundException('User not found');}
 
       let providerData = null;
       let patientData = null;
@@ -96,6 +98,29 @@ export const profileController = new Elysia({ prefix: '/profile' })
         bio: t.Optional(t.String()),
       }),
       detail: { summary: 'Update My Profile', tags: ['Profile'] },
+    },
+  )
+  .post(
+    '/me/revoke-sessions',
+    async ({ user, session, request, ip }) => {
+      const revocation = await revokeUserAuth(db as never, user.id, 'logout_all');
+      await logAuthSecurityEvent({
+        actor: user,
+        actorRole: session.role,
+        targetUserId: user.id,
+        event: 'logout_all',
+        request,
+        ipAddress: ip,
+        details: {
+          tokenVersion: revocation.tokenVersion,
+        },
+      });
+
+      return revocation;
+    },
+    {
+      isSignIn: true,
+      detail: { summary: 'Revoke My Sessions', tags: ['Profile'] },
     },
   )
   .get(

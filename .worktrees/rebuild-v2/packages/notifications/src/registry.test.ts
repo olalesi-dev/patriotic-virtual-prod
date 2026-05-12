@@ -61,4 +61,20 @@ describe('notification registry', () => {
     expect(topic.inboxType).toBe('appointment_reminder');
     expect(body).toMatch(/^Your appointment with Alex Doe starts in 8 hours at /);
   });
+
+  it('enables SMS for appointment booking topics', () => {
+    const topic = getNotificationTopic('APPOINTMENT_BOOKED');
+    const body = topic.buildSmsBody?.({
+      appointmentAt: '2026-04-27T10:00:00.000Z',
+      provider_name: 'Dr. Smith',
+      recipient_type: 'patient',
+      meetingUrl: 'https://pvt.doxy.me/virtualtelehealth',
+    });
+
+    expect(topic.allowedChannels).toContain('sms');
+    expect(topic.defaultChannels).toContain('sms');
+    expect(body).toContain('Patriotic Telehealth');
+    expect(body).toContain('Dr. Smith');
+    expect(body).toContain('https://pvt.doxy.me/virtualtelehealth');
+  });
 });

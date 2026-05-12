@@ -1,7 +1,21 @@
 import { createAuthClient } from 'better-auth/react';
-import { twoFactorClient, adminClient } from 'better-auth/client/plugins';
+import { passkeyClient } from '@better-auth/passkey/client';
+import {
+  twoFactorClient,
+  adminClient,
+  emailOTPClient,
+  magicLinkClient,
+  phoneNumberClient,
+} from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
-  plugins: [twoFactorClient(), adminClient()],
+  plugins: [
+    emailOTPClient(),
+    magicLinkClient(),
+    phoneNumberClient(),
+    twoFactorClient(),
+    passkeyClient(),
+    adminClient(),
+  ],
 });

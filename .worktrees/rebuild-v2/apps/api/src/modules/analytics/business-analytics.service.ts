@@ -56,8 +56,8 @@ export class BusinessAnalyticsService {
     // Simplified: return MRR for last 6 months
     // In a real app, this would be a historical snapshots table
     return [
-      { month: 'Last Month', mrr: 15000 },
-      { month: 'This Month', mrr: 18800 },
+      { month: 'Last Month', mrr: 15_000 },
+      { month: 'This Month', mrr: 18_800 },
     ];
   }
 

@@ -50,8 +50,8 @@ export const facilitiesController = new Elysia({ prefix: '/facilities' })
         },
         {
           transform({ query }) {
-            if (query.limit) query.limit = +query.limit;
-            if (query.offset) query.offset = +query.offset;
+            if (query.limit) {query.limit = +query.limit;}
+            if (query.offset) {query.offset = +query.offset;}
           },
           query: t.Object({
             search: t.Optional(t.String()),

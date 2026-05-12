@@ -125,6 +125,59 @@ export class DoseSpotClinicianService {
     return { agreements, readiness: updated };
   }
 
+  async fetchIdpDisclaimer(clinicianUid: string) {
+    const provider = await this.requireClinicianId(clinicianUid);
+    const response = await doseSpotApiFetch<any>(
+      'api/clinicians/idpDisclaimer',
+      { onBehalfOfClinicianId: provider.clinicianId },
+    );
+
+    const disclaimer = this.normalizeIdpDisclaimer(response);
+    const current = await this.getReadiness(clinicianUid);
+    const updated = {
+      ...current,
+      idp: {
+        ...current.idp,
+        disclaimer,
+      },
+      lastOperation: 'idp.disclaimer.fetch',
+    };
+    updated.readinessStatus = this.deriveReadinessStatus(updated);
+    await this.persistReadiness(clinicianUid, updated);
+
+    return { disclaimer, readiness: updated };
+  }
+
+  async acceptIdpDisclaimer(clinicianUid: string, body: any = {}) {
+    const provider = await this.requireClinicianId(clinicianUid);
+    const response = await doseSpotApiFetch<any>(
+      'api/clinicians/idpDisclaimer',
+      {
+        method: 'POST',
+        body: { ...body, ClinicianId: provider.clinicianId },
+        onBehalfOfClinicianId: provider.clinicianId,
+      },
+    );
+
+    ensureDoseSpotResultOk(response.Result, 'accept IDP disclaimer');
+
+    const current = await this.getReadiness(clinicianUid);
+    const now = new Date().toISOString();
+    const updated = {
+      ...current,
+      idp: {
+        ...current.idp,
+        disclaimerAccepted: true,
+        disclaimerAcceptedAt: now,
+      },
+      lastOperation: 'idp.disclaimer.accept',
+    };
+    updated.readinessStatus = this.deriveReadinessStatus(updated);
+    await this.persistReadiness(clinicianUid, updated);
+
+    return { success: true, disclaimerAccepted: true, readiness: updated };
+  }
+
   async acceptLegalAgreement(clinicianUid: string, agreementId: string) {
     const provider = await this.requireClinicianId(clinicianUid);
     const response = await doseSpotApiFetch<any>('api/clinicians/acceptAgreement', {
@@ -254,7 +307,7 @@ export class DoseSpotClinicianService {
       .where(eq(schema.providers.userId, userId))
       .limit(1);
 
-    if (!provider) throw new Error('Provider profile not found');
+    if (!provider) {throw new Error('Provider profile not found');}
     return provider;
   }
 
@@ -291,28 +344,28 @@ export class DoseSpotClinicianService {
       clinicianUid: uid,
       clinicianId: id,
       readinessStatus: 'not_started',
-      clinicianConfirmed: !!stored.clinicianConfirmed,
-      accountLocked: !!stored.accountLocked,
-      agreementsAccepted: !!stored.agreementsAccepted || (agreements.length > 0 && agreements.every((a: any) => a.accepted)),
+      clinicianConfirmed: Boolean(stored.clinicianConfirmed),
+      accountLocked: Boolean(stored.accountLocked),
+      agreementsAccepted: Boolean(stored.agreementsAccepted) || (agreements.length > 0 && agreements.every((a: any) => a.accepted)),
       legalAgreements: agreements,
       idp: {
         initializedAt: idp.initializedAt || null,
-        disclaimerAccepted: !!idp.disclaimerAccepted,
+        disclaimerAccepted: Boolean(idp.disclaimerAccepted),
         disclaimerAcceptedAt: idp.disclaimerAcceptedAt || null,
         status: idp.status || null,
         pendingQuestionsCount: idp.pendingQuestionsCount || 0,
         questions: idp.questions || [],
-        otpRequired: !!idp.otpRequired,
+        otpRequired: Boolean(idp.otpRequired),
         completedAt: idp.completedAt || null,
         disclaimer: idp.disclaimer || null,
       },
       tfa: {
-        enabled: !!tfa.enabled,
+        enabled: Boolean(tfa.enabled),
         activatedAt: tfa.activatedAt || null,
         deactivatedAt: tfa.deactivatedAt || null,
       },
       pin: {
-        resetRequired: !!pin.resetRequired,
+        resetRequired: Boolean(pin.resetRequired),
         lastResetAt: pin.lastResetAt || null,
       },
       lastEventType: stored.lastEventType || null,
@@ -326,16 +379,16 @@ export class DoseSpotClinicianService {
   }
 
   private deriveReadinessStatus(r: DoseSpotClinicianReadiness): DoseSpotClinicianReadinessStatus {
-    if (r.accountLocked) return 'locked';
-    if (!r.agreementsAccepted) return 'agreements_pending';
-    if (!r.clinicianConfirmed) return 'clinician_confirmation_pending';
+    if (r.accountLocked) {return 'locked';}
+    if (!r.agreementsAccepted) {return 'agreements_pending';}
+    if (!r.clinicianConfirmed) {return 'clinician_confirmation_pending';}
     if (!r.idp.completedAt) {
-      if (r.idp.otpRequired) return 'otp_required';
-      if (r.idp.questions.length > 0) return 'idp_questions';
+      if (r.idp.otpRequired) {return 'otp_required';}
+      if (r.idp.questions.length > 0) {return 'idp_questions';}
       return 'idp_pending';
     }
-    if (!r.tfa.enabled) return 'tfa_pending';
-    if (r.pin.resetRequired) return 'pin_reset_required';
+    if (!r.tfa.enabled) {return 'tfa_pending';}
+    if (r.pin.resetRequired) {return 'pin_reset_required';}
     return 'ready';
   }
 
@@ -344,10 +397,19 @@ export class DoseSpotClinicianService {
     return items.map((i: any) => ({
       agreementId: i.AgreementId?.toString(),
       title: i.Title,
-      accepted: !!i.Accepted,
+      accepted: Boolean(i.Accepted),
       acceptedAt: i.AcceptedAt || null,
       version: i.Version || null,
     }));
+  }
+
+  private normalizeIdpDisclaimer(response: any): DoseSpotIdpDisclaimer {
+    const source = response.Item ?? response.Disclaimer ?? response;
+    return {
+      title: source.Title ?? source.title ?? null,
+      body: source.Body ?? source.Text ?? source.body ?? source.text ?? null,
+      version: source.Version ?? source.version ?? null,
+    };
   }
 
   private updateReadinessFromAgreements(

@@ -1,0 +1,33 @@
+@import '../../../../packages/ui/src/styles/provider.css';
+@import 'tw-animate-css';
+
+@layer base {
+  :root {
+    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--accent) 50%, transparent),
+        transparent 280px
+      ),
+      var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}

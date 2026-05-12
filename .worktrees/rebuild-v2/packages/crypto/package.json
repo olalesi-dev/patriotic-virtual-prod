@@ -1,0 +1,20 @@
+{
+  "name": "@workspace/crypto",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./field-encryption": "./src/field-encryption.ts",
+    "./e2ee-envelope": "./src/e2ee-envelope.ts"
+  },
+  "scripts": {
+    "lint": "oxlint --fix --deny-warnings",
+    "typecheck": "tsgo --noEmit",
+    "test": "SKIP_ENV_VALIDATION=true bun test"
+  },
+  "devDependencies": {
+    "@typescript/native-preview": "catalog:dev",
+    "bun-types": "catalog:dev",
+    "oxlint": "catalog:dev"
+  }
+}

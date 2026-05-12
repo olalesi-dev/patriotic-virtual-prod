@@ -2,6 +2,20 @@ import { describe, it, expect, spyOn, mock, afterEach } from 'bun:test';
 import { generateAuditSummary, createAuditLog } from './service';
 import { db } from '../../db';
 
+const mockPreviousAuditHash = (hash: string | null = null) =>
+  spyOn(db, 'select').mockImplementation(
+    () =>
+      ({
+        from: () => ({
+          where: () => ({
+            orderBy: () => ({
+              limit: () => Promise.resolve(hash ? [{ hash }] : []),
+            }),
+          }),
+        }),
+      }) as any,
+  );
+
 describe('Audit Service', () => {
   afterEach(() => {
     mock.restore();
@@ -68,6 +82,7 @@ describe('Audit Service', () => {
     it('should insert an audit log with provided organizationId', async () => {
       const mockLog = { id: 'log-123', summary: 'Test summary' } as any;
 
+      mockPreviousAuditHash('previous-hash');
       const insertSpy = spyOn(db, 'insert').mockImplementation(
         () =>
           ({
@@ -85,11 +100,22 @@ describe('Audit Service', () => {
         resourceType: 'Patient',
         resourceId: 'pat-1',
         ipAddress: '127.0.0.1',
+        userAgent: 'test-agent',
         organizationId: 'org-1',
+        isPhiAccess: false,
       });
 
       expect(result).toEqual(mockLog);
       expect(insertSpy).toHaveBeenCalled();
+      const valuesCall = (insertSpy.mock.results[0].value as any).values.mock
+        .calls[0][0];
+      expect(valuesCall.ipAddress).toBe('127.0.0.1');
+      expect(valuesCall.userAgent).toBe('test-agent');
+      expect(valuesCall.isPhiAccess).toBe(false);
+      expect(valuesCall.previousHash).toBe('previous-hash');
+      expect(valuesCall.hash).toHaveLength(64);
+      expect(valuesCall.hashAlgorithm).toBe('sha256');
+      expect(valuesCall.exportStatus).toBe('not_required');
     });
 
     it('should default organizationId if not provided', async () => {
@@ -100,9 +126,11 @@ describe('Audit Service', () => {
       };
 
       // Mock organization lookup
-      const orgSpy = spyOn(db.query.organizations, 'findFirst').mockResolvedValue(
-        mockOrg as any,
-      );
+      const orgSpy = spyOn(
+        db.query.organizations,
+        'findFirst',
+      ).mockResolvedValue(mockOrg as any);
+      mockPreviousAuditHash();
 
       // Mock insert
       const insertSpy = spyOn(db, 'insert').mockImplementation(() => {
@@ -129,6 +157,33 @@ describe('Audit Service', () => {
       const valuesCall = (insertSpy.mock.results[0].value as any).values.mock
         .calls[0][0];
       expect(valuesCall.organizationId).toBe('patriotic-org-id');
+    });
+
+    it('marks auth and PHI audit rows pending for export', async () => {
+      const mockLog = { id: 'log-789', summary: 'Security summary' } as any;
+
+      mockPreviousAuditHash('previous-hash');
+      const insertSpy = spyOn(db, 'insert').mockImplementation(() => {
+        const valuesMock = mock(() => ({
+          returning: mock(() => [mockLog]),
+        }));
+        return { values: valuesMock } as any;
+      });
+
+      await createAuditLog({
+        actorId: 'user-3',
+        actorName: 'Security Admin',
+        actorRole: 'Admin',
+        action: 'UPDATE',
+        resourceType: 'Auth Security',
+        resourceId: 'user-3',
+        ipAddress: '127.0.0.1',
+        organizationId: 'org-1',
+      });
+
+      const valuesCall = (insertSpy.mock.results[0].value as any).values.mock
+        .calls[0][0];
+      expect(valuesCall.exportStatus).toBe('pending');
     });
   });
 });

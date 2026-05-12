@@ -16,7 +16,7 @@ export const availabilityController = new Elysia({ prefix: '/availability' })
         .where(eq(schema.providers.userId, user.id))
         .limit(1);
 
-      if (!provider) throw new NotFoundException('Provider profile not found');
+      if (!provider) {throw new NotFoundException('Provider profile not found');}
 
       const items = await db
         .select()
@@ -40,7 +40,7 @@ export const availabilityController = new Elysia({ prefix: '/availability' })
         .where(eq(schema.providers.userId, user.id))
         .limit(1);
 
-      if (!provider) throw new NotFoundException('Provider profile not found');
+      if (!provider) {throw new NotFoundException('Provider profile not found');}
 
       const [item] = await db
         .insert(schema.availability)
@@ -74,7 +74,7 @@ export const availabilityController = new Elysia({ prefix: '/availability' })
         .where(eq(schema.providers.userId, user.id))
         .limit(1);
 
-      if (!provider) throw new NotFoundException('Provider profile not found');
+      if (!provider) {throw new NotFoundException('Provider profile not found');}
 
       await db
         .delete(schema.availability)

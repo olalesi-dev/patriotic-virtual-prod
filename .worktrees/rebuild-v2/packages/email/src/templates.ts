@@ -8,19 +8,21 @@ export interface EmailTemplateConfig {
   defaultReplyToEmail: string;
 }
 
-export const emailTemplateConfig: Record<EmailTemplateKey, EmailTemplateConfig> =
-  {
-    patient_welcome: {
-      envKey: 'SENDGRID_TEMPLATE_PATIENT_WELCOME',
-      defaultFromEmail: 'hello@patriotictelehealth.com',
-      defaultReplyToEmail: 'hello@patriotictelehealth.com',
-    },
-    staff_welcome: {
-      envKey: 'SENDGRID_TEMPLATE_STAFF_WELCOME',
-      defaultFromEmail: 'hello@patriotictelehealth.com',
-      defaultReplyToEmail: 'hello@patriotictelehealth.com',
-    },
-  };
+export const emailTemplateConfig: Record<
+  EmailTemplateKey,
+  EmailTemplateConfig
+> = {
+  patient_welcome: {
+    envKey: 'SENDGRID_TEMPLATE_PATIENT_WELCOME',
+    defaultFromEmail: 'hello@patriotictelehealth.com',
+    defaultReplyToEmail: 'hello@patriotictelehealth.com',
+  },
+  staff_welcome: {
+    envKey: 'SENDGRID_TEMPLATE_STAFF_WELCOME',
+    defaultFromEmail: 'hello@patriotictelehealth.com',
+    defaultReplyToEmail: 'hello@patriotictelehealth.com',
+  },
+};
 
 export const resolveTemplateId = (
   templateKey: EmailTemplateKey,
@@ -48,6 +50,22 @@ export const resolveSenderConfig = (
   const replyTo =
     source.SENDGRID_DEFAULT_REPLY_TO_EMAIL?.trim() ||
     config.defaultReplyToEmail;
+
+  return {
+    fromEmail,
+    replyTo,
+  };
+};
+
+export const resolveDefaultSenderConfig = (
+  source: Record<string, string | undefined> = process.env,
+): { fromEmail: string; replyTo: string } => {
+  const fromEmail =
+    source.SENDGRID_DEFAULT_FROM_EMAIL?.trim() ||
+    'hello@patriotictelehealth.com';
+  const replyTo =
+    source.SENDGRID_DEFAULT_REPLY_TO_EMAIL?.trim() ||
+    'hello@patriotictelehealth.com';
 
   return {
     fromEmail,

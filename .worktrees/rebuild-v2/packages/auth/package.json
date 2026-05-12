@@ -6,20 +6,22 @@
   "types": "src/index.ts",
   "scripts": {
     "lint": "oxlint --fix --deny-warnings",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "test": "SKIP_ENV_VALIDATION=true bun test"
   },
   "dependencies": {
+    "@better-auth/passkey": "1.6.9",
     "@workspace/db": "workspace:*",
     "@workspace/email": "workspace:*",
     "@workspace/env": "workspace:*",
+    "@workspace/notifications": "workspace:*",
     "better-auth": "catalog:auth",
     "drizzle-orm": "catalog:db",
     "postgres": "catalog:db"
   },
   "devDependencies": {
+    "@typescript/native-preview": "catalog:dev",
     "bun-types": "catalog:dev",
-    "oxlint": "catalog:dev",
-    "typescript": "catalog:dev"
+    "oxlint": "catalog:dev"
   }
 }

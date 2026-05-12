@@ -6,6 +6,10 @@ import * as schema from '@workspace/db/schema';
 import { eq } from 'drizzle-orm';
 import { DoseSpotClinicianService } from '../clinician.service';
 import { ForbiddenException } from '../../../utils/errors';
+import {
+  logDelegatedAccessAuditEvent,
+  resolveDoseSpotOnBehalfOf,
+} from '../../delegated-access/service';
 
 const clinicianService = new DoseSpotClinicianService(db);
 
@@ -13,13 +17,8 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
   .use(authMacro)
   .get(
     '/sso-url',
-    async ({ user, query }) => {
-      const {
-        clinicianId: targetClinicianId,
-        patientId,
-        encounterId,
-        refillsErrors,
-      } = query;
+    async ({ user, session, query, request, ip }) => {
+      const { patientId, encounterId, refillsErrors } = query;
 
       const [currentUserProvider] = await db
         .select()
@@ -29,16 +28,21 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
 
       let signingClinicianId: number;
       let onBehalfOfUserId: number | undefined;
+      let delegationId: string | null = null;
 
       const isAdmin =
         user.role === 'Admin' ||
         user.role === 'SuperAdmin' ||
         user.role === 'Staff';
 
-      if (isAdmin && targetClinicianId) {
-        signingClinicianId = Number(dosespotConfig.userId);
-        onBehalfOfUserId = Number(targetClinicianId);
-      } else if (currentUserProvider?.doseSpotClinicianId) {
+      const delegation = user.organizationId
+        ? await resolveDoseSpotOnBehalfOf({
+            actorUserId: user.id,
+            organizationId: user.organizationId,
+          })
+        : null;
+
+      if (currentUserProvider?.doseSpotClinicianId) {
         signingClinicianId = Number(currentUserProvider.doseSpotClinicianId);
       } else if (isAdmin) {
         signingClinicianId = Number(dosespotConfig.userId);
@@ -46,6 +50,25 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
         throw new ForbiddenException(
           'User not registered with DoseSpot. Contact admin.',
         );
+      }
+
+      if (delegation) {
+        onBehalfOfUserId = delegation.clinicianId;
+        ({ delegationId } = delegation);
+        await logDelegatedAccessAuditEvent({
+          actor: user,
+          actorRole: session.role,
+          delegationId: delegation.delegationId,
+          targetProviderId: delegation.targetProviderId,
+          event: 'delegated_access_dosespot_on_behalf',
+          request,
+          ipAddress: ip,
+          organizationId: user.organizationId,
+          details: {
+            clinicianIdResolved: true,
+            scopes: delegation.scopes,
+          },
+        });
       }
 
       const url = generateSSOUrl({
@@ -56,13 +79,12 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
         refillsErrors: refillsErrors === 'true',
       });
 
-      return { url };
+      return { url, onBehalfOf: delegationId ? { delegationId } : null };
     },
     {
       isSignIn: true,
       requirePermissions: ['dosespot:sso'],
       query: t.Object({
-        clinicianId: t.Optional(t.String()),
         patientId: t.Optional(t.String()),
         encounterId: t.Optional(t.String()),
         refillsErrors: t.Optional(t.String()),
@@ -87,9 +109,7 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
   )
   .get(
     '/registration-status',
-    async ({ user }) => {
-      return await clinicianService.fetchRegistrationStatus(user.id);
-    },
+    async ({ user }) => await clinicianService.fetchRegistrationStatus(user.id),
     {
       isSignIn: true,
       requirePermissions: ['dosespot:sso'],
@@ -103,9 +123,7 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
     app
       .post(
         '/start',
-        async ({ user, body }) => {
-          return await clinicianService.startIdp(user.id, body);
-        },
+        async ({ user, body }) => await clinicianService.startIdp(user.id, body),
         {
           isSignIn: true,
           requirePermissions: ['dosespot:sso'],
@@ -115,21 +133,20 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
       )
       .post(
         '/answers',
-        async ({ user, body }) => {
-          return await clinicianService.submitIdpAnswers(user.id, body);
-        },
+        async ({ user, body }) => await clinicianService.submitIdpAnswers(user.id, body),
         {
           isSignIn: true,
           requirePermissions: ['dosespot:sso'],
           body: t.Any(),
-          detail: { summary: 'Submit Clinician IDP Answers', tags: ['DoseSpot'] },
+          detail: {
+            summary: 'Submit Clinician IDP Answers',
+            tags: ['DoseSpot'],
+          },
         },
       )
       .post(
         '/otp',
-        async ({ user, body }) => {
-          return await clinicianService.submitIdpOtp(user.id, body);
-        },
+        async ({ user, body }) => await clinicianService.submitIdpOtp(user.id, body),
         {
           isSignIn: true,
           requirePermissions: ['dosespot:sso'],
@@ -139,9 +156,7 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
       )
       .post(
         '/init',
-        async ({ user }) => {
-          return await clinicianService.initIdp(user.id);
-        },
+        async ({ user }) => await clinicianService.initIdp(user.id),
         {
           isSignIn: true,
           requirePermissions: ['dosespot:sso'],
@@ -153,9 +168,7 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
     app
       .get(
         '/',
-        async ({ user }) => {
-          return await clinicianService.fetchLegalAgreements(user.id);
-        },
+        async ({ user }) => await clinicianService.fetchLegalAgreements(user.id),
         {
           isSignIn: true,
           requirePermissions: ['dosespot:sso'],
@@ -167,12 +180,10 @@ export const clinicianController = new Elysia({ prefix: '/clinician' })
       )
       .post(
         '/accept',
-        async ({ user, body }) => {
-          return await clinicianService.acceptLegalAgreement(
+        async ({ user, body }) => await clinicianService.acceptLegalAgreement(
             user.id,
             body.agreementId,
-          );
-        },
+          ),
         {
           isSignIn: true,
           requirePermissions: ['dosespot:sso'],

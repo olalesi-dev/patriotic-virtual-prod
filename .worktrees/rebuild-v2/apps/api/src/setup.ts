@@ -10,10 +10,13 @@ import { env } from '@workspace/env';
 import { loggerConfig } from './utils/logger';
 import { compression } from './plugins/compression';
 import { circuitBreakerPlugin } from './plugins/circuit-breaker';
+import { csrfProtection } from './plugins/csrf';
+import { transportSecurity } from './plugins/transport-security';
 import { authMacro } from './modules/auth/macro';
 import { auditMacro } from './modules/audit/macro';
 
 export const setupApp = new Elysia({ name: 'setup' })
+  .use(transportSecurity)
   .use(logger(loggerConfig))
   .use(requestID())
   .use(ip())
@@ -27,9 +30,10 @@ export const setupApp = new Elysia({ name: 'setup' })
       allowedHeaders: ['Content-Type', 'Authorization'],
     }),
   )
+  .use(csrfProtection)
   .use(rateLimit({
-    max: 100000, // Very high limit for load testing
-    duration: 60000,
+    max: 100_000, // Very high limit for load testing
+    duration: 60_000,
   }))
   .use(compression())
   .use(circuitBreakerPlugin())

@@ -8,13 +8,11 @@ export const communityController = new Elysia({ prefix: '/community' })
   .use(authMacro)
   .get(
     '/moderation-logs',
-    async ({ user }) => {
-      return await db
+    async ({ user }) => await db
         .select()
         .from(schema.moderationLogs)
         .where(eq(schema.moderationLogs.organizationId, user.organizationId!))
-        .orderBy(desc(schema.moderationLogs.timestamp));
-    },
+        .orderBy(desc(schema.moderationLogs.timestamp)),
     {
       isSignIn: true,
       requirePermissions: ['admin:community:read'],

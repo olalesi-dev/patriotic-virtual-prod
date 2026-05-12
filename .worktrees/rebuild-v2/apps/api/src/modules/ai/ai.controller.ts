@@ -10,7 +10,7 @@ const queueService = new AiQueueService();
 export const aiController = new Elysia({ prefix: '/ai' })
   .use(rateLimit({
     max: 10,
-    duration: 60000,
+    duration: 60_000,
     errorResponse: new Response(JSON.stringify({ error: 'AI rate limit exceeded' }), {
       status: 429,
       headers: { 'Content-Type': 'application/json' }
@@ -19,15 +19,11 @@ export const aiController = new Elysia({ prefix: '/ai' })
   .use(authMacro)
   .group('/queue', { isSignIn: true }, (app) =>
     app
-      .get('/', async ({ user }) => {
-        return await queueService.getQueue(user.organizationId!);
-      }, {
+      .get('/', async ({ user }) => await queueService.getQueue(user.organizationId!), {
         requirePermissions: ['patients:read'],
         detail: { summary: 'Get AI Action Queue', tags: ['AI'] }
       })
-      .post('/:id/resolve', async ({ params: { id }, user }) => {
-        return await queueService.resolveItem(id, user.organizationId!);
-      }, {
+      .post('/:id/resolve', async ({ params: { id }, user }) => await queueService.resolveItem(id, user.organizationId!), {
         requirePermissions: ['patients:write'],
         params: t.Object({ id: t.String() }),
         detail: { summary: 'Resolve AI Action Item', tags: ['AI'] }

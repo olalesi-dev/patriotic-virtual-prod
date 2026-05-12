@@ -6,13 +6,13 @@
   "types": "src/index.ts",
   "scripts": {
     "sync": "SKIP_ENV_VALIDATION=true bun run scripts/sync-env-example.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@sinclair/typebox": "catalog:api"
   },
   "devDependencies": {
-    "bun-types": "catalog:dev",
-    "typescript": "catalog:dev"
+    "@typescript/native-preview": "catalog:dev",
+    "bun-types": "catalog:dev"
   }
 }

@@ -38,8 +38,8 @@ export const operationsController = new Elysia()
         },
         {
           transform({ query }) {
-            if (query.limit) query.limit = +query.limit;
-            if (query.offset) query.offset = +query.offset;
+            if (query.limit) {query.limit = +query.limit;}
+            if (query.offset) {query.offset = +query.offset;}
           },
           query: t.Object({
             limit: t.Optional(t.Numeric()),
@@ -118,8 +118,8 @@ export const operationsController = new Elysia()
         },
         {
           transform({ query }) {
-            if (query.limit) query.limit = +query.limit;
-            if (query.offset) query.offset = +query.offset;
+            if (query.limit) {query.limit = +query.limit;}
+            if (query.offset) {query.offset = +query.offset;}
           },
           query: t.Object({
             search: t.Optional(t.String()),

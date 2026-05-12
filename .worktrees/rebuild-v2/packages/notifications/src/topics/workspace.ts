@@ -74,4 +74,22 @@ export const workspaceTopics = {
       `${asString(data.patientName, 'A patient')} submitted a request for ${asString(data.serviceName, 'a consultation')}.`,
     buildHref: () => '/waitlist',
   },
+  SECURITY_BREAK_GLASS_ACTIVATED: {
+    topicKey: 'SECURITY_BREAK_GLASS_ACTIVATED',
+    category: 'workspace',
+    priority: 'critical',
+    allowedChannels: ['in_app'],
+    defaultChannels: ['in_app'],
+    containsPHI: false,
+    requiresAudit: true,
+    fromEmail: 'security@patriotictelehealth.com',
+    replyTo: 'security@patriotictelehealth.com',
+    dedupeWindowSeconds: 0,
+    bypassPreferences: true,
+    inboxType: 'alert',
+    buildInboxTitle: () => 'Break-glass access activated',
+    buildInboxBody: (data) =>
+      `${asString(data.actorName, 'A user')} activated emergency access until ${asString(data.expiresAt, 'the configured expiry')}.`,
+    buildHref: () => '/admin/audit',
+  },
 } satisfies Partial<Record<string, NotificationTopicDefinition>>;

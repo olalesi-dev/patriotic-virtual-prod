@@ -6,13 +6,11 @@ import { eq, and, desc } from 'drizzle-orm';
 
 export const communicationsController = new Elysia({ prefix: '/communications' })
   .use(authMacro)
-  .get('/broadcast-history', async ({ user }) => {
-    return await db
+  .get('/broadcast-history', async ({ user }) => await db
       .select()
       .from(schema.broadcastLogs)
       .where(eq(schema.broadcastLogs.organizationId, user.organizationId!))
-      .orderBy(desc(schema.broadcastLogs.timestamp));
-  }, {
+      .orderBy(desc(schema.broadcastLogs.timestamp)), {
     isSignIn: true,
     requirePermissions: ['admin:communications:read'],
     detail: { summary: 'Get Broadcast History', tags: ['Admin'] },

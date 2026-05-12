@@ -2,6 +2,7 @@
 exact = true
 linker = "isolated"
 linkWorkspacePackages = true
+peer = false
 
 [install.cache]
 dir = ".bun/cache"

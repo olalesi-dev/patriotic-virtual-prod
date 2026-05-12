@@ -9,9 +9,7 @@ export const taskQueueController = new Elysia({ prefix: '/queues' })
   .use(authMacro)
   .get(
     '/refills',
-    async ({ user }) => {
-      return await workflowService.getPendingRefillsQueue(user.id);
-    },
+    async ({ user }) => await workflowService.getPendingRefillsQueue(user.id),
     {
       isSignIn: true,
       requirePermissions: ['appointments:read'],
@@ -20,9 +18,16 @@ export const taskQueueController = new Elysia({ prefix: '/queues' })
   )
   .get(
     '/rx-changes',
-    async ({ user }) => {
-      return await workflowService.getPendingRxChangesQueue(user.id);
+    async ({ user }) => await workflowService.getPendingRxChangesQueue(user.id),
+    {
+      isSignIn: true,
+      requirePermissions: ['appointments:read'],
+      detail: { summary: 'Fetch Pending Rx Changes Queue', tags: ['DoseSpot'] },
     },
+  )
+  .get(
+    '/rxchanges',
+    async ({ user }) => await workflowService.getPendingRxChangesQueue(user.id),
     {
       isSignIn: true,
       requirePermissions: ['appointments:read'],

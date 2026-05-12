@@ -102,7 +102,32 @@ export const users = pgTable(
     email: text('email').notNull().unique(),
     name: text('name').notNull(),
     phone: text('phone'),
+    phoneVerified: boolean('phone_verified').default(false).notNull(),
+    phoneVerification: jsonb('phone_verification')
+      .$type<Record<string, unknown>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+    tokenVersion: integer('token_version').default(0).notNull(),
+    tokenVersionUpdatedAt: timestamp('token_version_updated_at', {
+      withTimezone: true,
+    })
+      .default(sql`'1970-01-01 00:00:00+00'::timestamptz`)
+      .notNull(),
+    disabled: boolean('disabled').default(false).notNull(),
+    mustChangePassword: boolean('must_change_password')
+      .default(false)
+      .notNull(),
+    passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }),
+    adminCreatedById: text('admin_created_by_id').references(
+      (): any => users.id,
+    ),
     emailVerified: boolean('emailVerified').notNull().default(false),
+    twoFactorEnabled: boolean('twoFactorEnabled').default(false).notNull(),
+    failedLoginAttempts: integer('failed_login_attempts').default(0).notNull(),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
+    lastFailedLoginAt: timestamp('last_failed_login_at', {
+      withTimezone: true,
+    }),
     image: text('image'),
     roleId: text('role_id').references(() => roles.id),
     organizationId: text('organization_id').references(() => organizations.id),
@@ -116,6 +141,158 @@ export const users = pgTable(
   (table) => [
     index('users_email_idx').on(table.email),
     index('users_organization_id_idx').on(table.organizationId),
+  ],
+);
+
+export const adminPasswordResetRequests = pgTable(
+  'admin_password_reset_requests',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    requestedEmail: text('requested_email').notNull(),
+    requestedByUserId: text('requested_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    requestedIpAddress: text('requested_ip_address').notNull(),
+    requestedUserAgent: text('requested_user_agent'),
+    status: text('status').default('pending').notNull(),
+    reason: text('reason'),
+    approvedById: text('approved_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    rejectedById: text('rejected_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    rejectedAt: timestamp('rejected_at', { withTimezone: true }),
+    decisionReason: text('decision_reason'),
+    deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('admin_password_reset_requests_user_status_idx').on(
+      table.userId,
+      table.status,
+    ),
+    index('admin_password_reset_requests_org_status_idx').on(
+      table.organizationId,
+      table.status,
+    ),
+    index('admin_password_reset_requests_created_at_idx').on(table.createdAt),
+  ],
+);
+
+export const breakGlassAccessGrants = pgTable(
+  'break_glass_access_grants',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    grantedById: text('granted_by_id').references(() => users.id),
+    activatedById: text('activated_by_id').references(() => users.id),
+    reason: text('reason').notNull(),
+    activationReason: text('activation_reason'),
+    compensatingControl: text('compensating_control'),
+    status: text('status').default('granted').notNull(),
+    scopes: jsonb('scopes')
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    activatedAt: timestamp('activated_at', { withTimezone: true }),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('break_glass_access_grants_user_idx').on(table.userId),
+    index('break_glass_access_grants_org_status_idx').on(
+      table.organizationId,
+      table.status,
+    ),
+    index('break_glass_access_grants_expires_at_idx').on(table.expiresAt),
+  ],
+);
+
+export const delegatedAccessSessions = pgTable(
+  'delegated_access_sessions',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    actorUserId: text('actor_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    targetUserId: text('target_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    targetPatientId: text('target_patient_id').references(() => patients.id, {
+      onDelete: 'set null',
+    }),
+    targetProviderId: text('target_provider_id').references(
+      () => providers.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
+    grantedById: text('granted_by_id').references(() => users.id),
+    reason: text('reason').notNull(),
+    status: text('status').default('active').notNull(),
+    scopes: jsonb('scopes')
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    activatedAt: timestamp('activated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('delegated_access_actor_status_idx').on(
+      table.actorUserId,
+      table.status,
+      table.expiresAt,
+    ),
+    index('delegated_access_org_status_idx').on(
+      table.organizationId,
+      table.status,
+    ),
+    index('delegated_access_target_user_idx').on(table.targetUserId),
+    index('delegated_access_target_patient_idx').on(table.targetPatientId),
+    index('delegated_access_target_provider_idx').on(table.targetProviderId),
+    index('delegated_access_scopes_gin_idx').using('gin', table.scopes),
   ],
 );
 
@@ -149,17 +326,28 @@ export const patients = pgTable(
     state: text('state'),
     zipCode: text('zip_code'),
     phone: text('phone'),
+    phoneVerified: boolean('phone_verified').default(false).notNull(),
+    phoneVerification: jsonb('phone_verification')
+      .$type<Record<string, unknown>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
     mrn: text('mrn'),
     organizationId: text('organization_id')
       .notNull()
       .references(() => organizations.id),
-    isIdentityVerified: boolean('is_identity_verified').default(false).notNull(),
+    isIdentityVerified: boolean('is_identity_verified')
+      .default(false)
+      .notNull(),
     latestVerificationId: text('latest_verification_id'),
     acquisitionSource: text('acquisition_source'),
     doseSpotPatientId: text('dosespot_patient_id'),
-    doseSpotSyncStatus: text('dosespot_sync_status').default('pending').notNull(),
+    doseSpotSyncStatus: text('dosespot_sync_status')
+      .default('pending')
+      .notNull(),
     doseSpotSyncError: text('dosespot_sync_error'),
-    doseSpotLastSyncAt: timestamp('dosespot_last_sync_at', { withTimezone: true }),
+    doseSpotLastSyncAt: timestamp('dosespot_last_sync_at', {
+      withTimezone: true,
+    }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -251,8 +439,12 @@ export const appointments = pgTable(
     patientId: text('patient_id')
       .notNull()
       .references(() => patients.id, { onDelete: 'cascade' }),
-    providerId: text('provider_id').references(() => providers.id, { onDelete: 'set null' }),
-    consultationId: text('consultation_id').references(() => consultations.id, { onDelete: 'set null' }),
+    providerId: text('provider_id').references(() => providers.id, {
+      onDelete: 'set null',
+    }),
+    consultationId: text('consultation_id').references(() => consultations.id, {
+      onDelete: 'set null',
+    }),
     type: text('type').default('Telehealth').notNull(),
     status: text('status').default('pending_scheduling').notNull(),
     reason: text('reason'),
@@ -295,7 +487,14 @@ export const auditLogs = pgTable(
     newData: jsonb('new_data'),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
+    previousHash: text('previous_hash'),
     hash: text('hash'),
+    hashAlgorithm: text('hash_algorithm').default('sha256').notNull(),
+    exportStatus: text('export_status').default('not_required').notNull(),
+    exportedAt: timestamp('exported_at', { withTimezone: true }),
+    exportAttempts: integer('export_attempts').default(0).notNull(),
+    lastExportError: text('last_export_error'),
+    externalSinkId: text('external_sink_id'),
     isPhiAccess: boolean('is_phi_access').default(false).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
@@ -305,6 +504,10 @@ export const auditLogs = pgTable(
     index('audit_logs_organization_id_idx').on(table.organizationId),
     index('audit_logs_actor_id_idx').on(table.actorId),
     index('audit_logs_record_idx').on(table.tableName, table.recordId),
+    index('audit_logs_export_status_idx').on(
+      table.exportStatus,
+      table.createdAt,
+    ),
     index('audit_logs_details_gin_idx').using('gin', table.details),
   ],
 );
@@ -334,7 +537,10 @@ export const dosespotWebhookEvents = pgTable(
   (table) => [
     index('dosespot_webhook_events_status_idx').on(table.status),
     index('dosespot_webhook_events_event_type_idx').on(table.eventType),
-    index('dosespot_webhook_events_payload_gin_idx').using('gin', table.payload),
+    index('dosespot_webhook_events_payload_gin_idx').using(
+      'gin',
+      table.payload,
+    ),
   ],
 );
 
@@ -420,6 +626,13 @@ export const messages = pgTable(
       .references(() => users.id),
     subject: text('subject'),
     body: text('body').notNull(),
+    encryptionMode: text('encryption_mode').default('plain').notNull(),
+    encryptedPayload:
+      jsonb('encrypted_payload').$type<Record<string, unknown>>(),
+    encryptedKeyRecipients: jsonb('encrypted_key_recipients')
+      .$type<Record<string, unknown>[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
     isRead: boolean('is_read').default(false).notNull(),
     readAt: timestamp('read_at', { withTimezone: true }),
     threadId: text('thread_id'),
@@ -434,6 +647,86 @@ export const messages = pgTable(
     index('messages_sender_id_idx').on(table.senderId),
     index('messages_recipient_id_idx').on(table.recipientId),
     index('messages_thread_id_idx').on(table.threadId),
+    index('messages_encryption_mode_idx').on(table.encryptionMode),
+  ],
+);
+
+export const encryptionKeyRegistry = pgTable(
+  'encryption_key_registry',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    keyId: text('key_id').notNull().unique(),
+    provider: text('provider').notNull(),
+    purpose: text('purpose').notNull(),
+    status: text('status').default('active').notNull(),
+    metadata: jsonb('metadata')
+      .$type<Record<string, unknown>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+    rotatedAt: timestamp('rotated_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('encryption_key_registry_provider_idx').on(table.provider),
+    index('encryption_key_registry_purpose_status_idx').on(
+      table.purpose,
+      table.status,
+    ),
+  ],
+);
+
+export const encryptedDocumentUploads = pgTable(
+  'encrypted_document_uploads',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    ownerUserId: text('owner_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    storageProvider: text('storage_provider').notNull(),
+    storageObjectKey: text('storage_object_key').notNull(),
+    encryptionMode: text('encryption_mode').default('client_e2ee').notNull(),
+    encryptedPayload: jsonb('encrypted_payload')
+      .$type<Record<string, unknown>>()
+      .notNull(),
+    encryptedKeyRecipients: jsonb('encrypted_key_recipients')
+      .$type<Record<string, unknown>[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    encryptedMetadata:
+      jsonb('encrypted_metadata').$type<Record<string, unknown>>(),
+    mimeType: text('mime_type'),
+    sizeBytes: integer('size_bytes'),
+    checksumSha256: text('checksum_sha256'),
+    status: text('status').default('pending').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('encrypted_document_uploads_owner_idx').on(table.ownerUserId),
+    index('encrypted_document_uploads_org_status_idx').on(
+      table.organizationId,
+      table.status,
+    ),
+    index('encrypted_document_uploads_storage_uidx').on(
+      table.storageProvider,
+      table.storageObjectKey,
+    ),
   ],
 );
 
@@ -479,7 +772,9 @@ export const shopProducts = pgTable(
     compareAtPrice: integer('compare_at_price'),
     inventoryLevel: integer('inventory_level').default(0).notNull(),
     lowStockThreshold: integer('low_stock_threshold').default(5).notNull(),
-    images: jsonb('images').$type<string[]>().default(sql`'[]'::jsonb`),
+    images: jsonb('images')
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`),
     status: text('status').default('Draft').notNull(),
     category: text('category').notNull(),
     stripeLink: text('stripe_link'),
@@ -759,7 +1054,9 @@ export const socialPosts = pgTable(
     authorId: text('author_id')
       .notNull()
       .references(() => users.id),
-    platforms: jsonb('platforms').$type<string[]>().default(sql`'[]'::jsonb`),
+    platforms: jsonb('platforms')
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -1013,7 +1310,9 @@ export const complianceDocuments = pgTable(
     effectiveDate: timestamp('effective_date', { withTimezone: true }),
     expirationDate: timestamp('expiration_date', { withTimezone: true }),
     version: text('version'),
-    parties: jsonb('parties').$type<string[]>().default(sql`'[]'::jsonb`),
+    parties: jsonb('parties')
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`),
     summary: text('summary'),
     metadata: jsonb('metadata'),
     createdAt: timestamp('created_at', { withTimezone: true })

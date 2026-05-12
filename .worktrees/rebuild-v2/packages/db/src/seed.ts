@@ -5,6 +5,7 @@ import * as schema from './schema';
 import * as identitySchema from './identity-verifications';
 import * as notificationSchema from './notifications';
 import * as notificationEventSchema from './notification-events';
+import * as authSchema from './auth-schema';
 
 export const seedDatabase = async () => {
   if (!env.DATABASE_URL) {
@@ -42,9 +43,14 @@ export const seedDatabase = async () => {
     await db.delete(identitySchema.identityVerifications);
     await db.delete(schema.auditLogs);
     await db.delete(schema.appointments);
-    await db.delete(schema.users);
     await db.delete(schema.providers);
     await db.delete(schema.patients);
+    await db.delete(schema.userSettings);
+    await db.delete(authSchema.twoFactors);
+    await db.delete(authSchema.sessions);
+    await db.delete(authSchema.accounts);
+    await db.delete(authSchema.verifications);
+    await db.delete(schema.users);
     await db.delete(schema.roles);
     await db.delete(schema.organizations);
 
@@ -70,6 +76,8 @@ export const seedDatabase = async () => {
       { name: 'Admin Center', key: 'admin_center', sortOrder: 5 },
       { name: 'E-Prescribing', key: 'eprescribing', sortOrder: 6 },
       { name: 'Analytics', key: 'analytics', sortOrder: 7 },
+      { name: 'Secure Messaging', key: 'communications', sortOrder: 8 },
+      { name: 'Secure Documents', key: 'documents', sortOrder: 9 },
     ];
 
     const insertedModules = await db
@@ -95,6 +103,42 @@ export const seedDatabase = async () => {
         key: 'admin:roles',
         parentId: adminCenterModule.id,
         sortOrder: 2,
+      },
+      {
+        name: 'Settings',
+        key: 'admin:settings',
+        parentId: adminCenterModule.id,
+        sortOrder: 3,
+      },
+      {
+        name: 'Audit',
+        key: 'admin:audit',
+        parentId: adminCenterModule.id,
+        sortOrder: 4,
+      },
+      {
+        name: 'Store',
+        key: 'admin:store',
+        parentId: adminCenterModule.id,
+        sortOrder: 5,
+      },
+      {
+        name: 'Community',
+        key: 'admin:community',
+        parentId: adminCenterModule.id,
+        sortOrder: 6,
+      },
+      {
+        name: 'Communications',
+        key: 'admin:communications',
+        parentId: adminCenterModule.id,
+        sortOrder: 7,
+      },
+      {
+        name: 'Sessions',
+        key: 'admin:sessions',
+        parentId: adminCenterModule.id,
+        sortOrder: 8,
       },
       {
         name: 'Clinical Dashboard',
@@ -170,6 +214,81 @@ export const seedDatabase = async () => {
         moduleId: allModules.find((m) => m.key === 'admin:roles')!.id,
       },
       {
+        name: 'Manage Roles',
+        key: 'admin:roles:write',
+        moduleId: allModules.find((m) => m.key === 'admin:roles')!.id,
+      },
+      {
+        name: 'View Settings',
+        key: 'admin:settings:read',
+        moduleId: allModules.find((m) => m.key === 'admin:settings')!.id,
+      },
+      {
+        name: 'Manage Settings',
+        key: 'admin:settings:write',
+        moduleId: allModules.find((m) => m.key === 'admin:settings')!.id,
+      },
+      {
+        name: 'View Audit',
+        key: 'admin:audit:read',
+        moduleId: allModules.find((m) => m.key === 'admin:audit')!.id,
+      },
+      {
+        name: 'View Store',
+        key: 'admin:store:read',
+        moduleId: allModules.find((m) => m.key === 'admin:store')!.id,
+      },
+      {
+        name: 'Manage Store',
+        key: 'admin:store:write',
+        moduleId: allModules.find((m) => m.key === 'admin:store')!.id,
+      },
+      {
+        name: 'View Community',
+        key: 'admin:community:read',
+        moduleId: allModules.find((m) => m.key === 'admin:community')!.id,
+      },
+      {
+        name: 'Manage Community',
+        key: 'admin:community:write',
+        moduleId: allModules.find((m) => m.key === 'admin:community')!.id,
+      },
+      {
+        name: 'View Communications',
+        key: 'admin:communications:read',
+        moduleId: allModules.find((m) => m.key === 'admin:communications')!.id,
+      },
+      {
+        name: 'Manage Communications',
+        key: 'admin:communications:write',
+        moduleId: allModules.find((m) => m.key === 'admin:communications')!.id,
+      },
+      {
+        name: 'View User Sessions',
+        key: 'admin:sessions:read',
+        moduleId: allModules.find((m) => m.key === 'admin:sessions')!.id,
+      },
+      {
+        name: 'View Secure Messages',
+        key: 'communications:read',
+        moduleId: allModules.find((m) => m.key === 'communications')!.id,
+      },
+      {
+        name: 'Send Secure Messages',
+        key: 'communications:write',
+        moduleId: allModules.find((m) => m.key === 'communications')!.id,
+      },
+      {
+        name: 'View Secure Documents',
+        key: 'documents:read',
+        moduleId: allModules.find((m) => m.key === 'documents')!.id,
+      },
+      {
+        name: 'Upload Secure Documents',
+        key: 'documents:write',
+        moduleId: allModules.find((m) => m.key === 'documents')!.id,
+      },
+      {
         name: 'Launch DoseSpot',
         key: 'dosespot:sso',
         moduleId: allModules.find((m) => m.key === 'eprescribing')!.id,
@@ -220,6 +339,9 @@ export const seedDatabase = async () => {
     const superAdminRole = insertedRoles.find((r) => r.name === 'SuperAdmin')!;
     const adminRole = insertedRoles.find((r) => r.name === 'Admin')!;
     const providerRole = insertedRoles.find((r) => r.name === 'Provider')!;
+    const secureContentRoles = insertedRoles.filter((role) =>
+      ['Provider', 'Staff', 'Radiologist', 'Patient'].includes(role.name),
+    );
 
     // SuperAdmin gets everything
     const superAdminRolePermissions = insertedPermissions.map((p) => ({
@@ -250,12 +372,24 @@ export const seedDatabase = async () => {
         permissionId: p.id,
       }));
 
+    const secureContentPermissions = insertedPermissions.filter(
+      (p) =>
+        p.key.startsWith('communications:') || p.key.startsWith('documents:'),
+    );
+    const secureContentRolePermissions = secureContentRoles.flatMap((role) =>
+      secureContentPermissions.map((permission) => ({
+        roleId: role.id,
+        permissionId: permission.id,
+      })),
+    );
+
     await db
       .insert(schema.rolePermissions)
       .values([
         ...superAdminRolePermissions,
         ...adminRolePermissions,
         ...providerRolePermissions,
+        ...secureContentRolePermissions,
       ]);
 
     console.log('Seeding users...');
@@ -268,8 +402,13 @@ export const seedDatabase = async () => {
       organizationId: defaultOrg.id,
     }));
 
-    const insertedUsers = await db.insert(schema.users).values(usersToInsert).returning();
-    const patientUser = insertedUsers.find((user) => user.email === 'patient@example.com');
+    const insertedUsers = await db
+      .insert(schema.users)
+      .values(usersToInsert)
+      .returning();
+    const patientUser = insertedUsers.find(
+      (user) => user.email === 'patient@example.com',
+    );
     const providerUser = insertedUsers.find(
       (user) => user.email === 'provider@example.com',
     );
@@ -306,18 +445,53 @@ export const seedDatabase = async () => {
 
     console.log('Seeding analytics data...');
     await db.insert(schema.vitalLogs).values([
-      { patientId: patient.id, type: 'weight', value: '185', unit: 'lbs', recordedAt: new Date(Date.now() - 30 * 86_400_000) },
-      { patientId: patient.id, type: 'weight', value: '180', unit: 'lbs', recordedAt: new Date(Date.now() - 15 * 86_400_000) },
-      { patientId: patient.id, type: 'weight', value: '175', unit: 'lbs', recordedAt: new Date() },
+      {
+        patientId: patient.id,
+        type: 'weight',
+        value: '185',
+        unit: 'lbs',
+        recordedAt: new Date(Date.now() - 30 * 86_400_000),
+      },
+      {
+        patientId: patient.id,
+        type: 'weight',
+        value: '180',
+        unit: 'lbs',
+        recordedAt: new Date(Date.now() - 15 * 86_400_000),
+      },
+      {
+        patientId: patient.id,
+        type: 'weight',
+        value: '175',
+        unit: 'lbs',
+        recordedAt: new Date(),
+      },
     ]);
 
     await db.insert(schema.labOrders).values([
-      { patientId: patient.id, providerId: provider.id, testName: 'CBC with Differential', status: 'Completed', completedAt: new Date() },
-      { patientId: patient.id, providerId: provider.id, testName: 'Metabolic Panel', status: 'Overdue' },
+      {
+        patientId: patient.id,
+        providerId: provider.id,
+        testName: 'CBC with Differential',
+        status: 'Completed',
+        completedAt: new Date(),
+      },
+      {
+        patientId: patient.id,
+        providerId: provider.id,
+        testName: 'Metabolic Panel',
+        status: 'Overdue',
+      },
     ]);
 
     await db.insert(schema.subscriptions).values([
-      { patientId: patient.id, planId: 'weight_loss_monthly', status: 'active', mrr: 12900, stripeSubscriptionId: 'sub_mock_123' },
+      {
+        patientId: patient.id,
+        planId: 'weight_loss_monthly',
+        status: 'active',
+        mrr: 12900,
+        stripeSubscriptionId: 'sub_mock_123',
+      },
     ]);
 
     console.log('Seeding completed successfully.');

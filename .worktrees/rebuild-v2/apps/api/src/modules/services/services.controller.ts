@@ -8,13 +8,11 @@ export const servicesController = new Elysia({ prefix: '/services' })
   .use(authMacro)
   .get(
     '/',
-    async ({ user }) => {
-      return await db
+    async ({ user }) => await db
         .select()
         .from(schema.services)
         .where(eq(schema.services.organizationId, user.organizationId!))
-        .orderBy(desc(schema.services.createdAt));
-    },
+        .orderBy(desc(schema.services.createdAt)),
     {
       isSignIn: true,
       detail: { summary: 'List Services', tags: ['Services'] },

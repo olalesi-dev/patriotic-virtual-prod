@@ -52,7 +52,7 @@ export const paymentsController = new Elysia({ prefix: '/payments' })
 
           // Handle Consultation
           if (session.metadata?.consultationId) {
-            const consultationId = session.metadata.consultationId;
+            const {consultationId} = session.metadata;
 
             if (consultationId && patientId) {
               const { consultation, patient } = await completeConsultationPayment({
@@ -63,7 +63,7 @@ export const paymentsController = new Elysia({ prefix: '/payments' })
 
               await producers.notifyPriorityQueuePaymentSuccess({
                 appointmentId: consultation.id,
-                patientId: patientId,
+                patientId,
                 patientName: patient
                   ? `${patient.firstName} ${patient.lastName}`
                   : 'Patient',
@@ -74,7 +74,7 @@ export const paymentsController = new Elysia({ prefix: '/payments' })
           }
           // Handle Shop Order
           else if (session.metadata?.orderId) {
-            const orderId = session.metadata.orderId;
+            const {orderId} = session.metadata;
 
             if (orderId && patientId) {
               await shopService.completeShopOrderPayment({
@@ -125,16 +125,14 @@ export const paymentsController = new Elysia({ prefix: '/payments' })
   )
   .post(
     '/create-checkout-session',
-    async ({ body, user, headers }) => {
-      return await createStripeCheckoutSession({
+    async ({ body, user, headers }) => await createStripeCheckoutSession({
         userId: user.id,
         serviceKey: body.serviceKey,
         consultationId: body.consultationId,
         returnUrl: body.returnUrl,
         cancelUrl: body.cancelUrl,
         origin: headers['origin'],
-      });
-    },
+      }),
     {
       isSignIn: true,
       body: t.Object({

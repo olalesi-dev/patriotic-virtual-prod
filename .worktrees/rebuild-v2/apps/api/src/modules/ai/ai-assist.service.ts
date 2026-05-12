@@ -11,7 +11,7 @@ export class AiAssistService {
   }
 
   async autocomplete(text: string) {
-    if (!this.genAI) throw new Error('AI service not configured');
+    if (!this.genAI) {throw new Error('AI service not configured');}
     
     const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const prompt = `You are a medical EMR and CRM AI assistant providing inline text autocomplete. 
@@ -39,7 +39,7 @@ ${text}`;
   }
 
   async rewrite(text: string, instruction: string) {
-    if (!this.genAI) throw new Error('AI service not configured');
+    if (!this.genAI) {throw new Error('AI service not configured');}
 
     const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const prompt = `You are an AI writing assistant in a medical EMR portal. 

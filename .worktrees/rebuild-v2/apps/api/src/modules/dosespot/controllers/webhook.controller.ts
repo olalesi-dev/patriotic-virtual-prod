@@ -27,8 +27,8 @@ export const webhookController = new Elysia({ prefix: '/webhooks' }).post(
     );
 
     setImmediate(() => {
-      void webhookService.processEvent(result.id).catch((err) => {
-        console.error(`DoseSpot webhook processing failed: ${result.id}`, err);
+      void webhookService.processEvent(result.id).catch((error) => {
+        console.error(`DoseSpot webhook processing failed: ${result.id}`, error);
       });
     });
 

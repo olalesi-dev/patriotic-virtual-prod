@@ -8,10 +8,17 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:db": "POSTGRES_IMAGE=${POSTGRES_IMAGE:-postgres:18-alpine} POSTGRES_PORT=${POSTGRES_PORT:-55433} docker compose --env-file .env -p ${COMPOSE_PROJECT_NAME:-patriotic-rebuild-v2} -f infra/docker/docker-compose.yml up -d postgres",
+    "dev:infra": "./dev-infra.sh",
+    "db:migrate:local": "DATABASE_URL=${DATABASE_URL:-postgres://postgres:${POSTGRES_PASSWORD:-postgres}@127.0.0.1:${POSTGRES_PORT:-55433}/patriotic} bun run --cwd packages/db db:migrate",
+    "db:seed:local": "DATABASE_URL=${DATABASE_URL:-postgres://postgres:${POSTGRES_PASSWORD:-postgres}@127.0.0.1:${POSTGRES_PORT:-55433}/patriotic} bun run --cwd packages/db db:seed",
     "lint": "oxlint --fix --deny-warnings",
     "format": "oxfmt --write .",
     "typecheck": "turbo typecheck",
     "test": "turbo test"
+  },
+  "dependencies": {
+    "@google/generative-ai": "0.24.1"
   },
   "devDependencies": {
     "@types/node": "catalog:dev",
@@ -21,8 +28,10 @@
     "bun-types": "catalog:dev",
     "oxfmt": "catalog:dev",
     "oxlint": "catalog:dev",
-    "turbo": "catalog:dev",
-    "typescript": "catalog:dev"
+    "turbo": "catalog:dev"
+  },
+  "overrides": {
+    "typescript": "npm:@typescript/native-preview@7.0.0-dev.20260427.1"
   },
   "packageManager": "bun@1.3.11",
   "catalogs": {
@@ -44,9 +53,43 @@
     "web": {
       "react": "19.2.5",
       "react-dom": "19.2.5",
-      "@tanstack/react-router": "1.168.25",
-      "@tanstack/start": "1.120.20",
       "tailwindcss": "4.2.4"
+    },
+    "tanstack": {
+      "@tanstack/intent": "0.0.40",
+      "@tanstack/react-form": "1.29.1",
+      "@tanstack/react-query": "5.100.9",
+      "@tanstack/react-router": "1.169.2",
+      "@tanstack/react-router-ssr-query": "1.166.12",
+      "@tanstack/react-start": "1.167.65",
+      "@tanstack/react-store": "0.9.3",
+      "@tanstack/react-table": "8.21.3",
+      "@tanstack/store": "0.9.3"
+    },
+    "ui": {
+      "@base-ui/react": "1.4.1",
+      "@tabler/icons-react": "3.43.0",
+      "class-variance-authority": "0.7.1",
+      "clsx": "2.1.1",
+      "shadcn": "4.7.0",
+      "sonner": "2.0.7",
+      "tailwind-merge": "3.5.0",
+      "tw-animate-css": "1.4.0"
+    },
+    "state": {
+      "zustand": "5.0.13"
+    },
+    "validation": {
+      "zod": "4.4.3"
+    },
+    "web-dev": {
+      "@rolldown/plugin-babel": "0.2.3",
+      "@tailwindcss/vite": "4.2.4",
+      "@vitejs/plugin-react": "6.0.1",
+      "@vitejs/plugin-rsc": "0.5.26",
+      "babel-plugin-react-compiler": "1.0.0",
+      "nitro": "3.0.260429-beta",
+      "vite": "8.0.11"
     },
     "db": {
       "drizzle-orm": "0.45.2",
@@ -75,7 +118,6 @@
       "turbo": "2.9.6",
       "oxlint": "1.61.0",
       "oxfmt": "0.47.0",
-      "typescript": "6.0.3",
       "@typescript/native-preview": "7.0.0-dev.20260427.1",
       "bun-types": "1.3.13",
       "@types/react": "19.2.14",
@@ -83,8 +125,5 @@
       "@types/node": "25.6.0",
       "pino-pretty": "13.1.3"
     }
-  },
-  "dependencies": {
-    "@google/generative-ai": "0.24.1"
   }
 }

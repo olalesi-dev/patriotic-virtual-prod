@@ -1,31 +1,54 @@
 {
-  "name": "admin",
+  "name": "@workspace/admin",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
-    "build": "vinxi build",
-    "start": "vinxi start",
-    "lint": "oxlint --fix --deny-warnings",
-    "typecheck": "tsc --noEmit"
+    "dev": "vite dev --host 0.0.0.0 --port 48904",
+    "build": "bun --bun vite build",
+    "start": "bun run .output/server/index.mjs",
+    "lint": "oxlint src vite.config.ts --ignore-pattern src/routeTree.gen.ts --deny-warnings",
+    "typecheck": "tsgo --noEmit",
+    "test": "bun test ./src --pass-with-no-tests",
+    "intent:list": "intent list",
+    "intent:install": "intent install --map",
+    "intent:stale": "intent stale"
   },
   "dependencies": {
-    "@tanstack/react-router": "catalog:web",
-    "@tanstack/start": "catalog:web",
-    "@workspace/auth": "workspace:*",
-    "@workspace/common": "workspace:*",
-    "@workspace/db": "workspace:*",
-    "@workspace/env": "workspace:*",
+    "@base-ui/react": "catalog:ui",
+    "@tabler/icons-react": "catalog:ui",
+    "@tanstack/react-form": "catalog:tanstack",
+    "@tanstack/react-query": "catalog:tanstack",
+    "@tanstack/react-router": "catalog:tanstack",
+    "@tanstack/react-router-ssr-query": "catalog:tanstack",
+    "@tanstack/react-start": "catalog:tanstack",
+    "@tanstack/react-table": "catalog:tanstack",
     "@workspace/ui": "workspace:*",
+    "class-variance-authority": "catalog:ui",
+    "clsx": "catalog:ui",
     "react": "catalog:web",
     "react-dom": "catalog:web",
-    "tailwindcss": "catalog:web"
+    "sonner": "catalog:ui",
+    "tailwind-merge": "catalog:ui",
+    "tailwindcss": "catalog:web",
+    "tw-animate-css": "catalog:ui",
+    "zod": "catalog:validation",
+    "zustand": "catalog:state"
   },
   "devDependencies": {
+    "@rolldown/plugin-babel": "catalog:web-dev",
+    "@tailwindcss/vite": "catalog:web-dev",
+    "@tanstack/intent": "catalog:tanstack",
     "@types/node": "catalog:dev",
     "@types/react": "catalog:dev",
     "@types/react-dom": "catalog:dev",
+    "@typescript/native-preview": "catalog:dev",
+    "@vitejs/plugin-react": "catalog:web-dev",
+    "@vitejs/plugin-rsc": "catalog:web-dev",
+    "babel-plugin-react-compiler": "catalog:web-dev",
+    "nitro": "catalog:web-dev",
     "oxlint": "catalog:dev",
-    "typescript": "catalog:dev"
+    "shadcn": "catalog:ui",
+    "vite": "catalog:web-dev"
   }
 }

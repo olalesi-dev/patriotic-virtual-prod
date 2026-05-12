@@ -41,6 +41,14 @@ export const readPatientName = (data: Record<string, unknown>): string =>
 export const readProviderName = (data: Record<string, unknown>): string =>
   asString(data.provider_name ?? data.providerName, 'your care team');
 
+export const readMeetingLink = (
+  data: Record<string, unknown>,
+): string | undefined =>
+  asOptionalString(data.meetingUrl) ??
+  asOptionalString(data.meeting_url) ??
+  asOptionalString(data.joinLink) ??
+  asOptionalString(data.join_link);
+
 export const readPortalLink = (
   data: Record<string, unknown>,
   fallback: string,

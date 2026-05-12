@@ -11,8 +11,7 @@ export const shopController = new Elysia({ prefix: '/shop' })
   .use(authMacro)
   .get(
     '/products',
-    async ({ user }) => {
-      return await db
+    async ({ user }) => await db
         .select()
         .from(schema.shopProducts)
         .where(
@@ -21,8 +20,7 @@ export const shopController = new Elysia({ prefix: '/shop' })
             eq(schema.shopProducts.status, 'Active'),
           ),
         )
-        .orderBy(desc(schema.shopProducts.createdAt));
-    },
+        .orderBy(desc(schema.shopProducts.createdAt)),
     {
       isSignIn: true,
       detail: { summary: 'List Active Products', tags: ['Shop'] },
@@ -30,13 +28,11 @@ export const shopController = new Elysia({ prefix: '/shop' })
   )
   .post(
     '/checkout',
-    async ({ body, user, headers }) => {
-      return await service.createCheckoutSession({
+    async ({ body, user, headers }) => await service.createCheckoutSession({
         userId: user.id,
         items: body.items,
         origin: headers['origin'],
-      });
-    },
+      }),
     {
       isSignIn: true,
       body: t.Object({
@@ -52,9 +48,7 @@ export const shopController = new Elysia({ prefix: '/shop' })
   )
   .post(
     '/checkout/confirm',
-    async ({ body }) => {
-      return await service.confirmOrder(body.sessionId);
-    },
+    async ({ body }) => await service.confirmOrder(body.sessionId),
     {
       isSignIn: true,
       body: t.Object({

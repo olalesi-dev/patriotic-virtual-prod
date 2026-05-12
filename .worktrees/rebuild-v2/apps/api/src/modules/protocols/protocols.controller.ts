@@ -8,9 +8,7 @@ export const protocolsController = new Elysia({ prefix: '/protocols' })
   .use(authMacro)
   .get(
     '/',
-    async ({ user }) => {
-      return await service.getProtocols(user.organizationId!);
-    },
+    async ({ user }) => await service.getProtocols(user.organizationId!),
     {
       isSignIn: true,
       requirePermissions: ['patients:read'],
@@ -19,9 +17,7 @@ export const protocolsController = new Elysia({ prefix: '/protocols' })
   )
   .post(
     '/',
-    async ({ body, user }) => {
-      return await service.createProtocol(user.organizationId!, body);
-    },
+    async ({ body, user }) => await service.createProtocol(user.organizationId!, body),
     {
       isSignIn: true,
       requirePermissions: ['admin:settings:write'],

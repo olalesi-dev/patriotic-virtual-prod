@@ -10,6 +10,8 @@ export async function getUserPermissionsAndModules(
     .select({
       roleId: schema.users.roleId,
       roleName: schema.roles.name,
+      tokenVersion: schema.users.tokenVersion,
+      tokenVersionUpdatedAt: schema.users.tokenVersionUpdatedAt,
     })
     .from(schema.users)
     .leftJoin(schema.roles, eq(schema.users.roleId, schema.roles.id))
@@ -21,6 +23,8 @@ export async function getUserPermissionsAndModules(
       role: undefined,
       permissions: [],
       allowedModules: [],
+      tokenVersion: 0,
+      tokenVersionUpdatedAt: new Date(0),
     };
   }
 
@@ -63,9 +67,11 @@ export async function getUserPermissionsAndModules(
     }
   }
 
-  return {
-    role: user.roleName,
-    permissions,
-    allowedModules: [...moduleKeys],
-  };
+    return {
+      role: user.roleName,
+      permissions,
+      allowedModules: [...moduleKeys],
+      tokenVersion: user.tokenVersion,
+      tokenVersionUpdatedAt: user.tokenVersionUpdatedAt,
+    };
 }

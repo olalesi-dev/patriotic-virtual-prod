@@ -21,7 +21,7 @@ describe('BusinessAnalyticsService', () => {
 
     const spy = spyOn(db, 'select');
     
-    spy.mockImplementationOnce(() => createMockBuilder([{ total: 1880000 }]));
+    spy.mockImplementationOnce(() => createMockBuilder([{ total: 1_880_000 }]));
     spy.mockImplementationOnce(() => createMockBuilder([{ count: 47 }]));
     spy.mockImplementationOnce(() => createMockBuilder([{ count: 3 }]));
 

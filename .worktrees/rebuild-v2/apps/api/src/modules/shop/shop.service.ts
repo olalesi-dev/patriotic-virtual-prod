@@ -23,7 +23,7 @@ export class ShopService {
       .where(eq(schema.patients.userId, userId))
       .limit(1);
 
-    if (!patient) throw new Error('Patient profile not found');
+    if (!patient) {throw new Error('Patient profile not found');}
 
     let subtotal = 0;
     const lineItems: any[] = [];
@@ -36,7 +36,7 @@ export class ShopService {
         .where(eq(schema.shopProducts.id, item.productId))
         .limit(1);
 
-      if (!product) throw new Error(`Product not found: ${item.productId}`);
+      if (!product) {throw new Error(`Product not found: ${item.productId}`);}
       if (product.inventoryLevel < item.quantity) {
         throw new Error(`Insufficient stock for ${product.name}`);
       }
@@ -118,7 +118,7 @@ export class ShopService {
   }
 
   async confirmOrder(sessionId: string) {
-    if (!stripe || !isStripeConfigured) throw new Error('Stripe is not configured');
+    if (!stripe || !isStripeConfigured) {throw new Error('Stripe is not configured');}
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     if (session.payment_status !== 'paid') {
@@ -126,7 +126,7 @@ export class ShopService {
     }
 
     const orderId = session.metadata?.orderId;
-    if (!orderId) throw new Error('Order context missing from session');
+    if (!orderId) {throw new Error('Order context missing from session');}
 
     await db
       .update(schema.shopOrders)
@@ -159,7 +159,7 @@ export class ShopService {
       )
       .returning();
 
-    if (!order) throw new Error('Order not found');
+    if (!order) {throw new Error('Order not found');}
 
     return { order };
   }

@@ -35,13 +35,11 @@ export const supportController = new Elysia({ prefix: '/support' })
   )
   .get(
     '/tickets',
-    async ({ user }) => {
-      return await db
+    async ({ user }) => await db
         .select()
         .from(schema.supportTickets)
         .where(eq(schema.supportTickets.userId, user.id))
-        .orderBy(desc(schema.supportTickets.createdAt));
-    },
+        .orderBy(desc(schema.supportTickets.createdAt)),
     {
       isSignIn: true,
       detail: { summary: 'List My Support Tickets', tags: ['Support'] },

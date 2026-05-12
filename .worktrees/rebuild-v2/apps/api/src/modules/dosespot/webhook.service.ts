@@ -5,8 +5,8 @@ import { env } from '@workspace/env/index';
 import { createHash } from 'node:crypto';
 import { getPrescription } from '@workspace/dosespot/api';
 import { dosespotConfig } from '@workspace/dosespot/utils';
-import { eq } from 'drizzle-orm';
-import { NotificationProducers } from '@workspace/notifications/producers';
+import { desc, eq } from 'drizzle-orm';
+import type { NotificationProducers } from '@workspace/notifications/producers';
 
 export class DoseSpotWebhookService {
   private readonly repo: ReturnType<typeof dosespotRepository>;
@@ -48,7 +48,7 @@ export class DoseSpotWebhookService {
       .where(eq(dosespotWebhookEvents.id, eventId))
       .limit(1);
 
-    if (!event || event.status !== 'pending') return;
+    if (!event || event.status !== 'pending') {return;}
 
     await this.repo.updateWebhookEvent(eventId, { status: 'processing' });
 
@@ -69,7 +69,7 @@ export class DoseSpotWebhookService {
             doseSpotPatientId.toString(),
           );
           if (!patient)
-            throw new Error(`Patient not found: ${doseSpotPatientId}`);
+            {throw new Error(`Patient not found: ${doseSpotPatientId}`);}
 
           // Fetch full details from DoseSpot
           const dsPrescription = await getPrescription(
@@ -110,10 +110,19 @@ export class DoseSpotWebhookService {
         }
       }
 
-      await this.repo.updateWebhookEvent(eventId, {
+      const updated = await this.repo.updateWebhookEvent(eventId, {
         status: 'success',
         processedAt: new Date(),
       });
+
+      return {
+        alreadyProcessed: false,
+        eventId,
+        notificationId: null,
+        recipientId: null,
+        internalType: event.eventType,
+        event: updated,
+      };
     } catch (error: any) {
       await this.repo.updateWebhookEvent(eventId, {
         status: 'failed',
@@ -134,13 +143,13 @@ export class DoseSpotWebhookService {
     ) {
       return 'Transmission Error';
     }
-    if (details.includes('filled')) return 'Filled';
-    if (details.includes('sent') || details.includes('pharmacy')) return 'Sent';
+    if (details.includes('filled')) {return 'Filled';}
+    if (details.includes('sent') || details.includes('pharmacy')) {return 'Sent';}
     if (details.includes('pending') || details.includes('queued'))
-      return 'In Progress';
+      {return 'In Progress';}
 
     const status = data.PrescriptionStatus;
-    if (status === 13) return 'Transmission Error';
+    if (status === 13) {return 'Transmission Error';}
     return 'Sent';
   }
 
@@ -149,10 +158,85 @@ export class DoseSpotWebhookService {
     return createHash('sha256').update(basis).digest('hex');
   }
 
-  verifySignature(authHeader?: string): boolean {
+  getRuntimeHealth() {
+    const webhookSecretConfigured = Boolean(dosespotConfig.webhookSecret);
+    return {
+      queueConfigured: false,
+      cloudTasksRequired: false,
+      queueMode: 'inline_fallback',
+      inlineFallbackEnabled: true,
+      webhookSecretConfigured,
+      missingQueueConfig: [],
+      queue: null,
+    };
+  }
+
+  async getValidationReport(options: { windowHours?: number; maxEvents?: number } = {}) {
+    const windowHours =
+      typeof options.windowHours === 'number' &&
+      Number.isFinite(options.windowHours) &&
+      options.windowHours > 0
+        ? Math.floor(options.windowHours)
+        : 168;
+    const maxEvents =
+      typeof options.maxEvents === 'number' &&
+      Number.isFinite(options.maxEvents) &&
+      options.maxEvents > 0
+        ? Math.floor(options.maxEvents)
+        : 300;
+    const windowStart = Date.now() - windowHours * 60 * 60 * 1000;
+
+    const events = await this.db
+      .select()
+      .from(dosespotWebhookEvents)
+      .orderBy(desc(dosespotWebhookEvents.receivedAt))
+      .limit(maxEvents);
+
+    let realEvents = 0;
+    let successfulRealEvents = 0;
+    let failedRealEvents = 0;
+    let latestRealEventAt: Date | null = null;
+    let latestRealEventType: string | null = null;
+    const observedEventTypes = new Set<string>();
+
+    for (const event of events) {
+      const {receivedAt} = event;
+      if (!receivedAt || receivedAt.getTime() < windowStart) {continue;}
+
+      const payload = event.payload as Record<string, any>;
+      if (payload?.Headers?.['x-dosespot-dev-helper'] === 'true') {continue;}
+
+      realEvents += 1;
+      if (event.status === 'success') {successfulRealEvents += 1;}
+      if (event.status === 'failed') {failedRealEvents += 1;}
+
+      observedEventTypes.add(event.eventType || 'Unknown');
+      if (!latestRealEventAt || receivedAt.getTime() > latestRealEventAt.getTime()) {
+        latestRealEventAt = receivedAt;
+        latestRealEventType = event.eventType || 'Unknown';
+      }
+    }
+
+    const validated = successfulRealEvents > 0;
+    return {
+      validated,
+      windowHours,
+      scannedEvents: events.length,
+      realEvents,
+      successfulRealEvents,
+      failedRealEvents,
+      latestRealEventAt: latestRealEventAt ? latestRealEventAt.toISOString() : null,
+      latestRealEventType,
+      observedEventTypes: [...observedEventTypes].sort(),
+      message: validated
+        ? 'Real DoseSpot outbound webhook delivery has been observed and processed.'
+        : `No successfully processed real DoseSpot outbound webhooks observed in the last ${windowHours} hours.`,
+    };
+  }
+
+  verifySignature(authHeader?: string, legacySecretHeader?: string): boolean {
     const secret = dosespotConfig.webhookSecret;
-    if (!secret) return true;
-    if (!authHeader) return false;
-    return authHeader === `Secret ${secret}`;
+    if (!secret) {return true;}
+    return authHeader === `Secret ${secret}` || legacySecretHeader === secret;
   }
 }

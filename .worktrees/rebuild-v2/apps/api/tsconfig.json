@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "strict": true,
-    "baseUrl": ".",
     "paths": {
       "@workspace/auth/*": ["../../packages/auth/src/*"],
       "@workspace/common/*": ["../../packages/common/src/*"],
@@ -12,7 +11,13 @@
       "@workspace/env/*": ["../../packages/env/src/*"],
       "@workspace/notifications/*": ["../../packages/notifications/src/*"],
       "@workspace/queue/*": ["../../packages/queue/src/*"],
-      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@workspace/ui/*": [
+        "../../packages/ui/src/components/*",
+        "../../packages/ui/src/forms/*",
+        "../../packages/ui/src/theme/*",
+        "../../packages/ui/src/store/*",
+        "../../packages/ui/src/lib/*"
+      ],
       "~/*": ["./src/*"]
     }
   },
