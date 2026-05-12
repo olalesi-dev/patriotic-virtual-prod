@@ -20,6 +20,8 @@ function extendLandingI18n() {
     "hero-online": "Board-Certified Physicians Online Now",
     "hero-h1":
       'Welcome home to <span class="accent">better healthcare</span>',
+    "hero-subhead":
+      "Doctor-led weight loss and wellness — virtually, in English or Spanish.",
     "hero-sub":
       "Get evaluated by a licensed provider. Rx treatment available if clinically appropriate.",
     "hero-cta": "Start Your Consultation",
@@ -31,6 +33,8 @@ function extendLandingI18n() {
     "hero-live-popular": "Popular",
     "proto-title":
       '<span class="accent">Protocol-driven</span> care.<br />No exceptions.',
+    "proto-support":
+      "We say no when treatment isn't right for you — and yes, with a clear plan, when it is.",
     "proto-sub":
       "Every consultation, treatment request, and imaging review follows strict clinical protocols. Our automated screening helps flag contraindications before care decisions are made.",
     "proto-card1-title": "Automated Risk Screening System",
@@ -198,8 +202,9 @@ function extendLandingI18n() {
     "med-price-199": "From $199/mo*",
     "med-price-199-flat": "$199/mo*",
     "breakthrough-note":
-      "*Pricing and eligibility are placeholders for review. Medication access depends on provider evaluation and clinical appropriateness.",
+      "Pricing shown is starting price; final pricing confirmed at consultation. Eligibility determined by licensed clinician.",
     "breakthrough-science-title": "The perfect<br /><span>SNAC</span>",
+    "breakthrough-science-explainer": "[Explainer copy pending]",
     "breakthrough-science-cta": "See the science",
     "breakthrough-dose-badge": "New high dose",
     "breakthrough-dose-title": "Lose 25% or more<br />body weight*",
@@ -234,6 +239,8 @@ function extendLandingI18n() {
     "hero-online": "Medicos Certificados en Linea Ahora",
     "hero-h1":
       'Bienvenidos a casa a una <span class="accent">mejor atencion medica</span>',
+    "hero-subhead":
+      "Perdida de peso y bienestar dirigidos por medicos — virtualmente, en ingles o espanol.",
     "hero-sub":
       "Sea evaluado por un proveedor con licencia. Tratamiento con receta disponible si es clinicamente apropiado.",
     "hero-cta": "Comenzar Consulta",
@@ -245,6 +252,8 @@ function extendLandingI18n() {
     "hero-live-popular": "Popular",
     "proto-title":
       'Atencion <span class="accent">guiada por protocolos</span>.<br />Sin excepciones.',
+    "proto-support":
+      "Decimos no cuando el tratamiento no es adecuado para usted — y si, con un plan claro, cuando lo es.",
     "proto-sub":
       "Cada consulta, solicitud de tratamiento y revision de imagen sigue protocolos clinicos estrictos. Nuestra evaluacion automatizada ayuda a detectar contraindicaciones antes de tomar decisiones clinicas.",
     "proto-card1-title": "Sistema Automatizado de Riesgo",
@@ -412,8 +421,9 @@ function extendLandingI18n() {
     "med-price-199": "Desde $199/mes*",
     "med-price-199-flat": "$199/mes*",
     "breakthrough-note":
-      "*Los precios y la elegibilidad son textos provisionales para revision. El acceso a medicamentos depende de la evaluacion del proveedor y de la idoneidad clinica.",
+      "El precio mostrado es inicial; el precio final se confirma en la consulta. La elegibilidad la determina un clinico con licencia.",
     "breakthrough-science-title": "El SNAC<br /><span>perfecto</span>",
+    "breakthrough-science-explainer": "[Explainer copy pending]",
     "breakthrough-science-cta": "Ver la ciencia",
     "breakthrough-dose-badge": "Nueva dosis alta",
     "breakthrough-dose-title": "Pierda 25% o mas<br />de peso corporal*",

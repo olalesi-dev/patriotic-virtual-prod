@@ -152,6 +152,7 @@
       <div class="lp-container lp-hero-content">
         <div class="lp-hero-copy">
           <h1 class="lp-hero-title" data-i18n="hero-h1">Welcome home to <span class="accent">better healthcare</span> </h1>
+          <p class="lp-hero-subhead" data-i18n="hero-subhead">Doctor-led weight loss and wellness — virtually, in English or Spanish.</p>
           <p class="lp-hero-motto">Bienvenidos. Estamos aquí para servir a nuestra comunidad latina, día y noche.</p>
         </div>
 
@@ -333,13 +334,16 @@
             <span class="lp-med-type">Semaglutide</span>
           </button>
         </div>
-        <p class="lp-breakthrough-note" data-i18n="breakthrough-note">*Pricing and eligibility are placeholders for review. Medication access depends on provider evaluation and clinical appropriateness.</p>
+        <p class="lp-breakthrough-note" data-i18n="breakthrough-note">Pricing shown is starting price; final pricing confirmed at consultation. Eligibility determined by licensed clinician.</p>
       </div>
 
       <div class="lp-breakthrough-panels">
         <article class="lp-science-panel">
           <div class="lp-panel-top">
-            <h3 data-i18n="breakthrough-science-title">The perfect<br /><span>SNAC</span></h3>
+            <div class="lp-science-heading">
+              <h3 data-i18n="breakthrough-science-title">The perfect<br /><span>SNAC</span></h3>
+              <p class="lp-science-explainer" data-i18n="breakthrough-science-explainer">[Explainer copy pending]</p>
+            </div>
             <button class="lp-breakthrough-btn" type="button" onclick="startSvc('imaging_video')" data-i18n="breakthrough-science-cta">See the science</button>
           </div>
           <img src="landing-page-demo/assets/snac.png" alt="" />
@@ -485,7 +489,10 @@
     <section class="lp-section lp-home-section">
       <div class="lp-container">
         <div class="lp-section-header lp-section-header--split">
-          <h2 class="lp-section-title" data-i18n="proto-title"><span class="accent">Protocol-driven</span> care.<br />No exceptions.</h2>
+          <div class="lp-protocol-heading-copy">
+            <h2 class="lp-section-title" data-i18n="proto-title"><span class="accent">Protocol-driven</span> care.<br />No exceptions.</h2>
+            <p class="lp-protocol-support" data-i18n="proto-support">We say no when treatment isn't right for you — and yes, with a clear plan, when it is.</p>
+          </div>
           <p class="lp-section-copy" data-i18n="proto-sub">Every consultation, treatment request, and imaging review follows strict clinical protocols. Our automated screening helps flag contraindications before care decisions are made.</p>
         </div>
 
@@ -806,12 +813,11 @@
             <h2 class="lp-section-title lp-cta-title" data-i18n="cta-title">Explore the medications we offer.</h2>
             <p class="lp-section-copy" data-i18n="cta-desc">See every medication available through our licensed pharmacy partner — with clinical guidelines and transparent pricing. View the catalog now, or have the complete list emailed to you.</p>
             <div class="lp-cta-actions">
-              <button class="lp-cta-btn" type="button" onclick="startSvc('weight_loss')" data-i18n="cta-btn">View our medications →</button>
-              <div class="lp-cta-divider" data-i18n="cta-divider">Or get the list in your inbox</div>
               <form class="lp-cta-email-form" onsubmit="event.preventDefault();">
                 <input type="email" name="medicationCatalogEmail" autocomplete="email" placeholder="Enter your email address" aria-label="Email address" data-i18n-placeholder="cta-email-placeholder" />
                 <button class="lp-cta-email-btn" type="button" data-i18n="cta-email-btn">Email me the list</button>
               </form>
+              <button class="lp-cta-link" type="button" onclick="startSvc('weight_loss')" data-i18n="cta-btn">View our medications →</button>
             </div>
             <p class="lp-cta-disclaimer" data-i18n="cta-disclaimer">All medications require evaluation by a licensed clinician. Compounded medications are not FDA-approved. Eligibility confirmed at consultation.</p>
           </div>
@@ -828,20 +834,6 @@
               <img src="assets/logomarkdark.png" alt="Patriotic Virtual Telehealth" class="brand-logo-img brand-logo-dark" />
             </a>
             <p data-i18n="footer-brand" style="margin-bottom: 8px;">Telehealth and radiology education consultation</p>
-            <div class="lp-footer-socials" aria-label="Social media" style="display:flex; gap:12px; margin-bottom:24px;">
-              <button class="lp-footer-social-btn" type="button" onclick="toast('Facebook page coming soon!')" aria-label="Facebook">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-facebook"></use></svg>
-              </button>
-              <button class="lp-footer-social-btn" type="button" onclick="toast('X page coming soon!')" aria-label="X">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-x"></use></svg>
-              </button>
-              <button class="lp-footer-social-btn" type="button" onclick="toast('Instagram page coming soon!')" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-instagram"></use></svg>
-              </button>
-              <button class="lp-footer-social-btn" type="button" onclick="toast('TikTok page coming soon!')" aria-label="TikTok">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
-              </button>
-            </div>
             <div class="lp-footer-seal-row" style="display:flex; align-items:flex-end; gap:14px; flex-wrap:nowrap; margin-top: 1rem;">
               <a href="https://www.legitscript.com/websites/?checker_keywords=patriotictelehealth.com" target="_blank" rel="noopener noreferrer" title="Verify LegitScript Approval for www.patriotictelehealth.com">
                 <img src="https://static.legitscript.com/seals/49631054.png" alt="Verify Approval for www.patriotictelehealth.com" width="73" height="79" />
@@ -857,6 +849,20 @@
                 <img class="lp-footer-powered-logo lp-theme-logo-light" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" />
                 <img class="lp-footer-powered-logo lp-theme-logo-dark" src="landing-page-demo/assets/nviida-dark.png" alt="NVIDIA Inception Program" />
               </a>
+            </div>
+            <div class="lp-footer-socials" aria-label="Social media" style="display:flex; gap:12px; margin-bottom:24px;">
+              <button class="lp-footer-social-btn" type="button" onclick="toast('Facebook page coming soon!')" aria-label="Facebook">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-facebook"></use></svg>
+              </button>
+              <button class="lp-footer-social-btn" type="button" onclick="toast('X page coming soon!')" aria-label="X">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-x"></use></svg>
+              </button>
+              <button class="lp-footer-social-btn" type="button" onclick="toast('Instagram page coming soon!')" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-instagram"></use></svg>
+              </button>
+              <button class="lp-footer-social-btn" type="button" onclick="toast('TikTok page coming soon!')" aria-label="TikTok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
+              </button>
             </div>
           </div>
 
@@ -1548,20 +1554,6 @@
             </a>
             <p class="footer-brand-text" data-i18n="footer-brand" style="margin-bottom:8px;">Board-certified telehealth and radiology services.
               Protocol-driven care, delivered to your door. Currently serving Florida.</p>
-            <div class="footer-socials" aria-label="Social media" style="display:flex; gap:12px; margin-bottom:24px;">
-              <button class="footer-social-btn" type="button" onclick="toast('Facebook page coming soon!')" aria-label="Facebook">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-facebook"></use></svg>
-              </button>
-              <button class="footer-social-btn" type="button" onclick="toast('X page coming soon!')" aria-label="X">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-x"></use></svg>
-              </button>
-              <button class="footer-social-btn" type="button" onclick="toast('Instagram page coming soon!')" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-instagram"></use></svg>
-              </button>
-              <button class="footer-social-btn" type="button" onclick="toast('TikTok page coming soon!')" aria-label="TikTok">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
-              </button>
-            </div>
             <div class="lp-footer-seal-row" style="display:flex;align-items:flex-end;gap:14px;flex-wrap:nowrap; margin-top:1rem;">
               <a href="https://www.legitscript.com/websites/?checker_keywords=patriotictelehealth.com" target="_blank" rel="noopener noreferrer" title="Verify LegitScript Approval for www.patriotictelehealth.com">
                 <img src="https://static.legitscript.com/seals/49631054.png" alt="Verify Approval for www.patriotictelehealth.com" width="73" height="79" />
@@ -1577,6 +1569,20 @@
                 <img class="lp-footer-powered-logo lp-theme-logo-light" src="landing-page-demo/assets/nviida.png" alt="NVIDIA Inception Program" />
                 <img class="lp-footer-powered-logo lp-theme-logo-dark" src="landing-page-demo/assets/nviida-dark.png" alt="NVIDIA Inception Program" />
               </a>
+            </div>
+            <div class="footer-socials" aria-label="Social media" style="display:flex; gap:12px; margin-bottom:24px;">
+              <button class="footer-social-btn" type="button" onclick="toast('Facebook page coming soon!')" aria-label="Facebook">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-facebook"></use></svg>
+              </button>
+              <button class="footer-social-btn" type="button" onclick="toast('X page coming soon!')" aria-label="X">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-x"></use></svg>
+              </button>
+              <button class="footer-social-btn" type="button" onclick="toast('Instagram page coming soon!')" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-instagram"></use></svg>
+              </button>
+              <button class="footer-social-btn" type="button" onclick="toast('TikTok page coming soon!')" aria-label="TikTok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
+              </button>
             </div>
           </div>
 
@@ -3258,6 +3264,11 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <div class="lp-mobile-sticky-cta" id="mobileStickyCta" aria-hidden="true">
+    <div class="lp-mobile-sticky-cta-text">Start your weight loss journey — <strong>From $149/mo</strong></div>
+    <button class="lp-mobile-sticky-cta-button" type="button" data-mobile-sticky-cta-action>Start</button>
+  </div>
 
   <!-- AI NAVIGATOR FAB + CHAT -->
   <button class="ai-fab" id="aiFab" onclick="toggleAI()" hidden aria-hidden="true">

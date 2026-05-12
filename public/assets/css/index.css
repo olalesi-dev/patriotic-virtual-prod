@@ -2188,6 +2188,92 @@ footer {
   opacity: 1;
 }
 
+.lp-mobile-sticky-cta {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .lp-mobile-sticky-cta {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 1600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 64px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 18px;
+    background: #0c4285;
+    color: #ffffff;
+    box-shadow: 0 18px 42px rgba(3, 21, 42, 0.34);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(calc(100% + 20px));
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+  }
+
+  .lp-mobile-sticky-cta.is-visible:not(.is-input-focused) {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .lp-mobile-sticky-cta-text {
+    min-width: 0;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .lp-mobile-sticky-cta-text strong {
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .lp-mobile-sticky-cta-button {
+    flex: 0 0 auto;
+    min-width: 72px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #0c4285;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(3, 21, 42, 0.2);
+  }
+}
+
+@media (max-width: 360px) {
+  .lp-mobile-sticky-cta {
+    left: 8px;
+    right: 8px;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .lp-mobile-sticky-cta-text {
+    font-size: 12px;
+  }
+
+  .lp-mobile-sticky-cta-button {
+    min-width: 64px;
+    padding: 0 12px;
+  }
+}
+
 /* ======= AI NAVIGATOR ======= */
 body {
   --ai-label-bg: #0f172a;
@@ -7074,6 +7160,18 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   color: #99cbef;
 }
 
+#landingPage .lp-hero-subhead {
+  max-width: 920px;
+  margin: -10px 0 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(29px, 4.45vw, 46px);
+  font-weight: 500;
+  line-height: 1.42;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 12px rgba(3, 16, 33, 0.22);
+}
+
 #landingPage .lp-hero-motto {
   max-width: 760px;
   margin: -8px 0 0;
@@ -7638,9 +7736,18 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   border: 1px solid rgba(12, 66, 133, 0.24);
   border-radius: 18px;
   background:
-    linear-gradient(90deg, rgba(245, 158, 11, 0.92), rgba(245, 158, 11, 0)) 0 0 / 100% 4px no-repeat,
-    radial-gradient(circle at 100% 0%, rgba(153, 203, 239, 0.42), transparent 38%),
-    linear-gradient(135deg, rgba(249, 252, 255, 0.99), rgba(231, 242, 255, 0.98));
+    linear-gradient(90deg, rgba(245, 158, 11, 0.92), rgba(245, 158, 11, 0)) 0
+      0 / 100% 4px no-repeat,
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(153, 203, 239, 0.42),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(249, 252, 255, 0.99),
+      rgba(231, 242, 255, 0.98)
+    );
   box-shadow: 0 18px 42px rgba(4, 28, 65, 0.18);
   color: #11284c;
   display: grid;
@@ -7724,7 +7831,9 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   border-radius: 13px;
   background: #ffffff;
   color: #10284e;
-  font: 600 14px/1 "Plus Jakarta Sans", sans-serif;
+  font:
+    600 14px/1 "Plus Jakarta Sans",
+    sans-serif;
   padding: 0 14px;
   outline: none;
 }
@@ -7741,7 +7850,9 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   padding: 0 18px;
   background: linear-gradient(135deg, #0c4285, #1e6db7);
   color: #ffffff;
-  font: 800 14px/1 "Plus Jakarta Sans", sans-serif;
+  font:
+    800 14px/1 "Plus Jakarta Sans",
+    sans-serif;
   cursor: default;
   box-shadow: 0 12px 22px rgba(12, 66, 133, 0.22);
 }
@@ -8107,6 +8218,21 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   font-size: 30px;
   font-weight: 900;
   line-height: 0.98;
+  letter-spacing: 0;
+}
+
+#landingPage .lp-science-heading {
+  display: grid;
+  gap: 10px;
+  max-width: 320px;
+}
+
+#landingPage .lp-science-explainer {
+  margin: 0;
+  color: rgba(219, 234, 254, 0.82);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.32;
   letter-spacing: 0;
 }
 
@@ -8634,6 +8760,21 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   align-items: start;
   padding-bottom: 32px;
   border-bottom: 1px solid #d6d6d6;
+}
+
+#landingPage .lp-protocol-heading-copy {
+  display: grid;
+  gap: 14px;
+}
+
+#landingPage .lp-protocol-support {
+  max-width: 600px;
+  margin: 0;
+  color: rgba(13, 13, 13, 0.68);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
 }
 
 #landingPage .lp-section-header--narrow {
@@ -9172,7 +9313,7 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   min-height: 316px;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(180deg, #f8b5b5 0%, #ef4444 100%);
+  background: linear-gradient(180deg, #f1bcbc 0%, #de5555 100%);
   color: #ffffff;
   display: grid;
   gap: 16px;
@@ -9791,7 +9932,7 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
 #landingPage .lp-cta-actions {
   width: min(100%, 520px);
   display: grid;
-  gap: 12px;
+  gap: 18px;
 }
 
 #landingPage .lp-cta-btn {
@@ -9823,26 +9964,6 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   box-shadow: 0 22px 46px rgba(3, 21, 42, 0.3);
 }
 
-#landingPage .lp-cta-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 16px;
-  letter-spacing: 0;
-}
-
-#landingPage .lp-cta-divider::before,
-#landingPage .lp-cta-divider::after {
-  content: "";
-  height: 1px;
-  flex: 1 1 auto;
-  background: rgba(255, 255, 255, 0.28);
-}
-
 #landingPage .lp-cta-email-form {
   width: 100%;
   display: grid;
@@ -9857,7 +9978,9 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.94);
   color: #0c2245;
-  font: 700 13px/1 "Plus Jakarta Sans", sans-serif;
+  font:
+    700 13px/1 "Plus Jakarta Sans",
+    sans-serif;
   padding: 0 14px;
   outline: none;
   box-shadow: 0 12px 24px rgba(3, 21, 42, 0.14);
@@ -9875,11 +9998,29 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   border: 0;
   border-radius: 14px;
   padding: 0 18px;
-  background: #99cbef;
-  color: #062142;
-  font: 800 13px/1 "Plus Jakarta Sans", sans-serif;
+  background: #0c4285;
+  color: #ffffff;
+  font:
+    800 13px/1 "Plus Jakarta Sans",
+    sans-serif;
   cursor: default;
-  box-shadow: 0 12px 24px rgba(3, 21, 42, 0.16);
+  box-shadow: 0 14px 28px rgba(12, 66, 133, 0.32);
+}
+
+#landingPage .lp-cta-link {
+  width: fit-content;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff !important;
+  font:
+    800 13px/1.25 "Plus Jakarta Sans",
+    sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  text-shadow: 0 1px 8px rgba(3, 16, 33, 0.24);
 }
 
 #landingPage .lp-cta-disclaimer {
@@ -9954,6 +10095,7 @@ body:not(.light-theme) #landingPage .lp-footer {
   align-items: flex-end;
   gap: 14px;
   flex-wrap: nowrap;
+  margin-bottom: 18px;
 }
 
 #landingPage .lp-footer-seal-row > a {
@@ -9963,7 +10105,7 @@ body:not(.light-theme) #landingPage .lp-footer {
 
 #landingPage .lp-footer-seal-row > a:first-child img {
   width: auto;
-  height: 70px;
+  height: 112px;
 }
 
 #landingPage .lp-footer-column {
@@ -10275,6 +10417,10 @@ body:not(.light-theme) #landingPage .lp-footer-bottom {
   color: var(--lp-muted) !important;
 }
 
+body:not(.light-theme) #landingPage .lp-protocol-support {
+  color: rgba(203, 213, 225, 0.78);
+}
+
 body:not(.light-theme) #landingPage .lp-eyebrow {
   color: var(--lp-accent);
 }
@@ -10343,7 +10489,13 @@ body:not(.light-theme) #how-it-works.lp-section {
 
 body:not(.light-theme) #landingPage .lp-step-card {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 44px rgba(239, 68, 68, 0.14);
+  background: linear-gradient(180deg, #5b2529 0%, #8f383b 100%);
+  box-shadow: 0 20px 44px rgba(67, 18, 22, 0.32);
+}
+
+body:not(.light-theme) #landingPage .lp-step-number {
+  background: rgba(255, 255, 255, 0.9);
+  color: #8f383b;
 }
 
 body:not(.light-theme) #radiology.lp-section,
@@ -10736,6 +10888,14 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     font-size: 29px;
     line-height: 33px;
     letter-spacing: 0;
+  }
+
+  #landingPage .lp-hero-subhead {
+    order: 1;
+    max-width: 350px;
+    margin: -2px 0 2px;
+    font-size: 18px;
+    line-height: 1.45;
   }
 
   #landingPage .lp-hero-motto {
@@ -11132,7 +11292,7 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
 
   #landingPage .lp-cta-actions {
     width: 100%;
-    gap: 10px;
+    gap: 16px;
   }
 
   #landingPage .lp-cta-btn {
@@ -11141,10 +11301,6 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     min-height: 42px;
     padding: 10px 18px;
     font-size: 13px;
-  }
-
-  #landingPage .lp-cta-divider {
-    font-size: 11px;
   }
 
   #landingPage .lp-cta-email-form {
@@ -11156,6 +11312,11 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
   #landingPage .lp-cta-email-btn {
     width: 100%;
     height: 42px;
+    font-size: 12px;
+  }
+
+  #landingPage .lp-cta-link {
+    justify-self: center;
     font-size: 12px;
   }
 
@@ -11223,6 +11384,11 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     font-size: 26px;
   }
 
+  #landingPage .lp-science-explainer {
+    font-size: 16px;
+    line-height: 1.32;
+  }
+
   #landingPage .lp-science-panel img {
     width: 94%;
     height: 64%;
@@ -11261,6 +11427,12 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     line-height: 24px;
   }
 
+  #landingPage #how-it-works .lp-protocol-support {
+    max-width: 100%;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
   #landingPage #how-it-works .lp-steps-grid {
     position: relative;
     grid-template-columns: 1fr;
@@ -11277,8 +11449,8 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     border-radius: 999px;
     background: linear-gradient(
       180deg,
-      rgba(248, 181, 181, 0.4),
-      rgba(239, 68, 68, 0.9)
+      rgba(241, 188, 188, 0.4),
+      rgba(222, 85, 85, 0.9)
     );
     pointer-events: none;
   }
@@ -11299,8 +11471,8 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     align-items: start;
     background: linear-gradient(
       135deg,
-      rgba(248, 181, 181, 0.96) 0%,
-      rgba(239, 68, 68, 0.96) 100%
+      rgba(241, 188, 188, 0.96) 0%,
+      rgba(222, 85, 85, 0.96) 100%
     );
     box-shadow: 0 12px 28px rgba(239, 68, 68, 0.18);
   }
@@ -11328,6 +11500,23 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     font-size: 13.5px;
     line-height: 20px;
     color: rgba(255, 255, 255, 0.92);
+  }
+
+  body:not(.light-theme) #landingPage #how-it-works .lp-steps-grid::before {
+    background: linear-gradient(
+      180deg,
+      rgba(91, 37, 41, 0.4),
+      rgba(143, 56, 59, 0.82)
+    );
+  }
+
+  body:not(.light-theme) #landingPage #how-it-works .lp-step-card {
+    background: linear-gradient(
+      135deg,
+      rgba(91, 37, 41, 0.96) 0%,
+      rgba(143, 56, 59, 0.96) 100%
+    );
+    box-shadow: 0 12px 28px rgba(67, 18, 22, 0.28);
   }
 
   #landingPage.lp-motion-ready
@@ -11506,6 +11695,14 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
     padding-top: 72px;
   }
 
+  #landingPage .lp-footer-seal-row {
+    gap: 10px !important;
+  }
+
+  #landingPage .lp-footer-seal-row > a:first-child img {
+    height: 106px;
+  }
+
   #landingPage .lp-footer-bottom {
     flex-direction: column;
     align-items: flex-start;
@@ -11525,6 +11722,12 @@ body:not(.light-theme) #landingPage .lp-footer-social-btn:focus-visible {
   #landingPage .lp-hero-title {
     font-size: 26px;
     line-height: 30px;
+    margin-bottom: 0;
+  }
+
+  #landingPage .lp-hero-subhead {
+    font-size: 15px;
+    line-height: 1.42;
     margin-bottom: 0;
   }
 

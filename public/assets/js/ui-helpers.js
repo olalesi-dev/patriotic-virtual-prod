@@ -317,3 +317,81 @@
         setupCarouselDrag();
       }
     })();
+
+    (function initMobileStickyCta() {
+      const mobileQuery = window.matchMedia("(max-width: 768px)");
+      const bar = document.getElementById("mobileStickyCta");
+      const landing = document.getElementById("landingPage");
+      const hero = landing?.querySelector(":scope > .lp-hero");
+      const action = bar?.querySelector("[data-mobile-sticky-cta-action]");
+      if (!bar || !landing || !action) return;
+
+      let inputFocused = false;
+
+      function landingIsVisible() {
+        return (
+          !landing.classList.contains("hidden") &&
+          landing.style.display !== "none" &&
+          window.getComputedStyle(landing).display !== "none"
+        );
+      }
+
+      function isTextEntry(element) {
+        if (!element) return false;
+        if (element.isContentEditable) return true;
+        const tag = element.tagName;
+        if (tag === "TEXTAREA") return true;
+        if (tag !== "INPUT") return false;
+        const type = (element.getAttribute("type") || "text").toLowerCase();
+        return !["button", "checkbox", "color", "file", "hidden", "image", "radio", "range", "reset", "submit"].includes(type);
+      }
+
+      function heroHasPassed() {
+        if (!landingIsVisible()) return false;
+        if (hero && window.getComputedStyle(hero).display !== "none" && hero.offsetHeight > 0) {
+          return hero.getBoundingClientRect().bottom <= 0;
+        }
+        return window.scrollY > 80;
+      }
+
+      function updateStickyCta() {
+        const shouldShow = mobileQuery.matches && !inputFocused && heroHasPassed();
+        bar.classList.toggle("is-visible", shouldShow);
+        bar.classList.toggle("is-input-focused", inputFocused);
+        bar.setAttribute("aria-hidden", shouldShow ? "false" : "true");
+      }
+
+      action.addEventListener("click", function () {
+        if (typeof window.startSvc === "function") {
+          window.startSvc("weight_loss");
+        } else if (typeof window.openModal === "function") {
+          window.openModal("register");
+        }
+      });
+
+      document.addEventListener("focusin", function (event) {
+        if (!isTextEntry(event.target)) return;
+        inputFocused = true;
+        updateStickyCta();
+      });
+
+      document.addEventListener("focusout", function () {
+        window.setTimeout(function () {
+          inputFocused = isTextEntry(document.activeElement);
+          updateStickyCta();
+        }, 0);
+      });
+
+      window.addEventListener("scroll", updateStickyCta, { passive: true });
+      window.addEventListener("resize", updateStickyCta);
+      mobileQuery.addEventListener?.("change", updateStickyCta);
+
+      const observer = new MutationObserver(updateStickyCta);
+      observer.observe(landing, { attributes: true, attributeFilter: ["class", "style", "data-lp-route"] });
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", updateStickyCta, { once: true });
+      } else {
+        updateStickyCta();
+      }
+    })();
