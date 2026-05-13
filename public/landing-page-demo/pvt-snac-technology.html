@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Science of Oral GLP-1 — Patriotic Virtual Telehealth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #0B1E3F;
+    --navy-deep: #050F22;
+    --navy-mid: #142B54;
+    --red: #C8102E;
+    --red-bright: #E63946;
+    --cream: #F7F4ED;
+    --paper: #FBF9F4;
+    --ink: #0B1E3F;
+    --muted: #6B7388;
+    --line: #D8D4C8;
+    --gold: #C9A86A;
+    --serif: 'Fraunces', 'Times New Roman', serif;
+    --sans: 'Inter Tight', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    overflow-x: hidden;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 18px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(251, 249, 244, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(11, 30, 63, 0.08);
+  }
+  .nav-logo {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-logo .mark {
+    width: 28px; height: 28px;
+    background: var(--navy);
+    border-radius: 50%;
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .nav-logo .mark::after {
+    content: '';
+    width: 12px; height: 12px;
+    background: var(--red);
+    border-radius: 50%;
+  }
+  .nav-links {
+    display: flex; gap: 36px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .nav-links a {
+    color: var(--ink);
+    text-decoration: none;
+    position: relative;
+    padding: 4px 0;
+  }
+  .nav-links a.active::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--red);
+  }
+  .nav-cta {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: background 0.3s;
+  }
+  .nav-cta:hover { background: var(--red); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    min-height: 100vh;
+    padding: 140px 48px 80px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 60px;
+    position: relative;
+    background: var(--paper);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 50%;
+    background:
+      radial-gradient(circle at 70% 40%, rgba(200, 16, 46, 0.06), transparent 60%),
+      radial-gradient(circle at 30% 80%, rgba(11, 30, 63, 0.04), transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero-grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(11, 30, 63, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(11, 30, 63, 0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+    mask-image: linear-gradient(180deg, transparent, black 30%, black 70%, transparent);
+  }
+
+  .hero-left {
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 28px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 32px; height: 1px;
+    background: var(--red);
+  }
+
+  .hero-title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(48px, 6.2vw, 92px);
+    line-height: 0.96;
+    letter-spacing: -0.035em;
+    color: var(--navy);
+    margin-bottom: 32px;
+  }
+  .hero-title em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--red);
+  }
+  .hero-title .ampersand {
+    font-style: italic;
+    font-weight: 300;
+    opacity: 0.4;
+  }
+
+  .hero-lede {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: var(--navy-mid);
+    max-width: 520px;
+    margin-bottom: 40px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+    max-width: 520px;
+  }
+  .hero-meta-item {
+    flex: 1;
+  }
+  .hero-meta-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .hero-meta-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+  }
+  .hero-meta-value sup { font-size: 12px; color: var(--red); }
+
+  .hero-right {
+    z-index: 2;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hero schematic — the tablet diagram */
+  .schematic {
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 1;
+    position: relative;
+  }
+
+  /* ---------- SECTION COMMON ---------- */
+  section {
+    padding: 120px 48px;
+    position: relative;
+  }
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 16px;
+  }
+  .section-eyebrow .num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border: 1px solid var(--red);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    margin-right: 12px;
+    font-size: 11px;
+  }
+
+  /* ---------- PROBLEM SECTION ---------- */
+  .problem {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 140px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .problem::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(200, 16, 46, 0.18), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(201, 168, 106, 0.08), transparent 50%);
+  }
+  .problem-grid {
+    background-image:
+      linear-gradient(rgba(247, 244, 237, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247, 244, 237, 0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    position: absolute; inset: 0;
+    mask-image: linear-gradient(180deg, transparent, black 30%, black 70%, transparent);
+  }
+  .problem-inner {
+    max-width: 1200px; margin: 0 auto;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .problem-eyebrow {
+    color: var(--red-bright);
+  }
+  .problem-eyebrow .num {
+    border-color: var(--red-bright);
+  }
+  .problem-title {
+    font-family: var(--serif);
+    font-size: clamp(40px, 4.5vw, 64px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin-bottom: 32px;
+  }
+  .problem-title em { font-style: italic; color: var(--red-bright); }
+  .problem-body {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(247, 244, 237, 0.85);
+    max-width: 480px;
+  }
+  .problem-body p + p { margin-top: 18px; }
+
+  /* Stomach environment visual */
+  .stomach-vis {
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 460px;
+    margin-left: auto;
+    position: relative;
+  }
+
+  /* ---------- MECHANISM SECTION ---------- */
+  .mechanism {
+    background: var(--paper);
+    padding: 140px 48px;
+  }
+  .mechanism-header {
+    max-width: 1200px;
+    margin: 0 auto 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: end;
+  }
+  .mechanism-title {
+    font-family: var(--serif);
+    font-size: clamp(40px, 4.5vw, 64px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    color: var(--navy);
+  }
+  .mechanism-title em { font-style: italic; color: var(--red); }
+  .mechanism-intro {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--navy-mid);
+    max-width: 480px;
+  }
+
+  .stages {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .stage {
+    display: grid;
+    grid-template-columns: 80px 1fr 1.2fr;
+    gap: 40px;
+    padding: 60px 0;
+    border-top: 1px solid var(--line);
+    align-items: start;
+    position: relative;
+  }
+  .stage:last-child { border-bottom: 1px solid var(--line); }
+
+  .stage-num {
+    font-family: var(--serif);
+    font-size: 80px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--navy);
+    letter-spacing: -0.04em;
+    position: relative;
+  }
+  .stage-num sup {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--red);
+    vertical-align: top;
+    margin-left: 4px;
+    font-weight: 500;
+  }
+
+  .stage-content h3 {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .stage-content h3 em {
+    font-style: italic;
+    color: var(--red);
+    font-weight: 400;
+  }
+  .stage-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .stage-content p {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--navy-mid);
+    max-width: 420px;
+  }
+
+  .stage-vis {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    width: 100%;
+    background: linear-gradient(180deg, #FFFFFF, #F2EEE5);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stage-vis-label {
+    position: absolute;
+    top: 14px; left: 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    z-index: 3;
+  }
+  .stage-vis-corner {
+    position: absolute;
+    bottom: 12px; right: 14px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    z-index: 3;
+    letter-spacing: 0.05em;
+  }
+
+  /* ---------- DELIVERY (FORMULATION) SECTION ---------- */
+  .delivery {
+    background: var(--cream);
+    padding: 140px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .delivery-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .delivery h2 {
+    font-family: var(--serif);
+    font-size: clamp(40px, 4.5vw, 64px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    color: var(--navy);
+    margin-bottom: 28px;
+  }
+  .delivery h2 em { font-style: italic; color: var(--red); }
+  .delivery p {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--navy-mid);
+    margin-bottom: 20px;
+    max-width: 500px;
+  }
+  .delivery-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 40px;
+    max-width: 500px;
+  }
+  .delivery-stat {
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+  }
+  .delivery-stat-num {
+    font-family: var(--serif);
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--navy);
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+  }
+  .delivery-stat-num em { font-style: italic; color: var(--red); }
+  .delivery-stat-label {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  /* Tablet composition visual */
+  .composition-vis {
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 520px;
+    margin-left: auto;
+    position: relative;
+  }
+
+  /* ---------- SAFETY / CLINICAL CONTEXT ---------- */
+  .clinical {
+    background: var(--navy-deep);
+    color: var(--cream);
+    padding: 140px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .clinical::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(200, 16, 46, 0.15), transparent 50%);
+  }
+  .clinical-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+  }
+  .clinical-eyebrow {
+    color: var(--red-bright);
+    justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .clinical-eyebrow .num { border-color: var(--red-bright); }
+  .clinical h2 {
+    font-family: var(--serif);
+    font-size: clamp(40px, 5vw, 72px);
+    font-weight: 400;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    margin-bottom: 32px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .clinical h2 em { font-style: italic; color: var(--red-bright); }
+  .clinical-body {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: rgba(247, 244, 237, 0.8);
+    max-width: 720px;
+    margin: 0 auto 60px;
+  }
+
+  .indications-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(247, 244, 237, 0.12);
+    border: 1px solid rgba(247, 244, 237, 0.12);
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: left;
+  }
+  .indication {
+    background: var(--navy-deep);
+    padding: 32px 28px;
+  }
+  .indication-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--red-bright);
+    margin-bottom: 14px;
+  }
+  .indication h4 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .indication p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(247, 244, 237, 0.65);
+  }
+
+  /* ---------- CTA SECTION ---------- */
+  .cta {
+    background: var(--paper);
+    padding: 160px 48px;
+    text-align: center;
+    position: relative;
+  }
+  .cta-inner {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .cta-eyebrow {
+    justify-content: center;
+    display: inline-flex;
+    align-items: center;
+  }
+  .cta h2 {
+    font-family: var(--serif);
+    font-size: clamp(44px, 5.5vw, 80px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    color: var(--navy);
+    margin-bottom: 24px;
+    margin-top: 16px;
+  }
+  .cta h2 em { font-style: italic; color: var(--red); }
+  .cta-sub {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: var(--navy-mid);
+    margin-bottom: 48px;
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-btn {
+    display: inline-block;
+    background: var(--navy);
+    color: var(--cream);
+    padding: 18px 40px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 999px;
+    transition: all 0.3s;
+  }
+  .cta-btn:hover {
+    background: var(--red);
+    transform: translateY(-2px);
+  }
+  .cta-disclaimer {
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--muted);
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
+
+  /* ---------- REFERENCES ---------- */
+  .refs {
+    background: var(--paper);
+    padding: 60px 48px 80px;
+    border-top: 1px solid var(--line);
+  }
+  .refs-inner {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .refs h5 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .refs ol {
+    list-style: none;
+    counter-reset: ref;
+  }
+  .refs li {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+    padding-left: 28px;
+    position: relative;
+    margin-bottom: 10px;
+    counter-increment: ref;
+  }
+  .refs li::before {
+    content: counter(ref);
+    position: absolute;
+    left: 0; top: 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  /* ---------- ANIMATIONS ---------- */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes drift {
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(4px, -3px); }
+    100% { transform: translate(0, 0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scan {
+    0%, 100% { transform: translateY(0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+
+  .float-1 { animation: float 6s ease-in-out infinite; }
+  .float-2 { animation: float 7s ease-in-out infinite 1s; }
+  .float-3 { animation: float 5.5s ease-in-out infinite 0.5s; }
+  .drift-1 { animation: drift 4s ease-in-out infinite; }
+  .pulse-1 { animation: pulse 3s ease-in-out infinite; }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 980px) {
+    .nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 110px 20px 60px;
+      gap: 40px;
+    }
+    section { padding: 80px 20px; }
+    .problem, .mechanism, .delivery, .clinical, .cta { padding: 80px 20px; }
+    .problem-inner, .delivery-inner { grid-template-columns: 1fr; gap: 40px; }
+    .mechanism-header { grid-template-columns: 1fr; gap: 24px; }
+    .stage {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 40px 0;
+    }
+    .stage-num { font-size: 56px; }
+    .indications-grid { grid-template-columns: 1fr; }
+    .hero-meta { gap: 24px; }
+    .delivery-stats { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="#" class="nav-logo">
+    <span class="mark"></span>
+    PVT
+  </a>
+  <div class="nav-links">
+    <a href="#">Treatments</a>
+    <a href="#" class="active">The Science</a>
+    <a href="#">How It Works</a>
+    <a href="#">FAQ</a>
+  </div>
+  <a href="#cta" class="nav-cta">Get Started</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid-overlay"></div>
+  <div class="hero-left reveal">
+    <div class="hero-eyebrow">Dossier 01 · Oral GLP-1 Therapy</div>
+    <h1 class="hero-title">
+      A medicine<br>
+      that survives<br>
+      the <em>stomach.</em>
+    </h1>
+    <p class="hero-lede">
+      For nearly a century, GLP-1 medications required a needle. A small fatty-acid molecule called SNAC changed that—creating a brief, protected window for absorption directly through the gastric lining.
+    </p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <div class="hero-meta-label">FDA Approval</div>
+        <div class="hero-meta-value">Sep 2019<sup>1</sup></div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="hero-meta-label">Active Compound</div>
+        <div class="hero-meta-value">Semaglutide</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="hero-meta-label">Carrier</div>
+        <div class="hero-meta-value">SNAC<sup>2</sup></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero schematic: pill cross-section -->
+  <div class="hero-right reveal">
+    <svg class="schematic" viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="pillGrad" cx="0.4" cy="0.35" r="0.7">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="60%" stop-color="#F2EEE5"/>
+          <stop offset="100%" stop-color="#D8D2C2"/>
+        </radialGradient>
+        <radialGradient id="coreGrad" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="#E63946"/>
+          <stop offset="100%" stop-color="#C8102E"/>
+        </radialGradient>
+        <pattern id="dotPattern" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1" fill="#0B1E3F" opacity="0.15"/>
+        </pattern>
+      </defs>
+
+      <!-- Outer guide circle -->
+      <circle cx="240" cy="240" r="220" fill="none" stroke="#0B1E3F" stroke-width="0.5" stroke-dasharray="2 4" opacity="0.3"/>
+      <circle cx="240" cy="240" r="190" fill="none" stroke="#0B1E3F" stroke-width="0.5" opacity="0.15"/>
+
+      <!-- Crosshairs -->
+      <line x1="240" y1="0" x2="240" y2="20" stroke="#0B1E3F" stroke-width="0.5" opacity="0.4"/>
+      <line x1="240" y1="460" x2="240" y2="480" stroke="#0B1E3F" stroke-width="0.5" opacity="0.4"/>
+      <line x1="0" y1="240" x2="20" y2="240" stroke="#0B1E3F" stroke-width="0.5" opacity="0.4"/>
+      <line x1="460" y1="240" x2="480" y2="240" stroke="#0B1E3F" stroke-width="0.5" opacity="0.4"/>
+
+      <!-- Pill shape (cross-section) -->
+      <g class="float-1">
+        <circle cx="240" cy="240" r="150" fill="url(#pillGrad)" stroke="#0B1E3F" stroke-width="1.5" opacity="0.95"/>
+        <circle cx="240" cy="240" r="150" fill="url(#dotPattern)" opacity="0.7"/>
+
+        <!-- SNAC matrix layer -->
+        <circle cx="240" cy="240" r="110" fill="none" stroke="#0B1E3F" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.4"/>
+
+        <!-- Semaglutide core -->
+        <circle cx="240" cy="240" r="55" fill="url(#coreGrad)" opacity="0.9"/>
+        <circle cx="240" cy="240" r="55" fill="none" stroke="#0B1E3F" stroke-width="1"/>
+
+        <!-- Inner detail in core -->
+        <g opacity="0.5">
+          <circle cx="230" cy="232" r="3" fill="#FFFFFF"/>
+          <circle cx="250" cy="240" r="2" fill="#FFFFFF"/>
+          <circle cx="238" cy="252" r="2.5" fill="#FFFFFF"/>
+          <circle cx="225" cy="245" r="1.5" fill="#FFFFFF"/>
+          <circle cx="252" cy="226" r="1.5" fill="#FFFFFF"/>
+        </g>
+
+        <!-- SNAC particles in middle layer -->
+        <g opacity="0.6">
+          <circle cx="170" cy="240" r="3" fill="#C9A86A"/>
+          <circle cx="310" cy="240" r="3" fill="#C9A86A"/>
+          <circle cx="240" cy="170" r="3" fill="#C9A86A"/>
+          <circle cx="240" cy="310" r="3" fill="#C9A86A"/>
+          <circle cx="190" cy="190" r="2.5" fill="#C9A86A"/>
+          <circle cx="290" cy="290" r="2.5" fill="#C9A86A"/>
+          <circle cx="190" cy="290" r="2.5" fill="#C9A86A"/>
+          <circle cx="290" cy="190" r="2.5" fill="#C9A86A"/>
+          <circle cx="155" cy="215" r="2" fill="#C9A86A"/>
+          <circle cx="325" cy="265" r="2" fill="#C9A86A"/>
+          <circle cx="215" cy="155" r="2" fill="#C9A86A"/>
+          <circle cx="265" cy="325" r="2" fill="#C9A86A"/>
+        </g>
+      </g>
+
+      <!-- Annotation lines -->
+      <g font-family="JetBrains Mono, monospace" font-size="9" fill="#0B1E3F" letter-spacing="1">
+        <!-- Core label -->
+        <line x1="240" y1="240" x2="380" y2="120" stroke="#C8102E" stroke-width="0.5"/>
+        <circle cx="240" cy="240" r="2" fill="#C8102E"/>
+        <text x="384" y="115" fill="#C8102E" font-weight="600">SEMAGLUTIDE</text>
+        <text x="384" y="128" fill="#6B7388">14 mg active molecule</text>
+
+        <!-- SNAC label -->
+        <line x1="290" y1="290" x2="400" y2="360" stroke="#C9A86A" stroke-width="0.5"/>
+        <circle cx="290" cy="290" r="2" fill="#C9A86A"/>
+        <text x="404" y="355" fill="#C9A86A" font-weight="600">SNAC CARRIER</text>
+        <text x="404" y="368" fill="#6B7388">~300 mg permeation enh.</text>
+
+        <!-- Tablet label -->
+        <line x1="100" y1="240" x2="20" y2="380" stroke="#0B1E3F" stroke-width="0.5"/>
+        <circle cx="100" cy="240" r="2" fill="#0B1E3F"/>
+        <text x="20" y="395" fill="#0B1E3F" font-weight="600">TABLET MATRIX</text>
+        <text x="20" y="408" fill="#6B7388">Erodes in ~60–90 min</text>
+      </g>
+
+      <!-- Scale indicator -->
+      <g transform="translate(20, 30)">
+        <text font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" letter-spacing="1.5">FIG. 01 · TABLET CROSS-SECTION</text>
+        <line x1="0" y1="8" x2="40" y2="8" stroke="#6B7388" stroke-width="0.5"/>
+      </g>
+
+      <g transform="translate(380, 460)">
+        <text font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388">SCALE: 1:1 ×10³</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- PROBLEM SECTION -->
+<section class="problem">
+  <div class="problem-grid"></div>
+  <div class="problem-inner">
+    <div class="reveal">
+      <div class="hero-eyebrow problem-eyebrow"><span class="num">02</span>The Obstacle</div>
+      <h2 class="problem-title">
+        The stomach is built to <em>destroy</em> what semaglutide is made of.
+      </h2>
+      <div class="problem-body">
+        <p>
+          Semaglutide is built from a short chain of amino acids—the same kind of structure the stomach was designed to break down. Hydrochloric acid maintains a pH between 1 and 2, and the enzyme pepsin shreds these amino-acid bonds at peak efficiency in that range.<sup style="color: var(--red-bright);">3</sup>
+        </p>
+        <p>
+          Without protection, a swallowed dose would be reduced to fragments before reaching the bloodstream. This is why every previous GLP-1 medication required a subcutaneous injection.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stomach environment visual -->
+    <div class="stomach-vis reveal">
+      <svg viewBox="0 0 460 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="acidGrad" cx="0.5" cy="0.5" r="0.6">
+            <stop offset="0%" stop-color="#E63946" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#E63946" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="phGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#E63946"/>
+            <stop offset="20%" stop-color="#E63946"/>
+            <stop offset="50%" stop-color="#C9A86A"/>
+            <stop offset="100%" stop-color="#0B1E3F"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Background environment glow -->
+        <circle cx="230" cy="230" r="200" fill="url(#acidGrad)"/>
+
+        <!-- pH scale at top -->
+        <g transform="translate(40, 40)">
+          <text font-family="JetBrains Mono, monospace" font-size="9" fill="#F7F4ED" letter-spacing="1.5" opacity="0.7">GASTRIC pH SCALE</text>
+          <rect x="0" y="14" width="380" height="6" fill="url(#phGrad)" rx="3"/>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#F7F4ED" opacity="0.6">
+            <text x="0" y="36">1</text>
+            <text x="95" y="36">3</text>
+            <text x="190" y="36">5</text>
+            <text x="285" y="36">7</text>
+            <text x="370" y="36">9</text>
+          </g>
+          <!-- pH 1-2 marker -->
+          <line x1="20" y1="14" x2="20" y2="22" stroke="#FBF9F4" stroke-width="2"/>
+          <text x="20" y="56" font-family="JetBrains Mono, monospace" font-size="9" fill="#E63946" text-anchor="middle" font-weight="600">YOU ARE HERE</text>
+          <text x="20" y="68" font-family="JetBrains Mono, monospace" font-size="8" fill="#F7F4ED" opacity="0.6" text-anchor="middle">pH 1–2</text>
+        </g>
+
+        <!-- Central molecule being attacked -->
+        <g transform="translate(230, 250)" class="float-2">
+          <!-- Amino acid chain (fragmented) -->
+          <g opacity="0.9">
+            <circle cx="-40" cy="0" r="10" fill="#F7F4ED"/>
+            <circle cx="-20" cy="-8" r="10" fill="#F7F4ED"/>
+            <circle cx="0" cy="0" r="10" fill="#F7F4ED"/>
+            <line x1="-30" y1="-4" x2="-10" y2="-4" stroke="#F7F4ED" stroke-width="2"/>
+            <!-- Broken bonds -->
+            <line x1="10" y1="0" x2="22" y2="6" stroke="#E63946" stroke-width="2" stroke-dasharray="2 2"/>
+            <circle cx="30" cy="10" r="8" fill="#F7F4ED" opacity="0.5"/>
+            <circle cx="50" cy="-10" r="6" fill="#F7F4ED" opacity="0.4"/>
+            <circle cx="-60" cy="-15" r="5" fill="#F7F4ED" opacity="0.3"/>
+          </g>
+        </g>
+
+        <!-- Pepsin enzymes (predators) -->
+        <g class="drift-1">
+          <g transform="translate(120, 180)">
+            <path d="M 0 0 L 20 -8 L 30 4 L 22 18 L 4 16 Z" fill="#E63946" opacity="0.8"/>
+            <text x="15" y="32" font-family="JetBrains Mono, monospace" font-size="7" fill="#FBF9F4" text-anchor="middle" opacity="0.7">PEPSIN</text>
+          </g>
+          <g transform="translate(320, 200)">
+            <path d="M 0 0 L 20 -8 L 30 4 L 22 18 L 4 16 Z" fill="#E63946" opacity="0.7"/>
+          </g>
+          <g transform="translate(160, 320)">
+            <path d="M 0 0 L 20 -8 L 30 4 L 22 18 L 4 16 Z" fill="#E63946" opacity="0.75"/>
+          </g>
+          <g transform="translate(310, 340)">
+            <path d="M 0 0 L 20 -8 L 30 4 L 22 18 L 4 16 Z" fill="#E63946" opacity="0.6"/>
+          </g>
+        </g>
+
+        <!-- H+ ions floating -->
+        <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" fill="#E63946" opacity="0.6">
+          <text x="90" y="280" class="float-3">H⁺</text>
+          <text x="380" y="160" class="float-1">H⁺</text>
+          <text x="380" y="380" class="float-3">H⁺</text>
+          <text x="100" y="400" class="float-2">H⁺</text>
+          <text x="280" y="130" class="float-1">H⁺</text>
+          <text x="60" y="200" class="float-2">H⁺</text>
+        </g>
+
+        <!-- Bottom annotation -->
+        <g transform="translate(40, 420)" font-family="JetBrains Mono, monospace" font-size="8" fill="#F7F4ED" opacity="0.5">
+          <text>FIG. 02 · UNPROTECTED MOLECULE IN GASTRIC ENVIRONMENT</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- MECHANISM SECTION -->
+<section class="mechanism">
+  <div class="mechanism-header">
+    <h2 class="mechanism-title reveal">
+      How <em>SNAC</em> escorts the molecule through.
+    </h2>
+    <p class="mechanism-intro reveal">
+      SNAC (sodium N-[8-(2-hydroxybenzoyl)amino] caprylate) is not a coating or a capsule. It's a small fatty-acid derivative that performs three coordinated actions within a few centimeters of the tablet—just long enough for absorption to happen, then dissolves away.<sup style="color: var(--red);">2,4</sup>
+    </p>
+  </div>
+
+  <div class="stages">
+
+    <!-- STAGE 1 -->
+    <div class="stage reveal">
+      <div class="stage-num">01<sup>α</sup></div>
+      <div class="stage-content">
+        <div class="stage-tag">Stage One · Buffering</div>
+        <h3>Raise the local <em>pH</em>.</h3>
+        <p>
+          As the tablet erodes, it releases roughly 300 mg of SNAC into a small zone against the stomach wall. This creates a concentrated microenvironment that locally raises the pH from around 1–2 to approximately 5.<sup style="color: var(--red);">4,5</sup> At pH 5, pepsin loses its ability to degrade the molecule—and semaglutide stays intact.
+        </p>
+      </div>
+
+      <!-- Stage 1 visual: pH buffer zone -->
+      <div class="stage-vis">
+        <span class="stage-vis-label">FIG. 03 · LOCAL pH SHIFT</span>
+        <span class="stage-vis-corner">α · BUFFERING</span>
+        <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
+          <defs>
+            <radialGradient id="bufferZone" cx="0.3" cy="0.5" r="0.4">
+              <stop offset="0%" stop-color="#C9A86A" stop-opacity="0.5"/>
+              <stop offset="60%" stop-color="#C9A86A" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#C9A86A" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="stomachWall" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0B1E3F" stop-opacity="0.1"/>
+              <stop offset="100%" stop-color="#0B1E3F" stop-opacity="0.25"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Stomach lining (left wall) -->
+          <rect x="0" y="0" width="40" height="250" fill="url(#stomachWall)"/>
+          <g stroke="#0B1E3F" stroke-width="0.5" opacity="0.3" fill="none">
+            <path d="M 40 20 Q 30 30, 40 40 Q 30 50, 40 60 Q 30 70, 40 80 Q 30 90, 40 100 Q 30 110, 40 120 Q 30 130, 40 140 Q 30 150, 40 160 Q 30 170, 40 180 Q 30 190, 40 200 Q 30 210, 40 220 Q 30 230, 40 240"/>
+        </g>
+
+          <!-- Buffer zone glow -->
+          <ellipse cx="130" cy="125" rx="110" ry="100" fill="url(#bufferZone)"/>
+
+          <!-- Tablet (eroding) -->
+          <g transform="translate(70, 100)">
+            <ellipse cx="0" cy="25" rx="35" ry="22" fill="#F2EEE5" stroke="#0B1E3F" stroke-width="0.8" opacity="0.85"/>
+            <ellipse cx="0" cy="25" rx="35" ry="22" fill="url(#dotPattern)" opacity="0.4"/>
+            <circle cx="0" cy="25" r="8" fill="#C8102E" opacity="0.7"/>
+          </g>
+
+          <!-- SNAC particles radiating -->
+          <g fill="#C9A86A" opacity="0.7">
+            <circle cx="140" cy="80" r="2.5" class="float-1"/>
+            <circle cx="160" cy="100" r="2" class="float-2"/>
+            <circle cx="180" cy="125" r="2.5" class="float-3"/>
+            <circle cx="155" cy="155" r="2" class="float-1"/>
+            <circle cx="135" cy="175" r="2.5" class="float-2"/>
+            <circle cx="190" cy="160" r="2" class="float-3"/>
+            <circle cx="120" cy="100" r="2" class="float-2"/>
+            <circle cx="115" cy="155" r="2" class="float-1"/>
+            <circle cx="175" cy="85" r="2" class="float-3"/>
+          </g>
+
+          <!-- pH labels -->
+          <g font-family="JetBrains Mono, monospace" font-size="10" font-weight="600">
+            <text x="115" y="50" fill="#C9A86A" text-anchor="middle">pH ≈ 5</text>
+            <line x1="100" y1="55" x2="130" y2="55" stroke="#C9A86A" stroke-width="0.5"/>
+
+            <text x="320" y="50" fill="#E63946">pH 1–2</text>
+            <text x="320" y="64" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388">(ambient)</text>
+          </g>
+
+          <!-- Pepsin pushed out -->
+          <g opacity="0.5">
+            <path d="M 300 110 L 318 102 L 326 114 L 320 128 L 304 126 Z" fill="#E63946"/>
+            <text x="313" y="148" font-family="JetBrains Mono, monospace" font-size="7" fill="#E63946" text-anchor="middle">PEPSIN</text>
+            <text x="313" y="158" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388" text-anchor="middle">inactive</text>
+          </g>
+
+          <!-- Arrow showing exclusion -->
+          <g stroke="#6B7388" stroke-width="0.5" opacity="0.5" fill="none">
+            <path d="M 240 125 L 285 115" marker-end="url(#arrowHead)"/>
+          </g>
+          <defs>
+            <marker id="arrowHead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M 0 0 L 6 3 L 0 6 Z" fill="#6B7388"/>
+            </marker>
+          </defs>
+
+          <text x="20" y="240" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388">GASTRIC MUCOSA</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- STAGE 2 -->
+    <div class="stage reveal">
+      <div class="stage-num">02<sup>β</sup></div>
+      <div class="stage-content">
+        <div class="stage-tag">Stage Two · Monomerization</div>
+        <h3>Separate the <em>clusters.</em></h3>
+        <p>
+          Semaglutide molecules naturally cluster together. As single molecules, they can cross a cell membrane—as clusters, they're too large. SNAC interferes with these aggregates and shifts the equilibrium toward individual molecules ready for absorption.<sup style="color: var(--red);">4</sup>
+        </p>
+      </div>
+
+      <!-- Stage 2 visual: monomerization -->
+      <div class="stage-vis">
+        <span class="stage-vis-label">FIG. 04 · AGGREGATE DISSOCIATION</span>
+        <span class="stage-vis-corner">β · MONOMERIZATION</span>
+        <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
+          <!-- Before cluster (left) -->
+          <g transform="translate(80, 125)">
+            <text x="0" y="-65" font-family="JetBrains Mono, monospace" font-size="9" fill="#6B7388" text-anchor="middle" letter-spacing="1.5">BEFORE</text>
+            <g class="pulse-1">
+              <circle cx="0" cy="0" r="14" fill="#C8102E" opacity="0.95"/>
+              <circle cx="-12" cy="-8" r="13" fill="#C8102E" opacity="0.9"/>
+              <circle cx="14" cy="-6" r="13" fill="#C8102E" opacity="0.9"/>
+              <circle cx="-8" cy="14" r="12" fill="#C8102E" opacity="0.85"/>
+              <circle cx="10" cy="12" r="13" fill="#C8102E" opacity="0.9"/>
+              <circle cx="0" cy="-22" r="11" fill="#C8102E" opacity="0.8"/>
+            </g>
+            <text x="0" y="50" font-family="JetBrains Mono, monospace" font-size="8" fill="#0B1E3F" text-anchor="middle" font-weight="600">AGGREGATE</text>
+            <text x="0" y="62" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388" text-anchor="middle">cannot permeate</text>
+          </g>
+
+          <!-- Arrow with SNAC -->
+          <g transform="translate(200, 125)">
+            <line x1="-40" y1="0" x2="40" y2="0" stroke="#0B1E3F" stroke-width="1" stroke-dasharray="3 3"/>
+            <path d="M 30 -5 L 40 0 L 30 5 Z" fill="#0B1E3F"/>
+            <text x="0" y="-12" font-family="JetBrains Mono, monospace" font-size="8" fill="#C9A86A" text-anchor="middle" font-weight="600">+ SNAC</text>
+            <circle cx="0" cy="14" r="3" fill="#C9A86A"/>
+          </g>
+
+          <!-- After: monomers (right) -->
+          <g transform="translate(320, 125)">
+            <text x="0" y="-65" font-family="JetBrains Mono, monospace" font-size="9" fill="#6B7388" text-anchor="middle" letter-spacing="1.5">AFTER</text>
+            <g>
+              <circle cx="-30" cy="-25" r="9" fill="#C8102E" opacity="0.9" class="float-1"/>
+              <circle cx="20" cy="-30" r="9" fill="#C8102E" opacity="0.9" class="float-2"/>
+              <circle cx="35" cy="5" r="9" fill="#C8102E" opacity="0.9" class="float-3"/>
+              <circle cx="-25" cy="20" r="9" fill="#C8102E" opacity="0.9" class="float-1"/>
+              <circle cx="10" cy="30" r="9" fill="#C8102E" opacity="0.9" class="float-2"/>
+              <circle cx="-5" cy="-5" r="9" fill="#C8102E" opacity="0.9" class="float-3"/>
+            </g>
+            <text x="0" y="60" font-family="JetBrains Mono, monospace" font-size="8" fill="#0B1E3F" text-anchor="middle" font-weight="600">MONOMERS</text>
+            <text x="0" y="72" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388" text-anchor="middle">absorbable single units</text>
+          </g>
+
+          <!-- Bottom scale -->
+          <line x1="40" y1="220" x2="360" y2="220" stroke="#D8D4C8" stroke-width="0.5"/>
+          <text x="200" y="238" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388" text-anchor="middle">EQUILIBRIUM SHIFT</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- STAGE 3 -->
+    <div class="stage reveal">
+      <div class="stage-num">03<sup>γ</sup></div>
+      <div class="stage-content">
+        <div class="stage-tag">Stage Three · Permeation</div>
+        <h3>Cross the <em>epithelium.</em></h3>
+        <p>
+          SNAC briefly increases the fluidity of the gastric cell membrane, opening a transcellular path for semaglutide.<sup style="color: var(--red);">4,6</sup> The effect is concentration-dependent and fully reversible: as SNAC disperses, the membrane returns to its baseline state. The result is approximately 1% oral bioavailability—enough, because semaglutide is highly potent and persists for about a week.<sup style="color: var(--red);">2,4</sup>
+        </p>
+      </div>
+
+      <!-- Stage 3 visual: membrane crossing -->
+      <div class="stage-vis">
+        <span class="stage-vis-label">FIG. 05 · TRANSCELLULAR PERMEATION</span>
+        <span class="stage-vis-corner">γ · ABSORPTION</span>
+        <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
+          <!-- Apical side label -->
+          <text x="200" y="22" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" text-anchor="middle" letter-spacing="1">STOMACH LUMEN</text>
+
+          <!-- Lipid bilayer (membrane) -->
+          <g transform="translate(0, 110)">
+            <!-- Outer layer heads -->
+            <g fill="#0B1E3F" opacity="0.7">
+              <circle cx="20" cy="0" r="6"/>
+              <circle cx="40" cy="0" r="6"/>
+              <circle cx="60" cy="0" r="6"/>
+              <circle cx="80" cy="0" r="6"/>
+              <circle cx="100" cy="0" r="6"/>
+              <circle cx="120" cy="0" r="6"/>
+              <circle cx="140" cy="0" r="6"/>
+              <circle cx="160" cy="0" r="6"/>
+              <!-- Gap for crossing -->
+              <circle cx="240" cy="0" r="6"/>
+              <circle cx="260" cy="0" r="6"/>
+              <circle cx="280" cy="0" r="6"/>
+              <circle cx="300" cy="0" r="6"/>
+              <circle cx="320" cy="0" r="6"/>
+              <circle cx="340" cy="0" r="6"/>
+              <circle cx="360" cy="0" r="6"/>
+              <circle cx="380" cy="0" r="6"/>
+            </g>
+            <!-- Tails -->
+            <g stroke="#0B1E3F" stroke-width="1" opacity="0.5">
+              <line x1="20" y1="6" x2="20" y2="20"/><line x1="40" y1="6" x2="40" y2="20"/>
+              <line x1="60" y1="6" x2="60" y2="20"/><line x1="80" y1="6" x2="80" y2="20"/>
+              <line x1="100" y1="6" x2="100" y2="20"/><line x1="120" y1="6" x2="120" y2="20"/>
+              <line x1="140" y1="6" x2="140" y2="20"/><line x1="160" y1="6" x2="160" y2="20"/>
+              <line x1="240" y1="6" x2="240" y2="20"/><line x1="260" y1="6" x2="260" y2="20"/>
+              <line x1="280" y1="6" x2="280" y2="20"/><line x1="300" y1="6" x2="300" y2="20"/>
+              <line x1="320" y1="6" x2="320" y2="20"/><line x1="340" y1="6" x2="340" y2="20"/>
+              <line x1="360" y1="6" x2="360" y2="20"/><line x1="380" y1="6" x2="380" y2="20"/>
+
+              <line x1="20" y1="34" x2="20" y2="20"/><line x1="40" y1="34" x2="40" y2="20"/>
+              <line x1="60" y1="34" x2="60" y2="20"/><line x1="80" y1="34" x2="80" y2="20"/>
+              <line x1="100" y1="34" x2="100" y2="20"/><line x1="120" y1="34" x2="120" y2="20"/>
+              <line x1="140" y1="34" x2="140" y2="20"/><line x1="160" y1="34" x2="160" y2="20"/>
+              <line x1="240" y1="34" x2="240" y2="20"/><line x1="260" y1="34" x2="260" y2="20"/>
+              <line x1="280" y1="34" x2="280" y2="20"/><line x1="300" y1="34" x2="300" y2="20"/>
+              <line x1="320" y1="34" x2="320" y2="20"/><line x1="340" y1="34" x2="340" y2="20"/>
+              <line x1="360" y1="34" x2="360" y2="20"/><line x1="380" y1="34" x2="380" y2="20"/>
+            </g>
+            <!-- Inner heads -->
+            <g fill="#0B1E3F" opacity="0.7">
+              <circle cx="20" cy="40" r="6"/><circle cx="40" cy="40" r="6"/>
+              <circle cx="60" cy="40" r="6"/><circle cx="80" cy="40" r="6"/>
+              <circle cx="100" cy="40" r="6"/><circle cx="120" cy="40" r="6"/>
+              <circle cx="140" cy="40" r="6"/><circle cx="160" cy="40" r="6"/>
+              <circle cx="240" cy="40" r="6"/><circle cx="260" cy="40" r="6"/>
+              <circle cx="280" cy="40" r="6"/><circle cx="300" cy="40" r="6"/>
+              <circle cx="320" cy="40" r="6"/><circle cx="340" cy="40" r="6"/>
+              <circle cx="360" cy="40" r="6"/><circle cx="380" cy="40" r="6"/>
+            </g>
+          </g>
+
+          <!-- Crossing zone — fluidized -->
+          <g transform="translate(200, 130)">
+            <ellipse cx="0" cy="0" rx="40" ry="32" fill="#C9A86A" opacity="0.18"/>
+            <ellipse cx="0" cy="0" rx="40" ry="32" fill="none" stroke="#C9A86A" stroke-width="0.5" stroke-dasharray="2 2"/>
+            <!-- Semaglutide passing through -->
+            <circle cx="0" cy="0" r="9" fill="#C8102E" class="float-2"/>
+            <!-- Small SNAC dots around it -->
+            <circle cx="-18" cy="-12" r="2" fill="#C9A86A" opacity="0.8"/>
+            <circle cx="20" cy="-8" r="2" fill="#C9A86A" opacity="0.8"/>
+            <circle cx="-15" cy="14" r="2" fill="#C9A86A" opacity="0.8"/>
+            <circle cx="22" cy="16" r="2" fill="#C9A86A" opacity="0.8"/>
+          </g>
+
+          <!-- Semaglutide above (entering) -->
+          <circle cx="200" cy="80" r="8" fill="#C8102E" opacity="0.7" class="float-3"/>
+          <line x1="200" y1="88" x2="200" y2="100" stroke="#C8102E" stroke-width="0.5" stroke-dasharray="2 2"/>
+
+          <!-- Bloodstream below (exit) -->
+          <text x="200" y="240" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" text-anchor="middle" letter-spacing="1">→ BLOODSTREAM</text>
+          <line x1="200" y1="170" x2="200" y2="210" stroke="#C8102E" stroke-width="0.5" stroke-dasharray="2 2"/>
+          <path d="M 197 210 L 200 217 L 203 210" fill="none" stroke="#C8102E" stroke-width="1"/>
+
+          <!-- Label on the gap -->
+          <text x="200" y="58" font-family="JetBrains Mono, monospace" font-size="8" fill="#C9A86A" text-anchor="middle" font-weight="600">FLUIDIZED ZONE</text>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- DELIVERY / COMPOSITION SECTION -->
+<section class="delivery">
+  <div class="delivery-inner">
+    <div class="reveal">
+      <div class="hero-eyebrow"><span class="num">04</span>The Result</div>
+      <h2>The <em>injection</em>, reformulated.</h2>
+      <p>
+        The same active molecule used in weekly injections—delivered through a daily tablet. A small amount of semaglutide does extraordinary work, because the molecule binds tightly to GLP-1 receptors and remains in the body for roughly seven days.<sup style="color: var(--red);">2</sup>
+      </p>
+      <p>
+        That long half-life is why even ~1% absorption is therapeutically meaningful. The dose isn't smaller. The route is different.
+      </p>
+
+      <div class="delivery-stats">
+        <div class="delivery-stat">
+          <div class="delivery-stat-num">~<em>1%</em></div>
+          <div class="delivery-stat-label">Approximate oral bioavailability achieved via SNAC</div>
+        </div>
+        <div class="delivery-stat">
+          <div class="delivery-stat-num">~<em>7</em> days</div>
+          <div class="delivery-stat-label">Plasma half-life of semaglutide</div>
+        </div>
+        <div class="delivery-stat">
+          <div class="delivery-stat-num"><em>20:1</em></div>
+          <div class="delivery-stat-label">SNAC-to-semaglutide mass ratio per tablet</div>
+        </div>
+        <div class="delivery-stat">
+          <div class="delivery-stat-num"><em>60–90</em> min</div>
+          <div class="delivery-stat-label">Tablet erosion time in gastric environment</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Composition visual -->
+    <div class="composition-vis reveal">
+      <svg viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="tabletWhite" cx="0.35" cy="0.3" r="0.8">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="70%" stop-color="#F2EEE5"/>
+            <stop offset="100%" stop-color="#C8C0AE"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Background circle -->
+        <circle cx="260" cy="260" r="240" fill="none" stroke="#0B1E3F" stroke-width="0.5" stroke-dasharray="1 5" opacity="0.4"/>
+
+        <!-- Three tablets in arrangement -->
+        <g class="float-1">
+          <ellipse cx="180" cy="200" rx="60" ry="40" fill="url(#tabletWhite)" stroke="#0B1E3F" stroke-width="1" opacity="0.95"/>
+          <ellipse cx="180" cy="200" rx="60" ry="40" fill="url(#dotPattern)" opacity="0.4"/>
+          <text x="180" y="205" font-family="Fraunces, serif" font-size="13" fill="#0B1E3F" text-anchor="middle" opacity="0.4">14</text>
+        </g>
+
+        <g class="float-2">
+          <ellipse cx="340" cy="290" rx="60" ry="40" fill="url(#tabletWhite)" stroke="#0B1E3F" stroke-width="1" opacity="0.95" transform="rotate(15 340 290)"/>
+          <ellipse cx="340" cy="290" rx="60" ry="40" fill="url(#dotPattern)" opacity="0.4" transform="rotate(15 340 290)"/>
+        </g>
+
+        <g class="float-3">
+          <ellipse cx="240" cy="370" rx="60" ry="40" fill="url(#tabletWhite)" stroke="#0B1E3F" stroke-width="1" opacity="0.95" transform="rotate(-12 240 370)"/>
+          <ellipse cx="240" cy="370" rx="60" ry="40" fill="url(#dotPattern)" opacity="0.4" transform="rotate(-12 240 370)"/>
+        </g>
+
+        <!-- Composition pie chart on top right -->
+        <g transform="translate(380, 100)">
+          <text x="0" y="-10" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" letter-spacing="1.5">PER TABLET</text>
+          <!-- SNAC slice (large) -->
+          <path d="M 0 0 L 0 -40 A 40 40 0 1 1 -3 39.9 Z" fill="#C9A86A" opacity="0.85"/>
+          <!-- Semaglutide slice (tiny) -->
+          <path d="M 0 0 L 0 -40 A 40 40 0 0 1 3 -39.9 Z" fill="#C8102E"/>
+          <circle cx="0" cy="0" r="40" fill="none" stroke="#0B1E3F" stroke-width="0.8"/>
+
+          <line x1="40" y1="0" x2="60" y2="0" stroke="#C9A86A" stroke-width="0.5"/>
+          <text x="64" y="-2" font-family="JetBrains Mono, monospace" font-size="8" fill="#C9A86A" font-weight="600">SNAC</text>
+          <text x="64" y="9" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388">~300 mg</text>
+
+          <line x1="0" y1="-40" x2="14" y2="-58" stroke="#C8102E" stroke-width="0.5"/>
+          <text x="16" y="-60" font-family="JetBrains Mono, monospace" font-size="8" fill="#C8102E" font-weight="600">SEMAGLUTIDE</text>
+          <text x="16" y="-50" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388">3 / 7 / 14 mg</text>
+        </g>
+
+        <!-- Bottom annotation -->
+        <text x="40" y="490" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" letter-spacing="1.5">FIG. 06 · COFORMULATION RATIO</text>
+        <text x="480" y="490" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" text-anchor="end">DOSAGE: 14 mg max</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- CLINICAL CONTEXT -->
+<section class="clinical">
+  <div class="clinical-inner">
+    <div class="hero-eyebrow clinical-eyebrow"><span class="num">05</span>Clinical Context</div>
+    <h2 class="reveal">
+      An <em>FDA-approved</em> molecule with two distinct indications.
+    </h2>
+    <p class="clinical-body reveal">
+      Oral semaglutide is approved by the FDA for adults with type 2 diabetes to improve glycemic control alongside diet and exercise.<sup style="color: var(--red-bright);">7</sup> It is not interchangeable with injectable forms, and weight-related indications for GLP-1 medications vary by formulation. Eligibility, dosing, and monitoring are determined during a clinical consultation.
+    </p>
+
+    <div class="indications-grid reveal">
+      <div class="indication">
+        <div class="indication-tag">Approved Use</div>
+        <h4>Type 2 Diabetes</h4>
+        <p>Adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus.<sup style="color: var(--red-bright);">7</sup></p>
+      </div>
+      <div class="indication">
+        <div class="indication-tag">Mechanism</div>
+        <h4>GLP-1 Receptor Agonist</h4>
+        <p>Mimics the body's natural incretin hormone—enhances insulin secretion, slows gastric emptying, and reduces appetite signaling.<sup style="color: var(--red-bright);">2</sup></p>
+      </div>
+      <div class="indication">
+        <div class="indication-tag">Contraindications</div>
+        <h4>Not for Everyone</h4>
+        <p>Contraindicated in patients with personal/family history of medullary thyroid carcinoma or MEN 2 syndrome. Boxed warning applies.<sup style="color: var(--red-bright);">7</sup></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="cta">
+  <div class="cta-inner">
+    <div class="hero-eyebrow cta-eyebrow"><span class="num">06</span>Your Consultation</div>
+    <h2 class="reveal">Talk to a clinician about <em>your</em> options.</h2>
+    <p class="cta-sub reveal">
+      Whether oral or injectable GLP-1 therapy is appropriate depends on your history, goals, and clinical picture. A licensed PVT provider can walk you through what's available—virtually, on your schedule.
+    </p>
+    <a href="#" class="cta-btn reveal">Begin Visit</a>
+    <p class="cta-disclaimer reveal">
+      PVT services are available to residents of Florida. This page is for educational purposes and does not constitute medical advice. Oral semaglutide is a prescription medication; use is determined by a licensed clinician based on individual evaluation.
+    </p>
+  </div>
+</section>
+
+<!-- REFERENCES -->
+<section class="refs">
+  <div class="refs-inner">
+    <h5>References</h5>
+    <ol>
+      <li>U.S. Food and Drug Administration. FDA approves first oral GLP-1 treatment for type 2 diabetes. September 20, 2019.</li>
+      <li>Buckley ST, et al. Transcellular stomach absorption of a derivatized glucagon-like peptide-1 receptor agonist. <em>Science Translational Medicine.</em> 2018;10(467):eaar7047.</li>
+      <li>Piper DW, Fenton BH. pH stability and activity curves of pepsin. <em>Gut.</em> 1965;6(5):506–508.</li>
+      <li>Bækdal TA, et al. Pharmacokinetics, safety, and tolerability of oral semaglutide. <em>Clinical Pharmacology in Drug Development.</em> 2021.</li>
+      <li>Colston JT, et al. Permeation enhancer-induced membrane defects assist the oral absorption of peptide drugs. <em>Nature Communications.</em> 2025.</li>
+      <li>Twarog C, et al. Intestinal permeation enhancers for oral delivery of macromolecules. <em>Pharmaceutics.</em> 2019;11(2):78.</li>
+      <li>Rybelsus® (semaglutide) tablets. Prescribing Information. Novo Nordisk Inc.</li>
+    </ol>
+  </div>
+</section>
+
+<script>
+  // Reveal-on-scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+  reveals.forEach(el => io.observe(el));
+
+  // Hero reveals immediately
+  document.querySelectorAll('.hero .reveal').forEach((el, i) => {
+    setTimeout(() => el.classList.add('in'), 120 + i * 180);
+  });
+</script>
+
+</body>
+</html>

@@ -273,7 +273,8 @@ function extendLandingI18n() {
     "breakthrough-note":
       "Pricing shown is starting price; final pricing confirmed at consultation. Eligibility determined by licensed clinician.",
     "breakthrough-science-title": "The perfect<br /><span>SNAC</span>",
-    "breakthrough-science-explainer": "[Explainer copy pending]",
+    "breakthrough-science-explainer":
+      "How SNAC helps oral semaglutide survive the stomach long enough for absorption.",
     "breakthrough-science-cta": "See the science",
     "breakthrough-dose-badge": "New high dose",
     "breakthrough-dose-title": "Lose 25% or more<br />body weight*",
@@ -492,7 +493,8 @@ function extendLandingI18n() {
     "breakthrough-note":
       "El precio mostrado es inicial; el precio final se confirma en la consulta. La elegibilidad la determina un clinico con licencia.",
     "breakthrough-science-title": "El SNAC<br /><span>perfecto</span>",
-    "breakthrough-science-explainer": "[Explainer copy pending]",
+    "breakthrough-science-explainer":
+      "Como SNAC ayuda a la semaglutida oral a sobrevivir el estomago el tiempo suficiente para su absorcion.",
     "breakthrough-science-cta": "Ver la ciencia",
     "breakthrough-dose-badge": "Nueva dosis alta",
     "breakthrough-dose-title": "Pierda 25% o mas<br />de peso corporal*",

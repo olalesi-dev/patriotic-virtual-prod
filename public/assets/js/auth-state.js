@@ -130,6 +130,6 @@
         if (mel) mel.remove();
 
         document.getElementById("adminDashboard").classList.add("hidden");
-        showLanding();
+        showLanding({ preserveRoute: true });
       }
     });

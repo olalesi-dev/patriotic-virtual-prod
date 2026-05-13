@@ -150,6 +150,90 @@
       }
     })();
 
+    (function initWegovyPageInteractions() {
+      function setupWegovyPage() {
+        const root = document.getElementById("pvt-wegovy");
+        if (!root || root.dataset.wegovyInit === "true") return;
+        root.dataset.wegovyInit = "true";
+
+        function setAccordionState(item, shouldOpen) {
+          const trigger = item.querySelector(".lp-wegovy-accordion-trigger");
+          const content = item.querySelector(".lp-wegovy-accordion-content");
+          if (!trigger || !content) return;
+
+          item.classList.toggle("is-open", shouldOpen);
+          trigger.setAttribute("aria-expanded", String(shouldOpen));
+          content.style.maxHeight = shouldOpen ? `${content.scrollHeight}px` : "0px";
+        }
+
+        root.querySelectorAll(".lp-wegovy-accordion-item").forEach(function (item) {
+          const trigger = item.querySelector(".lp-wegovy-accordion-trigger");
+          if (!trigger) return;
+
+          setAccordionState(item, item.classList.contains("is-open"));
+
+          trigger.addEventListener("click", function () {
+            setAccordionState(item, !item.classList.contains("is-open"));
+          });
+        });
+
+        root.querySelectorAll(".lp-wegovy-thumb").forEach(function (thumb) {
+          thumb.addEventListener("click", function () {
+            root.querySelectorAll(".lp-wegovy-thumb").forEach(function (otherThumb) {
+              otherThumb.classList.remove("is-active");
+            });
+            thumb.classList.add("is-active");
+          });
+        });
+
+        root.querySelectorAll("[data-wegovy-scroll-target]").forEach(function (trigger) {
+          trigger.addEventListener("click", function () {
+            const target = document.getElementById(trigger.dataset.wegovyScrollTarget);
+            if (target) target.scrollIntoView({ block: "start", behavior: "smooth" });
+          });
+        });
+
+        const revealItems = Array.from(root.querySelectorAll(".lp-wegovy-reveal"));
+        if ("IntersectionObserver" in window) {
+          const observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+              });
+            },
+            { threshold: 0.12, rootMargin: "0px 0px -50px 0px" },
+          );
+          revealItems.forEach(function (item) {
+            observer.observe(item);
+          });
+        } else {
+          revealItems.forEach(function (item) {
+            item.classList.add("is-visible");
+          });
+        }
+
+        root.querySelectorAll(".lp-wegovy-product .lp-wegovy-reveal").forEach(function (item, index) {
+          window.setTimeout(function () {
+            item.classList.add("is-visible");
+          }, 100 + index * 120);
+        });
+
+        window.addEventListener("resize", function () {
+          root.querySelectorAll(".lp-wegovy-accordion-item.is-open").forEach(function (item) {
+            setAccordionState(item, true);
+          });
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", setupWegovyPage, { once: true });
+      } else {
+        setupWegovyPage();
+      }
+    })();
+
     function renderThemeIcon(isLight) {
       return isLight
         ? '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12.8A8.99 8.99 0 0 1 11.2 3a8.3 8.3 0 0 0-.2 1.8 9 9 0 1 0 10 10c0-.34 0-.67-.06-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>'

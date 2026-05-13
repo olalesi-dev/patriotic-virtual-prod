@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wegovy® — Patriotic Virtual Telehealth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #0B1E3F;
+    --navy-deep: #050F22;
+    --navy-mid: #142B54;
+    --red: #C8102E;
+    --red-bright: #E63946;
+    --cream: #F7F4ED;
+    --paper: #FBF9F4;
+    --ink: #0B1E3F;
+    --muted: #6B7388;
+    --line: #D8D4C8;
+    --gold: #C9A86A;
+    --serif: 'Fraunces', 'Times New Roman', serif;
+    --sans: 'Inter Tight', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    overflow-x: hidden;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 18px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(251, 249, 244, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(11, 30, 63, 0.08);
+  }
+  .nav-logo {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .nav-logo .mark {
+    width: 28px; height: 28px;
+    background: var(--navy);
+    border-radius: 50%;
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .nav-logo .mark::after {
+    content: '';
+    width: 12px; height: 12px;
+    background: var(--red);
+    border-radius: 50%;
+  }
+  .nav-links {
+    display: flex; gap: 36px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .nav-links a {
+    color: var(--ink);
+    text-decoration: none;
+    position: relative;
+    padding: 4px 0;
+  }
+  .nav-links a.active::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--red);
+  }
+  .nav-cta {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: background 0.3s;
+  }
+  .nav-cta:hover { background: var(--red); }
+
+  /* ---------- PRODUCT HERO ---------- */
+  .product {
+    padding: 110px 48px 80px;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  /* Product gallery (left) */
+  .gallery {
+    position: sticky;
+    top: 100px;
+  }
+  .gallery-frame {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(200, 16, 46, 0.06), transparent 60%),
+      radial-gradient(circle at 70% 80%, rgba(201, 168, 106, 0.08), transparent 50%),
+      linear-gradient(180deg, #FBF9F4, #F2EEE5);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .gallery-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(11, 30, 63, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(11, 30, 63, 0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, transparent 20%, black 60%);
+  }
+  .gallery-corner {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .gallery-corner.tl { top: 18px; left: 20px; }
+  .gallery-corner.tr { top: 18px; right: 20px; }
+  .gallery-corner.bl { bottom: 18px; left: 20px; }
+  .gallery-corner.br { bottom: 18px; right: 20px; }
+  .gallery-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+  }
+
+  .gallery-thumbs {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .thumb {
+    width: 72px;
+    height: 72px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: linear-gradient(180deg, #FBF9F4, #F2EEE5);
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .thumb.active {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 1px var(--navy);
+  }
+  .thumb svg {
+    width: 100%; height: 100%;
+    padding: 8px;
+  }
+
+  /* Product info (right) */
+  .info {
+    padding-top: 20px;
+  }
+  .product-tag-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .product-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 2px;
+  }
+  .product-tag.rx {
+    background: var(--red);
+    color: var(--cream);
+  }
+  .product-tag.fda {
+    background: transparent;
+    color: var(--navy);
+    border: 1px solid var(--navy);
+  }
+  .product-tag.dossier {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+
+  .product-title {
+    font-family: var(--serif);
+    font-size: clamp(48px, 5.5vw, 76px);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    color: var(--navy);
+    margin-bottom: 12px;
+  }
+  .product-title sup {
+    font-size: 0.35em;
+    font-weight: 300;
+    vertical-align: super;
+    color: var(--red);
+  }
+  .product-subtitle {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--navy-mid);
+    margin-bottom: 32px;
+    letter-spacing: -0.01em;
+  }
+
+  .product-bullets {
+    list-style: none;
+    border-top: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  .product-bullets li {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .product-bullets .bullet-icon {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--red);
+    border-radius: 50%;
+    position: relative;
+    margin-top: 2px;
+  }
+  .product-bullets .bullet-icon::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    background: var(--red);
+    border-radius: 50%;
+  }
+  .product-bullets .bullet-text {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--navy);
+  }
+  .product-bullets .bullet-text strong {
+    font-family: var(--serif);
+    font-weight: 500;
+    color: var(--navy);
+  }
+  .product-bullets .bullet-text .stat {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  .product-cta {
+    display: block;
+    background: var(--navy);
+    color: var(--cream);
+    padding: 18px 32px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    transition: all 0.3s;
+    margin-bottom: 12px;
+  }
+  .product-cta:hover {
+    background: var(--red);
+  }
+  .safety-link {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    margin-bottom: 28px;
+  }
+
+  /* Accordion */
+  .accordion {
+    border-top: 1px solid var(--line);
+  }
+  .acc-item {
+    border-bottom: 1px solid var(--line);
+  }
+  .acc-trigger {
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--navy);
+    cursor: pointer;
+    letter-spacing: -0.01em;
+  }
+  .acc-trigger::after {
+    content: '+';
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--red);
+    transition: transform 0.3s;
+  }
+  .acc-item.open .acc-trigger::after {
+    content: '−';
+  }
+  .acc-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .acc-content-inner {
+    padding: 0 0 24px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--navy-mid);
+  }
+  .acc-content-inner p + p { margin-top: 12px; }
+  .acc-content-inner ul {
+    list-style: none;
+    margin-top: 8px;
+  }
+  .acc-content-inner ul li {
+    padding-left: 16px;
+    position: relative;
+    margin-bottom: 6px;
+  }
+  .acc-content-inner ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--red);
+  }
+
+  /* ---------- POWER STRIP (formerly horizontal cards) ---------- */
+  .power-strip {
+    background: var(--cream);
+    padding: 100px 48px;
+    border-top: 1px solid var(--line);
+  }
+  .power-strip-header {
+    max-width: 1400px;
+    margin: 0 auto 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .power-strip-title {
+    font-family: var(--serif);
+    font-size: clamp(36px, 4vw, 56px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--navy);
+    max-width: 600px;
+  }
+  .power-strip-title em { font-style: italic; color: var(--red); }
+
+  .power-cards {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .power-card {
+    background: var(--paper);
+    padding: 32px 28px;
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+  .power-card-vis {
+    aspect-ratio: 1;
+    width: 100%;
+    margin-bottom: 24px;
+    position: relative;
+    background: linear-gradient(180deg, transparent, rgba(11, 30, 63, 0.03));
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .power-card-num {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .power-card h3 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--navy);
+    margin-bottom: 10px;
+  }
+  .power-card h3 em { font-style: italic; color: var(--red); }
+  .power-card p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--navy-mid);
+  }
+
+  /* ---------- HOW IT WORKS ---------- */
+  .how {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 140px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .how::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 80% 30%, rgba(200, 16, 46, 0.15), transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(201, 168, 106, 0.08), transparent 50%);
+  }
+  .how-grid {
+    background-image:
+      linear-gradient(rgba(247, 244, 237, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247, 244, 237, 0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    position: absolute; inset: 0;
+    mask-image: linear-gradient(180deg, transparent, black 30%, black 70%, transparent);
+  }
+  .how-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .how-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 80px;
+    align-items: end;
+  }
+  .how-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red-bright);
+    margin-bottom: 16px;
+  }
+  .how-eyebrow .num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border: 1px solid var(--red-bright);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    margin-right: 12px;
+    font-size: 11px;
+  }
+  .how-title {
+    font-family: var(--serif);
+    font-size: clamp(40px, 4.5vw, 64px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+  .how-title em { font-style: italic; color: var(--red-bright); }
+  .how-intro {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(247, 244, 237, 0.78);
+    max-width: 460px;
+  }
+
+  .how-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid rgba(247, 244, 237, 0.18);
+  }
+  .how-step {
+    padding: 36px 24px 0;
+    border-right: 1px solid rgba(247, 244, 237, 0.18);
+    position: relative;
+  }
+  .how-step:last-child { border-right: none; }
+  .how-step-num {
+    font-family: var(--serif);
+    font-size: 64px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--red-bright);
+    margin-bottom: 32px;
+    letter-spacing: -0.04em;
+  }
+  .how-step h4 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+  }
+  .how-step p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(247, 244, 237, 0.7);
+  }
+  .how-cta-wrap {
+    text-align: center;
+    margin-top: 60px;
+  }
+  .how-cta {
+    display: inline-block;
+    background: var(--red);
+    color: var(--cream);
+    padding: 16px 40px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    transition: all 0.3s;
+  }
+  .how-cta:hover {
+    background: var(--cream);
+    color: var(--navy);
+  }
+
+  /* ---------- COMPARE INJECTION VS PILL ---------- */
+  .compare {
+    background: var(--paper);
+    padding: 140px 48px;
+  }
+  .compare-header {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+  }
+  .compare-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 16px;
+  }
+  .compare-eyebrow .num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border: 1px solid var(--red);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    margin-right: 12px;
+    font-size: 11px;
+  }
+  .compare-title {
+    font-family: var(--serif);
+    font-size: clamp(40px, 4.5vw, 60px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    color: var(--navy);
+    margin-bottom: 20px;
+  }
+  .compare-title em { font-style: italic; color: var(--red); }
+  .compare-intro {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--navy-mid);
+    max-width: 600px;
+  }
+
+  .compare-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .compare-card {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 36px 32px;
+    position: relative;
+  }
+  .compare-card-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 10px;
+  }
+  .compare-card h3 {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+    margin-bottom: 18px;
+  }
+  .compare-card-stat-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .compare-card-stat-line:last-child { border-bottom: none; }
+  .compare-card-stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+    width: 120px;
+  }
+  .compare-card-stat-value {
+    flex: 1;
+    color: var(--navy);
+    font-weight: 500;
+  }
+  .compare-card-stat-value em {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  /* ---------- HEALTH BENEFITS ---------- */
+  .benefits {
+    background: var(--cream);
+    padding: 140px 48px;
+    border-top: 1px solid var(--line);
+  }
+  .benefits-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .benefits-content h2 {
+    font-family: var(--serif);
+    font-size: clamp(40px, 4.5vw, 60px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    color: var(--navy);
+    margin-bottom: 28px;
+  }
+  .benefits-content h2 em { font-style: italic; color: var(--red); }
+  .benefits-list {
+    list-style: none;
+    margin-bottom: 28px;
+  }
+  .benefits-list li {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    font-size: 16px;
+    color: var(--navy);
+  }
+  .benefits-list li::before {
+    content: '';
+    flex-shrink: 0;
+    width: 14px; height: 14px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-top: 4px;
+  }
+  .benefits-disclaimer {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 500px;
+  }
+
+  /* Visual for benefits — heart anatomy schematic */
+  .benefits-vis {
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 480px;
+    margin-left: auto;
+    position: relative;
+  }
+
+  /* ---------- FAQ ---------- */
+  .faq {
+    background: var(--paper);
+    padding: 140px 48px;
+  }
+  .faq-inner {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .faq-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .faq-eyebrow .num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border: 1px solid var(--red);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    margin-right: 12px;
+    font-size: 11px;
+  }
+  .faq h2 {
+    font-family: var(--serif);
+    font-size: clamp(40px, 4.5vw, 60px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--navy);
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  .faq h2 em { font-style: italic; color: var(--red); }
+
+  .faq-list {
+    border-top: 1px solid var(--line);
+  }
+  .faq-list .acc-item {
+    border-bottom: 1px solid var(--line);
+  }
+  .faq-list .acc-trigger {
+    padding: 24px 0;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+  }
+  .faq-list .acc-content-inner {
+    font-size: 15px;
+    line-height: 1.65;
+    padding-bottom: 28px;
+    max-width: 720px;
+  }
+
+  /* ---------- CTA SECTION ---------- */
+  .cta {
+    background: var(--navy-deep);
+    color: var(--cream);
+    padding: 160px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(200, 16, 46, 0.18), transparent 50%);
+  }
+  .cta-inner {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .cta-eyebrow {
+    color: var(--red-bright);
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .cta-eyebrow .num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border: 1px solid var(--red-bright);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    margin-right: 12px;
+    font-size: 11px;
+  }
+  .cta h2 {
+    font-family: var(--serif);
+    font-size: clamp(44px, 5.5vw, 80px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    margin-bottom: 24px;
+  }
+  .cta h2 em { font-style: italic; color: var(--red-bright); }
+  .cta-sub {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(247, 244, 237, 0.78);
+    margin-bottom: 48px;
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-btn {
+    display: inline-block;
+    background: var(--red);
+    color: var(--cream);
+    padding: 18px 40px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 999px;
+    transition: all 0.3s;
+  }
+  .cta-btn:hover {
+    background: var(--cream);
+    color: var(--navy);
+  }
+  .cta-disclaimer {
+    margin-top: 40px;
+    font-size: 11px;
+    color: rgba(247, 244, 237, 0.5);
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  /* ---------- REFERENCES ---------- */
+  .refs {
+    background: var(--paper);
+    padding: 60px 48px 80px;
+    border-top: 1px solid var(--line);
+  }
+  .refs-inner {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .refs h5 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .refs ol {
+    list-style: none;
+    counter-reset: ref;
+  }
+  .refs li {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+    padding-left: 28px;
+    position: relative;
+    margin-bottom: 10px;
+    counter-increment: ref;
+  }
+  .refs li::before {
+    content: counter(ref);
+    position: absolute;
+    left: 0; top: 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  /* ---------- ANIMATIONS ---------- */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+  @keyframes drift {
+    0% { transform: translate(0, 0) rotate(0); }
+    50% { transform: translate(3px, -2px) rotate(2deg); }
+    100% { transform: translate(0, 0) rotate(0); }
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .float-1 { animation: float 6s ease-in-out infinite; }
+  .float-2 { animation: float 7s ease-in-out infinite 1s; }
+  .float-3 { animation: float 5.5s ease-in-out infinite 0.5s; }
+  .pulse-soft { animation: pulse 3s ease-in-out infinite; }
+  .drift-soft { animation: drift 5s ease-in-out infinite; }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 980px) {
+    .nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    .product {
+      grid-template-columns: 1fr;
+      padding: 100px 20px 40px;
+      gap: 40px;
+    }
+    .gallery { position: relative; top: 0; }
+    .info { padding-top: 0; }
+    .power-strip, .how, .compare, .benefits, .faq, .cta { padding: 80px 20px; }
+    .power-cards { grid-template-columns: 1fr 1fr; }
+    .how-header { grid-template-columns: 1fr; gap: 24px; }
+    .how-steps {
+      grid-template-columns: 1fr;
+      border-top: none;
+    }
+    .how-step {
+      border-right: none;
+      border-top: 1px solid rgba(247, 244, 237, 0.18);
+      padding: 28px 0;
+    }
+    .compare-grid { grid-template-columns: 1fr; }
+    .benefits-inner { grid-template-columns: 1fr; gap: 40px; }
+    .product-title { font-size: 56px; }
+  }
+  @media (max-width: 600px) {
+    .power-cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="#" class="nav-logo">
+    <span class="mark"></span>
+    PVT
+  </a>
+  <div class="nav-links">
+    <a href="#" class="active">Treatments</a>
+    <a href="#">The Science</a>
+    <a href="#">How It Works</a>
+    <a href="#">FAQ</a>
+  </div>
+  <a href="#cta" class="nav-cta">Get Started</a>
+</nav>
+
+<!-- PRODUCT HERO -->
+<section class="product">
+
+  <!-- GALLERY -->
+  <div class="gallery">
+    <div class="gallery-frame">
+      <div class="gallery-grid"></div>
+      <div class="gallery-corner tl">FIG. 01 · PRODUCT VIEW</div>
+      <div class="gallery-corner tr">DOSE 2.4 MG</div>
+      <div class="gallery-corner bl">ONCE WEEKLY</div>
+      <div class="gallery-corner br">SCALE 1:1</div>
+
+      <!-- Main injection pen schematic -->
+      <svg class="gallery-svg" viewBox="0 0 480 600" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="penBody" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#E8E2D2"/>
+            <stop offset="30%" stop-color="#FFFFFF"/>
+            <stop offset="55%" stop-color="#F7F4ED"/>
+            <stop offset="100%" stop-color="#C8C0AE"/>
+          </linearGradient>
+          <linearGradient id="penTip" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#F7F4ED"/>
+            <stop offset="100%" stop-color="#B8AE9C"/>
+          </linearGradient>
+          <linearGradient id="needleGuard" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#5B6F7E"/>
+            <stop offset="50%" stop-color="#A4B5C2"/>
+            <stop offset="100%" stop-color="#5B6F7E"/>
+          </linearGradient>
+          <linearGradient id="redBand" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#E63946"/>
+            <stop offset="100%" stop-color="#9F0A24"/>
+          </linearGradient>
+          <radialGradient id="window" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="100%" stop-color="#D8D2C2"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Background circle -->
+        <circle cx="240" cy="300" r="280" fill="none" stroke="#0B1E3F" stroke-width="0.5" stroke-dasharray="2 5" opacity="0.2"/>
+        <circle cx="240" cy="300" r="230" fill="none" stroke="#0B1E3F" stroke-width="0.4" opacity="0.15"/>
+
+        <!-- Subtle backlight -->
+        <ellipse cx="240" cy="300" rx="180" ry="220" fill="#C8102E" opacity="0.04"/>
+
+        <!-- Pen body — held at a slight diagonal -->
+        <g class="float-1" transform="translate(240 300) rotate(-18)">
+
+          <!-- Cap (top) -->
+          <rect x="-40" y="-220" width="80" height="40" rx="3" fill="url(#penBody)" stroke="#0B1E3F" stroke-width="0.8"/>
+          <rect x="-40" y="-185" width="80" height="6" fill="#0B1E3F" opacity="0.15"/>
+
+          <!-- Top dial / dose selector -->
+          <rect x="-38" y="-180" width="76" height="50" rx="2" fill="url(#penBody)" stroke="#0B1E3F" stroke-width="0.8"/>
+          <!-- Dose markings -->
+          <g font-family="JetBrains Mono, monospace" font-size="7" fill="#0B1E3F" opacity="0.5">
+            <line x1="-30" y1="-170" x2="-22" y2="-170" stroke="#0B1E3F" stroke-width="0.5"/>
+            <line x1="-30" y1="-160" x2="-22" y2="-160" stroke="#0B1E3F" stroke-width="0.5"/>
+            <line x1="-30" y1="-150" x2="-22" y2="-150" stroke="#0B1E3F" stroke-width="0.5"/>
+            <line x1="-30" y1="-140" x2="-22" y2="-140" stroke="#0B1E3F" stroke-width="0.5"/>
+            <text x="-18" y="-167">0.25</text>
+            <text x="-18" y="-157">0.5</text>
+            <text x="-18" y="-147">1.0</text>
+            <text x="-18" y="-137">1.7</text>
+          </g>
+
+          <!-- Red dose indicator band -->
+          <rect x="-40" y="-130" width="80" height="8" fill="url(#redBand)"/>
+
+          <!-- Main body -->
+          <rect x="-40" y="-122" width="80" height="240" fill="url(#penBody)" stroke="#0B1E3F" stroke-width="0.8"/>
+
+          <!-- Brand label area -->
+          <rect x="-32" y="-100" width="64" height="80" rx="2" fill="#FFFFFF" stroke="#0B1E3F" stroke-width="0.4" opacity="0.7"/>
+          <text x="0" y="-72" font-family="Fraunces, serif" font-size="13" font-weight="600" fill="#0B1E3F" text-anchor="middle" letter-spacing="-0.5">PVT</text>
+          <text x="0" y="-58" font-family="JetBrains Mono, monospace" font-size="6" fill="#6B7388" text-anchor="middle" letter-spacing="1.5">SEMAGLUTIDE</text>
+          <line x1="-20" y1="-50" x2="20" y2="-50" stroke="#C8102E" stroke-width="0.8"/>
+          <text x="0" y="-38" font-family="JetBrains Mono, monospace" font-size="6" fill="#0B1E3F" text-anchor="middle" letter-spacing="1">2.4 mg / 0.75 mL</text>
+          <text x="0" y="-28" font-family="JetBrains Mono, monospace" font-size="5" fill="#6B7388" text-anchor="middle" letter-spacing="1">Rx ONLY</text>
+
+          <!-- Viewing window (cartridge view) -->
+          <rect x="-22" y="-12" width="44" height="60" rx="2" fill="url(#window)" stroke="#0B1E3F" stroke-width="0.6"/>
+          <!-- Liquid fill -->
+          <rect x="-20" y="-2" width="40" height="48" fill="#F7F4ED" opacity="0.7"/>
+          <!-- Tick marks on window -->
+          <g stroke="#0B1E3F" stroke-width="0.4" opacity="0.5">
+            <line x1="-20" y1="2" x2="-15" y2="2"/>
+            <line x1="-20" y1="12" x2="-15" y2="12"/>
+            <line x1="-20" y1="22" x2="-15" y2="22"/>
+            <line x1="-20" y1="32" x2="-15" y2="32"/>
+            <line x1="-20" y1="42" x2="-15" y2="42"/>
+          </g>
+
+          <!-- Bottom section -->
+          <rect x="-40" y="58" width="80" height="60" fill="url(#penBody)" stroke="#0B1E3F" stroke-width="0.8"/>
+          <text x="0" y="88" font-family="JetBrains Mono, monospace" font-size="6" fill="#6B7388" text-anchor="middle" letter-spacing="1.5">ONCE WEEKLY</text>
+          <text x="0" y="100" font-family="JetBrains Mono, monospace" font-size="5" fill="#6B7388" text-anchor="middle" letter-spacing="1">SUBQ INJ.</text>
+
+          <!-- Lower red ring -->
+          <rect x="-40" y="118" width="80" height="6" fill="url(#redBand)"/>
+
+          <!-- Needle base -->
+          <rect x="-22" y="124" width="44" height="22" fill="url(#penBody)" stroke="#0B1E3F" stroke-width="0.6"/>
+
+          <!-- Needle guard / tip cap -->
+          <rect x="-15" y="146" width="30" height="44" rx="2" fill="url(#needleGuard)" stroke="#0B1E3F" stroke-width="0.6"/>
+
+          <!-- Subtle reflection highlight -->
+          <rect x="-38" y="-120" width="6" height="234" fill="#FFFFFF" opacity="0.5"/>
+          <rect x="32" y="-120" width="4" height="234" fill="#0B1E3F" opacity="0.1"/>
+
+        </g>
+
+        <!-- FDA approval stamp -->
+        <g transform="translate(80, 480)" class="drift-soft">
+          <circle cx="0" cy="0" r="42" fill="none" stroke="#C8102E" stroke-width="1.5"/>
+          <circle cx="0" cy="0" r="36" fill="none" stroke="#C8102E" stroke-width="0.5" stroke-dasharray="2 2"/>
+          <text x="0" y="-8" font-family="Fraunces, serif" font-size="10" font-weight="600" fill="#C8102E" text-anchor="middle" letter-spacing="0.5">FDA</text>
+          <text x="0" y="4" font-family="Fraunces, serif" font-size="9" fill="#C8102E" text-anchor="middle" font-style="italic">approved</text>
+          <text x="0" y="16" font-family="JetBrains Mono, monospace" font-size="6" fill="#C8102E" text-anchor="middle" letter-spacing="1">EST. 2021</text>
+        </g>
+
+        <!-- Annotation callouts -->
+        <g font-family="JetBrains Mono, monospace" font-size="8" fill="#0B1E3F">
+          <line x1="120" y1="180" x2="35" y2="180" stroke="#0B1E3F" stroke-width="0.4"/>
+          <circle cx="120" cy="180" r="1.5" fill="#C8102E"/>
+          <text x="20" y="178" text-anchor="end" fill="#0B1E3F" font-weight="600" letter-spacing="0.5">DOSE DIAL</text>
+          <text x="20" y="190" text-anchor="end" fill="#6B7388">selectable</text>
+
+          <line x1="305" y1="280" x2="420" y2="280" stroke="#0B1E3F" stroke-width="0.4"/>
+          <circle cx="305" cy="280" r="1.5" fill="#C8102E"/>
+          <text x="425" y="278" fill="#0B1E3F" font-weight="600" letter-spacing="0.5">CARTRIDGE</text>
+          <text x="425" y="290" fill="#6B7388">2.4 mg active</text>
+
+          <line x1="340" y1="430" x2="450" y2="430" stroke="#0B1E3F" stroke-width="0.4"/>
+          <circle cx="340" cy="430" r="1.5" fill="#C8102E"/>
+          <text x="455" y="428" fill="#0B1E3F" font-weight="600" letter-spacing="0.5">32G NEEDLE</text>
+          <text x="455" y="440" fill="#6B7388">4 mm length</text>
+        </g>
+
+        <!-- Bottom info bar -->
+        <g transform="translate(140, 560)">
+          <line x1="0" y1="0" x2="200" y2="0" stroke="#0B1E3F" stroke-width="0.5" opacity="0.3"/>
+          <text x="100" y="14" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" text-anchor="middle" letter-spacing="2">SUBCUTANEOUS · ONCE WEEKLY</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Thumbnails -->
+    <div class="gallery-thumbs">
+      <div class="thumb active">
+        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+          <rect x="22" y="8" width="16" height="44" rx="2" fill="#F2EEE5" stroke="#0B1E3F" stroke-width="0.6"/>
+          <rect x="22" y="18" width="16" height="2" fill="#C8102E"/>
+          <rect x="22" y="42" width="16" height="2" fill="#C8102E"/>
+          <rect x="26" y="48" width="8" height="8" fill="#5B6F7E"/>
+        </svg>
+      </div>
+      <div class="thumb">
+        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="22" cy="28" rx="10" ry="7" fill="#F2EEE5" stroke="#0B1E3F" stroke-width="0.6"/>
+          <ellipse cx="38" cy="36" rx="10" ry="7" fill="#F2EEE5" stroke="#0B1E3F" stroke-width="0.6"/>
+          <circle cx="22" cy="28" r="2" fill="#C8102E"/>
+        </svg>
+      </div>
+      <div class="thumb">
+        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" r="18" fill="none" stroke="#0B1E3F" stroke-width="0.6"/>
+          <circle cx="30" cy="30" r="12" fill="none" stroke="#0B1E3F" stroke-width="0.4" stroke-dasharray="2 2"/>
+          <circle cx="30" cy="30" r="6" fill="#C8102E"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO PANEL -->
+  <div class="info">
+    <div class="product-tag-row">
+      <span class="product-tag rx">Rx Only</span>
+      <span class="product-tag fda">FDA Approved · 2021</span>
+      <span class="product-tag dossier">Dossier 02</span>
+    </div>
+
+    <h1 class="product-title">Wegovy<sup>®</sup></h1>
+    <p class="product-subtitle">semaglutide injection · once-weekly GLP-1 therapy for chronic weight management</p>
+
+    <ul class="product-bullets">
+      <li>
+        <span class="bullet-icon"></span>
+        <span class="bullet-text">FDA-approved <strong>once-weekly subcutaneous injection</strong> indicated alongside a reduced-calorie diet and increased physical activity.<sup style="color: var(--red); font-size: 0.7em;">1</sup></span>
+      </li>
+      <li>
+        <span class="bullet-icon"></span>
+        <span class="bullet-text">In the STEP-1 trial, adults on Wegovy lost a mean of <span class="stat">~14.9% of body weight</span> at 68 weeks—compared to 2.4% on placebo.<sup style="color: var(--red); font-size: 0.7em;">2</sup></span>
+      </li>
+      <li>
+        <span class="bullet-icon"></span>
+        <span class="bullet-text">Also FDA-approved to <strong>reduce the risk of major cardiovascular events</strong> in adults with established cardiovascular disease and either obesity or overweight.<sup style="color: var(--red); font-size: 0.7em;">3</sup></span>
+      </li>
+      <li>
+        <span class="bullet-icon"></span>
+        <span class="bullet-text">Dose is titrated gradually from <strong>0.25 mg to 2.4 mg</strong> over ~16 weeks to support tolerability.<sup style="color: var(--red); font-size: 0.7em;">1</sup></span>
+      </li>
+    </ul>
+
+    <a href="#cta" class="product-cta">Get Started</a>
+    <a href="#safety" class="safety-link">Important safety information</a>
+
+    <div class="accordion">
+
+      <div class="acc-item">
+        <button class="acc-trigger">Meet the Wegovy® pen</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Wegovy is supplied as a single-patient-use, pre-filled, disposable pen with a fixed dose. Each pen contains one weekly dose at the strength prescribed by your clinician (0.25 mg, 0.5 mg, 1 mg, 1.7 mg, or 2.4 mg).</p>
+            <p>The needle is short and fine—typically 4 mm, 32 gauge—designed for subcutaneous injection into the abdomen, thigh, or upper arm. Most patients report minimal discomfort once they're comfortable with technique.</p>
+            <p>PVT clinicians review injection technique with you during your consultation and provide written and video guidance.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger">About the active ingredient</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Semaglutide is a GLP-1 receptor agonist. It mimics a hormone the body naturally produces after eating, which helps signal fullness, slow gastric emptying, and improve insulin response.</p>
+            <p>Wegovy is the FDA-approved brand of semaglutide indicated for chronic weight management at the 2.4 mg weekly dose. Other brands of semaglutide—Ozempic® and Rybelsus®—are approved for type 2 diabetes; Wegovy and Ozempic share the same active molecule but differ in indication and maximum dose.<sup style="color: var(--red);">4</sup></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger">How to use it</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Wegovy is injected once weekly on the same day each week, at any time of day, with or without food.<sup style="color: var(--red);">1</sup></p>
+            <p>You'll start at the lowest dose (0.25 mg) and increase every four weeks until you reach the maintenance dose of 2.4 mg, or the highest dose you tolerate. This gradual ramp-up reduces gastrointestinal side effects.</p>
+            <p>Injection sites should be rotated. Wegovy must be refrigerated before first use; after first use, pens may be kept at room temperature for up to 28 days.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- POWER STRIP -->
+<section class="power-strip">
+  <div class="power-strip-header">
+    <h2 class="power-strip-title reveal">
+      <em>GLP-1</em> power, prescribed properly.
+    </h2>
+    <p class="reveal" style="font-family: var(--serif); font-size: 16px; font-weight: 300; color: var(--navy-mid); max-width: 360px; line-height: 1.55;">
+      Wegovy is one of the most clinically studied weight-management medications available. Here's what the evidence says.
+    </p>
+  </div>
+
+  <div class="power-cards">
+
+    <!-- CARD 1 -->
+    <div class="power-card reveal">
+      <div class="power-card-num">01 / 04</div>
+      <div class="power-card-vis">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#C8102E" stroke-width="1.5"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#C8102E" stroke-width="0.5" stroke-dasharray="2 2"/>
+          <text x="100" y="92" font-family="Fraunces, serif" font-size="22" font-weight="600" fill="#C8102E" text-anchor="middle" letter-spacing="0.5">FDA</text>
+          <text x="100" y="112" font-family="Fraunces, serif" font-size="13" font-style="italic" fill="#C8102E" text-anchor="middle">approved</text>
+          <text x="100" y="138" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388" text-anchor="middle" letter-spacing="1.5">JUNE 2021</text>
+        </svg>
+      </div>
+      <div>
+        <h3>FDA <em>approved</em></h3>
+        <p>Wegovy is approved by the U.S. Food and Drug Administration as a clinically reviewed treatment for chronic weight management in qualifying adults and adolescents 12+.<sup style="color: var(--red);">1</sup></p>
+      </div>
+    </div>
+
+    <!-- CARD 2 -->
+    <div class="power-card reveal">
+      <div class="power-card-num">02 / 04</div>
+      <div class="power-card-vis">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <!-- Hormone biology icon: receptor with binding ligand -->
+          <g transform="translate(100 105)">
+            <!-- Receptor (curved shape) -->
+            <path d="M -50 30 Q -50 -20, 0 -25 Q 50 -20, 50 30" fill="none" stroke="#0B1E3F" stroke-width="1.5"/>
+            <path d="M -50 30 Q -50 -20, 0 -25 Q 50 -20, 50 30" fill="#0B1E3F" opacity="0.05"/>
+            <!-- Receptor pocket -->
+            <ellipse cx="0" cy="-5" rx="14" ry="10" fill="#F7F4ED" stroke="#0B1E3F" stroke-width="0.8"/>
+            <!-- Ligand entering -->
+            <circle cx="0" cy="-30" r="9" fill="#C8102E" class="float-2"/>
+            <circle cx="-7" cy="-42" r="5" fill="#C8102E" opacity="0.5" class="float-3"/>
+            <circle cx="8" cy="-48" r="4" fill="#C8102E" opacity="0.4" class="float-1"/>
+            <!-- Cell membrane line -->
+            <line x1="-80" y1="40" x2="80" y2="40" stroke="#0B1E3F" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.4"/>
+          </g>
+          <text x="100" y="180" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388" text-anchor="middle" letter-spacing="1.5">GLP-1 RECEPTOR</text>
+        </svg>
+      </div>
+      <div>
+        <h3>Rooted in <em>biology</em></h3>
+        <p>Semaglutide acts like your body's own GLP-1 hormone—signaling satiety, slowing gastric emptying, and reducing appetite naturally rather than artificially suppressing it.<sup style="color: var(--red);">4</sup></p>
+      </div>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="power-card reveal">
+      <div class="power-card-num">03 / 04</div>
+      <div class="power-card-vis">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <!-- Bar chart showing weight loss difference -->
+          <line x1="20" y1="160" x2="180" y2="160" stroke="#0B1E3F" stroke-width="0.5"/>
+          <line x1="20" y1="40" x2="20" y2="160" stroke="#0B1E3F" stroke-width="0.5"/>
+
+          <!-- Y-axis labels -->
+          <g font-family="JetBrains Mono, monospace" font-size="6" fill="#6B7388">
+            <text x="14" y="44" text-anchor="end">20%</text>
+            <text x="14" y="84" text-anchor="end">15%</text>
+            <text x="14" y="124" text-anchor="end">5%</text>
+            <text x="14" y="162" text-anchor="end">0</text>
+          </g>
+
+          <!-- Wegovy bar (~14.9%) -->
+          <rect x="60" y="76" width="40" height="84" fill="#C8102E" opacity="0.9"/>
+          <text x="80" y="70" font-family="Fraunces, serif" font-size="14" font-weight="600" fill="#C8102E" text-anchor="middle">14.9%</text>
+          <text x="80" y="178" font-family="JetBrains Mono, monospace" font-size="6" fill="#0B1E3F" text-anchor="middle">WEGOVY</text>
+
+          <!-- Placebo bar (~2.4%) -->
+          <rect x="120" y="141" width="40" height="19" fill="#0B1E3F" opacity="0.3"/>
+          <text x="140" y="135" font-family="Fraunces, serif" font-size="12" font-weight="500" fill="#0B1E3F" text-anchor="middle">2.4%</text>
+          <text x="140" y="178" font-family="JetBrains Mono, monospace" font-size="6" fill="#6B7388" text-anchor="middle">PLACEBO</text>
+
+          <text x="100" y="32" font-family="JetBrains Mono, monospace" font-size="6" fill="#6B7388" text-anchor="middle" letter-spacing="1">MEAN BODY WT. CHANGE · 68 WK</text>
+        </svg>
+      </div>
+      <div>
+        <h3><em>Real</em> results</h3>
+        <p>In the STEP-1 trial of adults with obesity, those on Wegovy lost a mean of 14.9% of body weight at 68 weeks vs. 2.4% on placebo, alongside diet and exercise.<sup style="color: var(--red);">2</sup></p>
+      </div>
+    </div>
+
+    <!-- CARD 4 -->
+    <div class="power-card reveal">
+      <div class="power-card-num">04 / 04</div>
+      <div class="power-card-vis">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <!-- Heart with shield outline -->
+          <g transform="translate(100 105)">
+            <path d="M 0 30 C -50 0, -50 -40, -20 -40 C -5 -40, 0 -25, 0 -20 C 0 -25, 5 -40, 20 -40 C 50 -40, 50 0, 0 30 Z"
+                  fill="#C8102E" opacity="0.9" class="float-1"/>
+            <path d="M 0 30 C -50 0, -50 -40, -20 -40 C -5 -40, 0 -25, 0 -20 C 0 -25, 5 -40, 20 -40 C 50 -40, 50 0, 0 30 Z"
+                  fill="none" stroke="#0B1E3F" stroke-width="1"/>
+            <!-- ECG line through heart -->
+            <path d="M -55 -5 L -30 -5 L -22 -20 L -10 10 L 0 -30 L 12 5 L 22 -10 L 30 -5 L 55 -5"
+                  fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.9"/>
+          </g>
+          <text x="100" y="180" font-family="JetBrains Mono, monospace" font-size="7" fill="#6B7388" text-anchor="middle" letter-spacing="1.5">CARDIOVASCULAR PROTECTION</text>
+        </svg>
+      </div>
+      <div>
+        <h3>Heart <em>benefit</em></h3>
+        <p>Wegovy is also FDA-approved to reduce the risk of cardiovascular death, heart attack, and stroke in adults with established cardiovascular disease and overweight or obesity.<sup style="color: var(--red);">3</sup></p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="how-grid"></div>
+  <div class="how-inner">
+    <div class="how-header">
+      <div class="reveal">
+        <div class="how-eyebrow"><span class="num">03</span>How It Works</div>
+        <h2 class="how-title">From <em>consult</em> to your first <em>dose</em>.</h2>
+      </div>
+      <p class="how-intro reveal">
+        PVT is a Florida-licensed telehealth practice. Every Wegovy prescription is determined by a real clinician—after they've reviewed your history, goals, and clinical eligibility.
+      </p>
+    </div>
+
+    <div class="how-steps">
+
+      <div class="how-step reveal">
+        <div class="how-step-num">01</div>
+        <h4>Sign up</h4>
+        <p>Create your PVT account and complete a brief intake about your health history, goals, and current medications. Takes about 5 minutes.</p>
+      </div>
+
+      <div class="how-step reveal">
+        <div class="how-step-num">02</div>
+        <h4>Clinician review</h4>
+        <p>A licensed PVT clinician reviews your intake and either prescribes, requests a video visit, or recommends an alternative path. Many patients are connected for a face-to-face video consult.</p>
+      </div>
+
+      <div class="how-step reveal">
+        <div class="how-step-num">03</div>
+        <h4>Personalized plan</h4>
+        <p>If Wegovy is appropriate, your clinician builds a titration schedule, sets follow-ups, and walks you through injection technique, side effects, and what to monitor.</p>
+      </div>
+
+      <div class="how-step reveal">
+        <div class="how-step-num">04</div>
+        <h4>Begin treatment</h4>
+        <p>Your prescription is sent to a licensed pharmacy partner. Wegovy ships directly to you when filled. Your clinician stays available for questions throughout treatment.</p>
+      </div>
+
+    </div>
+
+    <div class="how-cta-wrap">
+      <a href="#cta" class="how-cta">Start Intake</a>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE: INJECTION VS PILL -->
+<section class="compare">
+  <div class="compare-header">
+    <div class="compare-eyebrow reveal"><span class="num">04</span>Which is Right for You</div>
+    <h2 class="compare-title reveal">Wegovy® <em>injection</em> vs. Wegovy® <em>pill</em>.</h2>
+    <p class="compare-intro reveal">
+      In late 2025, the FDA approved an oral form of Wegovy alongside the original weekly injection. Both contain semaglutide and both are clinically proven—your clinician will help you decide which is the better fit for your routine, goals, and tolerability.
+    </p>
+  </div>
+
+  <div class="compare-grid">
+
+    <div class="compare-card reveal">
+      <div class="compare-card-tag">Option A</div>
+      <h3>Wegovy® Pen</h3>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Dosage</span>
+        <span class="compare-card-stat-value"><em>Once weekly</em></span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Route</span>
+        <span class="compare-card-stat-value">Subcutaneous injection</span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Active</span>
+        <span class="compare-card-stat-value">Semaglutide, up to 2.4 mg</span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Trial Result</span>
+        <span class="compare-card-stat-value"><em>~14.9%</em> mean weight loss (STEP-1)<sup style="color: var(--red); font-size: 0.7em;">2</sup></span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">FDA Status</span>
+        <span class="compare-card-stat-value">Approved since 2021</span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">CV Indication</span>
+        <span class="compare-card-stat-value">Yes, MACE risk reduction</span>
+      </div>
+    </div>
+
+    <div class="compare-card reveal">
+      <div class="compare-card-tag">Option B</div>
+      <h3>Wegovy® Tablet</h3>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Dosage</span>
+        <span class="compare-card-stat-value"><em>Once daily</em></span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Route</span>
+        <span class="compare-card-stat-value">Oral tablet with SNAC</span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Active</span>
+        <span class="compare-card-stat-value">Semaglutide, up to 25 mg</span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">Trial Result</span>
+        <span class="compare-card-stat-value"><em>~13.6%</em> mean weight loss (OASIS-4)<sup style="color: var(--red); font-size: 0.7em;">5</sup></span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">FDA Status</span>
+        <span class="compare-card-stat-value">Approved 2025</span>
+      </div>
+      <div class="compare-card-stat-line">
+        <span class="compare-card-stat-label">CV Indication</span>
+        <span class="compare-card-stat-value">Yes</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HEALTH BENEFITS -->
+<section class="benefits">
+  <div class="benefits-inner">
+    <div class="benefits-content reveal">
+      <div class="compare-eyebrow"><span class="num">05</span>Beyond Weight</div>
+      <h2>More than a <em>number</em> on a scale.</h2>
+      <p style="font-family: var(--serif); font-size: 18px; font-weight: 300; line-height: 1.6; color: var(--navy-mid); margin-bottom: 28px; max-width: 480px;">
+        Clinical trials have documented effects beyond weight reduction. With sustained use alongside diet and exercise, Wegovy has been associated with:
+      </p>
+      <ul class="benefits-list">
+        <li>Improvements in blood pressure and waist circumference<sup style="color: var(--red); font-size: 0.7em;">2</sup></li>
+        <li>Better glycemic control in patients with prediabetes<sup style="color: var(--red); font-size: 0.7em;">5</sup></li>
+        <li>Reduced risk of major cardiovascular events in eligible adults<sup style="color: var(--red); font-size: 0.7em;">3</sup></li>
+        <li>Improvements in lipid profile and inflammatory markers<sup style="color: var(--red); font-size: 0.7em;">2</sup></li>
+      </ul>
+      <p class="benefits-disclaimer">
+        Individual results vary. Wegovy is intended as part of a comprehensive weight-management plan that includes a reduced-calorie diet and increased physical activity. It is not a substitute for lifestyle change.
+      </p>
+    </div>
+
+    <!-- Visual: anatomical / signal schematic -->
+    <div class="benefits-vis reveal">
+      <svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bodyGlow" cx="0.5" cy="0.5" r="0.6">
+            <stop offset="0%" stop-color="#C8102E" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#C8102E" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Backdrop circles -->
+        <circle cx="240" cy="240" r="220" fill="url(#bodyGlow)"/>
+        <circle cx="240" cy="240" r="200" fill="none" stroke="#0B1E3F" stroke-width="0.5" opacity="0.15"/>
+        <circle cx="240" cy="240" r="160" fill="none" stroke="#0B1E3F" stroke-width="0.5" stroke-dasharray="2 5" opacity="0.3"/>
+
+        <!-- Central figure outline (silhouette / abstract body) -->
+        <g transform="translate(240, 240)" class="float-1">
+          <!-- Head -->
+          <circle cx="0" cy="-100" r="22" fill="#F2EEE5" stroke="#0B1E3F" stroke-width="1"/>
+          <!-- Body -->
+          <path d="M -28 -75 L -32 30 L -22 80 L -18 100 L -8 105 L -8 30 L 8 30 L 8 105 L 18 100 L 22 80 L 32 30 L 28 -75 Z"
+                fill="#F2EEE5" stroke="#0B1E3F" stroke-width="1"/>
+          <!-- Heart -->
+          <path d="M -6 -42 C -14 -50, -14 -38, -6 -32 C 2 -38, 2 -50, -6 -42 Z" fill="#C8102E"/>
+        </g>
+
+        <!-- Indicator points around body with labels -->
+        <g font-family="JetBrains Mono, monospace" font-size="9" fill="#0B1E3F">
+          <!-- Heart -->
+          <line x1="232" y1="198" x2="100" y2="160" stroke="#C8102E" stroke-width="0.5"/>
+          <circle cx="232" cy="198" r="3" fill="#C8102E" class="pulse-soft"/>
+          <text x="92" y="158" text-anchor="end" font-weight="600" fill="#C8102E">CARDIOVASCULAR</text>
+          <text x="92" y="170" text-anchor="end" fill="#6B7388">MACE risk reduction</text>
+
+          <!-- Stomach -->
+          <line x1="240" y1="240" x2="380" y2="220" stroke="#C9A86A" stroke-width="0.5"/>
+          <circle cx="240" cy="240" r="3" fill="#C9A86A"/>
+          <text x="384" y="218" font-weight="600" fill="#C9A86A">GASTRIC</text>
+          <text x="384" y="230" fill="#6B7388">Delayed emptying</text>
+
+          <!-- Brain / appetite -->
+          <line x1="240" y1="140" x2="100" y2="100" stroke="#0B1E3F" stroke-width="0.5"/>
+          <circle cx="240" cy="140" r="3" fill="#0B1E3F"/>
+          <text x="92" y="98" text-anchor="end" font-weight="600" fill="#0B1E3F">SATIETY SIGNAL</text>
+          <text x="92" y="110" text-anchor="end" fill="#6B7388">Hypothalamic action</text>
+
+          <!-- Metabolic -->
+          <line x1="252" y1="280" x2="380" y2="310" stroke="#0B1E3F" stroke-width="0.5"/>
+          <circle cx="252" cy="280" r="3" fill="#0B1E3F"/>
+          <text x="384" y="308" font-weight="600" fill="#0B1E3F">METABOLIC</text>
+          <text x="384" y="320" fill="#6B7388">Glycemic improvement</text>
+
+          <!-- BP -->
+          <line x1="225" y1="320" x2="100" y2="350" stroke="#0B1E3F" stroke-width="0.5"/>
+          <circle cx="225" cy="320" r="3" fill="#0B1E3F"/>
+          <text x="92" y="348" text-anchor="end" font-weight="600" fill="#0B1E3F">CIRCULATORY</text>
+          <text x="92" y="360" text-anchor="end" fill="#6B7388">Blood pressure ↓</text>
+        </g>
+
+        <!-- Bottom info bar -->
+        <text x="240" y="450" font-family="JetBrains Mono, monospace" font-size="8" fill="#6B7388" text-anchor="middle" letter-spacing="2">FIG. 02 · SYSTEMIC EFFECTS — CLINICAL DATA</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="faq-inner">
+    <div class="faq-eyebrow reveal"><span class="num">06</span>Common Questions</div>
+    <h2 class="reveal">Frequently <em>asked.</em></h2>
+
+    <div class="faq-list">
+
+      <div class="acc-item">
+        <button class="acc-trigger">Who qualifies for Wegovy?</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Wegovy is FDA-approved for adults with a body mass index (BMI) of 30 or greater, or 27 or greater with at least one weight-related condition (such as hypertension, type 2 diabetes, or dyslipidemia). It's also approved for adolescents aged 12 and older with obesity.<sup style="color: var(--red);">1</sup></p>
+            <p>Final eligibility is determined by your PVT clinician during your intake and consultation.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger">How long do I need to stay on Wegovy?</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Wegovy is approved as a chronic weight-management medication, not a short-term solution. Clinical evidence suggests that discontinuing treatment can lead to regain of much of the weight lost.<sup style="color: var(--red);">2</sup></p>
+            <p>Most patients are encouraged to view Wegovy as part of a long-term plan. Your clinician will discuss what an ongoing or stepped-down plan might look like based on your progress.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger">What side effects should I expect?</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>The most common side effects are gastrointestinal: nausea, diarrhea, vomiting, constipation, and abdominal pain. These are most frequent during dose escalation and typically diminish as your body adjusts.<sup style="color: var(--red);">1</sup></p>
+            <p>Serious risks include pancreatitis, gallbladder issues, kidney problems, and a boxed warning for thyroid C-cell tumors. Wegovy is contraindicated in patients with a personal or family history of medullary thyroid carcinoma or Multiple Endocrine Neoplasia syndrome type 2.<sup style="color: var(--red);">1</sup></p>
+            <p>Your PVT clinician will review your full medical history to identify any contraindications before prescribing.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger">Is Wegovy covered by insurance?</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Insurance coverage for Wegovy varies significantly by plan and indication. Some plans cover it for chronic weight management; others only for the cardiovascular-risk-reduction indication.</p>
+            <p>PVT is a cash-pay telehealth practice—we provide consultations and prescriptions, but the medication is filled through a pharmacy partner. We can provide documentation for you to submit to your insurance separately.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger">Can I switch from another GLP-1?</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Switching between GLP-1 medications is common and should always be supervised by a clinician. Your PVT provider will review your prior treatment, current dose, and reason for switching, and design an appropriate transition plan.</p>
+            <p>Wegovy should never be combined with another semaglutide-containing product or another GLP-1 receptor agonist.<sup style="color: var(--red);">1</sup></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger">Where can I see this medication's full prescribing information?</button>
+        <div class="acc-content">
+          <div class="acc-content-inner">
+            <p>Wegovy's complete Prescribing Information and Medication Guide are published by Novo Nordisk and the FDA. Your PVT clinician will provide a copy during your consultation and review the most important sections with you.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="cta">
+  <div class="cta-inner">
+    <div class="cta-eyebrow"><span class="num">07</span>Begin When You're Ready</div>
+    <h2 class="reveal">See if Wegovy® is <em>right</em> for you.</h2>
+    <p class="cta-sub reveal">
+      Start your intake online. A licensed PVT clinician will review your responses and reach out within one business day to next-step your care.
+    </p>
+    <a href="#" class="cta-btn reveal">Start Intake</a>
+    <p class="cta-disclaimer">
+      Wegovy® is a registered trademark of Novo Nordisk A/S. PVT is not affiliated with Novo Nordisk. PVT services are available to residents of Florida only. This page is for educational purposes and does not constitute medical advice. Wegovy® is a prescription medication; eligibility and dosing are determined by a licensed clinician on the basis of individual evaluation. Treatment is most effective when combined with a reduced-calorie diet and increased physical activity.
+    </p>
+  </div>
+</section>
+
+<!-- REFERENCES -->
+<section class="refs" id="safety">
+  <div class="refs-inner">
+    <h5>References &amp; Important Safety Information</h5>
+    <ol>
+      <li>Wegovy® (semaglutide) injection. Prescribing Information. Novo Nordisk Inc.</li>
+      <li>Wilding JPH, et al. Once-Weekly Semaglutide in Adults with Overweight or Obesity (STEP 1). <em>New England Journal of Medicine.</em> 2021;384(11):989–1002.</li>
+      <li>U.S. Food and Drug Administration. FDA Approves First Treatment to Reduce Risk of Serious Heart Problems Specifically in Adults with Obesity or Overweight. March 8, 2024.</li>
+      <li>Semaglutide. <em>StatPearls.</em> National Center for Biotechnology Information.</li>
+      <li>OASIS 4 Trial Results, Oral Semaglutide 25 mg. Novo Nordisk; Applied Clinical Trials Online, 2025.</li>
+    </ol>
+  </div>
+</section>
+
+<script>
+  // Reveal-on-scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  reveals.forEach(el => io.observe(el));
+
+  // Hero reveals immediately
+  document.querySelectorAll('.product .reveal').forEach((el, i) => {
+    setTimeout(() => el.classList.add('in'), 120 + i * 180);
+  });
+
+  // Accordion behavior
+  document.querySelectorAll('.acc-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.acc-item');
+      const content = item.querySelector('.acc-content');
+      const isOpen = item.classList.contains('open');
+
+      if (isOpen) {
+        content.style.maxHeight = '0';
+        item.classList.remove('open');
+      } else {
+        item.classList.add('open');
+        content.style.maxHeight = content.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // Gallery thumbnails (visual switch only)
+  document.querySelectorAll('.thumb').forEach(thumb => {
+    thumb.addEventListener('click', () => {
+      document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+      thumb.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

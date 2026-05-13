@@ -389,8 +389,30 @@
       reviews: "reviews",
       testimonials: "reviews",
       partners: "partners",
+      "pvt-snac-technology": "pvt-snac-technology",
+      "snac-technology": "pvt-snac-technology",
+      snac: "pvt-snac-technology",
+      "pvt-wegovy": "pvt-wegovy",
+      wegovy: "pvt-wegovy",
+      "wegovy-pen": "pvt-wegovy",
     };
     const landingHomeAnchors = new Set(["", "services", "how-it-works"]);
+
+    function getLandingRouteFromLocation() {
+      const pathSlug = decodeURIComponent(
+        window.location.pathname.replace(/^\/+|\/+$/g, "").split("/").pop() || "",
+      );
+      if (landingSubpageRoutes[pathSlug]) return pathSlug;
+
+      const hash = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+      if (landingSubpageRoutes[hash]) return hash;
+
+      return "";
+    }
+
+    function getLandingRouteUrl(normalizedRoute) {
+      return normalizedRoute === "home" ? "/" : `/${normalizedRoute}`;
+    }
 
     function setLandingRoute(route, options = {}) {
       const page = document.getElementById("landingPage");
@@ -408,10 +430,10 @@
         section.setAttribute("aria-hidden", String(normalizedRoute !== "home"));
       });
 
-      if (options.updateHash && window.history && window.history.pushState) {
-        const baseUrl = window.location.pathname + window.location.search;
-        const nextUrl = normalizedRoute === "home" ? baseUrl : `${baseUrl}#${normalizedRoute}`;
-        window.history.pushState(null, "", nextUrl);
+      if ((options.updateUrl || options.updateHash) && window.history && window.history.pushState) {
+        window.history.pushState(null, "", getLandingRouteUrl(normalizedRoute));
+      } else if (options.replaceUrl && window.history && window.history.replaceState) {
+        window.history.replaceState(null, "", getLandingRouteUrl(normalizedRoute));
       }
 
       if (options.scroll !== false) {
@@ -427,10 +449,16 @@
       }
     }
 
+    function goLandingSubpage(route) {
+      setLandingRoute(route, { updateUrl: true, smooth: true });
+    }
+    window.goLandingSubpage = goLandingSubpage;
+
     function syncLandingRouteFromHash() {
       const hash = decodeURIComponent(window.location.hash.replace(/^#/, ""));
-      if (landingSubpageRoutes[hash]) {
-        setLandingRoute(hash);
+      const routeFromLocation = getLandingRouteFromLocation();
+      if (routeFromLocation) {
+        setLandingRoute(routeFromLocation, { replaceUrl: !!landingSubpageRoutes[hash] });
         return;
       }
 
@@ -450,11 +478,16 @@
       syncLandingRouteFromHash();
     }
 
-    function showLanding() {
+    function showLanding(options = {}) {
       closeMobileNav();
       document.getElementById("landingPage").classList.remove("hidden");
       document.getElementById("landingPage").style.display = "block";
       document.getElementById("dashboardPage").style.display = "none";
       document.getElementById("adminDashboard").classList.add("hidden");
+      const routeFromLocation = options.preserveRoute ? getLandingRouteFromLocation() : "";
+      if (routeFromLocation) {
+        setLandingRoute(routeFromLocation, { scroll: false });
+        return;
+      }
       setLandingRoute("home", { updateHash: true });
     }
