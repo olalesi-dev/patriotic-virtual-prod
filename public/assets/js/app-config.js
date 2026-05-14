@@ -23,6 +23,7 @@ function resolveRuntimeConfig() {
   const isFirebasePreview = host.includes("-fresh") || host.includes("--");
   const isDevLanding = host === "dev.patriotictelehealth.com";
   const isCustomProdLanding = host === "patriotictelehealth.com" || host === "www.patriotictelehealth.com";
+  const defaultVouchedPublicKey = "EmbGg*-Iph.xlzsx8fX9_O!BouHbdS";
 
   const defaults = isDevLanding || isFirebasePreview
     ? {
@@ -30,6 +31,7 @@ function resolveRuntimeConfig() {
         emrOrigin: "https://emr-dev.patriotictelehealth.com",
         apiOrigin: "https://api.patriotictelehealth.com",
         pacsOrigin: "https://pacs.patriotictelehealth.com",
+        vouchedPublicKey: defaultVouchedPublicKey,
       }
     : isCustomProdLanding
       ? {
@@ -37,25 +39,36 @@ function resolveRuntimeConfig() {
           emrOrigin: "https://emr.patriotictelehealth.com",
           apiOrigin: "https://api.patriotictelehealth.com",
           pacsOrigin: "https://pacs.patriotictelehealth.com",
+          vouchedPublicKey: defaultVouchedPublicKey,
         }
       : {
           environment: "default",
           emrOrigin: "https://emr.patriotictelehealth.com",
           apiOrigin: "https://api.patriotictelehealth.com",
           pacsOrigin: "https://pacs.patriotictelehealth.com",
+          vouchedPublicKey: defaultVouchedPublicKey,
         };
 
   const overrides = window.PVT_RUNTIME_OVERRIDES || {};
   const emrOrigin = normalizeRuntimeOrigin(overrides.emrOrigin) || defaults.emrOrigin;
   const apiOrigin = normalizeRuntimeOrigin(overrides.apiOrigin) || defaults.apiOrigin;
   const pacsOrigin = normalizeRuntimeOrigin(overrides.pacsOrigin) || defaults.pacsOrigin;
+  const vouchedPublicKey = typeof overrides.vouchedPublicKey === "string" && overrides.vouchedPublicKey.trim()
+    ? overrides.vouchedPublicKey.trim()
+    : defaults.vouchedPublicKey;
+  const vouchedWebhookUrl = normalizeRuntimeOrigin(overrides.vouchedWebhookOrigin || overrides.apiOrigin)
+    ? `${normalizeRuntimeOrigin(overrides.vouchedWebhookOrigin || overrides.apiOrigin)}/api/v1/vouched/webhook`
+    : `${apiOrigin}/api/v1/vouched/webhook`;
 
   return {
     environment: defaults.environment,
     emrOrigin,
     emrLoginUrl: `${emrOrigin}/login`,
+    emrDashboardUrl: `${emrOrigin}/dashboard`,
     apiOrigin,
     pacsOrigin,
+    vouchedPublicKey,
+    vouchedWebhookUrl,
   };
 }
 
@@ -70,12 +83,26 @@ function getEmrLoginUrl() {
   return APP_RUNTIME_CONFIG.emrLoginUrl;
 }
 
+function getEmrDashboardUrl(role) {
+  const normalizedRole = String(role || "").toLowerCase();
+  const isProviderDashboard = ["admin", "provider", "doctor", "staff"].includes(normalizedRole);
+  return isProviderDashboard ? APP_RUNTIME_CONFIG.emrDashboardUrl : `${APP_RUNTIME_CONFIG.emrOrigin}/patient`;
+}
+
 function getApiOrigin() {
   return APP_RUNTIME_CONFIG.apiOrigin;
 }
 
 function getPacsOrigin() {
   return APP_RUNTIME_CONFIG.pacsOrigin;
+}
+
+function getVouchedPublicKey() {
+  return APP_RUNTIME_CONFIG.vouchedPublicKey;
+}
+
+function getVouchedWebhookUrl() {
+  return APP_RUNTIME_CONFIG.vouchedWebhookUrl;
 }
 
 function extendLandingI18n() {

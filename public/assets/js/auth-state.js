@@ -1,10 +1,22 @@
     // Auth Listener Update
     auth.onAuthStateChanged(async (u) => {
       if (u) {
-        user = u; // Fix: Set global user var so checks pass
+        fbUser = u;
         try {
           token = await u.getIdToken();
         } catch (e) { }
+        if (typeof loadUserProfile === "function") {
+          try {
+            user = await loadUserProfile(u);
+          } catch (profileErr) {
+            user = user || {
+              uid: u.uid,
+              email: u.email || "",
+              firstName: u.displayName ? u.displayName.split(" ")[0] : (u.email || "Patient").split("@")[0],
+              role: "patient",
+            };
+          }
+        }
 
         updateNav();
 
@@ -12,6 +24,14 @@
         try {
           const doc = await db.collection("patients").doc(u.uid).get();
           const userData = doc.exists ? doc.data() : null;
+          if (userData) {
+            user = {
+              ...(user || {}),
+              ...userData,
+              uid: u.uid,
+              email: u.email || userData.email || "",
+            };
+          }
           const role =
             userData && userData.role
               ? userData.role.toLowerCase()

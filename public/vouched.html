@@ -16,19 +16,42 @@
       const lastName = urlParams.get('lastName') || '';
       const email = urlParams.get('email') || '';
       const phone = urlParams.get('phone') || '';
+      const birthDate = urlParams.get('birthDate') || '';
+      const uid = urlParams.get('uid') || '';
+      const internalId = urlParams.get('internalId') || '';
+      const context = urlParams.get('context') || 'consultation';
+      const callbackURL = urlParams.get('callbackURL') || '';
+      const appId = urlParams.get('appId') || 'EmbGg*-Iph.xlzsx8fX9_O!BouHbdS';
+
+      function formatBirthDate(value) {
+        const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return value || undefined;
+        return `${match[2]}/${match[3]}/${match[1]}`;
+      }
 
       var vouched = Vouched({
-        appId: 'EmbGg*-Iph.xlzsx8fX9_O!BouHbdS',
+        appId: appId,
+        callbackURL: callbackURL || undefined,
         verification: {
           firstName: firstName,
           lastName: lastName,
           email: email,
-          phone: phone
+          phone: phone,
+          birthDate: formatBirthDate(birthDate),
+          internalId: internalId || undefined
         },
+        properties: [
+          { name: 'firebaseUid', value: uid },
+          { name: 'internalId', value: internalId },
+          { name: 'role', value: 'patient' }
+        ],
         liveness: 'enhanced',
         id: 'camera',
+        idLiveness: 'distance',
         includeBarcode: true,
         manualCaptureTimeout: 20000,
+        maxRetriesBeforeNext: 3,
+        numForceRetries: 3,
         showTermsAndPrivacy: true,
         crossDevice: true,
         crossDeviceQRCode: true,
@@ -42,8 +65,10 @@
           // Send message to parent window (React)
           window.parent.postMessage({
             type: 'VOUCHED_DONE',
+            context: context,
             success: job.result ? job.result.success : false,
-            jobId: job.id || job.token
+            jobId: job.id || job.token,
+            internalId: internalId
           }, "*");
         }
       });

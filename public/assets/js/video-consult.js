@@ -12,6 +12,7 @@
 
     window.addEventListener("message", async (e) => {
       if (e.data && e.data.type === 'VOUCHED_DONE') {
+        if (e.data.context === 'signup') return;
         const success = e.data.success;
         const jobId = e.data.jobId;
         

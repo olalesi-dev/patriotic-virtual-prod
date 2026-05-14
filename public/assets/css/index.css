@@ -3916,6 +3916,39 @@ body.light-theme #authModal {
   color: var(--auth-muted) !important;
 }
 
+.auth-register-modal {
+  max-width: 980px;
+  width: min(980px, calc(100vw - 48px));
+  max-height: min(92vh, 980px);
+  overflow-y: auto;
+}
+
+.auth-verify-modal {
+  max-width: 920px;
+  width: min(920px, calc(100vw - 48px));
+  max-height: min(92vh, 980px);
+  overflow-y: auto;
+}
+
+.auth-verify-frame {
+  background: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 720px) {
+  .auth-register-modal,
+  .auth-verify-modal {
+    width: min(100vw - 24px, 680px);
+    max-height: calc(100vh - 24px);
+  }
+
+  #registerForm > div[style*="display: flex"] {
+    flex-direction: column;
+  }
+}
+
 /* DARK MODE PATIENT CHART OVERRIDE */
 #patientChart .modal {
   background: #000000 !important;

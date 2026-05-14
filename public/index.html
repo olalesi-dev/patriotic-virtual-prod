@@ -2943,13 +2943,7 @@
           <input type="email" id="regEmail" placeholder="you@example.com" style="padding: 10px 12px" />
         </div>
 
-        <!-- Row 3: Password -->
-        <div class="fg" style="margin-bottom: 12px">
-          <label style="font-size: 12px">Password</label>
-          <input type="password" id="regPassword" placeholder="Min. 8 characters" style="padding: 10px 12px" />
-        </div>
-
-        <!-- Row 4: State + Biological Sex -->
+        <!-- Row 3: State + Biological Sex -->
         <div style="display: flex; gap: 12px; margin-bottom: 12px">
           <div class="fg" style="flex: 1; margin-bottom: 0">
             <label style="font-size: 12px">State</label>
@@ -2964,11 +2958,12 @@
               <option value="">Select</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
         </div>
 
-        <!-- Row 5: Date of Birth + Phone -->
+        <!-- Row 4: Date of Birth + Phone -->
         <div style="display: flex; gap: 12px; margin-bottom: 16px">
           <div class="fg" style="flex: 1; margin-bottom: 0">
             <label style="font-size: 12px">Date of Birth</label>
@@ -2977,6 +2972,36 @@
           <div class="fg" style="flex: 1; margin-bottom: 0">
             <label style="font-size: 12px">Phone Number *</label>
             <input type="tel" id="regPhone" placeholder="(555) 555-5555" style="padding: 10px 12px" />
+          </div>
+        </div>
+
+        <!-- Row 5: Address -->
+        <div class="fg" style="margin-bottom: 12px">
+          <label style="font-size: 12px">Address Line 1</label>
+          <input type="text" id="regAddress1" placeholder="2798 Parsifal St NE" style="padding: 10px 12px" />
+        </div>
+
+        <!-- Row 6: City + ZIP -->
+        <div style="display: flex; gap: 12px; margin-bottom: 12px">
+          <div class="fg" style="flex: 1; margin-bottom: 0">
+            <label style="font-size: 12px">City</label>
+            <input type="text" id="regCity" placeholder="Miami" style="padding: 10px 12px" />
+          </div>
+          <div class="fg" style="flex: 1; margin-bottom: 0">
+            <label style="font-size: 12px">ZIP Code</label>
+            <input type="text" inputmode="numeric" id="regZipCode" placeholder="33101" style="padding: 10px 12px" />
+          </div>
+        </div>
+
+        <!-- Row 7: Password + Confirm -->
+        <div style="display: flex; gap: 12px; margin-bottom: 16px">
+          <div class="fg" style="flex: 1; margin-bottom: 0">
+            <label style="font-size: 12px">Password</label>
+            <input type="password" id="regPassword" placeholder="Min. 8 characters" style="padding: 10px 12px" />
+          </div>
+          <div class="fg" style="flex: 1; margin-bottom: 0">
+            <label style="font-size: 12px">Confirm Password</label>
+            <input type="password" id="regConfirmPassword" placeholder="Repeat password" style="padding: 10px 12px" />
           </div>
         </div>
 
@@ -3011,10 +3036,14 @@
         <p class="ms" style="margin-bottom: 20px">
           For your safety and to comply with telehealth regulations, please verify your identity with a valid ID.
         </p>
+        <p class="ms" id="vouchedNotice" style="margin-bottom: 20px">
+          Complete secure ID verification to continue.
+        </p>
         <iframe
           id="vouchedFrame"
           src=""
-          style="width: 100%; min-height: 550px; border: none; border-radius: 12px"
+          class="auth-verify-frame"
+          style="width: 100%; min-height: 650px; border: none; border-radius: 12px"
           allow="camera; microphone"
         ></iframe>
       </div>

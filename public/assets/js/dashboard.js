@@ -1,9 +1,7 @@
     async function showDashboard() {
       toast("Redirecting to your EMR portal...");
       document.getElementById("landingPage").style.display = "none";
-      const EMR_BASE = getEmrOrigin();
-      const isAdmin = user && ['admin', 'provider', 'doctor'].includes(user.role);
-      const endpoint = isAdmin ? '/admin' : '/patient';
+      const destination = getEmrDashboardUrl(user && user.role);
       
       try {
         let tokenParam = '';
@@ -24,10 +22,10 @@
             console.warn('Bridge token failed:', bridgeErr.message);
           }
         }
-        window.location.href = `${EMR_BASE}${endpoint}${tokenParam}`;
+        window.location.href = `${destination}${tokenParam}`;
       } catch (err) {
         console.error("Dashboard redirect error:", err);
-        window.location.href = EMR_BASE;
+        window.location.href = destination;
       }
     }
 

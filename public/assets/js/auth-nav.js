@@ -36,7 +36,14 @@
       if (e && e.target !== e.currentTarget) return;
       document.getElementById("authModal").classList.remove("active");
     }
+    function setAuthModalModeClass(t) {
+      const modal = document.querySelector("#authModal .modal");
+      if (!modal) return;
+      modal.classList.toggle("auth-register-modal", t === "register");
+      modal.classList.toggle("auth-verify-modal", t === "verify");
+    }
     function switchAuth(t) {
+      setAuthModalModeClass(t);
       document
         .getElementById("loginForm")
         .classList.toggle("hidden", t !== "login");
@@ -44,7 +51,357 @@
         .getElementById("registerForm")
         .classList.toggle("hidden", t !== "register");
       if (document.getElementById("verifyForm")) {
-        document.getElementById("verifyForm").classList.add("hidden");
+        document.getElementById("verifyForm").classList.toggle("hidden", t !== "verify");
+        if (t !== "verify") {
+          const iframe = document.getElementById("vouchedFrame");
+          if (iframe) iframe.src = "";
+        }
+      }
+    }
+    function normalizeUsPhone(value) {
+      const digits = String(value || "").replace(/\D/g, "");
+      if (digits.length === 10) return digits;
+      if (digits.length === 11 && digits.startsWith("1")) return digits.slice(1);
+      return null;
+    }
+    function normalizeUsZip(value) {
+      const digits = String(value || "").replace(/\D/g, "");
+      return digits.length >= 5 ? digits.slice(0, 5) : null;
+    }
+    function isAdult(dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      if (Number.isNaN(birthDate.getTime())) return false;
+
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDelta = today.getMonth() - birthDate.getMonth();
+      if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
+        age -= 1;
+      }
+
+      return age >= 18;
+    }
+    function readRegistrationForm(options = {}) {
+      const requireEmail = options.requireEmail !== false;
+      const requirePassword = options.requirePassword !== false;
+      const firstName = document.getElementById("regFirst").value.trim();
+      const lastName = document.getElementById("regLast").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const confirmPassword = document.getElementById("regConfirmPassword")
+        ? document.getElementById("regConfirmPassword").value
+        : password;
+      const state = document.getElementById("regState").value;
+      const dob = document.getElementById("regDob").value;
+      const sex = document.getElementById("regSex").value;
+      const phone = normalizeUsPhone(document.getElementById("regPhone").value);
+      const address1 = document.getElementById("regAddress1")
+        ? document.getElementById("regAddress1").value.trim()
+        : "";
+      const city = document.getElementById("regCity")
+        ? document.getElementById("regCity").value.trim()
+        : "";
+      const zipCode = normalizeUsZip(document.getElementById("regZipCode")
+        ? document.getElementById("regZipCode").value
+        : "");
+
+      if (!firstName || !lastName) return { error: "First name and last name are required.", data: null };
+      if (!dob || !isAdult(dob)) return { error: "You must be at least 18 years old to create an account.", data: null };
+      if (!sex) return { error: "Sex is required.", data: null };
+      if (!address1 || !city || !state) return { error: "Address, city, and state are required.", data: null };
+      if (!zipCode) return { error: "ZIP code must be a valid 5-digit US ZIP.", data: null };
+      if (!phone) return { error: "Phone number must be a valid 10-digit US phone number.", data: null };
+      if (requireEmail && !email) return { error: "Email is required.", data: null };
+      if (!ACTIVE_STATES.includes(state)) return { error: "We're currently only available in Florida.", data: null };
+      if (requirePassword) {
+        if (password.length < 8) return { error: "Password must be at least 8 characters.", data: null };
+        if (password !== confirmPassword) return { error: "Passwords do not match.", data: null };
+      }
+
+      return {
+        error: null,
+        data: {
+          firstName,
+          lastName,
+          displayName: `${firstName} ${lastName}`.trim(),
+          email,
+          password,
+          dob,
+          sex,
+          address1,
+          city,
+          state,
+          zipCode,
+          phone,
+        },
+      };
+    }
+    function getFallbackUserProfile(firebaseUser) {
+      const displayName = firebaseUser.displayName || "";
+      const names = displayName.trim() ? displayName.trim().split(/\s+/) : [];
+      return {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        firstName: names[0] || (firebaseUser.email ? firebaseUser.email.split("@")[0] : "Patient"),
+        lastName: names.slice(1).join(" "),
+        displayName,
+        role: "patient",
+      };
+    }
+    async function loadUserProfile(firebaseUser) {
+      const fallback = getFallbackUserProfile(firebaseUser);
+      if (!db) return fallback;
+
+      try {
+        const patientDoc = await db.collection("patients").doc(firebaseUser.uid).get();
+        if (patientDoc.exists) {
+          return { ...fallback, ...patientDoc.data(), uid: firebaseUser.uid, email: firebaseUser.email || patientDoc.data().email || "" };
+        }
+
+        const userDoc = await db.collection("users").doc(firebaseUser.uid).get();
+        if (userDoc.exists) {
+          return { ...fallback, ...userDoc.data(), uid: firebaseUser.uid, email: firebaseUser.email || userDoc.data().email || "" };
+        }
+      } catch (profileErr) {
+        console.warn("Profile lookup failed:", profileErr.message);
+      }
+
+      return fallback;
+    }
+    async function recordSignupFlowTrace({ step, status, user: traceUser, payload, response, error }) {
+      if (!db) return;
+      try {
+        await db.collection("audit_logs").add({
+          action: "SIGNUP_FLOW_TRACE",
+          source: "landing_modal",
+          step,
+          status,
+          userId: traceUser ? traceUser.uid : null,
+          userEmail: traceUser ? traceUser.email : null,
+          payload: payload || null,
+          response: response || null,
+          error: error || null,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          userAgent: navigator.userAgent,
+        });
+      } catch (traceErr) {
+        console.warn("Failed to record signup flow trace:", traceErr.message);
+      }
+    }
+    async function persistPatientRegistration(firebaseUser, registration, options = {}) {
+      const email = (options.emailOverride || firebaseUser.email || registration.email || "").trim();
+      if (!email) throw new Error("Unable to determine patient email address.");
+
+      await firebaseUser.updateProfile({ displayName: registration.displayName });
+
+      const serverTimestamp = () => firebase.firestore.FieldValue.serverTimestamp();
+      const patientRecord = {
+        uid: firebaseUser.uid,
+        email,
+        name: registration.displayName,
+        displayName: registration.displayName,
+        firstName: registration.firstName,
+        lastName: registration.lastName,
+        dob: registration.dob || null,
+        dateOfBirth: registration.dob || null,
+        sex: registration.sex || null,
+        sexAtBirth: registration.sex || null,
+        gender: registration.sex || null,
+        address: registration.address1 || null,
+        address1: registration.address1 || null,
+        city: registration.city || null,
+        state: registration.state || null,
+        zip: registration.zipCode,
+        zipCode: registration.zipCode,
+        phone: registration.phone,
+        phoneNumber: registration.phone,
+        role: "patient",
+        status: "active",
+        isIdentityVerified: false,
+        identityVerification: {
+          provider: "vouched",
+          status: "not_started",
+          verified: false,
+          jobId: null,
+          internalId: null,
+          verifiedAt: null,
+          lastUpdatedAt: serverTimestamp(),
+          failureReason: null,
+          warningCode: null,
+          warningMessage: null,
+        },
+        emailVerified: firebaseUser.emailVerified,
+        updatedAt: serverTimestamp(),
+      };
+
+      if (!options.mergePatientRecord) {
+        patientRecord.createdAt = serverTimestamp();
+      }
+
+      await Promise.all([
+        db.collection("patients").doc(firebaseUser.uid).set(patientRecord, { merge: !!options.mergePatientRecord }),
+        db.collection("users").doc(firebaseUser.uid).set(patientRecord, { merge: true }),
+      ]);
+
+      if (options.sendVerificationEmail && !firebaseUser.emailVerified) {
+        await firebaseUser.sendEmailVerification();
+      }
+
+      if (options.auditAction) {
+        try {
+          await db.collection("audit_logs").add({
+            userId: firebaseUser.uid,
+            userEmail: email,
+            action: options.auditAction,
+            details: { role: "patient" },
+            timestamp: serverTimestamp(),
+          });
+        } catch (auditErr) {
+          console.warn("Signup audit event skipped:", auditErr.message);
+        }
+      }
+
+      return {
+        uid: firebaseUser.uid,
+        email,
+        patientDocumentPath: `patients/${firebaseUser.uid}`,
+        userDocumentPath: `users/${firebaseUser.uid}`,
+        mergedPatientRecord: !!options.mergePatientRecord,
+        verificationEmailRequested: !!options.sendVerificationEmail && !firebaseUser.emailVerified,
+        persistedAt: new Date().toISOString(),
+      };
+    }
+    async function authedApiJson(path, options = {}) {
+      const currentUser = options.user || auth.currentUser || fbUser;
+      if (!currentUser) throw new Error("Please sign in again before continuing.");
+
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch(`${API}${path}`, {
+        method: options.method || "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+          ...(options.headers || {}),
+        },
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+
+      const text = await response.text();
+      let body = null;
+      if (text) {
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = { error: text };
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error((body && (body.error || body.message)) || `Request failed with status ${response.status}.`);
+      }
+
+      return body;
+    }
+    function getVouchedWorkflowPayload(registration) {
+      return {
+        firstName: registration.firstName,
+        lastName: registration.lastName,
+        email: registration.email,
+        phone: registration.phone,
+        dob: registration.dob,
+        address: {
+          streetAddress: registration.address1,
+          city: registration.city,
+          state: registration.state,
+          postalCode: registration.zipCode,
+          country: "US",
+        },
+      };
+    }
+    function finishSignup(message) {
+      updateNav();
+      toast(message || "Account created. Please check your email to verify your email address.");
+      document.getElementById("authModal").classList.remove("active");
+
+      if (window._pendingVisit || selSvc) {
+        window._pendingVisit = false;
+        openConsultation();
+      }
+    }
+    function showVisualVerification(firebaseUser, registration, notice) {
+      const internalId = `patient:${firebaseUser.uid}:${Date.now()}`;
+      window.pendingSignupVerification = { uid: firebaseUser.uid, registration, internalId };
+
+      document.getElementById("loginForm").classList.add("hidden");
+      document.getElementById("registerForm").classList.add("hidden");
+      switchAuth("verify");
+
+      const noticeEl = document.getElementById("vouchedNotice");
+      if (noticeEl) {
+        noticeEl.textContent = notice || "Complete secure ID verification to continue.";
+      }
+
+      const iframe = document.getElementById("vouchedFrame");
+      const params = new URLSearchParams({
+        context: "signup",
+        firstName: registration.firstName,
+        lastName: registration.lastName,
+        email: registration.email,
+        phone: registration.phone,
+        birthDate: registration.dob,
+        uid: firebaseUser.uid,
+        internalId,
+        appId: getVouchedPublicKey(),
+        callbackURL: getVouchedWebhookUrl(),
+      });
+      iframe.src = `/vouched.html?${params.toString()}`;
+    }
+    async function runSignupVerification(firebaseUser, registration) {
+      const workflowPayload = getVouchedWorkflowPayload(registration);
+
+      try {
+        const workflow = await authedApiJson("/api/v1/vouched/workflow/start", {
+          method: "POST",
+          user: firebaseUser,
+          body: workflowPayload,
+        });
+        await recordSignupFlowTrace({
+          step: "vouched_workflow",
+          status: "success",
+          user: firebaseUser,
+          payload: workflowPayload,
+          response: workflow,
+        });
+
+        if (workflow && workflow.nextStep === "visual_id") {
+          showVisualVerification(
+            firebaseUser,
+            registration,
+            workflow.warningMessage || "We could not verify your identity with passive checks. Complete secure ID verification to continue.",
+          );
+          return;
+        }
+
+        if (workflow && workflow.status === "review_required") {
+          finishSignup(workflow.warningMessage || "Your account was created and identity verification is pending manual review. Please verify your email before logging in.");
+          return;
+        }
+
+        finishSignup("Your account was created and identity verification is complete. Please verify your email before logging in.");
+      } catch (error) {
+        await recordSignupFlowTrace({
+          step: "vouched_workflow",
+          status: "error",
+          user: firebaseUser,
+          payload: workflowPayload,
+          error: error.message || "Vouched step-up workflow failed.",
+        });
+        console.warn("Passive identity verification failed:", error);
+        showVisualVerification(
+          firebaseUser,
+          registration,
+          "We could not complete passive identity verification. Complete secure ID verification to continue.",
+        );
       }
     }
     async function handleLogin() {
@@ -59,31 +416,7 @@
 
         fbUser = cred.user; // Global assignment
         token = await fbUser.getIdToken();
-
-        try {
-          const r = await fetch(`${API}/api/v1/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (r.ok) {
-            user = await r.json();
-          } else {
-            // Fallback
-            user = {
-              firstName: fbUser.displayName || fbUser.email.split("@")[0],
-              email: fbUser.email,
-              role: "patient",
-              uid: fbUser.uid,
-            };
-          }
-        } catch (apiErr) {
-          console.error("API fetch error, using fallback:", apiErr);
-          user = {
-            firstName: fbUser.displayName || fbUser.email.split("@")[0],
-            email: fbUser.email,
-            role: "patient",
-            uid: fbUser.uid,
-          };
-        }
+        user = await loadUserProfile(fbUser);
 
         document.getElementById("authModal").classList.remove("active");
         updateNav();
@@ -114,106 +447,45 @@
       }
     }
     async function handleRegister() {
-      const fn = document.getElementById("regFirst").value,
-        ln = document.getElementById("regLast").value,
-        e = document.getElementById("regEmail").value,
-        p = document.getElementById("regPassword").value,
-        st = document.getElementById("regState").value,
-        dob = document.getElementById("regDob").value,
-        phoneRaw = document.getElementById("regPhone").value,
-        sex = document.getElementById("regSex").value;
+      const validation = readRegistrationForm();
+      if (validation.error || !validation.data) return toast(validation.error || "Please fill all required fields.");
 
-      const phone = phoneRaw.replace(/\D/g, "");
-
-      if (!fn || !ln || !e || !p || !phoneRaw || !sex || !dob)
-        return toast("Please fill all required fields.");
-      if (phone.length < 10)
-        return toast("Please enter a valid 10-digit phone number.");
-      if (p.length < 6)
-        return toast("Password must be at least 6 characters.");
-      if (!ACTIVE_STATES.includes(st)) {
-        return toast("We're currently only available in Florida.");
-      }
       try {
-        const cred = await auth.createUserWithEmailAndPassword(e, p);
+        const registration = validation.data;
+        const cred = await auth.createUserWithEmailAndPassword(registration.email, registration.password);
         fbUser = cred.user;
-        await fbUser.updateProfile({ displayName: fn + " " + ln });
         token = await fbUser.getIdToken();
+
         try {
-          const r = await fetch(`${API}/api/v1/auth/firebase-register`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              firstName: fn,
-              lastName: ln,
-              state: st,
-              dateOfBirth: dob,
-              gender: sex,
-              role: "patient",
-              firebaseUid: fbUser.uid,
-              email: e,
-            }),
+          const dbResult = await persistPatientRegistration(fbUser, registration, {
+            sendVerificationEmail: true,
+            auditAction: "ACCOUNT_CREATED",
           });
-          if (r.ok) {
-            user = await r.json();
-          } else {
-            user = {
-              firstName: fn,
-              lastName: ln,
-              email: e,
-              state: st,
-              role: "patient",
-              uid: fbUser.uid,
-            };
-          }
-        } catch (apiErr) {
-          user = {
-            firstName: fn,
-            lastName: ln,
-            email: e,
-            state: st,
-            role: "patient",
-            uid: fbUser.uid,
-          };
+          await recordSignupFlowTrace({
+            step: "db_write",
+            status: "success",
+            user: fbUser,
+            response: dbResult,
+          });
+        } catch (error) {
+          await recordSignupFlowTrace({
+            step: "db_write",
+            status: "error",
+            user: fbUser,
+            error: error.message || "Failed to persist patient/user signup records.",
+          });
+          throw error;
         }
-        // document.getElementById("authModal").classList.remove("active");
-        if (db && fbUser) {
-          try {
-            await db.collection('users').doc(fbUser.uid).set({
-              uid: fbUser.uid,
-              email: e,
-              displayName: fn + ' ' + ln,
-              firstName: fn,
-              lastName: ln,
-              state: st,
-              dateOfBirth: dob,
-              gender: sex,
-              phone: phone,
-              role: 'patient',
-              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            }, { merge: true });
-          } catch (writeErr) {
-            console.log('User profile write skipped:', writeErr.message);
-          }
-        }
+
+        user = await loadUserProfile(fbUser);
         updateNav();
-        toast("Account created! Please verify your identity.");
-        
-        document.getElementById("loginForm").classList.add("hidden");
-        document.getElementById("registerForm").classList.add("hidden");
-        document.getElementById("verifyForm").classList.remove("hidden");
-        
-        const iframe = document.getElementById("vouchedFrame");
-        iframe.src = `/vouched.html?firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&email=${encodeURIComponent(e)}&phone=${encodeURIComponent(phone)}`;
+        await runSignupVerification(fbUser, registration);
       } catch (err) {
         const msg =
           err.code === "auth/email-already-in-use"
             ? "An account with that email already exists. Try logging in."
             : err.code === "auth/weak-password"
-              ? "Password is too weak. Use at least 6 characters."
+              ? "Password is too weak. Use at least 8 characters."
               : err.code === "auth/invalid-email"
                 ? "Invalid email address."
                 : err.message || "Registration failed.";
@@ -222,51 +494,44 @@
     }
     async function handleGoogleLogin() {
       try {
+        const registerMode = !document.getElementById("registerForm").classList.contains("hidden");
+        let registration = null;
+        if (registerMode) {
+          const validation = readRegistrationForm({ requireEmail: false, requirePassword: false });
+          if (validation.error || !validation.data) return toast(validation.error || "Please complete the required patient details first.");
+          registration = validation.data;
+        }
+
         const provider = new firebase.auth.GoogleAuthProvider();
         const cred = await auth.signInWithPopup(provider);
         fbUser = cred.user;
         token = await fbUser.getIdToken();
-        const names = fbUser.displayName
-          ? fbUser.displayName.split(" ")
-          : ["User"];
-        try {
-          const r = await fetch(`${API}/api/v1/auth/firebase-register`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              firstName: names[0],
-              lastName: names.slice(1).join(" ") || "",
-              email: fbUser.email,
-              firebaseUid: fbUser.uid,
-              role: "patient",
-            }),
+
+        if (registerMode && registration) {
+          registration.email = fbUser.email || registration.email;
+          if (!registration.email) throw new Error("Unable to determine patient email address.");
+          const dbResult = await persistPatientRegistration(fbUser, registration, {
+            emailOverride: fbUser.email,
+            mergePatientRecord: true,
+            auditAction: "ACCOUNT_PROFILE_COMPLETED",
           });
-          if (r.ok) {
-            user = await r.json();
-          } else {
-            user = {
-              firstName: names[0],
-              lastName: names.slice(1).join(" ") || "",
-              email: fbUser.email,
-              role: "patient",
-              uid: fbUser.uid,
-            };
-          }
-        } catch (apiErr) {
-          user = {
-            firstName: names[0],
-            email: fbUser.email,
-            role: "patient",
-            uid: fbUser.uid,
-          };
+          await recordSignupFlowTrace({
+            step: "db_write",
+            status: "success",
+            user: fbUser,
+            response: dbResult,
+          });
         }
-        document.getElementById("authModal").classList.remove("active");
+
+        user = await loadUserProfile(fbUser);
         updateNav();
-        showDashboard();
-        toast("Welcome, " + (user.firstName || fbUser.email) + "!");
+        if (registerMode && registration) {
+          await runSignupVerification(fbUser, registration);
+        } else {
+          document.getElementById("authModal").classList.remove("active");
+          showDashboard();
+          toast("Welcome, " + (user.firstName || fbUser.email) + "!");
+        }
       } catch (err) {
         if (err.code !== "auth/popup-closed-by-user")
           toast(err.message || "Google sign-in failed.");
@@ -314,38 +579,49 @@
       if (u) {
         fbUser = u;
         token = await u.getIdToken();
-        try {
-          const r = await fetch(`${API}/api/v1/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (r.ok) {
-            user = await r.json();
-          } else {
-            user = {
-              firstName: u.displayName
-                ? u.displayName.split(" ")[0]
-                : u.email.split("@")[0],
-              email: u.email,
-              role: "patient",
-              uid: u.uid,
-            };
-          }
-        } catch (e) {
-          user = {
-            firstName: u.displayName
-              ? u.displayName.split(" ")[0]
-              : u.email.split("@")[0],
-            email: u.email,
-            role: "patient",
-            uid: u.uid,
-          };
-        }
+        user = await loadUserProfile(u);
         updateNav();
       } else {
         token = null;
         user = null;
         fbUser = null;
         updateNav();
+      }
+    });
+    window.addEventListener("message", async (e) => {
+      if (!e.data || e.data.type !== "VOUCHED_DONE" || e.data.context !== "signup") return;
+
+      const pending = window.pendingSignupVerification;
+      const jobId = typeof e.data.jobId === "string" ? e.data.jobId.trim() : "";
+      if (!pending || !jobId) {
+        toast("Identity verification completed without a valid Vouched job id.");
+        return;
+      }
+
+      try {
+        const result = await authedApiJson("/api/v1/vouched/jobs/complete", {
+          method: "POST",
+          body: {
+            jobId,
+            internalId: pending.internalId,
+          },
+        });
+
+        if (result.verified) {
+          window.pendingSignupVerification = null;
+          finishSignup("Your account was created and identity verification is complete. Please verify your email before logging in.");
+          return;
+        }
+
+        if (result.status === "review_required") {
+          window.pendingSignupVerification = null;
+          finishSignup(result.warningMessage || "Your account was created and identity verification is pending manual review. Please verify your email before logging in.");
+          return;
+        }
+
+        toast(result.failureReason || "Identity verification failed. Please try again or contact support.");
+      } catch (error) {
+        toast(error.message || "Identity verification could not be finalized.");
       }
     });
     function toggleNavVisibility(id, hidden) {
