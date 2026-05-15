@@ -156,7 +156,7 @@
         if (window.location.host.includes("-fresh")) {
           console.warn("STAGING TEST BYPASS: Skipping Stripe Payment");
           closeConsult();
-          await redirectToEMRSuccess(consultationId);
+          await handlePaymentSuccess(consultationId);
           return;
         }
         // --- END STAGING BYPASS ---

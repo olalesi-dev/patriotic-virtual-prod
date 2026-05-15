@@ -62,6 +62,7 @@
     }
 
     window.resumePendingPaymentSuccess = resumePendingPaymentSuccess;
+    window.clearPendingPaymentSuccess = clearPendingPaymentSuccess;
 
     async function handlePaymentSuccess(consultationId) {
       console.log("Processing payment success for:", consultationId);
@@ -192,8 +193,15 @@
           console.error("Google Ads tracking error:", e);
         }
 
-        // Redirect patient to EMR portal success page with a bridge token for auto-login
-        await redirectToEMRSuccess(consultationId);
+        if (typeof window.runPaidConsultationVerification === "function") {
+          await window.runPaidConsultationVerification(signedInUser, {
+            consultationId,
+            profile: user,
+            intakeData,
+          });
+        } else {
+          showBookingSuccess();
+        }
 
       } catch (err) {
         console.error("Error finalizing payment flow:", err);
@@ -207,39 +215,4 @@
         document.title,
         window.location.pathname,
       );
-    }
-
-    // Redirect to EMR portal with Firebase custom token for cross-domain SSO
-    async function redirectToEMRSuccess(consultationId) {
-      const EMR_BASE = getEmrOrigin();
-      try {
-        const signedInUser = await waitForLandingAuth();
-        if (!signedInUser) {
-          promptSignInForPaidConsultation(consultationId);
-          return;
-        }
-
-        const name = (
-          ((user && user.firstName) || '') + ' ' + ((user && user.lastName) || '')
-        ).trim();
-
-        const idTok = await signedInUser.getIdToken();
-        const bridgeRes = await fetch(`${API}/api/v1/auth/bridge-token`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${idTok}`, 'Content-Type': 'application/json' }
-        });
-        const data = await bridgeRes.json().catch(() => ({}));
-        if (!bridgeRes.ok || !data.customToken) {
-          throw new Error(data.error || data.message || `Bridge token failed with status ${bridgeRes.status}.`);
-        }
-
-        const successUrl = new URL(`${EMR_BASE}/book/success`);
-        successUrl.searchParams.set('consultationId', consultationId || '');
-        successUrl.searchParams.set('patientName', name);
-        successUrl.searchParams.set('token', data.customToken);
-        window.location.href = successUrl.toString();
-      } catch (e) {
-        console.error('Redirect to EMR failed:', e);
-        showBookingSuccess(); // Fallback to local page
-      }
     }

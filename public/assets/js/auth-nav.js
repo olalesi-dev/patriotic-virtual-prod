@@ -318,6 +318,34 @@
         },
       };
     }
+    function getProfileVouchedWorkflowPayload(profile, intakeData = {}) {
+      const source = profile || {};
+      const intakeSource = intakeData || {};
+      const firstName = source.firstName || intakeSource.firstName || "";
+      const lastName = source.lastName || intakeSource.lastName || "";
+      const email = source.email || (auth.currentUser && auth.currentUser.email) || "";
+      const phone = source.phone || source.phoneNumber || intakeSource.phone || "";
+      const dob = source.dob || source.dateOfBirth || source.birthDate || intakeSource.dob || intakeSource.dateOfBirth || "";
+      const address1 = source.address1 || source.address || intakeSource.address1 || intakeSource.address || "";
+      const city = source.city || intakeSource.city || "";
+      const state = source.state || intakeSource.state || "";
+      const zipCode = source.zipCode || source.zip || source.postalCode || intakeSource.zipCode || intakeSource.zip || intakeSource.postalCode || "";
+
+      return {
+        firstName,
+        lastName,
+        email,
+        phone,
+        dob,
+        address: {
+          streetAddress: address1,
+          city,
+          state,
+          postalCode: zipCode,
+          country: "US",
+        },
+      };
+    }
     function finishSignup(message) {
       updateNav();
       toast(message || "Account created. Please check your email to verify your email address.");
@@ -356,6 +384,78 @@
       });
       iframe.src = `/vouched.html?${params.toString()}`;
     }
+    function showPaidConsultationVerification(firebaseUser, payload, consultationId, notice) {
+      const internalId = `payment:${firebaseUser.uid}:${consultationId || Date.now()}`;
+      window.pendingPaymentVerification = { uid: firebaseUser.uid, consultationId, internalId };
+
+      document.getElementById("authModal").classList.add("active");
+      document.getElementById("loginForm").classList.add("hidden");
+      document.getElementById("registerForm").classList.add("hidden");
+      switchAuth("verify");
+
+      const noticeEl = document.getElementById("vouchedNotice");
+      if (noticeEl) {
+        noticeEl.textContent = notice || "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.";
+      }
+
+      const iframe = document.getElementById("vouchedFrame");
+      const params = new URLSearchParams({
+        context: "payment_success",
+        firstName: payload.firstName || "",
+        lastName: payload.lastName || "",
+        email: payload.email || "",
+        phone: payload.phone || "",
+        birthDate: payload.dob || "",
+        uid: firebaseUser.uid,
+        internalId,
+        appId: getVouchedPublicKey(),
+        callbackURL: getVouchedWebhookUrl(),
+      });
+      iframe.src = `/vouched.html?${params.toString()}`;
+    }
+    async function runPaidConsultationVerification(firebaseUser, options = {}) {
+      const profile = options.profile || user || getFallbackUserProfile(firebaseUser);
+      const workflowPayload = getProfileVouchedWorkflowPayload(profile, options.intakeData || {});
+      const consultationId = options.consultationId || currentConsultId || null;
+
+      try {
+        const workflow = await authedApiJson("/api/v1/vouched/workflow/start", {
+          method: "POST",
+          user: firebaseUser,
+          body: workflowPayload,
+        });
+
+        if (workflow && workflow.nextStep === "visual_id") {
+          showPaidConsultationVerification(
+            firebaseUser,
+            workflowPayload,
+            consultationId,
+            workflow.warningMessage || "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
+          );
+          return true;
+        }
+
+        if (workflow && workflow.status === "review_required") {
+          toast(workflow.warningMessage || "Payment confirmed. Identity verification is pending manual review.");
+          showBookingSuccess();
+          return true;
+        }
+
+        toast("Payment confirmed. Identity verification is complete.");
+        showBookingSuccess();
+        return true;
+      } catch (error) {
+        console.warn("Paid consultation identity verification check failed:", error);
+        showPaidConsultationVerification(
+          firebaseUser,
+          workflowPayload,
+          consultationId,
+          "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
+        );
+        return true;
+      }
+    }
+    window.runPaidConsultationVerification = runPaidConsultationVerification;
     async function runSignupVerification(firebaseUser, registration) {
       const workflowPayload = getVouchedWorkflowPayload(registration);
 
@@ -431,7 +531,7 @@
           window._pendingVisit = false;
           openConsultation();
         } else {
-          showDashboard();
+          toast("You are signed in.");
         }
       } catch (err) {
         console.error("Login Error Object:", err);
@@ -537,7 +637,6 @@
           if (typeof window.resumePendingPaymentSuccess === "function" && await window.resumePendingPaymentSuccess()) {
             return;
           }
-          showDashboard();
           toast("Welcome, " + (user.firstName || fbUser.email) + "!");
         }
       } catch (err) {
@@ -597,7 +696,47 @@
       }
     });
     window.addEventListener("message", async (e) => {
-      if (!e.data || e.data.type !== "VOUCHED_DONE" || e.data.context !== "signup") return;
+      if (!e.data || e.data.type !== "VOUCHED_DONE") return;
+
+      if (e.data.context === "payment_success") {
+        const pending = window.pendingPaymentVerification;
+        const jobId = typeof e.data.jobId === "string" ? e.data.jobId.trim() : "";
+        if (!pending || !jobId) {
+          toast("Identity verification completed without a valid Vouched job id.");
+          return;
+        }
+
+        try {
+          const result = await authedApiJson("/api/v1/vouched/jobs/complete", {
+            method: "POST",
+            body: {
+              jobId,
+              internalId: pending.internalId,
+            },
+          });
+
+          if (result.verified || result.status === "review_required") {
+            const consultationId = pending.consultationId || currentConsultId || null;
+            window.pendingPaymentVerification = null;
+            if (typeof window.clearPendingPaymentSuccess === "function") {
+              window.clearPendingPaymentSuccess(consultationId);
+            }
+            document.getElementById("authModal").classList.remove("active");
+            showBookingSuccess();
+            toast(result.verified
+              ? "Payment confirmed and identity verification is complete."
+              : (result.warningMessage || "Payment confirmed. Identity verification is pending manual review."));
+            return;
+          }
+
+          toast(result.failureReason || "Identity verification failed. Please try again or contact support.");
+        } catch (error) {
+          toast(error.message || "Identity verification could not be finalized.");
+        }
+        return;
+      }
+
+      if (e.data.context !== "signup") return;
 
       const pending = window.pendingSignupVerification;
       const jobId = typeof e.data.jobId === "string" ? e.data.jobId.trim() : "";
