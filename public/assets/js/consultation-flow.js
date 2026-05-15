@@ -115,6 +115,11 @@
 
         // 2. Create Payment Session
         console.log("Initiating Stripe Checkout...");
+        const landingOrigin = typeof getLandingOrigin === "function"
+          ? getLandingOrigin()
+          : window.location.origin;
+        const landingPath = window.location.pathname || "/";
+        const checkoutReturnUrl = `${landingOrigin}${landingPath}`;
         const payRes = await fetch(
           `${API}/api/v1/payments/create-checkout-session`,
           {
@@ -130,6 +135,8 @@
               uid: auth.currentUser
                 ? auth.currentUser.uid
                 : "unauthenticated_patient",
+              returnUrl: checkoutReturnUrl,
+              cancelUrl: checkoutReturnUrl,
               mode: sv.cat.includes("membership")
                 ? "subscription"
                 : "payment",

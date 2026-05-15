@@ -28,6 +28,7 @@ function resolveRuntimeConfig() {
   const defaults = isDevLanding || isFirebasePreview
     ? {
         environment: "staging",
+        landingOrigin: "https://dev.patriotictelehealth.com",
         emrOrigin: "https://emr-dev.patriotictelehealth.com",
         apiOrigin: "https://api.patriotictelehealth.com",
         pacsOrigin: "https://pacs.patriotictelehealth.com",
@@ -36,6 +37,7 @@ function resolveRuntimeConfig() {
     : isCustomProdLanding
       ? {
           environment: "production",
+          landingOrigin: "https://patriotictelehealth.com",
           emrOrigin: "https://emr.patriotictelehealth.com",
           apiOrigin: "https://api.patriotictelehealth.com",
           pacsOrigin: "https://pacs.patriotictelehealth.com",
@@ -43,6 +45,7 @@ function resolveRuntimeConfig() {
         }
       : {
           environment: "default",
+          landingOrigin: "https://patriotictelehealth.com",
           emrOrigin: "https://emr.patriotictelehealth.com",
           apiOrigin: "https://api.patriotictelehealth.com",
           pacsOrigin: "https://pacs.patriotictelehealth.com",
@@ -50,6 +53,7 @@ function resolveRuntimeConfig() {
         };
 
   const overrides = window.PVT_RUNTIME_OVERRIDES || {};
+  const landingOrigin = normalizeRuntimeOrigin(overrides.landingOrigin) || defaults.landingOrigin;
   const emrOrigin = normalizeRuntimeOrigin(overrides.emrOrigin) || defaults.emrOrigin;
   const apiOrigin = normalizeRuntimeOrigin(overrides.apiOrigin) || defaults.apiOrigin;
   const pacsOrigin = normalizeRuntimeOrigin(overrides.pacsOrigin) || defaults.pacsOrigin;
@@ -62,6 +66,7 @@ function resolveRuntimeConfig() {
 
   return {
     environment: defaults.environment,
+    landingOrigin,
     emrOrigin,
     emrLoginUrl: `${emrOrigin}/login`,
     emrDashboardUrl: `${emrOrigin}/dashboard`,
@@ -74,6 +79,10 @@ function resolveRuntimeConfig() {
 
 const APP_RUNTIME_CONFIG = resolveRuntimeConfig();
 window.PVT_RUNTIME_CONFIG = APP_RUNTIME_CONFIG;
+
+function getLandingOrigin() {
+  return APP_RUNTIME_CONFIG.landingOrigin;
+}
 
 function getEmrOrigin() {
   return APP_RUNTIME_CONFIG.emrOrigin;
