@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import { db } from '../config/database';
 
 const FIRESTORE_ONLY_PATH_PREFIXES = [
+    '/api/v1/auth/bridge-token',
     '/api/v1/phone-verification',
 ];
 

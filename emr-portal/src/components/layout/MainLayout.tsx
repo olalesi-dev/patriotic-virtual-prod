@@ -29,6 +29,12 @@ import { SPECIALTY_MODULES } from '@/lib/module-registry';
 import { fetchAppointmentWorkspace } from '@/lib/appointment-workspace';
 import { db } from '@/lib/firebase';
 
+const hasPendingSso = () => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).has('token') ||
+        window.sessionStorage.getItem('pvt_sso_pending') === '1';
+};
+
 export function MainLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -238,6 +244,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         if (!profile.loading) {
             if (!profile.authenticated) {
+                if (hasPendingSso()) return;
                 router.replace('/login');
             } else if (profile.normalizedRole !== 'provider') {
                 router.replace('/patient');
@@ -289,7 +296,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         }
     };
 
-    if (profile.loading) {
+    if (profile.loading || (!profile.authenticated && hasPendingSso())) {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-slate-900/50 dark:bg-slate-900 flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-indigo-500 rounded-full animate-spin"></div>

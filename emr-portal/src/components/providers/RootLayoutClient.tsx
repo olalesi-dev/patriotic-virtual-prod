@@ -20,14 +20,24 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
         if (token) {
+            window.sessionStorage.setItem('pvt_sso_pending', '1');
             signInWithCustomToken(auth, token)
                 .then(() => {
                     console.log('Cross-domain SSO successful');
                     const cleanUrl = new URL(window.location.href);
                     cleanUrl.searchParams.delete('token');
                     window.history.replaceState({}, '', cleanUrl.toString());
+                    window.sessionStorage.removeItem('pvt_sso_pending');
                 })
-                .catch(err => console.error('SSO Token Error:', err));
+                .catch(err => {
+                    console.error('SSO Token Error:', err);
+                    window.sessionStorage.removeItem('pvt_sso_pending');
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('token');
+                    cleanUrl.pathname = '/login';
+                    cleanUrl.searchParams.set('sso', 'failed');
+                    window.location.replace(cleanUrl.toString());
+                });
         }
 
         if ('serviceWorker' in navigator) {

@@ -80,6 +80,26 @@ app.use('/telnyx', telnyxRoutes);
 app.use('/api/v1/notifications', verifyFirebaseToken, notificationV1Routes);
 app.use('/api/v1/phone-verification', verifyFirebaseToken, phoneVerificationRoutes);
 
+app.post('/api/v1/auth/bridge-token', verifyFirebaseToken, async (req, res) => {
+    try {
+        const uid = req['user']?.uid;
+        if (!uid) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const role = typeof req['user']?.role === 'string' && req['user'].role.trim()
+            ? req['user'].role.trim()
+            : 'patient';
+
+        const customToken = await admin.auth().createCustomToken(uid, { role });
+
+        return res.json({ customToken });
+    } catch (error: any) {
+        logger.error('Bridge token error:', error);
+        return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to create bridge token' });
+    }
+});
+
 // DoseSpot Routes (Firestore Only - Bypasses Postgres loadUserContext)
 app.get('/api/v1/dosespot/sso-url', verifyFirebaseToken, async (req, res) => {
     try {

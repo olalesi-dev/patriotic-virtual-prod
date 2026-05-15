@@ -37,6 +37,11 @@ import { ConsentModal } from '@/components/patient/ConsentModal';
 import { useCart } from '@/hooks/useCart';
 import { CartDrawer } from '@/components/shop/CartDrawer';
 
+const hasPendingSso = () => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).has('token') ||
+        window.sessionStorage.getItem('pvt_sso_pending') === '1';
+};
 
 export function PatientLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -89,6 +94,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!profile.loading) {
             if (!profile.authenticated) {
+                if (hasPendingSso()) return;
                 if (!['/login', '/signup', '/forgot-password'].includes(pathname)) {
                     router.replace('/login');
                 }
@@ -149,7 +155,7 @@ export function PatientLayout({ children }: { children: React.ReactNode }) {
     ];
 
 
-    if (profile.loading) {
+    if (profile.loading || (!profile.authenticated && hasPendingSso())) {
         return (
             <div className="min-h-screen bg-[#F0F9FF] flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-[#0EA5E9] rounded-full animate-spin"></div>

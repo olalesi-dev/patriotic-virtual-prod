@@ -1,31 +1,30 @@
     async function showDashboard() {
-      toast("Redirecting to your EMR portal...");
-      document.getElementById("landingPage").style.display = "none";
+      toast("Preparing your EMR session...");
       const destination = getEmrDashboardUrl(user && user.role);
       
       try {
-        let tokenParam = '';
-        if (auth && auth.currentUser) {
-          try {
-            const idTok = await auth.currentUser.getIdToken();
-            const bridgeRes = await fetch(`${API}/api/v1/auth/bridge-token`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${idTok}`, 'Content-Type': 'application/json' }
-            });
-            if (bridgeRes.ok) {
-              const data = await bridgeRes.json();
-              if (data.customToken) {
-                tokenParam = `?token=${encodeURIComponent(data.customToken)}`;
-              }
-            }
-          } catch (bridgeErr) {
-            console.warn('Bridge token failed:', bridgeErr.message);
-          }
+        if (!auth || !auth.currentUser) {
+          throw new Error("No active landing session found.");
         }
-        window.location.href = `${destination}${tokenParam}`;
+
+        const idTok = await auth.currentUser.getIdToken();
+        const bridgeRes = await fetch(`${API}/api/v1/auth/bridge-token`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${idTok}`, 'Content-Type': 'application/json' }
+        });
+        const data = await bridgeRes.json().catch(() => ({}));
+        if (!bridgeRes.ok || !data.customToken) {
+          throw new Error(data.error || data.message || `Bridge token failed with status ${bridgeRes.status}.`);
+        }
+
+        const redirectUrl = new URL(destination);
+        redirectUrl.searchParams.set('token', data.customToken);
+        document.getElementById("landingPage").style.display = "none";
+        window.location.href = redirectUrl.toString();
       } catch (err) {
         console.error("Dashboard redirect error:", err);
-        window.location.href = destination;
+        document.getElementById("landingPage").style.display = "block";
+        toast("We couldn't open your EMR session. Please refresh and try again.");
       }
     }
 

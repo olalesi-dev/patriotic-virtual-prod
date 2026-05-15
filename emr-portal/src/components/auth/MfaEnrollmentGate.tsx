@@ -14,6 +14,12 @@ const isPublicRoute = (pathname: string) =>
     pathname === '/forgot-password' ||
     pathname.startsWith('/book');
 
+const hasPendingSso = () => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).has('token') ||
+        window.sessionStorage.getItem('pvt_sso_pending') === '1';
+};
+
 export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) => {
     const [isEnrolled, setIsEnrolled] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
@@ -66,6 +72,12 @@ export const MfaEnrollmentGate = ({ children }: { children: React.ReactNode }) =
                 setIsEnrolled(enrolledFactors.length > 0);
                 setLoading(false);
             } else {
+                if (hasPendingSso()) {
+                    console.log('MfaEnrollmentGate: SSO token detected, waiting for cross-domain sign-in');
+                    setLoading(true);
+                    return;
+                }
+
                 console.log('MfaEnrollmentGate: No user session found');
                 redirectTimeoutRef.current = window.setTimeout(() => {
                     const stabilizedUser = auth.currentUser;
