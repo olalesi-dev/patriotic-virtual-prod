@@ -1,14 +1,89 @@
     // New Function specifically for Payment Return
+    function waitForLandingAuth(timeoutMs = 12000) {
+      if (!auth) return Promise.resolve(null);
+      if (auth.currentUser) return Promise.resolve(auth.currentUser);
+
+      return new Promise((resolve) => {
+        let settled = false;
+        let unsubscribe = null;
+        const timer = window.setTimeout(() => finish(auth.currentUser || null), timeoutMs);
+
+        function finish(firebaseUser) {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timer);
+          if (typeof unsubscribe === "function") unsubscribe();
+          resolve(firebaseUser || auth.currentUser || null);
+        }
+
+        try {
+          unsubscribe = auth.onAuthStateChanged(
+            (firebaseUser) => finish(firebaseUser),
+            () => finish(null),
+          );
+        } catch (error) {
+          console.warn("Auth restoration wait failed:", error);
+          finish(auth.currentUser || null);
+        }
+      });
+    }
+
+    function setPendingPaymentSuccess(consultationId) {
+      if (!consultationId) return;
+      sessionStorage.setItem("pendingPaymentSuccessConsultationId", consultationId);
+      localStorage.setItem("pendingPaymentSuccessConsultationId", consultationId);
+    }
+
+    function clearPendingPaymentSuccess(consultationId) {
+      const sessionId = sessionStorage.getItem("pendingPaymentSuccessConsultationId");
+      const localId = localStorage.getItem("pendingPaymentSuccessConsultationId");
+      if (!consultationId || sessionId === consultationId) {
+        sessionStorage.removeItem("pendingPaymentSuccessConsultationId");
+      }
+      if (!consultationId || localId === consultationId) {
+        localStorage.removeItem("pendingPaymentSuccessConsultationId");
+      }
+    }
+
+    function promptSignInForPaidConsultation(consultationId) {
+      setPendingPaymentSuccess(consultationId);
+      toast("Payment received. Sign in to finish identity verification.");
+      openModal("login");
+    }
+
+    async function resumePendingPaymentSuccess() {
+      const pendingId =
+        sessionStorage.getItem("pendingPaymentSuccessConsultationId") ||
+        localStorage.getItem("pendingPaymentSuccessConsultationId");
+
+      if (!pendingId) return false;
+      await handlePaymentSuccess(pendingId);
+      return true;
+    }
+
+    window.resumePendingPaymentSuccess = resumePendingPaymentSuccess;
+
     async function handlePaymentSuccess(consultationId) {
       console.log("Processing payment success for:", consultationId);
       currentConsultId = consultationId; // Assign to global variable
 
       try {
+        const signedInUser = await waitForLandingAuth();
+        if (!signedInUser) {
+          promptSignInForPaidConsultation(consultationId);
+          return;
+        }
+
+        fbUser = signedInUser;
+        token = await signedInUser.getIdToken();
+        user = await loadUserProfile(signedInUser);
+        updateNav();
+
         const updateTasks = [];
 
         if (typeof db !== 'undefined' && consultationId) {
           const ts = firebase.firestore.FieldValue.serverTimestamp();
-          const uid = (auth && auth.currentUser) ? auth.currentUser.uid : null;
+          const uid = signedInUser.uid;
 
           // 1. Read the existing consultation to get serviceKey + intake data
           let serviceKey = null;
@@ -98,6 +173,7 @@
 
         await Promise.all(updateTasks);
         console.log("✅ Appointment written to all EMR collections successfully.");
+        clearPendingPaymentSuccess(consultationId);
 
         // Google Ads Conversion tracking for purchase
         try {
@@ -137,31 +213,33 @@
     async function redirectToEMRSuccess(consultationId) {
       const EMR_BASE = getEmrOrigin();
       try {
-        const name = encodeURIComponent(
+        const signedInUser = await waitForLandingAuth();
+        if (!signedInUser) {
+          promptSignInForPaidConsultation(consultationId);
+          return;
+        }
+
+        const name = (
           ((user && user.firstName) || '') + ' ' + ((user && user.lastName) || '')
         ).trim();
-        // Try to get bridge token for SSO
-        let tokenParam = '';
-        if (auth && auth.currentUser) {
-          try {
-            const idTok = await auth.currentUser.getIdToken();
-            const bridgeRes = await fetch(`${API}/api/v1/auth/bridge-token`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${idTok}` }
-            });
-            if (bridgeRes.ok) {
-              const { customToken } = await bridgeRes.json();
-              tokenParam = `&token=${encodeURIComponent(customToken)}`;
-            }
-          } catch (bridgeErr) {
-            console.warn('Bridge token failed, proceeding without SSO:', bridgeErr.message);
-          }
+
+        const idTok = await signedInUser.getIdToken();
+        const bridgeRes = await fetch(`${API}/api/v1/auth/bridge-token`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${idTok}`, 'Content-Type': 'application/json' }
+        });
+        const data = await bridgeRes.json().catch(() => ({}));
+        if (!bridgeRes.ok || !data.customToken) {
+          throw new Error(data.error || data.message || `Bridge token failed with status ${bridgeRes.status}.`);
         }
-        const successUrl = `${EMR_BASE}/book/success?consultationId=${encodeURIComponent(consultationId || '')}&patientName=${name}${tokenParam}`;
-        window.location.href = successUrl;
+
+        const successUrl = new URL(`${EMR_BASE}/book/success`);
+        successUrl.searchParams.set('consultationId', consultationId || '');
+        successUrl.searchParams.set('patientName', name);
+        successUrl.searchParams.set('token', data.customToken);
+        window.location.href = successUrl.toString();
       } catch (e) {
         console.error('Redirect to EMR failed:', e);
         showBookingSuccess(); // Fallback to local page
       }
     }
-

@@ -421,6 +421,11 @@
         document.getElementById("authModal").classList.remove("active");
         updateNav();
         toast("Welcome back, " + (user.firstName || user.email) + "!");
+
+        if (typeof window.resumePendingPaymentSuccess === "function" && await window.resumePendingPaymentSuccess()) {
+          return;
+        }
+
         // If user clicked a service before being asked to log in, open the visit modal
         if (window._pendingVisit || selSvc) {
           window._pendingVisit = false;
@@ -529,6 +534,9 @@
           await runSignupVerification(fbUser, registration);
         } else {
           document.getElementById("authModal").classList.remove("active");
+          if (typeof window.resumePendingPaymentSuccess === "function" && await window.resumePendingPaymentSuccess()) {
+            return;
+          }
           showDashboard();
           toast("Welcome, " + (user.firstName || fbUser.email) + "!");
         }
