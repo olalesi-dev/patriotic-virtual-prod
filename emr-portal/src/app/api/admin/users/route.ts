@@ -210,8 +210,54 @@ export async function POST(request: Request) {
                     error: notificationWarning
                 });
             }
-        } else {
             notificationWarning = 'Authorization header missing. Welcome email was not sent.';
+        }
+
+        // Notify staff/admin/providers
+        const staffEmails: string[] = [];
+        try {
+            const staffDocs = await db!.collection('users').where('role', 'in', ['admin', 'staff', 'provider']).get();
+            staffDocs.forEach(doc => {
+                const data = doc.data();
+                if (data.email) staffEmails.push(data.email);
+            });
+            
+            if (staffEmails.length > 0) {
+                // omit password from payload
+                const { password, ...safePayload } = payload;
+                const userAttributesHtml = Object.entries(safePayload).map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`).join('');
+                const newAccountUrl = new URL(`/admin/users/${userRecord.uid}`, portalBaseUrl).toString();
+                const html = `
+                    <h2>A new user has been created</h2>
+                    <p>Please review the details below:</p>
+                    <ul>
+                        ${userAttributesHtml}
+                    </ul>
+                    <br/>
+                    <a href="${newAccountUrl}" style="display:inline-block;padding:10px 20px;background-color:#0055ff;color:#ffffff;text-decoration:none;border-radius:5px;">View User Account</a>
+                `;
+
+                const backendUrl = (
+                    process.env.DOSESPOT_BACKEND_URL ||
+                    process.env.NEXT_PUBLIC_API_URL
+                )?.trim();
+
+                if (backendUrl) {
+                    await fetch(`${backendUrl.replace(/\/$/, '')}/api/v1/notifications/raw-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: staffEmails,
+                            subject: 'New User Account Created',
+                            text: 'A new user account has been created.',
+                            html
+                        }),
+                        cache: 'no-store'
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Failed to notify staff about new user:', e);
         }
 
         return NextResponse.json({

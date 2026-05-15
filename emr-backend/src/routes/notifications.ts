@@ -36,4 +36,23 @@ router.post('/appointment-bucket-alert', async (req, res) => {
     }
 });
 
+import { sendEmail } from '../services/sendgrid';
+
+router.post('/raw-email', async (req, res) => {
+    const { to, subject, text, html } = req.body;
+    if (!to || !subject || !text) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Convert 'to' to an array if it's a string
+    const recipients = Array.isArray(to) ? to : [to];
+
+    try {
+        await Promise.all(recipients.map(recipient => sendEmail(recipient, subject, text, html)));
+        res.json({ success: true });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

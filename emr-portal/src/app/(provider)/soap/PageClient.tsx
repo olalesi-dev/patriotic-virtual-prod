@@ -183,12 +183,10 @@ export default function SoapPageClient() {
     const generateSoap = async (finalTranscript: string) => {
         setIsGenerating(true);
         try {
-            const res = await fetch('/api/ai/scribe/generate', {
+            const data = await apiFetchJson<any>('/api/ai/scribe/generate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ transcript: finalTranscript })
             });
-            const data = await res.json();
             if (data.success && data.note) {
                 setSubjective(data.note.subjective || '');
                 setObjective(data.note.objective || '');
@@ -220,12 +218,10 @@ export default function SoapPageClient() {
         setIsSaving(true);
         try {
             const noteText = `S: ${subjective}\n\nO: ${objective}\n\nA: ${assessment}\n\nP: ${plan}`;
-            const res = await fetch(`/api/patients/${selectedPatientId}/soap`, {
+            const data = await apiFetchJson<any>(`/api/patients/${selectedPatientId}/soap`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ soapNote: noteText })
             });
-            const data = await res.json();
             if (data.success) {
                 toast.success('SOAP Note saved to patient chart successfully');
                 // Reset form

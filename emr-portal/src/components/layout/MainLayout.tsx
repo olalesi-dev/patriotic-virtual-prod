@@ -339,6 +339,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 { href: '/team', icon: Users, label: 'Team', active: pathname.startsWith('/team') },
                 { href: '/inbox', icon: MessageSquare, label: 'Inbox / Messages', badge: unreadInbox > 0 ? unreadInbox.toString() : undefined, active: pathname.startsWith('/inbox') },
                 { href: '/waitlist', icon: Clock, label: 'Patient Waitlist', badge: unreadWaitlist > 0 ? unreadWaitlist.toString() : undefined, active: pathname.startsWith('/waitlist') },
+                { href: '/async-queue', icon: Activity, label: 'Async Queue', active: pathname.startsWith('/async-queue') },
                 { href: '/waiting-room', icon: Video, label: 'Waiting Room', active: pathname === '/waiting-room' },
             ]
         },

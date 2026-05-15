@@ -98,6 +98,11 @@ export default function PatientDashboard() {
     });
     const [isSendingMsg, setIsSendingMsg] = useState(false);
 
+    // Quick Care State
+    const LIVE_STATES = ["FL"];
+    const [quickCareStatus, setQuickCareStatus] = useState<any>(null);
+    const [patientState, setPatientState] = useState<string>('');
+
     const fetchProvidersForMessaging = async () => {
         try {
             const q = query(collection(db, 'users'), where('role', 'in', ['provider', 'doctor', 'admin']));
@@ -248,12 +253,41 @@ export default function PatientDashboard() {
             (err) => { console.error('Dashboard labs error:', err); setLoading(false); }
         );
 
+        // 5. Quick Care Encounters
+        const unsubQuickCare = onSnapshot(
+            query(collection(db, 'patients', uid, 'encounters'), where('encounter_type', '==', 'async_quick_care')),
+            (snap) => {
+                const qcEncounters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                qcEncounters.sort((a: any, b: any) => {
+                    const tA = a.created_at?.toMillis ? a.created_at.toMillis() : 0;
+                    const tB = b.created_at?.toMillis ? b.created_at.toMillis() : 0;
+                    return tB - tA;
+                });
+                if (qcEncounters.length > 0) {
+                    setQuickCareStatus(qcEncounters[0]);
+                }
+            },
+            (err) => console.error('Dashboard quickcare error:', err)
+        );
+
+        // 6. Patient State
+        const unsubPatientState = onSnapshot(
+            query(collection(db, 'users'), where('uid', '==', uid)),
+            (snap) => {
+                if (!snap.empty) {
+                    setPatientState(snap.docs[0].data().state || '');
+                }
+            }
+        );
+
         return () => {
             unsubConsult();
             unsubSubAppt();
             unsubMsgs();
             unsubMeds();
             unsubLabs();
+            unsubQuickCare();
+            unsubPatientState();
         };
     };
 
@@ -334,8 +368,30 @@ export default function PatientDashboard() {
             )}
 
             {/* QUICK ACTIONS */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <QuickActionButton icon={Calendar} label="Schedule Visit" color="bg-[#0EA5E9]" onClick={() => router.push('/book')} />
+                
+                {patientState && LIVE_STATES.includes(patientState) && (
+                    <QuickActionButton 
+                        icon={Activity} 
+                        label={quickCareStatus && ['pending_review', 'awaiting_patient_response', 'under_review'].includes(quickCareStatus.status) 
+                            ? 'Quick Care Visit — In Review' 
+                            : 'Quick Care Visit'} 
+                        subtitle={(!quickCareStatus || !['pending_review', 'awaiting_patient_response', 'under_review'].includes(quickCareStatus.status)) ? 'Get treated for common conditions — no appointment needed.' : undefined}
+                        color="bg-slate-800 dark:bg-slate-700" 
+                        onClick={() => {
+                            if (quickCareStatus && ['pending_review', 'awaiting_patient_response', 'under_review'].includes(quickCareStatus.status)) {
+                                router.push('/quick-care/status/' + quickCareStatus.id);
+                            } else {
+                                router.push('/quick-care');
+                            }
+                        }} 
+                        banner={quickCareStatus && quickCareStatus.status === 'declined' && (Date.now() - (quickCareStatus.updated_at?.toDate()?.getTime() || 0) < 24 * 60 * 60 * 1000) ? 'Your last Quick Care visit was declined' : undefined}
+                        bannerAction="View details"
+                        onBannerClick={() => router.push('/quick-care/status/' + quickCareStatus.id)}
+                    />
+                )}
+
                 <QuickActionButton icon={MessageSquare} label="Message Doctor" color="bg-indigo-500" onClick={() => setIsMessagingOpen(true)} />
                 <QuickActionButton icon={Pill} label="Request Refill" color="bg-emerald-500" onClick={() => router.push('/my-health/medications')} />
             </div>
@@ -646,13 +702,24 @@ function DashboardCard({ title, icon: Icon, children, badge, footer }: any) {
     );
 }
 
-function QuickActionButton({ icon: Icon, label, color, onClick }: any) {
+function QuickActionButton({ icon: Icon, label, subtitle, color, onClick, banner, bannerAction, onBannerClick }: any) {
     return (
-        <button onClick={onClick} className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-[24px] border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all text-left">
-            <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-100`}>
-                <Icon className="w-5 h-5" />
+        <button onClick={onClick} className="flex flex-col bg-white dark:bg-slate-800 p-4 rounded-[24px] border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all text-left h-full">
+            <div className="flex items-center gap-4 w-full">
+                <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-100 shrink-0`}>
+                    <Icon className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <span className="font-black text-slate-800 dark:text-slate-100 text-sm tracking-tight truncate">{label}</span>
+                    {subtitle && <span className="text-[10px] text-slate-500 mt-0.5 leading-tight">{subtitle}</span>}
+                </div>
             </div>
-            <span className="font-black text-slate-800 dark:text-slate-100 text-sm tracking-tight">{label}</span>
+            {banner && (
+                <div className="mt-3 w-full bg-rose-50 border border-rose-100 p-2 rounded-xl flex items-center justify-between" onClick={(e) => { e.stopPropagation(); if (onBannerClick) onBannerClick(); }}>
+                    <span className="text-[10px] font-bold text-rose-700">{banner}</span>
+                    {bannerAction && <span className="text-[10px] font-black text-rose-600 underline ml-2 cursor-pointer shrink-0">{bannerAction}</span>}
+                </div>
+            )}
         </button>
     );
 }
