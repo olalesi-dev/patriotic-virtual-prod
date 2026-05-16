@@ -222,7 +222,7 @@ function extendLandingI18n() {
     "provider-3-focus-2": "Stroke Certified",
     "provider-3-focus-3": "Clinical Guidance",
     "provider-3-body":
-      "Board-certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse with over 15 years in the nursing field. La Donna is dedicated to evidence-based practice, improving patient outcomes through comprehensive care plans, and providing expert clinical guidance in critical care and stroke programs.",
+      "Board-Certified Adult-Gerontology Acute Care Nurse Practitioner (AGACNP-BC) and Stroke Certified Nurse, providing evidence-based clinical care and patient guidance at Patriotic Virtual Telehealth.",
     "provider-license-tag": "Active Florida Medical License",
     "testimonial-1-quote":
       '"Got my Rx prescription in 24 hours. Down 35 lbs and counting. The safety screening made me feel confident they actually care about doing this right."',
@@ -301,6 +301,7 @@ function extendLandingI18n() {
     "med-foundayo": "Foundayo<sup>&reg;</sup>",
     "med-wegovy-pen": "Wegovy<sup>&reg;</sup> Pen",
     "med-zepbound-vial": "Zepbound<sup>&reg;</sup> Vial",
+    "med-ozempic-pill": "Ozempic<sup>&reg;</sup> Pill",
     "med-ozempic": "Ozempic",
     "med-price-149": "From $149/mo*",
     "med-price-299": "From $299/mo*",
@@ -310,7 +311,7 @@ function extendLandingI18n() {
       "Pricing shown is starting price; final pricing confirmed at consultation. Eligibility determined by licensed clinician.",
     "breakthrough-science-title": "The perfect<br /><span>SNAC</span>",
     "breakthrough-science-explainer":
-      "How SNAC helps oral semaglutide survive the stomach long enough for absorption.",
+      "SNAC helps oral semaglutide survive stomach acid for absorption.",
     "breakthrough-science-cta": "See the science",
     "breakthrough-dose-badge": "New high dose",
     "breakthrough-dose-title": "Lose 25% or more<br />body weight*",
@@ -442,7 +443,7 @@ function extendLandingI18n() {
     "provider-3-focus-2": "Certificada en Stroke",
     "provider-3-focus-3": "Orientacion Clinica",
     "provider-3-body":
-      "Enfermera Practicante de Cuidados Agudos en Adultos y Gerontologia certificada (AGACNP-BC) y enfermera certificada en stroke, con mas de 15 anos de experiencia en enfermeria. La Donna se dedica a la practica basada en evidencia, a mejorar los resultados de los pacientes mediante planes de atencion integrales y a brindar orientacion clinica experta en cuidados criticos y programas de stroke.",
+      "Enfermera Practicante de Cuidados Agudos en Adultos y Gerontologia certificada (AGACNP-BC) y enfermera certificada en stroke, brindando atencion clinica basada en evidencia en Patriotic Virtual Telehealth.",
     "provider-license-tag": "Licencia Medica Activa en Florida",
     "testimonial-1-quote":
       '"Recibi mi receta en 24 horas. He bajado 35 libras y sigo avanzando. La evaluacion de seguridad me hizo sentir que realmente les importa hacerlo bien."',
@@ -521,6 +522,7 @@ function extendLandingI18n() {
     "med-foundayo": "Foundayo<sup>&reg;</sup>",
     "med-wegovy-pen": "Wegovy<sup>&reg;</sup> Pen",
     "med-zepbound-vial": "Zepbound<sup>&reg;</sup> Vial",
+    "med-ozempic-pill": "Ozempic<sup>&reg;</sup> en pastilla",
     "med-ozempic": "Ozempic",
     "med-price-149": "Desde $149/mes*",
     "med-price-299": "Desde $299/mes*",
@@ -530,7 +532,7 @@ function extendLandingI18n() {
       "El precio mostrado es inicial; el precio final se confirma en la consulta. La elegibilidad la determina un clinico con licencia.",
     "breakthrough-science-title": "El SNAC<br /><span>perfecto</span>",
     "breakthrough-science-explainer":
-      "Como SNAC ayuda a la semaglutida oral a sobrevivir el estomago el tiempo suficiente para su absorcion.",
+      "SNAC ayuda a la semaglutida oral a resistir el acido gastrico para absorberse.",
     "breakthrough-science-cta": "Ver la ciencia",
     "breakthrough-dose-badge": "Nueva dosis alta",
     "breakthrough-dose-title": "Pierda 25% o mas<br />de peso corporal*",

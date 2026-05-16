@@ -13,11 +13,16 @@
       t.classList.add("show");
       setTimeout(() => t.classList.remove("show"), 3500);
     }
-    window.addEventListener("scroll", () => {
-      document
-        .getElementById("mainNav")
-        .classList.toggle("scrolled", window.scrollY > 20);
-    });
+    function updateMainNavScrollState() {
+      const nav = document.getElementById("mainNav");
+      if (!nav) return;
+      nav.classList.toggle(
+        "scrolled",
+        document.body.classList.contains("lp-subroute") || window.scrollY > 20,
+      );
+    }
+    window.updateMainNavScrollState = updateMainNavScrollState;
+    window.addEventListener("scroll", updateMainNavScrollState);
     // --- INITIALIZATION ---
     window.addEventListener("load", () => {
       // 1. Check Auth

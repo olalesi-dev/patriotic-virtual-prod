@@ -844,6 +844,9 @@
       const normalizedRoute = landingSubpageRoutes[route] || "home";
       page.dataset.lpRoute = normalizedRoute;
       document.body.classList.toggle("lp-subroute", normalizedRoute !== "home");
+      if (window.updateMainNavScrollState) {
+        window.updateMainNavScrollState();
+      }
 
       page.querySelectorAll(".lp-subpage").forEach((section) => {
         section.setAttribute("aria-hidden", String(section.id !== normalizedRoute));

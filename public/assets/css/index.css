@@ -8244,7 +8244,8 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
 #landingPage .lp-panel-top {
   position: relative;
   z-index: 2;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
@@ -8261,9 +8262,24 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
 }
 
 #landingPage .lp-science-heading {
-  display: grid;
-  gap: 10px;
-  max-width: 320px;
+  display: contents;
+  max-width: none;
+}
+
+#landingPage .lp-science-heading h3 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#landingPage .lp-science-explainer {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+#landingPage .lp-science-panel .lp-breakthrough-btn {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
 }
 
 #landingPage .lp-science-explainer {
@@ -8326,6 +8342,7 @@ body:not(.light-theme).lp-subroute #mainNav:not(.scrolled) .lp-icon-btn:hover {
   padding: 11px 20px;
   font-size: 14px;
   line-height: 18px;
+  white-space: nowrap;
 }
 
 #landingPage .lp-snac-page {
@@ -9116,9 +9133,9 @@ body:not(.light-theme) #landingPage .lp-snac-page {
 #landingPage .lp-wegovy-title {
   margin: 0 0 8px !important;
   color: var(--wegovy-text);
-  font-size: clamp(64px, 8vw, 126px);
+  font-size: clamp(54px, 6.6vw, 98px);
   font-weight: 900;
-  line-height: 0.86;
+  line-height: 0.98;
   letter-spacing: 0;
 }
 
@@ -9866,7 +9883,7 @@ body:not(.light-theme) #landingPage .lp-wegovy-compare-card {
   }
 
   #landingPage .lp-wegovy-title {
-    font-size: clamp(56px, 17vw, 78px);
+    font-size: clamp(44px, 13vw, 58px);
   }
 
   #landingPage .lp-wegovy-bullets p {
