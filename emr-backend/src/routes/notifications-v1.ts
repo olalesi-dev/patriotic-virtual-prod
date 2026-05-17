@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { notificationService, sendDirectTemplateEmail } from '../modules/notifications';
+import { notifyNewPatientAccountCreated } from '../modules/notifications/producers';
 import { NotificationRepository } from '../modules/notifications/repository';
 import type { NotificationChannel, NotificationTemplateKey, NotificationTopicKey } from '../modules/notifications';
 
@@ -71,6 +72,24 @@ router.post('/notify', async (req, res) => {
             actorName: body.actorName ?? null,
             source: body.source ?? null,
         });
+
+        if (body.topicKey === 'PATIENT_WELCOME' && !result.deduped) {
+            await notifyNewPatientAccountCreated({
+                patientUid: body.entityId,
+                firstName: typeof body.templateData.firstName === 'string'
+                    ? body.templateData.firstName
+                    : typeof body.templateData.first_name === 'string'
+                        ? body.templateData.first_name
+                        : null,
+                patientEmail: typeof body.templateData.patientEmail === 'string'
+                    ? body.templateData.patientEmail
+                    : typeof body.templateData.patient_email === 'string'
+                        ? body.templateData.patient_email
+                        : typeof req.user?.email === 'string'
+                            ? req.user.email
+                            : null,
+            });
+        }
 
         const followUps = [];
         const followUpErrors = [];

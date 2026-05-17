@@ -2,8 +2,21 @@ import { buildPortalUrl } from './links';
 import { formatRequestedDate, getPlatformName } from './template-data';
 import { NotificationRepository } from './repository';
 import { notificationService } from './service';
+import { sendDirectTemplateEmail } from './direct-email';
+import { logger } from '../../utils/logger';
 
 const repository = new NotificationRepository();
+
+const NEW_PATIENT_ACCOUNT_EMAIL_RECIPIENTS = new Set([
+    'alvaro@patriotictelehealth.com',
+    'oliver@patriotictelehealth.com',
+    'nyah@patriotictelehealth.com',
+    'dr.o@patriotictelehealth.com',
+    'ladonna@patriotictelehealth.com',
+    'tamal@patriotictelehealth.com',
+    'dayo@patriotictelehealth.com',
+    'support@patriotictelehealth.com',
+]);
 
 function asCurrency(amountInCents: number | null): string {
     if (amountInCents === null) return 'an outstanding balance';
@@ -124,4 +137,55 @@ export async function notifyFailedPayment(input: {
         },
         source: 'stripe',
     });
+}
+
+export async function notifyNewPatientAccountCreated(input: {
+    patientUid: string;
+    firstName?: string | null;
+    patientEmail?: string | null;
+}): Promise<void> {
+    const firstName = input.firstName?.trim() || 'Patient';
+    const patientEmail = input.patientEmail?.trim() || null;
+    const platformName = getPlatformName();
+    const recipients = Array.from(NEW_PATIENT_ACCOUNT_EMAIL_RECIPIENTS);
+
+    const results = await Promise.allSettled(
+        recipients.map((toEmail) => sendDirectTemplateEmail({
+            templateKey: 'patient_welcome',
+            toEmail,
+            templateData: {
+                first_name: firstName,
+                platform_name: platformName,
+                support_email: 'support@patriotictelehealth.com',
+                firstName,
+                platformName,
+                supportEmail: 'support@patriotictelehealth.com',
+                patient_uid: input.patientUid,
+                patient_email: patientEmail,
+                patientUid: input.patientUid,
+                patientEmail,
+            },
+            customArgs: {
+                source: 'new-patient-account',
+                patientUid: input.patientUid,
+            },
+        })),
+    );
+
+    const failedRecipients = results
+        .map((result, index) => ({
+            result,
+            toEmail: recipients[index],
+        }))
+        .filter((entry): entry is { result: PromiseRejectedResult; toEmail: string } => entry.result.status === 'rejected');
+
+    if (failedRecipients.length > 0) {
+        logger.warn('New patient account notification emails failed', {
+            patientUid: input.patientUid,
+            failedRecipients: failedRecipients.map((entry) => entry.toEmail),
+            errors: failedRecipients.map((entry) => entry.result.reason instanceof Error
+                ? entry.result.reason.message
+                : String(entry.result.reason)),
+        });
+    }
 }
