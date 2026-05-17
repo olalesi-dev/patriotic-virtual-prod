@@ -106,6 +106,7 @@
 
           // Use the consolidated professional success flow
           handlePaymentSuccess(savedId);
+          return;
         } else {
           console.warn(
             "Payment success landing but no Consultation ID found in storage or URL.",
@@ -115,6 +116,23 @@
         }
       } else if (paymentStatus === "cancelled") {
         toast("Payment was cancelled.");
+      } else if (params.get("modal") === "consult" && params.get("consultStep") === "4") {
+        const savedId = typeof window.getPendingPaymentSuccessConsultationId === "function"
+          ? window.getPendingPaymentSuccessConsultationId()
+          : null;
+
+        if (savedId && typeof handlePaymentSuccess === "function") {
+          currentConsultId = savedId;
+          handlePaymentSuccess(savedId);
+          return;
+        }
+
+        if (typeof window.openPaidConsultationVerificationShell === "function") {
+          window.openPaidConsultationVerificationShell(
+            savedId,
+            "Sign in again to continue identity verification for this appointment.",
+          );
+        }
       }
     }
 

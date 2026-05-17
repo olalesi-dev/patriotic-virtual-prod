@@ -67,6 +67,8 @@
     async function handlePaymentSuccess(consultationId) {
       console.log("Processing payment success for:", consultationId);
       currentConsultId = consultationId; // Assign to global variable
+      setPendingPaymentSuccess(consultationId);
+      let paymentVerificationStarted = false;
 
       try {
         const signedInUser = await waitForLandingAuth();
@@ -81,14 +83,14 @@
         updateNav();
 
         const updateTasks = [];
+        let serviceKey = null;
+        let intakeData = {};
 
         if (typeof db !== 'undefined' && consultationId) {
           const ts = firebase.firestore.FieldValue.serverTimestamp();
           const uid = signedInUser.uid;
 
           // 1. Read the existing consultation to get serviceKey + intake data
-          let serviceKey = null;
-          let intakeData = {};
           try {
             const consultDoc = await db.collection('consultations').doc(consultationId).get();
             if (consultDoc.exists) {
@@ -174,7 +176,6 @@
 
         await Promise.all(updateTasks);
         console.log("✅ Appointment written to all EMR collections successfully.");
-        clearPendingPaymentSuccess(consultationId);
 
         // Google Ads Conversion tracking for purchase
         try {
@@ -194,19 +195,25 @@
         }
 
         if (typeof window.runPaidConsultationVerification === "function") {
-          await window.runPaidConsultationVerification(signedInUser, {
+          paymentVerificationStarted = await window.runPaidConsultationVerification(signedInUser, {
             consultationId,
             profile: user,
             intakeData,
           });
         } else {
+          clearPendingPaymentSuccess(consultationId);
           showBookingSuccess();
         }
 
       } catch (err) {
         console.error("Error finalizing payment flow:", err);
         // Fallback: show local success if redirect fails
+        clearPendingPaymentSuccess(consultationId);
         showBookingSuccess();
+      }
+
+      if (paymentVerificationStarted) {
+        return;
       }
 
       // Clean URL

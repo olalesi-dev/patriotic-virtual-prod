@@ -34,6 +34,10 @@
     }
     function closeModal(e) {
       if (e && e.target !== e.currentTarget) return;
+      if (isPaymentVerificationLocked()) {
+        toast("Complete identity verification before closing this step.");
+        return;
+      }
       document.getElementById("authModal").classList.remove("active");
     }
     function setAuthModalModeClass(t) {
@@ -58,6 +62,142 @@
         }
       }
     }
+    function replaceLandingUrl(mutate) {
+      const url = new URL(window.location.href);
+      mutate(url.searchParams);
+      const query = url.searchParams.toString();
+      const nextUrl = `${url.pathname}${query ? `?${query}` : ""}${url.hash}`;
+      window.history.replaceState(window.history.state || {}, document.title, nextUrl);
+    }
+    function syncConsultModalUrl(open, step) {
+      replaceLandingUrl((params) => {
+        params.delete("payment");
+        params.delete("session_id");
+        params.delete("consultationId");
+
+        if (open) {
+          params.set("modal", "consult");
+          params.set("consultStep", String(step || 1));
+          return;
+        }
+
+        if (params.get("modal") === "consult") {
+          params.delete("modal");
+        }
+        params.delete("consultStep");
+        params.delete("consultService");
+      });
+    }
+    function clearPaymentFlowUrlState() {
+      syncConsultModalUrl(false);
+    }
+    function setConsultModalStep(step) {
+      ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle("hidden", id !== `cS${step}`);
+      });
+
+      const modal = document.querySelector("#consultModal .modal.cm");
+      if (modal) modal.classList.toggle("cm-verify", step === 4);
+    }
+    function getStoredPaymentSuccessConsultationId() {
+      try {
+        return sessionStorage.getItem("pendingPaymentSuccessConsultationId") ||
+          localStorage.getItem("pendingPaymentSuccessConsultationId") ||
+          null;
+      } catch {
+        return null;
+      }
+    }
+    function getPendingPaymentSuccessConsultationId() {
+      try {
+        return getStoredPaymentSuccessConsultationId() ||
+          sessionStorage.getItem("pendingConsultationId") ||
+          localStorage.getItem("pendingConsultationId") ||
+          null;
+      } catch {
+        return null;
+      }
+    }
+    function isPaymentVerificationLocked() {
+      const pending = window.pendingPaymentVerification;
+      return Boolean(
+        window.paymentVerificationRequired ||
+        (pending && !pending.resolved) ||
+        getStoredPaymentSuccessConsultationId(),
+      );
+    }
+    function setPaymentVerificationMessage(message) {
+      const noticeEl = document.getElementById("paymentVouchedNotice");
+      if (noticeEl) {
+        noticeEl.textContent = message || "Complete secure ID verification to continue.";
+      }
+    }
+    function setPaymentVerificationError(message) {
+      const errorEl = document.getElementById("paymentVouchedError");
+      if (!errorEl) return;
+      errorEl.textContent = message || "";
+      errorEl.classList.toggle("hidden", !message);
+    }
+    function openPaidConsultationVerificationShell(consultationId, notice) {
+      if (consultationId && typeof currentConsultId !== "undefined") {
+        currentConsultId = consultationId;
+      }
+
+      window.paymentVerificationRequired = Boolean(
+        consultationId ||
+        getStoredPaymentSuccessConsultationId() ||
+        window.pendingPaymentVerification,
+      );
+      const consultModal = document.getElementById("consultModal");
+      if (consultModal) consultModal.classList.add("active");
+      setConsultModalStep(4);
+      syncConsultModalUrl(true, 4);
+      setPaymentVerificationError("");
+      setPaymentVerificationMessage(notice || "Checking whether passive identity verification can complete this appointment...");
+
+      const loading = document.getElementById("paymentVouchedLoading");
+      if (loading) {
+        loading.style.display = "flex";
+        loading.textContent = "Checking whether passive identity verification can complete this appointment...";
+      }
+
+      const iframe = document.getElementById("paymentVouchedFrame");
+      if (iframe) {
+        iframe.style.display = "none";
+        iframe.src = "";
+      }
+    }
+    function showPaidConsultationVerificationComplete(outcome, message) {
+      const consultationId = window.pendingPaymentVerification
+        ? window.pendingPaymentVerification.consultationId
+        : getPendingPaymentSuccessConsultationId();
+
+      window.paymentVerificationRequired = false;
+      if (window.pendingPaymentVerification) {
+        window.pendingPaymentVerification.resolved = true;
+      }
+      if (typeof window.clearPendingPaymentSuccess === "function") {
+        window.clearPendingPaymentSuccess(consultationId);
+      }
+
+      const successCopy = document.getElementById("paymentVerificationSuccessCopy");
+      if (successCopy) {
+        successCopy.textContent = message || (
+          outcome === "review_required"
+            ? "Identity verification was submitted and is pending manual review. Our team will continue processing your appointment."
+            : "Identity verification is complete. A board-certified provider will review your case against our clinical protocols within 24 hours."
+        );
+      }
+
+      setPaymentVerificationError("");
+      setConsultModalStep(5);
+      syncConsultModalUrl(true, 5);
+    }
+    window.clearPaymentFlowUrlState = clearPaymentFlowUrlState;
+    window.getPendingPaymentSuccessConsultationId = getPendingPaymentSuccessConsultationId;
+    window.openPaidConsultationVerificationShell = openPaidConsultationVerificationShell;
+    window.showPaidConsultationVerificationComplete = showPaidConsultationVerificationComplete;
     function normalizeUsPhone(value) {
       const digits = String(value || "").replace(/\D/g, "");
       if (digits.length === 10) return digits;
@@ -386,19 +526,17 @@
     }
     function showPaidConsultationVerification(firebaseUser, payload, consultationId, notice) {
       const internalId = `payment:${firebaseUser.uid}:${consultationId || Date.now()}`;
-      window.pendingPaymentVerification = { uid: firebaseUser.uid, consultationId, internalId };
+      window.pendingPaymentVerification = { uid: firebaseUser.uid, consultationId, internalId, resolved: false };
 
-      document.getElementById("authModal").classList.add("active");
-      document.getElementById("loginForm").classList.add("hidden");
-      document.getElementById("registerForm").classList.add("hidden");
-      switchAuth("verify");
+      openPaidConsultationVerificationShell(
+        consultationId,
+        notice || "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
+      );
 
-      const noticeEl = document.getElementById("vouchedNotice");
-      if (noticeEl) {
-        noticeEl.textContent = notice || "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.";
-      }
+      const loading = document.getElementById("paymentVouchedLoading");
+      if (loading) loading.style.display = "none";
 
-      const iframe = document.getElementById("vouchedFrame");
+      const iframe = document.getElementById("paymentVouchedFrame");
       const params = new URLSearchParams({
         context: "payment_success",
         firstName: payload.firstName || "",
@@ -411,49 +549,23 @@
         appId: getVouchedPublicKey(),
         callbackURL: getVouchedWebhookUrl(),
       });
-      iframe.src = `/vouched.html?${params.toString()}`;
+      if (iframe) {
+        iframe.style.display = "block";
+        iframe.src = `/vouched.html?${params.toString()}`;
+      }
     }
     async function runPaidConsultationVerification(firebaseUser, options = {}) {
       const profile = options.profile || user || getFallbackUserProfile(firebaseUser);
       const workflowPayload = getProfileVouchedWorkflowPayload(profile, options.intakeData || {});
       const consultationId = options.consultationId || currentConsultId || null;
 
-      try {
-        const workflow = await authedApiJson("/api/v1/vouched/workflow/start", {
-          method: "POST",
-          user: firebaseUser,
-          body: workflowPayload,
-        });
-
-        if (workflow && workflow.nextStep === "visual_id") {
-          showPaidConsultationVerification(
-            firebaseUser,
-            workflowPayload,
-            consultationId,
-            workflow.warningMessage || "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
-          );
-          return true;
-        }
-
-        if (workflow && workflow.status === "review_required") {
-          toast(workflow.warningMessage || "Payment confirmed. Identity verification is pending manual review.");
-          showBookingSuccess();
-          return true;
-        }
-
-        toast("Payment confirmed. Identity verification is complete.");
-        showBookingSuccess();
-        return true;
-      } catch (error) {
-        console.warn("Paid consultation identity verification check failed:", error);
-        showPaidConsultationVerification(
-          firebaseUser,
-          workflowPayload,
-          consultationId,
-          "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
-        );
-        return true;
-      }
+      showPaidConsultationVerification(
+        firebaseUser,
+        workflowPayload,
+        consultationId,
+        "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
+      );
+      return true;
     }
     window.runPaidConsultationVerification = runPaidConsultationVerification;
     async function runSignupVerification(firebaseUser, registration) {
@@ -717,21 +829,29 @@
 
           if (result.verified || result.status === "review_required") {
             const consultationId = pending.consultationId || currentConsultId || null;
-            window.pendingPaymentVerification = null;
             if (typeof window.clearPendingPaymentSuccess === "function") {
               window.clearPendingPaymentSuccess(consultationId);
             }
-            document.getElementById("authModal").classList.remove("active");
-            showBookingSuccess();
+            showPaidConsultationVerificationComplete(
+              result.verified ? "verified" : "review_required",
+              result.verified
+                ? "Identity verification is complete. A board-certified provider will review your case against our clinical protocols within 24 hours."
+                : (result.warningMessage || "Identity verification was submitted and is pending manual review. Our team will continue processing your appointment."),
+            );
+            window.pendingPaymentVerification = null;
             toast(result.verified
               ? "Payment confirmed and identity verification is complete."
               : (result.warningMessage || "Payment confirmed. Identity verification is pending manual review."));
             return;
           }
 
-          toast(result.failureReason || "Identity verification failed. Please try again or contact support.");
+          const failureMessage = result.failureReason || "Identity verification failed. Please try again or contact support.";
+          setPaymentVerificationError(failureMessage);
+          toast(failureMessage);
         } catch (error) {
-          toast(error.message || "Identity verification could not be finalized.");
+          const message = error.message || "Identity verification could not be finalized.";
+          setPaymentVerificationError(message);
+          toast(message);
         }
         return;
       }

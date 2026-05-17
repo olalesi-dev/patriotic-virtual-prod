@@ -4120,6 +4120,35 @@ body.light-theme #consultModal {
     0 10px 10px -5px rgba(0, 0, 0, 0.35) !important;
 }
 
+#consultModal .modal.cm.cm-verify {
+  max-width: 920px;
+  width: min(920px, calc(100vw - 48px));
+  max-height: min(92vh, 980px);
+  overflow-y: auto;
+}
+
+#consultModal .consult-verify-copy {
+  color: var(--consult-muted) !important;
+}
+
+#consultModal .consult-verify-frame {
+  display: block;
+  max-width: 720px;
+  margin: 0 auto;
+  background: #ffffff;
+}
+
+@media (max-width: 720px) {
+  #consultModal .modal.cm.cm-verify {
+    width: min(100vw - 24px, 680px);
+    max-height: calc(100vh - 24px);
+  }
+
+  #consultModal .consult-verify-frame {
+    min-height: 580px !important;
+  }
+}
+
 #consultModal h2,
 #consultModal h3 {
   color: var(--consult-title) !important;

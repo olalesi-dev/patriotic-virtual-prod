@@ -259,8 +259,47 @@ function buildFacets(patients: PatientRegistryRow[]): PatientRegistryResponse['f
     };
 }
 
-function buildEncounterRows(patientId: string, appointmentRows: Record<string, unknown>[]): PatientDetailEncounter[] {
-    return appointmentRows
+function formatSoapSections(value: Record<string, unknown>): string | null {
+    const sections = [
+        ['S', asNonEmptyString(value.subjective)],
+        ['O', asNonEmptyString(value.objective)],
+        ['A', asNonEmptyString(value.assessment)],
+        ['P', asNonEmptyString(value.plan)]
+    ].filter((section): section is [string, string] => Boolean(section[1]));
+
+    return sections.length > 0
+        ? sections.map(([label, text]) => `${label}: ${text}`).join('\n\n')
+        : null;
+}
+
+function formatSoapNote(value: unknown): string | null {
+    const direct = asNonEmptyString(value);
+    if (direct) return direct;
+
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return formatSoapSections(value as Record<string, unknown>);
+    }
+
+    return null;
+}
+
+function buildEncounterNotes(row: Record<string, unknown>): string | null {
+    const notes = asNonEmptyString(row.notes);
+    const soapNote = formatSoapNote(row.soapNote) ?? formatSoapNote(row.soapNotes);
+
+    if (notes && soapNote && !notes.includes(soapNote)) {
+        return `${notes}\n\n[SOAP Note]\n${soapNote}`;
+    }
+
+    return notes ?? soapNote;
+}
+
+function buildEncounterRows(
+    patientId: string,
+    appointmentRows: Record<string, unknown>[],
+    savedEncounterRows: Record<string, unknown>[] = []
+): PatientDetailEncounter[] {
+    const appointmentEncounters = appointmentRows
         .map((appointment, index) => {
             const encounterDate =
                 asDate(appointment.startTime) ??
@@ -274,9 +313,31 @@ function buildEncounterRows(patientId: string, appointmentRows: Record<string, u
                 title: asNonEmptyString(appointment.service) ?? asNonEmptyString(appointment.type) ?? 'Telehealth Visit',
                 provider: asNonEmptyString(appointment.providerName) ?? 'Assigned Provider',
                 type: asNonEmptyString(appointment.type) ?? 'Telehealth',
-                status: asNonEmptyString(appointment.status) ?? 'scheduled'
+                status: asNonEmptyString(appointment.status) ?? 'scheduled',
+                notes: buildEncounterNotes(appointment)
             } satisfies PatientDetailEncounter;
-        })
+        });
+
+    const savedEncounters = savedEncounterRows
+        .map((encounter, index) => {
+            const encounterDate =
+                asDate(encounter.timestamp) ??
+                asDate(encounter.date) ??
+                asDate(encounter.createdAt) ??
+                asDate(encounter.updatedAt);
+
+            return {
+                id: asNonEmptyString(encounter.id) ?? `${patientId}-soap-${index}`,
+                date: encounterDate ? encounterDate.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+                title: asNonEmptyString(encounter.title) ?? 'SOAP Encounter Note',
+                provider: asNonEmptyString(encounter.providerName) ?? asNonEmptyString(encounter.authorEmail) ?? 'Assigned Provider',
+                type: asNonEmptyString(encounter.type) ?? 'Telehealth',
+                status: asNonEmptyString(encounter.status) ?? 'draft',
+                notes: buildEncounterNotes(encounter)
+            } satisfies PatientDetailEncounter;
+        });
+
+    return [...appointmentEncounters, ...savedEncounters]
         .sort((first, second) => second.date.localeCompare(first.date));
 }
 
@@ -1304,7 +1365,7 @@ async function loadPatientDetailFromContext(
     } as Record<string, unknown>;
 
     const patientRef = firestore.collection('patients').doc(patientId);
-    const [problemsSnap, medicationsSnap, ordersSnap, imagingSnap, observationsSnap, labResultsSnap, documentsSnap, consentsSnap, patientMessagesSnap, billingSummarySnap, threadSnap] = await Promise.all([
+    const [problemsSnap, medicationsSnap, ordersSnap, imagingSnap, observationsSnap, labResultsSnap, documentsSnap, consentsSnap, patientMessagesSnap, savedEncountersSnap, billingSummarySnap, threadSnap] = await Promise.all([
         patientRef.collection('problems').get(),
         patientRef.collection('medications').get(),
         patientRef.collection('orders').get(),
@@ -1314,6 +1375,7 @@ async function loadPatientDetailFromContext(
         patientRef.collection('documents').get(),
         patientRef.collection('consents').get(),
         patientRef.collection('messages').get(),
+        patientRef.collection('encounters').limit(50).get(),
         patientRef.collection('billing').doc('summary').get(),
         firestore.collection('threads').where('providerId', '==', providerId).where('patientId', '==', patientId).limit(1).get()
     ]);
@@ -1326,7 +1388,11 @@ async function loadPatientDetailFromContext(
 
     const problemList = normalizeProblemList(problemsSnap.docs, merged.problemList);
     const activeMedications = normalizeMedications(medicationsSnap.docs, merged.activeMedications);
-    const recentEncounters = buildEncounterRows(patientId, context.appointmentRows.get(patientId) ?? []).slice(0, 10);
+    const savedEncounterRows = savedEncountersSnap.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+    } as Record<string, unknown>));
+    const recentEncounters = buildEncounterRows(patientId, context.appointmentRows.get(patientId) ?? [], savedEncounterRows).slice(0, 10);
     const orders = normalizeOrders(ordersSnap.docs, merged.orders);
     const imagingStudies = normalizeImaging(imagingSnap.docs, merged.imaging);
     const observations = normalizeObservations(observationsSnap.docs, labResultsSnap.docs, merged.vitalsHistory, merged.labsHistory);

@@ -3120,7 +3120,64 @@
           </button>
         </div>
       </div>
-      <div id="cS4" class="hidden" style="text-align: center; padding: 24px 0">
+      <div id="cS4" class="hidden consult-verify-step" style="text-align: center; padding: 24px 0">
+        <div style="
+              width: 64px;
+              height: 64px;
+              border-radius: 50%;
+              background: rgba(14, 165, 233, 0.12);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 28px;
+              color: #0ea5e9;
+              margin: 0 auto 20px;
+            ">
+          🪪
+        </div>
+        <h2 style="margin-bottom: 8px">Complete Identity Verification</h2>
+        <p class="ms consult-verify-copy" style="max-width: 620px; margin: 0 auto 20px">
+          Your payment is confirmed. Complete this secure ID check so our clinical team can continue processing your appointment.
+        </p>
+        <div id="paymentVouchedError" class="hidden" style="
+              margin: 0 auto 16px;
+              padding: 12px 14px;
+              border-radius: 12px;
+              background: #fef2f2;
+              color: #b91c1c;
+              font-size: 13px;
+              font-weight: 600;
+              text-align: left;
+              max-width: 720px;
+            "></div>
+        <p class="ms" id="paymentVouchedNotice" style="max-width: 720px; margin: 0 auto 16px">
+          Preparing identity verification...
+        </p>
+        <div id="paymentVouchedLoading" style="
+              min-height: 320px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              color: #64748b;
+              font-weight: 600;
+              padding: 24px;
+              background: #ffffff;
+              border-radius: 16px;
+              max-width: 720px;
+              margin: 0 auto;
+            ">
+          Checking whether passive identity verification can complete this appointment...
+        </div>
+        <iframe
+          id="paymentVouchedFrame"
+          src=""
+          class="auth-verify-frame consult-verify-frame"
+          style="display: none; width: 100%; min-height: 650px; border: none; border-radius: 12px"
+          allow="camera; microphone"
+        ></iframe>
+      </div>
+      <div id="cS5" class="hidden" style="text-align: center; padding: 24px 0">
         <div style="
               width: 64px;
               height: 64px;
@@ -3134,10 +3191,9 @@
             ">
           ✓
         </div>
-        <h2 style="margin-bottom: 8px">Visit Submitted!</h2>
-        <p class="ms" style="max-width: 340px; margin: 0 auto 28px">
-          A board-certified provider will review your case against our
-          clinical protocols within 24 hours.
+        <h2 style="margin-bottom: 8px">Consultation Request Submitted</h2>
+        <p class="ms" id="paymentVerificationSuccessCopy" style="max-width: 420px; margin: 0 auto 28px">
+          Identity verification is complete. A board-certified provider will review your case against our clinical protocols within 24 hours.
         </p>
         <button class="btn btn-primary" onclick="
               closeConsult();

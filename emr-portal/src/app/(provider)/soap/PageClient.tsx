@@ -6,8 +6,10 @@ import { AITextarea } from '@/components/ui/AITextarea';
 import { toast } from 'sonner';
 import { apiFetchJson } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
+import { useAuthUser } from '@/hooks/useAuthUser';
 
 export default function SoapPageClient() {
+    const { user: activeUser, isReady } = useAuthUser();
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [interimTranscript, setInterimTranscript] = useState('');
@@ -29,6 +31,7 @@ export default function SoapPageClient() {
     // Fetch patients for dropdown
     const usersQuery = useQuery({
         queryKey: ['admin-users-patients-soap'],
+        enabled: isReady && Boolean(activeUser),
         queryFn: async () => {
             const data = await apiFetchJson<{
                 success?: boolean;
@@ -36,7 +39,8 @@ export default function SoapPageClient() {
                 error?: string;
             }>('/api/admin/users', {
                 method: 'GET',
-                cache: 'no-store'
+                cache: 'no-store',
+                user: activeUser
             });
             if (!data.success || !data.users) return [];
             return data.users.filter((u: any) => u.role?.toLowerCase() === 'patient' || !u.role);
@@ -185,7 +189,7 @@ export default function SoapPageClient() {
         try {
             const data = await apiFetchJson<any>('/api/ai/scribe/generate', {
                 method: 'POST',
-                body: JSON.stringify({ transcript: finalTranscript })
+                body: { transcript: finalTranscript }
             });
             if (data.success && data.note) {
                 setSubjective(data.note.subjective || '');
@@ -215,12 +219,28 @@ export default function SoapPageClient() {
             return;
         }
 
+        if (!activeUser) {
+            toast.error("Please sign in again before saving the SOAP note.");
+            return;
+        }
+
         setIsSaving(true);
         try {
             const noteText = `S: ${subjective}\n\nO: ${objective}\n\nA: ${assessment}\n\nP: ${plan}`;
             const data = await apiFetchJson<any>(`/api/patients/${selectedPatientId}/soap`, {
                 method: 'POST',
-                body: JSON.stringify({ soapNote: noteText })
+                user: activeUser,
+                body: {
+                    soapNote: noteText,
+                    sections: {
+                        subjective,
+                        objective,
+                        assessment,
+                        plan
+                    },
+                    transcript,
+                    source: 'manual / SOAP notes'
+                }
             });
             if (data.success) {
                 toast.success('SOAP Note saved to patient chart successfully');
@@ -311,20 +331,20 @@ export default function SoapPageClient() {
                         
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Subjective</label>
-                                <AITextarea value={subjective} onValueChange={setSubjective} className="w-full min-h-[100px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
+                                <label htmlFor="soap-subjective" className="text-xs font-black text-slate-500 uppercase tracking-widest">Subjective</label>
+                                <AITextarea id="soap-subjective" value={subjective} onValueChange={setSubjective} className="w-full min-h-[100px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Objective</label>
-                                <AITextarea value={objective} onValueChange={setObjective} className="w-full min-h-[100px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
+                                <label htmlFor="soap-objective" className="text-xs font-black text-slate-500 uppercase tracking-widest">Objective</label>
+                                <AITextarea id="soap-objective" value={objective} onValueChange={setObjective} className="w-full min-h-[100px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Assessment</label>
-                                <AITextarea value={assessment} onValueChange={setAssessment} className="w-full min-h-[80px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
+                                <label htmlFor="soap-assessment" className="text-xs font-black text-slate-500 uppercase tracking-widest">Assessment</label>
+                                <AITextarea id="soap-assessment" value={assessment} onValueChange={setAssessment} className="w-full min-h-[80px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Plan</label>
-                                <AITextarea value={plan} onValueChange={setPlan} className="w-full min-h-[80px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
+                                <label htmlFor="soap-plan" className="text-xs font-black text-slate-500 uppercase tracking-widest">Plan</label>
+                                <AITextarea id="soap-plan" value={plan} onValueChange={setPlan} className="w-full min-h-[80px] p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-sm border border-slate-200 dark:border-slate-700 focus:border-brand/50 focus:ring-1 focus:ring-brand/50" />
                             </div>
                         </div>
                     </div>
@@ -340,8 +360,9 @@ export default function SoapPageClient() {
 
                         <div className="space-y-4 flex-1">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Select Patient</label>
+                                <label htmlFor="soap-patient-select" className="text-xs font-black text-slate-500 uppercase tracking-widest">Select Patient</label>
                                 <select
+                                    id="soap-patient-select"
                                     value={selectedPatientId}
                                     onChange={(e) => setSelectedPatientId(e.target.value)}
                                     className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-brand/50 focus:border-brand/50 font-medium"

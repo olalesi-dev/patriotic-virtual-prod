@@ -19,10 +19,14 @@
       intake = {};
       selSvc = selSvc || "membership_elite";
       if (!selSvc) window._initialSvcClick = null;
-      ["cS1", "cS2", "cS3", "cS4"].forEach((id) =>
-        document.getElementById(id).classList.add("hidden"),
-      );
-      document.getElementById("cS1").classList.remove("hidden");
+      if (typeof setConsultModalStep === "function") {
+        setConsultModalStep(1);
+      } else {
+        ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+          document.getElementById(id).classList.add("hidden"),
+        );
+        document.getElementById("cS1").classList.remove("hidden");
+      }
       const clinicalSvcs = window._initialSvcClick ? svcs.filter(s => (s.k === window._initialSvcClick || s.k === "telehealth_standard")) : svcs;
       document.getElementById("svcSel").innerHTML = clinicalSvcs
         .map(
@@ -62,16 +66,24 @@
         document.getElementById("rSum").innerHTML =
           `<div class="consult-rsum-block"><div class="consult-rsum-label">Service</div><div class="consult-rsum-value">${sv.icon} ${sv.name}</div></div><div class="consult-rsum-block"><div class="consult-rsum-label">Price</div><div class="consult-rsum-value">$${sv.price}</div></div><div class="consult-rsum-block"><div class="consult-rsum-label" style="margin-bottom:8px">Responses</div>${responseRows || '<div class="consult-rsum-empty">No additional responses.</div>'}</div>`;
       }
-      ["cS1", "cS2", "cS3", "cS4"].forEach((id) =>
-        document.getElementById(id).classList.add("hidden"),
-      );
-      document.getElementById("cS" + s).classList.remove("hidden");
+      if (typeof setConsultModalStep === "function") {
+        setConsultModalStep(s);
+      } else {
+        ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+          document.getElementById(id).classList.add("hidden"),
+        );
+        document.getElementById("cS" + s).classList.remove("hidden");
+      }
     }
     function cB(s) {
-      ["cS1", "cS2", "cS3", "cS4"].forEach((id) =>
-        document.getElementById(id).classList.add("hidden"),
-      );
-      document.getElementById("cS" + s).classList.remove("hidden");
+      if (typeof setConsultModalStep === "function") {
+        setConsultModalStep(s);
+      } else {
+        ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+          document.getElementById(id).classList.add("hidden"),
+        );
+        document.getElementById("cS" + s).classList.remove("hidden");
+      }
     }
     function sI(el, k, v) {
       el.parentElement
@@ -175,6 +187,13 @@
     }
     function closeConsult(e) {
       if (e && e.target !== e.currentTarget) return;
+      if (typeof isPaymentVerificationLocked === "function" && isPaymentVerificationLocked()) {
+        toast("Complete identity verification before closing this step.");
+        return;
+      }
       document.getElementById("consultModal").classList.remove("active");
+      if (typeof clearPaymentFlowUrlState === "function") {
+        clearPaymentFlowUrlState();
+      }
       selSvc = null;
     }
