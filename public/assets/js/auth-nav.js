@@ -92,7 +92,7 @@
       syncConsultModalUrl(false);
     }
     function setConsultModalStep(step) {
-      ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) => {
+      ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle("hidden", id !== `cS${step}`);
       });
@@ -491,6 +491,11 @@
       toast(message || "Account created. Please check your email to verify your email address.");
       document.getElementById("authModal").classList.remove("active");
 
+      if (window._pendingHairLossConsult && typeof window.resumeHairConsultationAfterAuth === "function") {
+        window.resumeHairConsultationAfterAuth();
+        return;
+      }
+
       if (window._pendingVisit || selSvc) {
         window._pendingVisit = false;
         openConsultation();
@@ -524,9 +529,15 @@
       });
       iframe.src = `/vouched.html?${params.toString()}`;
     }
-    function showPaidConsultationVerification(firebaseUser, payload, consultationId, notice) {
+    function showPaidConsultationVerification(firebaseUser, payload, consultationId, notice, options = {}) {
       const internalId = `payment:${firebaseUser.uid}:${consultationId || Date.now()}`;
-      window.pendingPaymentVerification = { uid: firebaseUser.uid, consultationId, internalId, resolved: false };
+      window.pendingPaymentVerification = {
+        uid: firebaseUser.uid,
+        consultationId,
+        internalId,
+        serviceKey: options.serviceKey || null,
+        resolved: false,
+      };
 
       openPaidConsultationVerificationShell(
         consultationId,
@@ -564,6 +575,7 @@
         workflowPayload,
         consultationId,
         "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
+        { serviceKey: options.serviceKey || null },
       );
 
       if (!getVouchedPublicKey()) {
@@ -595,6 +607,11 @@
         toast("Welcome back, " + (user.firstName || user.email) + "!");
 
         if (typeof window.resumePendingPaymentSuccess === "function" && await window.resumePendingPaymentSuccess()) {
+          return;
+        }
+
+        if (window._pendingHairLossConsult && typeof window.resumeHairConsultationAfterAuth === "function") {
+          await window.resumeHairConsultationAfterAuth();
           return;
         }
 
@@ -709,6 +726,10 @@
           if (typeof window.resumePendingPaymentSuccess === "function" && await window.resumePendingPaymentSuccess()) {
             return;
           }
+          if (window._pendingHairLossConsult && typeof window.resumeHairConsultationAfterAuth === "function") {
+            await window.resumeHairConsultationAfterAuth();
+            return;
+          }
           toast("Welcome, " + (user.firstName || fbUser.email) + "!");
         }
       } catch (err) {
@@ -791,6 +812,9 @@
             const consultationId = pending.consultationId || currentConsultId || null;
             if (typeof window.clearPendingPaymentSuccess === "function") {
               window.clearPendingPaymentSuccess(consultationId);
+            }
+            if (pending.serviceKey === "hair_loss" && typeof window.clearHairConsultationFlow === "function") {
+              window.clearHairConsultationFlow();
             }
             showPaidConsultationVerificationComplete(
               result.verified ? "verified" : "review_required",

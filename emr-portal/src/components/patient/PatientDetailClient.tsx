@@ -5,6 +5,7 @@ import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Activity,
+    AlertCircle,
     ArrowLeft,
     Check,
     ChevronsUpDown,
@@ -34,6 +35,7 @@ import { IdentityVerificationBadge } from '@/components/common/IdentityVerificat
 import type {
     PatientDetailBilling,
     PatientDetailDocument,
+    PatientDetailEncounter,
     PatientDetailImagingStudy,
     PatientDetailMessage,
     PatientDetailObservation,
@@ -85,6 +87,75 @@ const PATIENT_DETAIL_TABS: Array<{ id: PatientDetailTab; icon: React.ComponentTy
     { id: 'Inbox', icon: Inbox },
     { id: 'Billing', icon: CreditCard }
 ];
+
+function formatScreeningAnswer(value: unknown): string {
+    if (Array.isArray(value)) {
+        return value.map(formatScreeningAnswer).filter(Boolean).join(', ');
+    }
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+}
+
+function getHairScreeningEncounter(patient: PatientDetailRecord): PatientDetailEncounter | null {
+    return patient.recentEncounters.find((encounter) => (
+        encounter.screeningVersion === 'hair_loss_v1' ||
+        encounter.serviceKey === 'hair_loss' ||
+        encounter.serviceLine === 'hair_loss'
+    )) ?? null;
+}
+
+function HairScreeningSummary({ patient }: { patient: PatientDetailRecord }) {
+    const encounter = getHairScreeningEncounter(patient);
+    const responses = encounter?.screeningResponses ?? [];
+    if (!encounter || responses.length === 0) return null;
+
+    const flags = encounter.screeningFlags ?? [];
+    return (
+        <div className="mt-6 rounded-2xl border border-sky-100 bg-sky-50/70 p-5">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700">Hair Growth Screening</p>
+                    <h2 className="mt-1 text-lg font-black text-slate-900">Hair loss intake snapshot</h2>
+                    <p className="mt-1 text-sm font-semibold text-slate-600">
+                        Version {encounter.screeningVersion ?? 'hair_loss_v1'} | Chart category {encounter.chartCategory ?? 'dermatology'}
+                    </p>
+                </div>
+                {(encounter.requiresClinicianReview || flags.length > 0) && (
+                    <div className="inline-flex max-w-md items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>Review required before prescription consideration.</span>
+                    </div>
+                )}
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+                {responses.map((response, index) => {
+                    const question = formatScreeningAnswer(response.question_text ?? response.question_id ?? `Question ${index + 1}`);
+                    const answer = formatScreeningAnswer(response.answer_label ?? response.answer);
+                    const followUp = response.follow_up && typeof response.follow_up === 'object'
+                        ? response.follow_up as Record<string, unknown>
+                        : null;
+                    const isFlagged = flags.some((flag) => flag.question_id === response.question_id);
+
+                    return (
+                        <div key={`${String(response.question_id ?? index)}`} className={`rounded-xl border bg-white p-4 ${isFlagged ? 'border-rose-200 ring-1 ring-rose-100' : 'border-sky-100'}`}>
+                            <div className="mb-2 flex items-start justify-between gap-3">
+                                <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{question}</p>
+                                {isFlagged && <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-rose-700">Flag</span>}
+                            </div>
+                            <p className="text-sm font-bold text-slate-900">{answer}</p>
+                            {followUp && (
+                                <p className="mt-2 text-xs font-semibold text-slate-600">
+                                    {formatScreeningAnswer(followUp.question_text)}: {formatScreeningAnswer(followUp.answer)}
+                                </p>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
 
 const SEX_OPTIONS = ['Male', 'Female', 'Other', 'Unknown'];
 const MEDICATION_ROUTE_OPTIONS = ['PO', 'IM', 'IV', 'SQ', 'Topical', 'Inhaled'];
@@ -606,6 +677,8 @@ export function PatientDetailClient({ patientId }: { patientId: string }) {
                         </div>
                     </div>
                 </div>
+
+                <HairScreeningSummary patient={patient} />
 
                 <div className="-mb-8 mt-8 flex gap-1 overflow-x-auto border-t border-slate-100 pt-4">
                     {PATIENT_DETAIL_TABS.map((tab) => (

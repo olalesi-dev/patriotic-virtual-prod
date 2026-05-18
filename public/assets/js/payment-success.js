@@ -238,6 +238,7 @@
             consultationId,
             profile: user,
             intakeData,
+            serviceKey,
           });
         } else {
           paymentVerificationStarted = true;

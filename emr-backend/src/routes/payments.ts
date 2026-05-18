@@ -7,6 +7,11 @@ import {
     completeTelehealthConsultationPayment,
     CONSULTATION_CATALOG,
 } from '../services/consultation-payments';
+import {
+    HAIR_LOSS_SCREENING_QUESTIONS,
+    HAIR_LOSS_SCREENING_VERSION,
+    HAIR_LOSS_SERVICE_KEY,
+} from '../services/hair-loss-screening';
 import { DEFAULT_EMR_ORIGIN, normalizeAbsoluteUrl } from '../config/app-origins';
 import { buildCheckoutRedirectUrl } from '../utils/stripe-checkout-urls';
 import { logger } from '../utils/logger';
@@ -31,6 +36,28 @@ function requireStripeConfigured(res: Response) {
         code: 'STRIPE_NOT_CONFIGURED',
     });
     return null;
+}
+
+function hasCompleteHairLossScreening(consultationData: Record<string, unknown>): boolean {
+    const version = typeof consultationData.screeningVersion === 'string'
+        ? consultationData.screeningVersion
+        : null;
+    const responses = Array.isArray(consultationData.screeningResponses)
+        ? consultationData.screeningResponses
+        : [];
+
+    if (version !== HAIR_LOSS_SCREENING_VERSION) return false;
+    if (responses.length < HAIR_LOSS_SCREENING_QUESTIONS.length) return false;
+
+    const responseIds = new Set(
+        responses
+            .map((response) => response && typeof response === 'object' && 'question_id' in response
+                ? String((response as { question_id?: unknown }).question_id ?? '')
+                : '')
+            .filter(Boolean),
+    );
+
+    return HAIR_LOSS_SCREENING_QUESTIONS.every((question) => responseIds.has(question.id));
 }
 
 router.post('/create-checkout-session', async (req, res) => {
@@ -73,9 +100,16 @@ router.post('/create-checkout-session', async (req, res) => {
         if (!consultationOwnerUid || consultationOwnerUid !== uid) {
             return res.status(403).json({ error: 'Not authorized for this consultation' });
         }
+        const consultationServiceKey = typeof consultationData.serviceKey === 'string' ? consultationData.serviceKey.trim() : '';
+        if (consultationServiceKey && consultationServiceKey !== serviceKey) {
+            return res.status(400).json({ error: 'Requested service does not match the consultation record' });
+        }
+        if (serviceKey === HAIR_LOSS_SERVICE_KEY && !hasCompleteHairLossScreening(consultationData)) {
+            return res.status(400).json({ error: 'Hair growth screening must be completed before checkout' });
+        }
 
         const baseUrl = resolveCheckoutBaseUrl(req);
-        const lineItem = buildStripeLineItem(serviceKey);
+        const lineItem = await buildStripeLineItem(serviceKey, stripeClient);
         const item = CONSULTATION_CATALOG[serviceKey];
 
         const sessionConfig = {
@@ -102,6 +136,11 @@ router.post('/create-checkout-session', async (req, res) => {
                 uid,
             },
             billing_address_collection: 'required' as const,
+            custom_text: {
+                submit: {
+                    message: 'Refunds are available only if your consultation has not been completed by a clinician.',
+                },
+            },
         };
 
         const session = await stripeClient.checkout.sessions.create(sessionConfig as never);

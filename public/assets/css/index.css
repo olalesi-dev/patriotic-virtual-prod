@@ -1992,6 +1992,43 @@ footer {
   font-weight: 500;
 }
 
+.hair-screening-followup {
+  margin-top: 10px;
+}
+
+.hair-screening-followup input {
+  width: 100%;
+}
+
+.hair-screening-alert {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.hair-screening-note {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--g500);
+}
+
+.hair-choice--multi .rd2 {
+  border-radius: 6px;
+}
+
+.hair-choice--multi.ro.sel .rd2::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+}
+
 .ia {
   display: flex;
   gap: 12px;

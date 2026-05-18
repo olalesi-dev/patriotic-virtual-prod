@@ -78,6 +78,13 @@ export interface PatientDetailEncounter {
     type: string;
     status: string;
     notes?: string | null;
+    serviceKey?: string | null;
+    serviceLine?: string | null;
+    chartCategory?: string | null;
+    screeningVersion?: string | null;
+    screeningResponses?: Array<Record<string, unknown>>;
+    screeningFlags?: Array<Record<string, unknown>>;
+    requiresClinicianReview?: boolean;
 }
 
 export interface PatientDetailOrder {

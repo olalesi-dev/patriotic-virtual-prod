@@ -23,7 +23,7 @@ function resolveRuntimeConfig() {
   const isFirebasePreview = host.includes("-fresh") || host.includes("--");
   const isDevLanding = host === "dev.patriotictelehealth.com";
   const isCustomProdLanding = host === "patriotictelehealth.com" || host === "www.patriotictelehealth.com";
-  const defaultVouchedPublicKey = "EmbGg*-Iph.xlzsx8fX9_O!BouHbdS";
+  const defaultVouchedPublicKey = "sooD.0nmqW@uG7MIP*QLEkebheKqYk";
 
   const defaults = isDevLanding || isFirebasePreview
     ? {

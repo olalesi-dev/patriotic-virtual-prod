@@ -201,7 +201,7 @@
             </span>
           </button>
 
-          <button class="lp-service-mini-card lp-service-mini-card--hair" type="button" onclick="startSvc('imaging_video')" aria-label="Start hair regrowth support">
+          <button class="lp-service-mini-card lp-service-mini-card--hair" type="button" onclick="startHairGrowthConsultation()" aria-label="Start hair regrowth support">
             <span class="lp-service-mini-copy">
               <span class="lp-service-mini-title" data-i18n="mini-hair-title"><span class="lp-service-mini-emphasis lp-service-mini-emphasis--blue">Restore</span> your hair</span>
               <span class="lp-service-mini-sub" data-i18n="mini-hair-sub">Care options for thinning hair.</span>
@@ -3062,6 +3062,23 @@
   <!-- CONSULT MODAL -->
   <div class="mo" id="consultModal" onclick="closeConsult(event)">
     <div class="modal cm" onclick="event.stopPropagation()">
+      <div id="cSHair" class="hidden">
+        <h2>Hair Growth Consultation</h2>
+        <p class="ms">
+          Answer these required screening questions before creating or signing in to your account.
+        </p>
+        <div class="ip">
+          <div class="ipb act"></div>
+          <div class="ipb"></div>
+          <div class="ipb"></div>
+        </div>
+        <div id="hairScreeningQuestions"></div>
+        <div id="hairScreeningAlert" class="hair-screening-alert hidden"></div>
+        <div class="ia">
+          <button class="btn btn-ghost" onclick="closeConsult()">Cancel</button>
+          <button class="btn btn-primary" id="hairScreeningContinueBtn" onclick="continueHairConsultationFromScreening()">Continue</button>
+        </div>
+      </div>
       <div id="cS1">
         <h2>Start a Visit</h2>
         <p class="ms">
@@ -4411,6 +4428,7 @@
   <script src="/assets/js/auth-nav.js"></script>
   <script src="/assets/js/dashboard.js"></script>
   <script src="/assets/js/consultation-flow.js"></script>
+  <script src="/assets/js/hair-consultation-flow.js"></script>
   <script src="/assets/js/booking-calendar.js"></script>
   <script src="/assets/js/payment-success.js"></script>
   <script src="/assets/js/provider-admin.js"></script>

@@ -22,7 +22,7 @@
       if (typeof setConsultModalStep === "function") {
         setConsultModalStep(1);
       } else {
-        ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+        ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
           document.getElementById(id).classList.add("hidden"),
         );
         document.getElementById("cS1").classList.remove("hidden");
@@ -69,7 +69,7 @@
       if (typeof setConsultModalStep === "function") {
         setConsultModalStep(s);
       } else {
-        ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+        ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
           document.getElementById(id).classList.add("hidden"),
         );
         document.getElementById("cS" + s).classList.remove("hidden");
@@ -79,7 +79,7 @@
       if (typeof setConsultModalStep === "function") {
         setConsultModalStep(s);
       } else {
-        ["cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+        ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
           document.getElementById(id).classList.add("hidden"),
         );
         document.getElementById("cS" + s).classList.remove("hidden");
@@ -194,6 +194,10 @@
       document.getElementById("consultModal").classList.remove("active");
       if (typeof clearPaymentFlowUrlState === "function") {
         clearPaymentFlowUrlState();
+      }
+      const hairStep = document.getElementById("cSHair");
+      if (hairStep && !hairStep.classList.contains("hidden")) {
+        window._pendingHairLossConsult = false;
       }
       selSvc = null;
     }

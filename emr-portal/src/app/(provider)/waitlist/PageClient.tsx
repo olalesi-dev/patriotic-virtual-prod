@@ -27,6 +27,10 @@ interface WaitlistEntry {
     createdAt: Date;
     meetingUrl: string;
     intakeAnswers: Record<string, any>;
+    screeningVersion?: string | null;
+    screeningResponses?: Array<Record<string, any>>;
+    screeningFlags?: Array<Record<string, any>>;
+    requiresClinicianReview?: boolean;
     priority: 'high' | 'normal' | 'low';
 }
 
@@ -281,6 +285,8 @@ function ScheduleModal({
                                 <InfoBlock label="Submitted" value={format(entry.createdAt, 'MMM d, yyyy · h:mm a')} icon={<Clock className="w-4 h-4 text-indigo-500" />} />
                             </div>
 
+                            <HairScreeningBlock entry={entry} />
+
                             {/* Intake Q&A */}
                             {Object.keys(entry.intakeAnswers).length > 0 ? (
                                 <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-700 p-5 space-y-4">
@@ -479,6 +485,62 @@ function InfoBlock({ label, value, icon }: { label: string; value: string; icon:
     );
 }
 
+function formatScreeningValue(value: unknown): string {
+    if (Array.isArray(value)) return value.map(formatScreeningValue).filter(Boolean).join(', ');
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+}
+
+function HairScreeningBlock({ entry }: { entry: WaitlistEntry }) {
+    const responses = entry.screeningResponses ?? [];
+    if (responses.length === 0) return null;
+
+    const flags = entry.screeningFlags ?? [];
+    return (
+        <div className="bg-sky-50 dark:bg-sky-950/30 rounded-3xl border border-sky-100 dark:border-sky-900 p-5 space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-300">Hair Growth Screening</p>
+                    <p className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+                        Version {entry.screeningVersion || 'hair_loss_v1'} | Chart category dermatology
+                    </p>
+                </div>
+                {(entry.requiresClinicianReview || flags.length > 0) && (
+                    <span className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+                        <AlertCircle className="h-3 w-3" /> Review Required
+                    </span>
+                )}
+            </div>
+            <div className="grid gap-3">
+                {responses.map((response, index) => {
+                    const question = formatScreeningValue(response.question_text ?? response.question_id ?? `Question ${index + 1}`);
+                    const answer = formatScreeningValue(response.answer_label ?? response.answer);
+                    const followUp = response.follow_up && typeof response.follow_up === 'object'
+                        ? response.follow_up as Record<string, unknown>
+                        : null;
+                    const flagged = flags.some((flag) => flag.question_id === response.question_id);
+
+                    return (
+                        <div key={`${String(response.question_id ?? index)}`} className={`rounded-2xl border bg-white dark:bg-slate-900/50 p-4 ${flagged ? 'border-rose-200 dark:border-rose-500/30' : 'border-sky-100 dark:border-sky-900'}`}>
+                            <div className="flex items-start justify-between gap-3">
+                                <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">{question}</p>
+                                {flagged && <span className="rounded-full bg-rose-100 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">Flag</span>}
+                            </div>
+                            <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">{answer}</p>
+                            {followUp && (
+                                <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    {formatScreeningValue(followUp.question_text)}: {formatScreeningValue(followUp.answer)}
+                                </p>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 /* ─── Main Page ──────────────────────────── */
 export default function WaitlistPage() {
     const [entries, setEntries] = useState<WaitlistEntry[]>([]);
@@ -508,6 +570,10 @@ export default function WaitlistPage() {
         let patientUid = data.patientId || data.uid || '';
         let serviceKey = data.serviceKey || data.service || data.type || 'consultation';
         let intakeAnswers: Record<string, any> = data.intakeAnswers || {};
+        let screeningVersion: string | null = data.screeningVersion || data.screening_version || null;
+        let screeningResponses: Array<Record<string, any>> = Array.isArray(data.screeningResponses) ? data.screeningResponses : [];
+        let screeningFlags: Array<Record<string, any>> = Array.isArray(data.screeningFlags) ? data.screeningFlags : [];
+        let requiresClinicianReview = Boolean(data.requiresClinicianReview);
         let meetingUrl = data.meetingUrl || buildDoxyRoomUrl(DEFAULT_DOXY_ROOM);
         // Normalize any old per-appointment random URLs to the canonical clinic waiting room
         if (meetingUrl && meetingUrl.includes('doxy.me/patriotic-visit-')) {
@@ -520,6 +586,12 @@ export default function WaitlistPage() {
                 const cd = consultSnap.data();
                 intakeAnswers = cd.intake || intakeAnswers;
                 serviceKey = cd.serviceKey || serviceKey;
+                screeningVersion = cd.screeningVersion || cd.screening_version || screeningVersion;
+                screeningResponses = Array.isArray(cd.screeningResponses) ? cd.screeningResponses : screeningResponses;
+                screeningFlags = Array.isArray(cd.screeningFlags) ? cd.screeningFlags : screeningFlags;
+                requiresClinicianReview = typeof cd.requiresClinicianReview === 'boolean'
+                    ? cd.requiresClinicianReview
+                    : requiresClinicianReview || screeningFlags.length > 0;
                 patientUid = cd.uid || cd.patientId || patientUid;
                 meetingUrl = cd.meetingUrl || meetingUrl;
                 const cdName = String(cd.patient || cd.patientName || '').trim();
@@ -548,7 +620,18 @@ export default function WaitlistPage() {
 
         if (patientName === 'Unknown Patient' && patientEmail) patientName = patientEmail.split('@')[0];
 
-        return { patientName, patientEmail, patientUid, serviceKey, intakeAnswers, meetingUrl };
+        return {
+            patientName,
+            patientEmail,
+            patientUid,
+            serviceKey,
+            intakeAnswers,
+            meetingUrl,
+            screeningVersion,
+            screeningResponses,
+            screeningFlags,
+            requiresClinicianReview,
+        };
     };
 
     useEffect(() => {
@@ -603,7 +686,7 @@ export default function WaitlistPage() {
                     const enriched = await enrichFromConsultation(d.id, data);
                     const svcName = enriched.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
                     const priority: 'high' | 'normal' | 'low' =
-                        enriched.serviceKey.includes('diagnostic') || enriched.serviceKey.includes('imaging') ? 'high' : 'normal';
+                        enriched.requiresClinicianReview || enriched.screeningFlags.length > 0 || enriched.serviceKey.includes('diagnostic') || enriched.serviceKey.includes('imaging') ? 'high' : 'normal';
 
                     return {
                         id: d.id,
@@ -616,6 +699,10 @@ export default function WaitlistPage() {
                         createdAt: dateObj,
                         meetingUrl: enriched.meetingUrl,
                         intakeAnswers: enriched.intakeAnswers,
+                        screeningVersion: enriched.screeningVersion,
+                        screeningResponses: enriched.screeningResponses,
+                        screeningFlags: enriched.screeningFlags,
+                        requiresClinicianReview: enriched.requiresClinicianReview,
                         priority,
                     } satisfies WaitlistEntry;
                 }));
@@ -637,7 +724,7 @@ export default function WaitlistPage() {
                     const enriched = await enrichFromConsultation(d.id, data);
                     const svcName = enriched.serviceKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
                     const priority: 'high' | 'normal' | 'low' =
-                        enriched.serviceKey.includes('diagnostic') || enriched.serviceKey.includes('imaging') ? 'high' : 'normal';
+                        enriched.requiresClinicianReview || enriched.screeningFlags.length > 0 || enriched.serviceKey.includes('diagnostic') || enriched.serviceKey.includes('imaging') ? 'high' : 'normal';
 
                     return {
                         id: d.id,
@@ -650,6 +737,10 @@ export default function WaitlistPage() {
                         createdAt: dateObj,
                         meetingUrl: enriched.meetingUrl,
                         intakeAnswers: enriched.intakeAnswers,
+                        screeningVersion: enriched.screeningVersion,
+                        screeningResponses: enriched.screeningResponses,
+                        screeningFlags: enriched.screeningFlags,
+                        requiresClinicianReview: enriched.requiresClinicianReview,
                         priority,
                     } satisfies WaitlistEntry;
                 }));

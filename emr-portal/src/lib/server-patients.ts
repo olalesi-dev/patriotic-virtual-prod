@@ -294,6 +294,12 @@ function buildEncounterNotes(row: Record<string, unknown>): string | null {
     return notes ?? soapNote;
 }
 
+function asRecordArray(value: unknown): Array<Record<string, unknown>> {
+    return Array.isArray(value)
+        ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
+        : [];
+}
+
 function buildEncounterRows(
     patientId: string,
     appointmentRows: Record<string, unknown>[],
@@ -314,7 +320,14 @@ function buildEncounterRows(
                 provider: asNonEmptyString(appointment.providerName) ?? 'Assigned Provider',
                 type: asNonEmptyString(appointment.type) ?? 'Telehealth',
                 status: asNonEmptyString(appointment.status) ?? 'scheduled',
-                notes: buildEncounterNotes(appointment)
+                notes: buildEncounterNotes(appointment),
+                serviceKey: asNonEmptyString(appointment.serviceKey),
+                serviceLine: asNonEmptyString(appointment.serviceLine) ?? asNonEmptyString(appointment.service_line),
+                chartCategory: asNonEmptyString(appointment.chartCategory) ?? asNonEmptyString(appointment.chart_category),
+                screeningVersion: asNonEmptyString(appointment.screeningVersion) ?? asNonEmptyString(appointment.screening_version),
+                screeningResponses: asRecordArray(appointment.screeningResponses),
+                screeningFlags: asRecordArray(appointment.screeningFlags),
+                requiresClinicianReview: Boolean(appointment.requiresClinicianReview),
             } satisfies PatientDetailEncounter;
         });
 
@@ -333,7 +346,14 @@ function buildEncounterRows(
                 provider: asNonEmptyString(encounter.providerName) ?? asNonEmptyString(encounter.authorEmail) ?? 'Assigned Provider',
                 type: asNonEmptyString(encounter.type) ?? 'Telehealth',
                 status: asNonEmptyString(encounter.status) ?? 'draft',
-                notes: buildEncounterNotes(encounter)
+                notes: buildEncounterNotes(encounter),
+                serviceKey: asNonEmptyString(encounter.serviceKey),
+                serviceLine: asNonEmptyString(encounter.serviceLine) ?? asNonEmptyString(encounter.service_line),
+                chartCategory: asNonEmptyString(encounter.chartCategory) ?? asNonEmptyString(encounter.chart_category),
+                screeningVersion: asNonEmptyString(encounter.screeningVersion) ?? asNonEmptyString(encounter.screening_version),
+                screeningResponses: asRecordArray(encounter.screeningResponses),
+                screeningFlags: asRecordArray(encounter.screeningFlags),
+                requiresClinicianReview: Boolean(encounter.requiresClinicianReview),
             } satisfies PatientDetailEncounter;
         });
 
