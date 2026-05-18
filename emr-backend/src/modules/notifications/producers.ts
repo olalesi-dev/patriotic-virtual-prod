@@ -178,6 +178,27 @@ export async function notifyNewPatientAccountCreated(input: {
             toEmail: recipients[index],
         }))
         .filter((entry): entry is { result: PromiseRejectedResult; toEmail: string } => entry.result.status === 'rejected');
+    const sentRecipients = results
+        .map((result, index) => ({
+            result,
+            toEmail: recipients[index],
+        }))
+        .filter((entry): entry is {
+            result: PromiseFulfilledResult<Awaited<ReturnType<typeof sendDirectTemplateEmail>>>;
+            toEmail: string;
+        } => entry.result.status === 'fulfilled');
+
+    logger.info('New patient account notification email results', {
+        patientUid: input.patientUid,
+        attemptedCount: recipients.length,
+        sentCount: sentRecipients.length,
+        failedCount: failedRecipients.length,
+        sentRecipients: sentRecipients.map((entry) => ({
+            toEmail: entry.toEmail,
+            responseCode: entry.result.value.responseCode,
+            providerMessageId: entry.result.value.providerMessageId,
+        })),
+    });
 
     if (failedRecipients.length > 0) {
         logger.warn('New patient account notification emails failed', {

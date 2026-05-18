@@ -4,6 +4,7 @@ import { notificationService, sendDirectTemplateEmail } from '../modules/notific
 import { notifyNewPatientAccountCreated } from '../modules/notifications/producers';
 import { NotificationRepository } from '../modules/notifications/repository';
 import type { NotificationChannel, NotificationTemplateKey, NotificationTopicKey } from '../modules/notifications';
+import { logger } from '../utils/logger';
 
 const router = Router();
 const repository = new NotificationRepository();
@@ -48,6 +49,17 @@ const deliveryStatusQuerySchema = z.object({
     message: 'Either email or providerMessageId is required.',
 });
 
+function readStringField(data: Record<string, unknown> | undefined, keys: string[]): string | null {
+    if (!data) return null;
+    for (const key of keys) {
+        const value = data[key];
+        if (typeof value === 'string' && value.trim().length > 0) {
+            return value.trim();
+        }
+    }
+    return null;
+}
+
 router.post('/notify', async (req, res) => {
     try {
         const parsed = notifySchema.safeParse(req.body);
@@ -60,35 +72,64 @@ router.post('/notify', async (req, res) => {
             await notificationService.cancelScheduledByDedupeKey(dedupeKey);
         }
 
-        const result = await notificationService.notify({
-            topicKey: body.topicKey as NotificationTopicKey,
-            entityId: body.entityId,
-            recipientIds: body.recipientIds,
-            templateData: body.templateData,
-            metadata: body.metadata,
-            dedupeKey: body.dedupeKey,
-            channels: body.channels as NotificationChannel[] | undefined,
-            actorId: body.actorId ?? req.user?.uid ?? null,
-            actorName: body.actorName ?? null,
-            source: body.source ?? null,
-        });
+        const metadataRole = readStringField(body.metadata, ['role']);
+        const shouldNotifyNewPatientAccount =
+            body.topicKey === 'PATIENT_WELCOME' ||
+            (body.topicKey === 'STAFF_ACCOUNT_CREATED' && metadataRole?.toLowerCase() === 'patient');
+        const newPatientAccountNotificationInput = {
+            patientUid: body.entityId,
+            firstName: readStringField(body.templateData, ['firstName', 'first_name']),
+            patientEmail: readStringField(body.templateData, [
+                'patientEmail',
+                'patient_email',
+                'email',
+                'loginEmail',
+                'login_email',
+            ]) ?? readStringField(req.user, ['email']),
+        };
 
-        if (body.topicKey === 'PATIENT_WELCOME' && !result.deduped) {
-            await notifyNewPatientAccountCreated({
-                patientUid: body.entityId,
-                firstName: typeof body.templateData.firstName === 'string'
-                    ? body.templateData.firstName
-                    : typeof body.templateData.first_name === 'string'
-                        ? body.templateData.first_name
-                        : null,
-                patientEmail: typeof body.templateData.patientEmail === 'string'
-                    ? body.templateData.patientEmail
-                    : typeof body.templateData.patient_email === 'string'
-                        ? body.templateData.patient_email
-                        : typeof req.user?.email === 'string'
-                            ? req.user.email
-                            : null,
+        let result: { messageId: string | null; deduped: boolean };
+        try {
+            result = await notificationService.notify({
+                topicKey: body.topicKey as NotificationTopicKey,
+                entityId: body.entityId,
+                recipientIds: body.recipientIds,
+                templateData: body.templateData,
+                metadata: body.metadata,
+                dedupeKey: body.dedupeKey,
+                channels: body.channels as NotificationChannel[] | undefined,
+                actorId: body.actorId ?? req.user?.uid ?? null,
+                actorName: body.actorName ?? null,
+                source: body.source ?? null,
             });
+        } catch (error) {
+            if (!shouldNotifyNewPatientAccount) {
+                throw error;
+            }
+
+            const notificationError = error instanceof Error ? error.message : String(error);
+            logger.warn('Primary notification pipeline failed during patient account creation; sending direct staff email fallback', {
+                topicKey: body.topicKey,
+                entityId: body.entityId,
+                error: notificationError,
+            });
+
+            await notifyNewPatientAccountCreated(newPatientAccountNotificationInput);
+
+            return res.json({
+                success: true,
+                result: {
+                    messageId: null,
+                    deduped: false,
+                },
+                followUps: [],
+                followUpErrors: [],
+                notificationWarning: notificationError,
+            });
+        }
+
+        if (shouldNotifyNewPatientAccount && !result.deduped) {
+            await notifyNewPatientAccountCreated(newPatientAccountNotificationInput);
         }
 
         const followUps = [];

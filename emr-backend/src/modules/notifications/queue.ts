@@ -2,7 +2,7 @@ import { CloudTasksClient } from '@google-cloud/tasks';
 import { logger } from '../../utils/logger';
 import type { DispatchTaskPayload } from './types';
 
-const tasksClient = new CloudTasksClient();
+let tasksClient: CloudTasksClient | null = null;
 
 interface QueueConfig {
     projectId: string;
@@ -10,6 +10,72 @@ interface QueueConfig {
     queue: string;
     targetUrl: string;
     secret: string | null;
+}
+
+function normalizePrivateKey(value: string): string {
+    return value.replace(/\\n/g, '\n');
+}
+
+function readCloudTasksClientOptions(projectId?: string): ConstructorParameters<typeof CloudTasksClient>[0] {
+    const jsonCandidates = [
+        process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+        process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON,
+    ];
+
+    for (const rawJson of jsonCandidates) {
+        if (!rawJson) continue;
+
+        const rawCandidates = [rawJson];
+        try {
+            rawCandidates.push(Buffer.from(rawJson, 'base64').toString('utf8'));
+        } catch {
+            // Ignore invalid base64 and try the raw value.
+        }
+
+        for (const candidate of rawCandidates) {
+            try {
+                const parsed = JSON.parse(candidate) as {
+                    project_id?: string;
+                    client_email?: string;
+                    private_key?: string;
+                };
+
+                if (parsed.client_email && parsed.private_key) {
+                    return {
+                        projectId: parsed.project_id ?? projectId,
+                        credentials: {
+                            client_email: parsed.client_email,
+                            private_key: normalizePrivateKey(parsed.private_key),
+                        },
+                    };
+                }
+            } catch {
+                // Continue to the next credential shape.
+            }
+        }
+    }
+
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    if (clientEmail && privateKey) {
+        return {
+            projectId: process.env.FIREBASE_PROJECT_ID ?? projectId,
+            credentials: {
+                client_email: clientEmail,
+                private_key: normalizePrivateKey(privateKey),
+            },
+        };
+    }
+
+    return projectId ? { projectId } : undefined;
+}
+
+function getTasksClient(projectId?: string): CloudTasksClient {
+    if (!tasksClient) {
+        tasksClient = new CloudTasksClient(readCloudTasksClientOptions(projectId));
+    }
+
+    return tasksClient;
 }
 
 function getQueueConfig(): QueueConfig | null {
@@ -71,7 +137,8 @@ export async function enqueueDispatchTask(
         };
     }
 
-    const parent = tasksClient.queuePath(queueConfig.projectId, queueConfig.location, queueConfig.queue);
+    const client = getTasksClient(queueConfig.projectId);
+    const parent = client.queuePath(queueConfig.projectId, queueConfig.location, queueConfig.queue);
     const task: {
         httpRequest: {
             httpMethod: 'POST';
@@ -101,7 +168,7 @@ export async function enqueueDispatchTask(
         };
     }
 
-    const [response] = await tasksClient.createTask({
+    const [response] = await client.createTask({
         parent,
         task,
     });
@@ -112,7 +179,8 @@ export async function enqueueDispatchTask(
 }
 
 export async function deleteDispatchTask(taskName: string): Promise<void> {
-    await tasksClient.deleteTask({ name: taskName });
+    const queueConfig = getQueueConfig();
+    await getTasksClient(queueConfig?.projectId).deleteTask({ name: taskName });
 }
 
 export function verifyDispatchSecret(secret: string | undefined): boolean {
