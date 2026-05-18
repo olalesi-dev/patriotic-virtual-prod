@@ -565,56 +565,16 @@
         consultationId,
         "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
       );
+
+      if (!getVouchedPublicKey()) {
+        setPaymentVerificationError("Identity verification is not configured. Please contact support so we can finish your appointment review.");
+      }
+
       return true;
     }
     window.runPaidConsultationVerification = runPaidConsultationVerification;
     async function runSignupVerification(firebaseUser, registration) {
-      const workflowPayload = getVouchedWorkflowPayload(registration);
-
-      try {
-        const workflow = await authedApiJson("/api/v1/vouched/workflow/start", {
-          method: "POST",
-          user: firebaseUser,
-          body: workflowPayload,
-        });
-        await recordSignupFlowTrace({
-          step: "vouched_workflow",
-          status: "success",
-          user: firebaseUser,
-          payload: workflowPayload,
-          response: workflow,
-        });
-
-        if (workflow && workflow.nextStep === "visual_id") {
-          showVisualVerification(
-            firebaseUser,
-            registration,
-            workflow.warningMessage || "We could not verify your identity with passive checks. Complete secure ID verification to continue.",
-          );
-          return;
-        }
-
-        if (workflow && workflow.status === "review_required") {
-          finishSignup(workflow.warningMessage || "Your account was created and identity verification is pending manual review. Please verify your email before logging in.");
-          return;
-        }
-
-        finishSignup("Your account was created and identity verification is complete. Please verify your email before logging in.");
-      } catch (error) {
-        await recordSignupFlowTrace({
-          step: "vouched_workflow",
-          status: "error",
-          user: firebaseUser,
-          payload: workflowPayload,
-          error: error.message || "Vouched step-up workflow failed.",
-        });
-        console.warn("Passive identity verification failed:", error);
-        showVisualVerification(
-          firebaseUser,
-          registration,
-          "We could not complete passive identity verification. Complete secure ID verification to continue.",
-        );
-      }
+      finishSignup("Account created. Continue to checkout; identity verification starts after payment.");
     }
     async function handleLogin() {
       const e = document.getElementById("loginEmail").value;
@@ -696,7 +656,7 @@
 
         user = await loadUserProfile(fbUser);
         updateNav();
-        await runSignupVerification(fbUser, registration);
+        finishSignup("Account created. Please check your email to verify your email address. Identity verification starts after payment.");
       } catch (err) {
         const msg =
           err.code === "auth/email-already-in-use"
@@ -743,7 +703,7 @@
         user = await loadUserProfile(fbUser);
         updateNav();
         if (registerMode && registration) {
-          await runSignupVerification(fbUser, registration);
+          finishSignup("Account ready. Continue to checkout; identity verification starts after payment.");
         } else {
           document.getElementById("authModal").classList.remove("active");
           if (typeof window.resumePendingPaymentSuccess === "function" && await window.resumePendingPaymentSuccess()) {

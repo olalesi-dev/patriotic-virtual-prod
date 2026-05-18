@@ -89,6 +89,7 @@
 
       if (paymentStatus === "success") {
         const urlId = params.get("consultationId");
+        const stripeSessionId = params.get("session_id");
         const sessionId = sessionStorage.getItem("pendingConsultationId");
         const localId = localStorage.getItem("pendingConsultationId");
 
@@ -110,14 +111,13 @@
           localStorage.setItem("pendingConsultationId", savedId);
 
           // Use the consolidated professional success flow
-          handlePaymentSuccess(savedId);
+          handlePaymentSuccess(savedId, stripeSessionId);
           return;
         } else {
           console.warn(
             "Payment success landing but no Consultation ID found in storage or URL.",
           );
-          // Fallback: show success anyway so patient isn't stuck
-          showBookingSuccess();
+          toast("Payment received, but we could not find your consultation. Please contact support so identity verification can be completed.");
         }
       } else if (paymentStatus === "cancelled") {
         toast("Payment was cancelled.");

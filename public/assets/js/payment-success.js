@@ -28,10 +28,14 @@
       });
     }
 
-    function setPendingPaymentSuccess(consultationId) {
+    function setPendingPaymentSuccess(consultationId, sessionId) {
       if (!consultationId) return;
       sessionStorage.setItem("pendingPaymentSuccessConsultationId", consultationId);
       localStorage.setItem("pendingPaymentSuccessConsultationId", consultationId);
+      if (sessionId) {
+        sessionStorage.setItem("pendingPaymentSuccessSessionId", sessionId);
+        localStorage.setItem("pendingPaymentSuccessSessionId", sessionId);
+      }
     }
 
     function clearPendingPaymentSuccess(consultationId) {
@@ -43,10 +47,12 @@
       if (!consultationId || localId === consultationId) {
         localStorage.removeItem("pendingPaymentSuccessConsultationId");
       }
+      sessionStorage.removeItem("pendingPaymentSuccessSessionId");
+      localStorage.removeItem("pendingPaymentSuccessSessionId");
     }
 
-    function promptSignInForPaidConsultation(consultationId) {
-      setPendingPaymentSuccess(consultationId);
+    function promptSignInForPaidConsultation(consultationId, sessionId) {
+      setPendingPaymentSuccess(consultationId, sessionId);
       toast("Payment received. Sign in to finish identity verification.");
       openModal("login");
     }
@@ -57,23 +63,27 @@
         localStorage.getItem("pendingPaymentSuccessConsultationId");
 
       if (!pendingId) return false;
-      await handlePaymentSuccess(pendingId);
+      const pendingSessionId =
+        sessionStorage.getItem("pendingPaymentSuccessSessionId") ||
+        localStorage.getItem("pendingPaymentSuccessSessionId") ||
+        null;
+      await handlePaymentSuccess(pendingId, pendingSessionId);
       return true;
     }
 
     window.resumePendingPaymentSuccess = resumePendingPaymentSuccess;
     window.clearPendingPaymentSuccess = clearPendingPaymentSuccess;
 
-    async function handlePaymentSuccess(consultationId) {
+    async function handlePaymentSuccess(consultationId, sessionId) {
       console.log("Processing payment success for:", consultationId);
       currentConsultId = consultationId; // Assign to global variable
-      setPendingPaymentSuccess(consultationId);
+      setPendingPaymentSuccess(consultationId, sessionId);
       let paymentVerificationStarted = false;
 
       try {
         const signedInUser = await waitForLandingAuth();
         if (!signedInUser) {
-          promptSignInForPaidConsultation(consultationId);
+          promptSignInForPaidConsultation(consultationId, sessionId);
           return;
         }
 
@@ -81,6 +91,35 @@
         token = await signedInUser.getIdToken();
         user = await loadUserProfile(signedInUser);
         updateNav();
+
+        if (sessionId) {
+          try {
+            const confirmRes = await fetch(`${API}/api/v1/payments/confirm-telehealth-session`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                sessionId,
+                consultationId,
+              }),
+            });
+
+            if (!confirmRes.ok) {
+              const text = await confirmRes.text();
+              let body = null;
+              try {
+                body = text ? JSON.parse(text) : null;
+              } catch {
+                body = { error: text };
+              }
+              console.warn((body && (body.error || body.message)) || "Payment confirmation failed.");
+            }
+          } catch (confirmErr) {
+            console.warn("Payment confirmation check skipped:", confirmErr);
+          }
+        }
 
         const updateTasks = [];
         let serviceKey = null;
@@ -201,15 +240,32 @@
             intakeData,
           });
         } else {
-          clearPendingPaymentSuccess(consultationId);
-          showBookingSuccess();
+          paymentVerificationStarted = true;
+          if (typeof window.openPaidConsultationVerificationShell === "function") {
+            window.openPaidConsultationVerificationShell(
+              consultationId,
+              "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
+            );
+          }
+          if (typeof setPaymentVerificationError === "function") {
+            setPaymentVerificationError("Identity verification could not start automatically. Please refresh this page or contact support.");
+          }
+          toast("Payment received. Identity verification is required before your appointment can continue.");
         }
 
       } catch (err) {
         console.error("Error finalizing payment flow:", err);
-        // Fallback: show local success if redirect fails
-        clearPendingPaymentSuccess(consultationId);
-        showBookingSuccess();
+        paymentVerificationStarted = true;
+        if (typeof window.openPaidConsultationVerificationShell === "function") {
+          window.openPaidConsultationVerificationShell(
+            consultationId,
+            "Your payment is confirmed. Complete secure ID verification so our clinical team can continue processing your appointment.",
+          );
+        }
+        if (typeof setPaymentVerificationError === "function") {
+          setPaymentVerificationError("Payment succeeded, but we could not finish loading identity verification. Please refresh this page or contact support.");
+        }
+        toast("Payment received. Identity verification is required before your appointment can continue.");
       }
 
       if (paymentVerificationStarted) {
