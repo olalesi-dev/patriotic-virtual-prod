@@ -6,6 +6,12 @@ import {
     HairLossScreeningValidationError,
     normalizeHairLossScreening,
 } from '../services/hair-loss-screening';
+import {
+    METABOLIC_HOLD_MESSAGE,
+    METABOLIC_SERVICE_KEY,
+    MetabolicScreeningValidationError,
+    normalizeMetabolicScreening,
+} from '../services/metabolic-screening';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -83,6 +89,49 @@ router.post('/', async (req, res) => {
             }
         }
 
+        if (normalizedServiceKey === METABOLIC_SERVICE_KEY) {
+            try {
+                const normalizedScreening = normalizeMetabolicScreening(screening);
+                Object.assign(clinicalPayload, {
+                    serviceCategory: catalogItem?.serviceCategory ?? 'program',
+                    serviceLine: catalogItem?.serviceLine ?? METABOLIC_SERVICE_KEY,
+                    service_line: catalogItem?.serviceLine ?? METABOLIC_SERVICE_KEY,
+                    clinicalType: catalogItem?.clinicalType ?? 'async_or_sync',
+                    chartCategory: catalogItem?.chartCategory ?? 'metabolic',
+                    chart_category: catalogItem?.chartCategory ?? 'metabolic',
+                    requiresIntake: catalogItem?.requiresIntake ?? true,
+                    requiresIdVerification: catalogItem?.requiresIdVerification ?? true,
+                    requiresRxCapableProvider: catalogItem?.requiresRxCapableProvider ?? false,
+                    screeningVersion: normalizedScreening.screeningVersion,
+                    screening_version: normalizedScreening.screeningVersion,
+                    screening: normalizedScreening.screening,
+                    screeningResponses: normalizedScreening.screeningResponses,
+                    screeningFlags: normalizedScreening.screeningFlags,
+                    requiresClinicianReview: normalizedScreening.requiresClinicianReview,
+                    paymentEligible: normalizedScreening.paymentEligible,
+                    holdMessage: normalizedScreening.holdMessage,
+                    stripeProductId: catalogItem?.stripeProductId ?? stripeProductId ?? null,
+                    sku: catalogItem?.sku ?? null,
+                    initialStatus: normalizedScreening.paymentEligible ? 'pending' : 'pending_clinician_review',
+                    initialPaymentStatus: normalizedScreening.paymentEligible ? 'unpaid' : 'not_required',
+                });
+            } catch (error) {
+                if (error instanceof MetabolicScreeningValidationError) {
+                    return res.status(error.statusCode).json({ error: error.message });
+                }
+                throw error;
+            }
+        }
+
+        const initialStatus = typeof clinicalPayload.initialStatus === 'string'
+            ? clinicalPayload.initialStatus
+            : 'pending';
+        const initialPaymentStatus = typeof clinicalPayload.initialPaymentStatus === 'string'
+            ? clinicalPayload.initialPaymentStatus
+            : 'unpaid';
+        delete clinicalPayload.initialStatus;
+        delete clinicalPayload.initialPaymentStatus;
+
         const consultationRef = await firestore.collection('consultations').add({
             uid,
             patient: `${firstName} ${lastName}`.trim(),
@@ -90,8 +139,8 @@ router.post('/', async (req, res) => {
             serviceKey: normalizedServiceKey,
             intake: intake || {},
             stripeProductId: clinicalPayload.stripeProductId || stripeProductId || catalogItem?.stripeProductId || null,
-            status: 'pending',
-            paymentStatus: 'unpaid',
+            status: initialStatus,
+            paymentStatus: initialPaymentStatus,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             ...clinicalPayload,
         });
@@ -108,7 +157,13 @@ router.post('/', async (req, res) => {
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
 
-        return res.json({ id: consultationRef.id, message: 'Consultation created' });
+        const isMetabolicHold = normalizedServiceKey === METABOLIC_SERVICE_KEY && clinicalPayload.paymentEligible === false;
+        return res.json({
+            id: consultationRef.id,
+            message: isMetabolicHold ? METABOLIC_HOLD_MESSAGE : 'Consultation created',
+            hold: isMetabolicHold,
+            holdMessage: isMetabolicHold ? METABOLIC_HOLD_MESSAGE : null,
+        });
     } catch (error) {
         logger.error('Error creating consultation', { error });
         return res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });

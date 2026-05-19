@@ -290,7 +290,7 @@ function showHairScreeningModal() {
   const modal = document.getElementById("consultModal");
   if (modal) modal.classList.add("active");
 
-  ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) => {
+  ["cSHair", "cSMetabolicHold", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("hidden", id !== "cSHair");
   });

@@ -285,7 +285,7 @@ function ScheduleModal({
                                 <InfoBlock label="Submitted" value={format(entry.createdAt, 'MMM d, yyyy · h:mm a')} icon={<Clock className="w-4 h-4 text-indigo-500" />} />
                             </div>
 
-                            <HairScreeningBlock entry={entry} />
+                            <ClinicalScreeningBlock entry={entry} />
 
                             {/* Intake Q&A */}
                             {Object.keys(entry.intakeAnswers).length > 0 ? (
@@ -492,23 +492,45 @@ function formatScreeningValue(value: unknown): string {
     return String(value);
 }
 
-function HairScreeningBlock({ entry }: { entry: WaitlistEntry }) {
+function getScreeningDisplay(entry: WaitlistEntry) {
+    if (
+        entry.screeningVersion === 'metabolic_wellness_v1' ||
+        entry.serviceKey === 'metabolic_wellness'
+    ) {
+        return {
+            eyebrow: 'Metabolic Wellness Screening',
+            version: entry.screeningVersion || 'metabolic_wellness_v1',
+            chartCategory: 'metabolic',
+            reviewCopy: 'Physician review required before payment.',
+        };
+    }
+
+    return {
+        eyebrow: 'Hair Growth Screening',
+        version: entry.screeningVersion || 'hair_loss_v1',
+        chartCategory: 'dermatology',
+        reviewCopy: 'Review Required',
+    };
+}
+
+function ClinicalScreeningBlock({ entry }: { entry: WaitlistEntry }) {
     const responses = entry.screeningResponses ?? [];
     if (responses.length === 0) return null;
 
     const flags = entry.screeningFlags ?? [];
+    const display = getScreeningDisplay(entry);
     return (
         <div className="bg-sky-50 dark:bg-sky-950/30 rounded-3xl border border-sky-100 dark:border-sky-900 p-5 space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-300">Hair Growth Screening</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-300">{display.eyebrow}</p>
                     <p className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">
-                        Version {entry.screeningVersion || 'hair_loss_v1'} | Chart category dermatology
+                        Version {display.version} | Chart category {display.chartCategory}
                     </p>
                 </div>
                 {(entry.requiresClinicianReview || flags.length > 0) && (
                     <span className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
-                        <AlertCircle className="h-3 w-3" /> Review Required
+                        <AlertCircle className="h-3 w-3" /> {display.reviewCopy}
                     </span>
                 )}
             </div>
@@ -658,7 +680,7 @@ export default function WaitlistPage() {
 
             const consultQuery = query(
                 collection(db, 'consultations'),
-                where('paymentStatus', '==', 'paid')
+                where('paymentStatus', 'in', ['paid', 'not_required'])
             );
 
             let apptEntries: WaitlistEntry[] = [];

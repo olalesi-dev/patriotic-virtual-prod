@@ -174,7 +174,7 @@
             </div>
           </button>
 
-          <button class="lp-service-card lp-service-card--top" type="button" onclick="startSvc('weight_loss')" aria-label="Start Imaging-Guided Metabolic Wellness Optimization">
+          <button class="lp-service-card lp-service-card--top" type="button" onclick="startSvc('metabolic_wellness')" aria-label="Start Imaging-Guided Metabolic Wellness Optimization">
             <div class="lp-service-card-bg" aria-hidden="true">
               <img src="landing-page-demo/assets/hero-card-2.png" alt="" />
             </div>
@@ -3078,6 +3078,27 @@
           <button class="btn btn-ghost" onclick="closeConsult()">Cancel</button>
           <button class="btn btn-primary" id="hairScreeningContinueBtn" onclick="continueHairConsultationFromScreening()">Continue</button>
         </div>
+      </div>
+      <div id="cSMetabolicHold" class="hidden" style="text-align: center; padding: 24px 0">
+        <div style="
+              width: 64px;
+              height: 64px;
+              border-radius: 50%;
+              background: #fff7ed;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 28px;
+              color: #c2410c;
+              margin: 0 auto 20px;
+            ">
+          !
+        </div>
+        <h2 style="margin-bottom: 8px">Physician Review Needed</h2>
+        <p class="ms" id="metabolicHoldCopy" style="max-width: 520px; margin: 0 auto 28px">
+          A physician will review your intake. We will contact you within 1 business day.
+        </p>
+        <button class="btn btn-primary" onclick="closeConsult()">Done</button>
       </div>
       <div id="cS1">
         <h2>Start a Visit</h2>

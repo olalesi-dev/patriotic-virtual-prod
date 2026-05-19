@@ -36,6 +36,40 @@ test('hair loss consultation uses the configured Stripe product and resolves an 
     });
 });
 
+test('metabolic wellness uses the configured Stripe product and resolves an active price server-side', async () => {
+    const stripeCalls: string[] = [];
+    const fakeStripe = {
+        products: {
+            retrieve: async (productId: string) => {
+                stripeCalls.push(`product:${productId}`);
+                return {
+                    id: productId,
+                    default_price: {
+                        id: 'price_metabolic_standard',
+                        active: true,
+                        recurring: null,
+                    },
+                };
+            },
+        },
+        prices: {
+            list: async () => {
+                throw new Error('default price should be used');
+            },
+        },
+    };
+
+    const lineItem = await buildStripeLineItem('metabolic_wellness', fakeStripe as never);
+
+    assert.equal(CONSULTATION_CATALOG.metabolic_wellness.stripeProductId, 'prod_UXYYtyYEe4mYGu');
+    assert.equal(CONSULTATION_CATALOG.metabolic_wellness.amount, 49900);
+    assert.deepEqual(stripeCalls, ['product:prod_UXYYtyYEe4mYGu']);
+    assert.deepEqual(lineItem, {
+        quantity: 1,
+        price: 'price_metabolic_standard',
+    });
+});
+
 test('non-product services keep existing inline price data behavior', async () => {
     const lineItem = await buildStripeLineItem('general_visit');
 

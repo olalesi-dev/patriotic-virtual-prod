@@ -1,3 +1,91 @@
+    const METABOLIC_SERVICE_KEY = "metabolic_wellness";
+    const METABOLIC_SCREENING_VERSION = "metabolic_wellness_v1";
+    const METABOLIC_HOLD_MESSAGE = "A physician will review your intake. We will contact you within 1 business day.";
+    const CONSULT_STEP_IDS = ["cSHair", "cSMetabolicHold", "cS1", "cS2", "cS3", "cS4", "cS5"];
+
+    function hideConsultStepsExcept(activeId) {
+      CONSULT_STEP_IDS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle("hidden", id !== activeId);
+      });
+      const cm = document.querySelector("#consultModal .modal.cm");
+      if (cm) cm.classList.remove("cm-verify");
+    }
+
+    function getMetabolicQuestions() {
+      return iQs[METABOLIC_SERVICE_KEY] || [];
+    }
+
+    function validateMetabolicSafetyAnswers() {
+      const questions = getMetabolicQuestions();
+      const missing = questions.filter((question) => typeof intake[question.k] !== "boolean");
+      const blocked = questions.filter((question) => intake[question.k] === true);
+      return { missing, blocked };
+    }
+
+    function buildMetabolicScreeningPayload() {
+      const timestamp = new Date().toISOString();
+      return {
+        version: METABOLIC_SCREENING_VERSION,
+        responses: getMetabolicQuestions().map((question) => {
+          const answer = intake[question.k] === true;
+          return {
+            question_id: question.k,
+            question_text: question.l,
+            answer,
+            answer_label: answer ? "Yes" : "No",
+            timestamp,
+          };
+        }),
+      };
+    }
+
+    function showMetabolicHoldMessage(message) {
+      const copy = document.getElementById("metabolicHoldCopy");
+      if (copy) copy.textContent = message || METABOLIC_HOLD_MESSAGE;
+      hideConsultStepsExcept("cSMetabolicHold");
+      document.getElementById("consultModal").classList.add("active");
+    }
+
+    async function submitMetabolicHoldConsultation() {
+      const btn = document.querySelector("#cS2 .btn-primary");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Submitting...";
+      }
+
+      try {
+        const tok = await auth.currentUser.getIdToken();
+        const consRes = await fetch(`${API}/api/v1/consultations`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${tok}`,
+          },
+          body: JSON.stringify({
+            serviceKey: METABOLIC_SERVICE_KEY,
+            intake,
+            screening: buildMetabolicScreeningPayload(),
+          }),
+        });
+        const consText = await consRes.text();
+        const consData = consText ? JSON.parse(consText) : {};
+        if (!consRes.ok) throw new Error(consData.error || "Failed to submit intake for review");
+
+        currentConsultId = consData.id || currentConsultId;
+        showMetabolicHoldMessage(consData.holdMessage || METABOLIC_HOLD_MESSAGE);
+        toast(consData.holdMessage || METABOLIC_HOLD_MESSAGE);
+      } catch (error) {
+        console.error("Metabolic hold submission failed:", error);
+        toast(error.message || "Could not submit your intake for physician review.");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "Continue →";
+        }
+      }
+    }
+
     function startSvc(k) {
       selSvc = k;
       window._initialSvcClick = k;
@@ -22,7 +110,7 @@
       if (typeof setConsultModalStep === "function") {
         setConsultModalStep(1);
       } else {
-        ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+        CONSULT_STEP_IDS.forEach((id) =>
           document.getElementById(id).classList.add("hidden"),
         );
         document.getElementById("cS1").classList.remove("hidden");
@@ -43,7 +131,7 @@
       el.classList.add("sel");
       selSvc = k;
     }
-    function cN(s) {
+    async function cN(s) {
       if (s === 2 && !selSvc) return toast("Select a service.");
       if (s === 2) {
         const qs = iQs[selSvc] || [];
@@ -56,6 +144,17 @@
           .join("");
       }
       if (s === 3) {
+        if (selSvc === METABOLIC_SERVICE_KEY) {
+          const metabolicSafety = validateMetabolicSafetyAnswers();
+          if (metabolicSafety.missing.length > 0) {
+            return toast("Please answer every Metabolic Wellness safety screening question.");
+          }
+          if (metabolicSafety.blocked.length > 0) {
+            await submitMetabolicHoldConsultation();
+            return;
+          }
+        }
+
         const sv = svcs.find((x) => x.k === selSvc);
         const responseRows = Object.entries(intake)
           .map(
@@ -69,7 +168,7 @@
       if (typeof setConsultModalStep === "function") {
         setConsultModalStep(s);
       } else {
-        ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+        CONSULT_STEP_IDS.forEach((id) =>
           document.getElementById(id).classList.add("hidden"),
         );
         document.getElementById("cS" + s).classList.remove("hidden");
@@ -79,7 +178,7 @@
       if (typeof setConsultModalStep === "function") {
         setConsultModalStep(s);
       } else {
-        ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) =>
+        CONSULT_STEP_IDS.forEach((id) =>
           document.getElementById(id).classList.add("hidden"),
         );
         document.getElementById("cS" + s).classList.remove("hidden");
@@ -101,6 +200,23 @@
         }
 
         const sv = svcs.find((x) => x.k === selSvc);
+        if (selSvc === METABOLIC_SERVICE_KEY) {
+          const metabolicSafety = validateMetabolicSafetyAnswers();
+          if (metabolicSafety.missing.length > 0) {
+            throw new Error("Please answer every Metabolic Wellness safety screening question.");
+          }
+          if (metabolicSafety.blocked.length > 0) {
+            if (btn) {
+              btn.disabled = false;
+              btn.innerText = "Submit Visit →";
+            }
+            await submitMetabolicHoldConsultation();
+            return;
+          }
+        }
+        const metabolicScreening = selSvc === METABOLIC_SERVICE_KEY
+          ? buildMetabolicScreeningPayload()
+          : null;
 
         // 1. Create Consultation
         console.log("Creating consultation for:", sv.name);
@@ -115,6 +231,7 @@
             serviceKey: sv.k,
             intake: intake,
             stripeProductId: sv.priceId,
+            ...(metabolicScreening ? { screening: metabolicScreening } : {}),
           }),
         });
 
@@ -131,7 +248,9 @@
           ? getLandingOrigin()
           : window.location.origin;
         const landingPath = window.location.pathname || "/";
-        const checkoutReturnUrl = `${landingOrigin}${landingPath}`;
+        const checkoutReturnUrl = selSvc === METABOLIC_SERVICE_KEY
+          ? `${landingOrigin}/booking-confirmed`
+          : `${landingOrigin}${landingPath}`;
         const payRes = await fetch(
           `${API}/api/v1/payments/create-checkout-session`,
           {
@@ -187,7 +306,7 @@
     }
     function closeConsult(e) {
       if (e && e.target !== e.currentTarget) return;
-      if (typeof isPaymentVerificationLocked === "function" && isPaymentVerificationLocked()) {
+      if (typeof isPaymentVerificationLocked === "function" && isPaymentVerificationLocked("consult")) {
         toast("Complete identity verification before closing this step.");
         return;
       }

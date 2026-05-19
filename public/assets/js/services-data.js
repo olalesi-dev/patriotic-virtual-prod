@@ -41,6 +41,19 @@
     priceId: "PRICE_ID_WEIGHT_LOSS",
   },
   {
+    id: "metabolic-wellness",
+    k: "metabolic_wellness",
+    name: "Imaging-Guided Metabolic Wellness Optimization",
+    desc: "Radiologist-led metabolic wellness program for Florida residents.",
+    icon: "🧬",
+    ic: "indigo",
+    c: "indigo",
+    price: 499,
+    cat: ["popular", "clinical", "radiology"],
+    stripe: "prod_UXYYtyYEe4mYGu",
+    priceId: "prod_UXYYtyYEe4mYGu",
+  },
+  {
     id: "membership-elite",
     k: "membership_elite",
     name: "All Access — Elite",
@@ -215,6 +228,38 @@
         { k: "hasMEN2", l: "History of MEN2 syndrome?", t: "yn" },
         { k: "hasPancreatitis", l: "History of pancreatitis?", t: "yn" },
         { k: "isPregnant", l: "Pregnant or planning pregnancy?", t: "yn" },
+      ],
+      metabolic_wellness: [
+        {
+          k: "metabolic_active_cardiovascular_condition",
+          l: "Do you have any active cardiovascular conditions (heart disease, recent MI, stroke)?",
+          t: "yn",
+          required: true,
+        },
+        {
+          k: "metabolic_liver_disease_or_cirrhosis",
+          l: "Have you been diagnosed with liver disease or cirrhosis?",
+          t: "yn",
+          required: true,
+        },
+        {
+          k: "metabolic_active_thyroid_treatment",
+          l: "Do you have an active thyroid condition currently being treated?",
+          t: "yn",
+          required: true,
+        },
+        {
+          k: "metabolic_pregnant_or_planning",
+          l: "Are you pregnant or planning to become pregnant?",
+          t: "yn",
+          required: true,
+        },
+        {
+          k: "metabolic_pacemaker_or_implanted_metal",
+          l: "Do you have a pacemaker or implanted metal device?",
+          t: "yn",
+          required: true,
+        },
       ],
       erectile_dysfunction: [
         {
@@ -446,4 +491,3 @@
         { k: "symptomDuration", l: "Duration of symptoms?", t: "i" },
       ],
     };
-

@@ -97,34 +97,62 @@ function formatScreeningAnswer(value: unknown): string {
     return String(value);
 }
 
-function getHairScreeningEncounter(patient: PatientDetailRecord): PatientDetailEncounter | null {
+function getScreeningEncounter(patient: PatientDetailRecord): PatientDetailEncounter | null {
     return patient.recentEncounters.find((encounter) => (
         encounter.screeningVersion === 'hair_loss_v1' ||
+        encounter.screeningVersion === 'metabolic_wellness_v1' ||
         encounter.serviceKey === 'hair_loss' ||
-        encounter.serviceLine === 'hair_loss'
+        encounter.serviceKey === 'metabolic_wellness' ||
+        encounter.serviceLine === 'hair_loss' ||
+        encounter.serviceLine === 'metabolic_wellness'
     )) ?? null;
 }
 
-function HairScreeningSummary({ patient }: { patient: PatientDetailRecord }) {
-    const encounter = getHairScreeningEncounter(patient);
+function getScreeningDisplay(encounter: PatientDetailEncounter) {
+    if (
+        encounter.screeningVersion === 'metabolic_wellness_v1' ||
+        encounter.serviceKey === 'metabolic_wellness' ||
+        encounter.serviceLine === 'metabolic_wellness'
+    ) {
+        return {
+            eyebrow: 'Metabolic Wellness Screening',
+            title: 'Metabolic safety intake snapshot',
+            version: encounter.screeningVersion ?? 'metabolic_wellness_v1',
+            chartCategory: encounter.chartCategory ?? 'metabolic',
+            reviewCopy: 'Physician review required before payment.',
+        };
+    }
+
+    return {
+        eyebrow: 'Hair Growth Screening',
+        title: 'Hair loss intake snapshot',
+        version: encounter.screeningVersion ?? 'hair_loss_v1',
+        chartCategory: encounter.chartCategory ?? 'dermatology',
+        reviewCopy: 'Review required before prescription consideration.',
+    };
+}
+
+function ClinicalScreeningSummary({ patient }: { patient: PatientDetailRecord }) {
+    const encounter = getScreeningEncounter(patient);
     const responses = encounter?.screeningResponses ?? [];
     if (!encounter || responses.length === 0) return null;
 
     const flags = encounter.screeningFlags ?? [];
+    const display = getScreeningDisplay(encounter);
     return (
         <div className="mt-6 rounded-2xl border border-sky-100 bg-sky-50/70 p-5">
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700">Hair Growth Screening</p>
-                    <h2 className="mt-1 text-lg font-black text-slate-900">Hair loss intake snapshot</h2>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700">{display.eyebrow}</p>
+                    <h2 className="mt-1 text-lg font-black text-slate-900">{display.title}</h2>
                     <p className="mt-1 text-sm font-semibold text-slate-600">
-                        Version {encounter.screeningVersion ?? 'hair_loss_v1'} | Chart category {encounter.chartCategory ?? 'dermatology'}
+                        Version {display.version} | Chart category {display.chartCategory}
                     </p>
                 </div>
                 {(encounter.requiresClinicianReview || flags.length > 0) && (
                     <div className="inline-flex max-w-md items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700">
                         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span>Review required before prescription consideration.</span>
+                        <span>{display.reviewCopy}</span>
                     </div>
                 )}
             </div>
@@ -678,7 +706,7 @@ export function PatientDetailClient({ patientId }: { patientId: string }) {
                     </div>
                 </div>
 
-                <HairScreeningSummary patient={patient} />
+                <ClinicalScreeningSummary patient={patient} />
 
                 <div className="-mb-8 mt-8 flex gap-1 overflow-x-auto border-t border-slate-100 pt-4">
                     {PATIENT_DETAIL_TABS.map((tab) => (

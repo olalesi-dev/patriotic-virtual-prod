@@ -2,6 +2,9 @@ import { admin, firestore } from '../config/firebase';
 import {
     HAIR_LOSS_SERVICE_KEY,
 } from './hair-loss-screening';
+import {
+    METABOLIC_SERVICE_KEY,
+} from './metabolic-screening';
 
 const DEFAULT_DOXY_ROOM = 'virtualtelehealth';
 const DEFAULT_MEETING_URL = `https://pvt.doxy.me/${DEFAULT_DOXY_ROOM}`;
@@ -53,6 +56,21 @@ export const CONSULTATION_CATALOG: Record<string, ConsultationCatalogItem> = {
         sku: 'PVT-CONSULT-HAIR-001',
         unitLabel: 'consultation',
         statementDescriptor: 'PVT HAIR CONSULT',
+    },
+    [METABOLIC_SERVICE_KEY]: {
+        name: 'Imaging-Guided Metabolic Wellness Optimization',
+        amount: 49900,
+        stripeProductId: 'prod_UXYYtyYEe4mYGu',
+        serviceCategory: 'program',
+        serviceLine: METABOLIC_SERVICE_KEY,
+        clinicalType: 'async_or_sync',
+        requiresIntake: true,
+        requiresIdVerification: true,
+        requiresRxCapableProvider: false,
+        chartCategory: 'metabolic',
+        sku: 'PVT-METABOLIC-WELLNESS-001',
+        unitLabel: 'program',
+        statementDescriptor: 'PVT METABOLIC WELLNESS',
     },
     ai_imaging: { name: 'AI-Powered Imaging Analysis', amount: 9900 },
     report_interpretation: { name: 'Report Interpretation', amount: 14900 },
@@ -257,11 +275,13 @@ export async function completeTelehealthConsultationPayment(args: {
 
 function getEnvPriceOverride(serviceKey: string): string | null {
     const envKey = `STRIPE_PRICE_${serviceKey.toUpperCase()}`;
-    return optionalString(process.env[envKey]) ?? (
-        serviceKey === HAIR_LOSS_SERVICE_KEY
-            ? optionalString(process.env.STRIPE_HAIR_LOSS_PRICE_ID)
-            : null
-    );
+    const serviceAlias = serviceKey === HAIR_LOSS_SERVICE_KEY
+        ? optionalString(process.env.STRIPE_HAIR_LOSS_PRICE_ID)
+        : serviceKey === METABOLIC_SERVICE_KEY
+            ? optionalString(process.env.STRIPE_METABOLIC_PRICE_ID) ?? optionalString(process.env.STRIPE_METABOLIC_WELLNESS_PRICE_ID)
+            : null;
+
+    return optionalString(process.env[envKey]) ?? serviceAlias;
 }
 
 function isCatalogIntervalMatch(price: any, item: ConsultationCatalogItem): boolean {

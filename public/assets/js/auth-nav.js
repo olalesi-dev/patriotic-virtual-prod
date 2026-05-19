@@ -34,7 +34,7 @@
     }
     function closeModal(e) {
       if (e && e.target !== e.currentTarget) return;
-      if (isPaymentVerificationLocked()) {
+      if (isPaymentVerificationLocked("auth")) {
         toast("Complete identity verification before closing this step.");
         return;
       }
@@ -92,7 +92,7 @@
       syncConsultModalUrl(false);
     }
     function setConsultModalStep(step) {
-      ["cSHair", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) => {
+      ["cSHair", "cSMetabolicHold", "cS1", "cS2", "cS3", "cS4", "cS5"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle("hidden", id !== `cS${step}`);
       });
@@ -119,12 +119,41 @@
         return null;
       }
     }
-    function isPaymentVerificationLocked() {
-      const pending = window.pendingPaymentVerification;
+    function isConsultPaymentVerificationStepActive() {
+      const consultModal = document.getElementById("consultModal");
+      const verificationStep = document.getElementById("cS4");
       return Boolean(
+        consultModal &&
+        consultModal.classList.contains("active") &&
+        verificationStep &&
+        !verificationStep.classList.contains("hidden"),
+      );
+    }
+    function isAuthPaymentVerificationPromptActive() {
+      const authModal = document.getElementById("authModal");
+      return Boolean(
+        authModal &&
+        authModal.classList.contains("active") &&
+        getStoredPaymentSuccessConsultationId(),
+      );
+    }
+    function isPaymentVerificationLocked(context) {
+      const pending = window.pendingPaymentVerification;
+      const hasPaymentVerificationState = Boolean(
         window.paymentVerificationRequired ||
         (pending && !pending.resolved) ||
         getStoredPaymentSuccessConsultationId(),
+      );
+
+      if (!hasPaymentVerificationState) return false;
+      if (context === "consult") return isConsultPaymentVerificationStepActive();
+      if (context === "auth") return isAuthPaymentVerificationPromptActive();
+
+      return Boolean(
+        isConsultPaymentVerificationStepActive() ||
+        isAuthPaymentVerificationPromptActive() ||
+        window.paymentVerificationRequired ||
+        (pending && !pending.resolved),
       );
     }
     function setPaymentVerificationMessage(message) {
@@ -810,6 +839,7 @@
 
           if (result.verified || result.status === "review_required") {
             const consultationId = pending.consultationId || currentConsultId || null;
+            const isMetabolicWellness = pending.serviceKey === "metabolic_wellness";
             if (typeof window.clearPendingPaymentSuccess === "function") {
               window.clearPendingPaymentSuccess(consultationId);
             }
@@ -818,14 +848,18 @@
             }
             showPaidConsultationVerificationComplete(
               result.verified ? "verified" : "review_required",
-              result.verified
-                ? "Identity verification is complete. A board-certified provider will review your case against our clinical protocols within 24 hours."
-                : (result.warningMessage || "Identity verification was submitted and is pending manual review. Our team will continue processing your appointment."),
+              isMetabolicWellness
+                ? "Your visit has been booked. Someone from our team will contact you within 24 hours."
+                : result.verified
+                  ? "Identity verification is complete. A board-certified provider will review your case against our clinical protocols within 24 hours."
+                  : (result.warningMessage || "Identity verification was submitted and is pending manual review. Our team will continue processing your appointment."),
             );
             window.pendingPaymentVerification = null;
-            toast(result.verified
-              ? "Payment confirmed and identity verification is complete."
-              : (result.warningMessage || "Payment confirmed. Identity verification is pending manual review."));
+            toast(isMetabolicWellness
+              ? "Payment confirmed. Your visit has been booked."
+              : result.verified
+                ? "Payment confirmed and identity verification is complete."
+                : (result.warningMessage || "Payment confirmed. Identity verification is pending manual review."));
             return;
           }
 

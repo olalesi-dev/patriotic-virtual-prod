@@ -45,6 +45,19 @@ router.post('/stripe', async (req, res) => {
                             : 'Consultation request',
                 });
             }
+        } else if (event.type === 'invoice.payment_failed') {
+            const invoice = event.data.object;
+            const metadataUid = typeof invoice.metadata?.uid === 'string' ? invoice.metadata.uid.trim() : '';
+            const patientEmail = typeof invoice.customer_email === 'string' ? invoice.customer_email.trim() : '';
+            const patientName = typeof invoice.customer_name === 'string' ? invoice.customer_name.trim() : '';
+
+            await notifyFailedPayment({
+                chargeId: invoice.id,
+                patientId: metadataUid || null,
+                patientEmail: patientEmail || null,
+                patientName: patientName || null,
+                amountInCents: typeof invoice.amount_due === 'number' ? invoice.amount_due : null,
+            });
         } else if (event.type === 'charge.failed') {
             const charge = event.data.object;
             const metadataUid = typeof charge.metadata?.uid === 'string' ? charge.metadata.uid.trim() : '';

@@ -12,6 +12,12 @@ import {
     HAIR_LOSS_SCREENING_VERSION,
     HAIR_LOSS_SERVICE_KEY,
 } from '../services/hair-loss-screening';
+import {
+    METABOLIC_HOLD_MESSAGE,
+    METABOLIC_SCREENING_QUESTIONS,
+    METABOLIC_SCREENING_VERSION,
+    METABOLIC_SERVICE_KEY,
+} from '../services/metabolic-screening';
 import { DEFAULT_EMR_ORIGIN, normalizeAbsoluteUrl } from '../config/app-origins';
 import { buildCheckoutRedirectUrl } from '../utils/stripe-checkout-urls';
 import { logger } from '../utils/logger';
@@ -58,6 +64,39 @@ function hasCompleteHairLossScreening(consultationData: Record<string, unknown>)
     );
 
     return HAIR_LOSS_SCREENING_QUESTIONS.every((question) => responseIds.has(question.id));
+}
+
+function getScreeningResponseIds(responses: unknown[]): Set<string> {
+    return new Set(
+        responses
+            .map((response) => response && typeof response === 'object' && 'question_id' in response
+                ? String((response as { question_id?: unknown }).question_id ?? '')
+                : '')
+            .filter(Boolean),
+    );
+}
+
+function hasCompleteMetabolicScreening(consultationData: Record<string, unknown>): boolean {
+    const version = typeof consultationData.screeningVersion === 'string'
+        ? consultationData.screeningVersion
+        : null;
+    const responses = Array.isArray(consultationData.screeningResponses)
+        ? consultationData.screeningResponses
+        : [];
+
+    if (version !== METABOLIC_SCREENING_VERSION) return false;
+    if (responses.length < METABOLIC_SCREENING_QUESTIONS.length) return false;
+
+    const responseIds = getScreeningResponseIds(responses);
+    return METABOLIC_SCREENING_QUESTIONS.every((question) => responseIds.has(question.id));
+}
+
+function hasMetabolicBlockingAnswer(consultationData: Record<string, unknown>): boolean {
+    if (consultationData.paymentEligible === false) return true;
+    const flags = Array.isArray(consultationData.screeningFlags)
+        ? consultationData.screeningFlags
+        : [];
+    return flags.length > 0;
 }
 
 router.post('/create-checkout-session', async (req, res) => {
@@ -107,12 +146,20 @@ router.post('/create-checkout-session', async (req, res) => {
         if (serviceKey === HAIR_LOSS_SERVICE_KEY && !hasCompleteHairLossScreening(consultationData)) {
             return res.status(400).json({ error: 'Hair growth screening must be completed before checkout' });
         }
+        if (serviceKey === METABOLIC_SERVICE_KEY) {
+            if (!hasCompleteMetabolicScreening(consultationData)) {
+                return res.status(400).json({ error: 'Metabolic safety screening must be completed before checkout' });
+            }
+            if (hasMetabolicBlockingAnswer(consultationData)) {
+                return res.status(400).json({ error: METABOLIC_HOLD_MESSAGE });
+            }
+        }
 
         const baseUrl = resolveCheckoutBaseUrl(req);
         const lineItem = await buildStripeLineItem(serviceKey, stripeClient);
         const item = CONSULTATION_CATALOG[serviceKey];
 
-        const sessionConfig = {
+        const sessionConfig: Record<string, unknown> = {
             payment_method_types: ['card'],
             allow_promotion_codes: true,
             line_items: [lineItem],
@@ -142,6 +189,33 @@ router.post('/create-checkout-session', async (req, res) => {
                 },
             },
         };
+
+        if (item.statementDescriptor && !item.interval) {
+            sessionConfig.payment_intent_data = {
+                statement_descriptor: item.statementDescriptor,
+            };
+        }
+
+        if (serviceKey === METABOLIC_SERVICE_KEY) {
+            sessionConfig.phone_number_collection = { enabled: true };
+            sessionConfig.custom_fields = [
+                {
+                    key: 'florida_resident',
+                    label: {
+                        type: 'custom',
+                        custom: 'Florida Resident?',
+                    },
+                    type: 'dropdown',
+                    dropdown: {
+                        options: [
+                            { label: 'Yes', value: 'yes' },
+                            { label: 'No', value: 'no' },
+                        ],
+                    },
+                    optional: false,
+                },
+            ];
+        }
 
         const session = await stripeClient.checkout.sessions.create(sessionConfig as never);
         return res.json({ sessionId: session.id, url: session.url });
