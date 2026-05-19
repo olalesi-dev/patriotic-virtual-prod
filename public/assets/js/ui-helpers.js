@@ -86,8 +86,43 @@
       const params = new URLSearchParams(window.location.search);
       const paymentStatus = params.get("payment");
       console.log("Checking payment status. Result:", paymentStatus);
+      const fallbackPaidSignupSessionId =
+        sessionStorage.getItem("pendingPaidSignupSessionId") ||
+        localStorage.getItem("pendingPaidSignupSessionId") ||
+        "";
+      const fallbackPaidSignupCheckoutId =
+        sessionStorage.getItem("pendingPaidSignupCheckoutId") ||
+        localStorage.getItem("pendingPaidSignupCheckoutId") ||
+        "";
+      const paidSignupStartedAt = Number(
+        sessionStorage.getItem("pendingPaidSignupStartedAt") ||
+        localStorage.getItem("pendingPaidSignupStartedAt") ||
+        0,
+      );
+      const paidSignupReturnExpected =
+        sessionStorage.getItem("pendingPaidSignupReturnExpected") === "1" ||
+        localStorage.getItem("pendingPaidSignupReturnExpected") === "1";
+      const paidSignupReturnIsFresh = paidSignupStartedAt > 0 &&
+        Date.now() - paidSignupStartedAt < 1000 * 60 * 60 * 24;
 
-      if (paymentStatus === "success") {
+      if (paymentStatus === "paid_signup") {
+        const stripeSessionId = params.get("session_id") || fallbackPaidSignupSessionId;
+        const intakeCheckoutId = params.get("intakeCheckoutId") || fallbackPaidSignupCheckoutId;
+
+        if (typeof window.preparePaidSignupFromCheckout === "function") {
+          window.preparePaidSignupFromCheckout(stripeSessionId, intakeCheckoutId);
+          return;
+        }
+
+        toast("Payment received. Account setup is loading; please refresh if it does not appear.");
+      } else if (!paymentStatus && paidSignupReturnExpected && paidSignupReturnIsFresh && fallbackPaidSignupSessionId) {
+        if (typeof window.preparePaidSignupFromCheckout === "function") {
+          window.preparePaidSignupFromCheckout(fallbackPaidSignupSessionId, fallbackPaidSignupCheckoutId);
+          return;
+        }
+
+        toast("Payment received. Account setup is loading; please refresh if it does not appear.");
+      } else if (paymentStatus === "success") {
         const urlId = params.get("consultationId");
         const stripeSessionId = params.get("session_id");
         const sessionId = sessionStorage.getItem("pendingConsultationId");

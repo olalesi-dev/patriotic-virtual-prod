@@ -15,6 +15,7 @@ import dosespotRoutes from './routes/dosespot';
 import vouchedRoutes from './routes/vouched';
 import consultationRoutes from './routes/consultations';
 import paymentRoutes from './routes/payments';
+import publicIntakeRoutes from './routes/public-intake';
 import webhookRoutes from './routes/webhooks';
 import phoneVerificationRoutes from './routes/phone-verification';
 import telnyxRoutes from './routes/telnyx';
@@ -68,6 +69,7 @@ app.use('/api/v1/dosespot', dosespotRoutes);
 
 // Vouched Webhook (Public)
 app.use('/api/v1/vouched', vouchedRoutes);
+app.use('/api/v1/public', publicIntakeRoutes);
 
 // Patient intake and payments (Protected by Firebase token, but not Postgres-backed staff context)
 app.use('/api/v1/consultations', verifyFirebaseToken, consultationRoutes);

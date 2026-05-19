@@ -28,7 +28,34 @@
       if (el) el.classList.add("active");
       renderSvc(c);
     }
+    function routeRegisterAttemptToPaidCheckout(message) {
+      const pendingPaidSignup = typeof getPendingPaidSignupState === "function"
+        ? getPendingPaidSignupState()
+        : {};
+
+      if ((typeof auth !== "undefined" && auth.currentUser) || pendingPaidSignup.sessionId) {
+        return false;
+      }
+
+      const authModal = document.getElementById("authModal");
+      if (authModal) authModal.classList.remove("active");
+
+      if (typeof openConsultation === "function") {
+        window._pendingVisit = false;
+        window._initialSvcClick = null;
+        openConsultation({ allowAnonymousCheckout: true });
+      } else {
+        const servicesSection = document.getElementById("services") || document.getElementById("svcGrid");
+        if (servicesSection) servicesSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      toast(message || "Select a service to continue to checkout before creating an account.");
+      return true;
+    }
     function openModal(t) {
+      if (t === "register" && routeRegisterAttemptToPaidCheckout()) {
+        return;
+      }
       document.getElementById("authModal").classList.add("active");
       switchAuth(t);
     }
@@ -60,6 +87,9 @@
           const iframe = document.getElementById("vouchedFrame");
           if (iframe) iframe.src = "";
         }
+      }
+      if (typeof applyPaidSignupModeToAuthForm === "function") {
+        applyPaidSignupModeToAuthForm(t);
       }
     }
     function replaceLandingUrl(mutate) {
@@ -305,6 +335,414 @@
         },
       };
     }
+    function getPendingPaidSignupState() {
+      try {
+        const raw = sessionStorage.getItem("pendingPaidSignup") || localStorage.getItem("pendingPaidSignup");
+        const parsed = raw ? JSON.parse(raw) : {};
+        const state = parsed && typeof parsed === "object" ? parsed : {};
+        return {
+          ...state,
+          sessionId: state.sessionId ||
+            sessionStorage.getItem("pendingPaidSignupSessionId") ||
+            localStorage.getItem("pendingPaidSignupSessionId") ||
+            "",
+          intakeCheckoutId: state.intakeCheckoutId ||
+            sessionStorage.getItem("pendingPaidSignupCheckoutId") ||
+            localStorage.getItem("pendingPaidSignupCheckoutId") ||
+            "",
+        };
+      } catch {
+        return {
+          sessionId: sessionStorage.getItem("pendingPaidSignupSessionId") ||
+            localStorage.getItem("pendingPaidSignupSessionId") ||
+            "",
+          intakeCheckoutId: sessionStorage.getItem("pendingPaidSignupCheckoutId") ||
+            localStorage.getItem("pendingPaidSignupCheckoutId") ||
+            "",
+        };
+      }
+    }
+    function setPendingPaidSignupState(patch) {
+      const next = {
+        ...getPendingPaidSignupState(),
+        ...(patch || {}),
+        updatedAt: new Date().toISOString(),
+      };
+      sessionStorage.setItem("pendingPaidSignup", JSON.stringify(next));
+      localStorage.setItem("pendingPaidSignup", JSON.stringify(next));
+      if (next.sessionId) {
+        sessionStorage.setItem("pendingPaidSignupSessionId", next.sessionId);
+        localStorage.setItem("pendingPaidSignupSessionId", next.sessionId);
+      }
+      if (next.intakeCheckoutId) {
+        sessionStorage.setItem("pendingPaidSignupCheckoutId", next.intakeCheckoutId);
+        localStorage.setItem("pendingPaidSignupCheckoutId", next.intakeCheckoutId);
+      }
+      return next;
+    }
+    function clearPendingPaidSignupState() {
+      [
+        "pendingPaidSignup",
+        "pendingPaidSignupSessionId",
+        "pendingPaidSignupCheckoutId",
+        "pendingPaidSignupStartedAt",
+        "pendingPaidSignupReturnExpected",
+      ].forEach((key) => {
+        sessionStorage.removeItem(key);
+        localStorage.removeItem(key);
+      });
+      const emailInput = document.getElementById("regEmail");
+      if (emailInput) emailInput.readOnly = false;
+    }
+    function applyPaidSignupModeToAuthForm(mode) {
+      const pending = getPendingPaidSignupState();
+      const hasPaidSignup = Boolean(pending.sessionId && (pending.signupToken || pending.loginRequired));
+      const emailInput = document.getElementById("regEmail");
+      const loginEmailInput = document.getElementById("loginEmail");
+      const registerHeading = document.querySelector("#registerForm h2");
+      const registerCopy = document.querySelector("#registerForm .ms");
+
+      if (registerHeading && !registerHeading.dataset.defaultText) {
+        registerHeading.dataset.defaultText = registerHeading.textContent || "";
+      }
+      if (registerCopy && !registerCopy.dataset.defaultText) {
+        registerCopy.dataset.defaultText = registerCopy.textContent || "";
+      }
+
+      if (hasPaidSignup && pending.email && loginEmailInput && mode === "login" && !loginEmailInput.value) {
+        loginEmailInput.value = pending.email;
+      }
+
+      if (mode !== "register") return;
+
+      if (hasPaidSignup && pending.signupToken) {
+        if (registerHeading) registerHeading.textContent = "Create your account";
+        if (registerCopy) registerCopy.textContent = pending.serviceName
+          ? `Payment confirmed for ${pending.serviceName}. Finish your account to continue.`
+          : "Payment confirmed. Finish your account to continue.";
+        if (emailInput && pending.email) {
+          emailInput.value = pending.email;
+          emailInput.readOnly = true;
+        }
+        return;
+      }
+
+      if (registerHeading && registerHeading.dataset.defaultText) {
+        registerHeading.textContent = registerHeading.dataset.defaultText;
+      }
+      if (registerCopy && registerCopy.dataset.defaultText) {
+        registerCopy.textContent = registerCopy.dataset.defaultText;
+      }
+      if (emailInput) emailInput.readOnly = false;
+    }
+    function fillPaidSignupRegistrationForm(profile) {
+      const values = {
+        regFirst: profile.firstName || "",
+        regLast: profile.lastName || "",
+        regEmail: profile.email || "",
+        regState: profile.state || "",
+        regSex: profile.sex || profile.sexAtBirth || profile.gender || "",
+        regDob: profile.dob || profile.dateOfBirth || "",
+        regPhone: profile.phone || profile.phoneNumber || "",
+        regAddress1: profile.address1 || profile.address || "",
+        regCity: profile.city || "",
+        regZipCode: profile.zipCode || profile.zip || profile.postalCode || "",
+      };
+
+      Object.entries(values).forEach(([id, value]) => {
+        const input = document.getElementById(id);
+        if (input && value && !input.value) input.value = value;
+      });
+    }
+    function hasCompletePaidSignupRegistrationDetails(registration) {
+      return Boolean(
+        registration.firstName &&
+        registration.lastName &&
+        registration.email &&
+        registration.dob &&
+        registration.sex &&
+        registration.address1 &&
+        registration.city &&
+        registration.state &&
+        normalizeUsZip(registration.zipCode || registration.zip) &&
+        normalizeUsPhone(registration.phone || registration.phoneNumber),
+      );
+    }
+    async function publicApiJson(path, options = {}) {
+      const response = await fetch(`${API}${path}`, {
+        method: options.method || "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        },
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+
+      const text = await response.text();
+      let body = null;
+      if (text) {
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = { error: text };
+        }
+      }
+
+      if (!response.ok) {
+        const err = new Error((body && (body.error || body.message)) || `Request failed with status ${response.status}.`);
+        err.code = body && body.code;
+        throw err;
+      }
+
+      return body;
+    }
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+    function normalizeEmailForAuth(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+    async function verifyGoogleProviderMayOpen(options = {}) {
+      const pending = getPendingPaidSignupState();
+
+      if (pending.signupToken) {
+        return {
+          allowed: true,
+          paidSignupAllowed: true,
+          expectedEmail: normalizeEmailForAuth(pending.email),
+        };
+      }
+
+      const loginEmailInput = document.getElementById("loginEmail");
+      const expectedEmail = normalizeEmailForAuth(pending.email || (loginEmailInput && loginEmailInput.value));
+
+      if (pending.loginRequired && !expectedEmail) {
+        toast("Enter the email used at checkout before continuing with Google.");
+        return { allowed: false };
+      }
+
+      if (!expectedEmail) {
+        toast("Enter your existing account email before continuing with Google. New patients should select a service first.");
+        return { allowed: false };
+      }
+
+      if (expectedEmail) {
+        const methods = await auth.fetchSignInMethodsForEmail(expectedEmail);
+        if (methods.includes("google.com")) {
+          return {
+            allowed: true,
+            paidSignupAllowed: false,
+            expectedEmail,
+          };
+        }
+
+        if (pending.loginRequired || methods.length > 0) {
+          toast("Use the existing login method for this email to attach your paid intake.");
+          return { allowed: false };
+        }
+      }
+
+      if (options.registerMode) {
+        toast("Payment is still being confirmed. Please wait before creating your account.");
+        return { allowed: false };
+      }
+
+      routeRegisterAttemptToPaidCheckout("New patients must select a service and complete checkout before creating an account.");
+      return { allowed: false };
+    }
+    async function rollbackUnexpectedGoogleSignup(credential) {
+      try {
+        if (credential && credential.additionalUserInfo && credential.additionalUserInfo.isNewUser && credential.user) {
+          await credential.user.delete();
+        }
+      } catch (deleteError) {
+        console.warn("Unable to delete unexpected Google signup:", deleteError.message);
+      }
+
+      try {
+        await auth.signOut();
+      } catch (signOutError) {
+        console.warn("Unable to sign out unexpected Google signup:", signOutError.message);
+      }
+    }
+    async function preparePaidSignupFromCheckout(sessionId, intakeCheckoutId) {
+      if (!sessionId) {
+        toast("Payment received, but the Stripe session was missing. Please contact support.");
+        return false;
+      }
+
+      setPendingPaidSignupState({ sessionId, intakeCheckoutId });
+      toast("Payment received. Confirming checkout before account setup...");
+
+      let lastStatus = null;
+      for (let attempt = 0; attempt < 18; attempt += 1) {
+        const query = new URLSearchParams({ session_id: sessionId });
+        if (intakeCheckoutId) query.set("intakeCheckoutId", intakeCheckoutId);
+        const status = await publicApiJson(`/api/v1/public/intake-checkout/status?${query.toString()}`);
+        lastStatus = status;
+        setPendingPaidSignupState({
+          sessionId,
+          intakeCheckoutId: status.intakeCheckoutId || intakeCheckoutId,
+          signupToken: status.signupToken || null,
+          signupTokenExpiresAt: status.signupTokenExpiresAt || null,
+          email: status.email || "",
+          serviceKey: status.serviceKey || "",
+          serviceName: status.serviceName || "",
+          loginRequired: !!status.loginRequired,
+        });
+
+        if (status.signupAllowed && status.signupToken) {
+          openModal("register");
+          applyPaidSignupModeToAuthForm("register");
+          toast(status.message || "Payment confirmed. Create your account to continue.");
+          return true;
+        }
+
+        if (status.loginRequired) {
+          openModal("login");
+          applyPaidSignupModeToAuthForm("login");
+          toast(status.message || "Payment confirmed. Log in to continue.");
+          return true;
+        }
+
+        if (["failed", "expired", "manual_review", "account_created"].includes(status.status)) {
+          toast(status.message || "This checkout cannot continue automatically.");
+          return false;
+        }
+
+        await wait(attempt < 5 ? 1500 : 3000);
+      }
+
+      toast((lastStatus && lastStatus.message) || "Payment is still being confirmed. Keep this page open and try again shortly.");
+      return false;
+    }
+    async function completePaidSignupRequest(registration, firebaseUser) {
+      const pending = getPendingPaidSignupState();
+      if (!pending.sessionId) {
+        throw new Error("Missing paid checkout session. Please return from Stripe checkout again.");
+      }
+
+      const headers = {};
+      if (firebaseUser) {
+        headers.Authorization = `Bearer ${await firebaseUser.getIdToken()}`;
+      }
+
+      return publicApiJson("/api/v1/public/complete-paid-signup", {
+        method: "POST",
+        headers,
+        body: {
+          sessionId: pending.sessionId,
+          intakeCheckoutId: pending.intakeCheckoutId || null,
+          signupToken: pending.signupToken || null,
+          registration,
+        },
+      });
+    }
+    async function finishPaidSignupAccount(result, firebaseUser) {
+      let activeUser = firebaseUser || auth.currentUser || null;
+      if (result.customToken) {
+        const cred = await auth.signInWithCustomToken(result.customToken);
+        activeUser = cred.user;
+        try {
+          if (activeUser && !activeUser.emailVerified) {
+            await activeUser.sendEmailVerification();
+          }
+        } catch (emailErr) {
+          console.warn("Paid signup verification email skipped:", emailErr.message);
+        }
+      }
+
+      if (!activeUser) {
+        throw new Error("Account was created but sign-in could not be restored.");
+      }
+
+      fbUser = activeUser;
+      token = await activeUser.getIdToken();
+      user = await loadUserProfile(activeUser);
+      updateNav();
+      document.getElementById("authModal").classList.remove("active");
+
+      const consultationId = result.consultationId || null;
+      if (consultationId) {
+        currentConsultId = consultationId;
+        sessionStorage.setItem("pendingConsultationId", consultationId);
+        localStorage.setItem("pendingConsultationId", consultationId);
+        if (typeof window.clearPendingPaymentSuccess === "function") {
+          window.clearPendingPaymentSuccess(consultationId);
+        }
+        if (typeof setPendingPaymentSuccess === "function") {
+          setPendingPaymentSuccess(consultationId, result.stripeSessionId || null);
+        } else {
+          sessionStorage.setItem("pendingPaymentSuccessConsultationId", consultationId);
+          localStorage.setItem("pendingPaymentSuccessConsultationId", consultationId);
+          if (result.stripeSessionId) {
+            sessionStorage.setItem("pendingPaymentSuccessSessionId", result.stripeSessionId);
+            localStorage.setItem("pendingPaymentSuccessSessionId", result.stripeSessionId);
+          }
+        }
+      }
+
+      clearPendingPaidSignupState();
+
+      if (consultationId && typeof window.runPaidConsultationVerification === "function") {
+        await window.runPaidConsultationVerification(activeUser, {
+          consultationId,
+          profile: user,
+          serviceKey: result.serviceKey || null,
+        });
+        toast("Account created. Complete identity verification to continue.");
+        return true;
+      }
+
+      toast("Account created. Please check your email to verify your email address.");
+      return true;
+    }
+    async function completePaidSignupWithRegistration(registration) {
+      const result = await completePaidSignupRequest(registration, null);
+      return finishPaidSignupAccount(result, null);
+    }
+    async function completePaidSignupForAuthenticatedUser(firebaseUser, registration) {
+      const result = await completePaidSignupRequest(registration, firebaseUser);
+      return finishPaidSignupAccount(result, firebaseUser);
+    }
+    async function resumePaidSignupAfterAuth(registration) {
+      const pending = getPendingPaidSignupState();
+      const firebaseUser = auth.currentUser || fbUser;
+      if (!pending.sessionId || !firebaseUser) return false;
+
+      let registrationData = registration || null;
+      if (!registrationData) {
+        const profile = await loadUserProfile(firebaseUser);
+        registrationData = {
+          firstName: profile.firstName || "",
+          lastName: profile.lastName || "",
+          displayName: profile.displayName || profile.name || firebaseUser.displayName || "",
+          email: firebaseUser.email || profile.email || pending.email || "",
+          dob: profile.dob || profile.dateOfBirth || "",
+          sex: profile.sex || profile.sexAtBirth || profile.gender || "",
+          address1: profile.address1 || profile.address || "",
+          city: profile.city || "",
+          state: profile.state || "",
+          zipCode: profile.zipCode || profile.zip || "",
+          phone: profile.phone || profile.phoneNumber || "",
+        };
+      }
+
+      if (!registration && !hasCompletePaidSignupRegistrationDetails(registrationData)) {
+        fillPaidSignupRegistrationForm(registrationData);
+        openModal("register");
+        applyPaidSignupModeToAuthForm("register");
+        toast("Complete your account details to attach this paid intake.");
+        return true;
+      }
+
+      await completePaidSignupForAuthenticatedUser(firebaseUser, registrationData);
+      return true;
+    }
+    window.preparePaidSignupFromCheckout = preparePaidSignupFromCheckout;
+    window.resumePaidSignupAfterAuth = resumePaidSignupAfterAuth;
+    window.setPendingPaidSignupState = setPendingPaidSignupState;
+    window.clearPendingPaidSignupState = clearPendingPaidSignupState;
     function getFallbackUserProfile(firebaseUser) {
       const displayName = firebaseUser.displayName || "";
       const names = displayName.trim() ? displayName.trim().split(/\s+/) : [];
@@ -639,6 +1077,10 @@
           return;
         }
 
+        if (typeof window.resumePaidSignupAfterAuth === "function" && await window.resumePaidSignupAfterAuth()) {
+          return;
+        }
+
         if (window._pendingHairLossConsult && typeof window.resumeHairConsultationAfterAuth === "function") {
           await window.resumeHairConsultationAfterAuth();
           return;
@@ -670,39 +1112,32 @@
       }
     }
     async function handleRegister() {
-      const validation = readRegistrationForm();
+      const pendingPaidSignup = getPendingPaidSignupState();
+      if (!pendingPaidSignup.sessionId) {
+        routeRegisterAttemptToPaidCheckout();
+        return;
+      }
+      if (pendingPaidSignup.loginRequired && !pendingPaidSignup.signupToken && !auth.currentUser) {
+        openModal("login");
+        return toast("This payment email already has an account. Log in to continue.");
+      }
+      if (!pendingPaidSignup.signupToken && !pendingPaidSignup.loginRequired) {
+        return toast("Payment is still being confirmed. Please wait before creating your account.");
+      }
+
+      const validation = readRegistrationForm({
+        requirePassword: !(pendingPaidSignup.sessionId && auth.currentUser),
+      });
       if (validation.error || !validation.data) return toast(validation.error || "Please fill all required fields.");
 
       try {
         const registration = validation.data;
-        const cred = await auth.createUserWithEmailAndPassword(registration.email, registration.password);
-        fbUser = cred.user;
-        token = await fbUser.getIdToken();
-
-        try {
-          const dbResult = await persistPatientRegistration(fbUser, registration, {
-            sendVerificationEmail: true,
-            auditAction: "ACCOUNT_CREATED",
-          });
-          await recordSignupFlowTrace({
-            step: "db_write",
-            status: "success",
-            user: fbUser,
-            response: dbResult,
-          });
-        } catch (error) {
-          await recordSignupFlowTrace({
-            step: "db_write",
-            status: "error",
-            user: fbUser,
-            error: error.message || "Failed to persist patient/user signup records.",
-          });
-          throw error;
+        if (auth.currentUser) {
+          await completePaidSignupForAuthenticatedUser(auth.currentUser, registration);
+          return;
         }
 
-        user = await loadUserProfile(fbUser);
-        updateNav();
-        finishSignup("Account created. Please check your email to verify your email address. Identity verification starts after payment.");
+        await completePaidSignupWithRegistration(registration);
       } catch (err) {
         const msg =
           err.code === "auth/email-already-in-use"
@@ -720,19 +1155,52 @@
         const registerMode = !document.getElementById("registerForm").classList.contains("hidden");
         let registration = null;
         if (registerMode) {
+          const paidSignupState = getPendingPaidSignupState();
+          if (!paidSignupState.sessionId) {
+            routeRegisterAttemptToPaidCheckout();
+            return;
+          }
+          if (!paidSignupState.signupToken) {
+            return toast("Payment is still being confirmed. Please wait before creating your account.");
+          }
           const validation = readRegistrationForm({ requireEmail: false, requirePassword: false });
           if (validation.error || !validation.data) return toast(validation.error || "Please complete the required patient details first.");
           registration = validation.data;
         }
 
+        const googleGate = await verifyGoogleProviderMayOpen({ registerMode });
+        if (!googleGate.allowed) return;
+
         const provider = new firebase.auth.GoogleAuthProvider();
+        if (googleGate.expectedEmail) {
+          provider.setCustomParameters({ login_hint: googleGate.expectedEmail });
+        }
         const cred = await auth.signInWithPopup(provider);
         fbUser = cred.user;
         token = await fbUser.getIdToken();
 
+        if (googleGate.expectedEmail && normalizeEmailForAuth(fbUser.email) !== googleGate.expectedEmail) {
+          await rollbackUnexpectedGoogleSignup(cred);
+          fbUser = null;
+          token = null;
+          return toast("Use the Google account that matches the email for this checkout or existing account.");
+        }
+
+        if (!googleGate.paidSignupAllowed && cred.additionalUserInfo && cred.additionalUserInfo.isNewUser) {
+          await rollbackUnexpectedGoogleSignup(cred);
+          fbUser = null;
+          token = null;
+          routeRegisterAttemptToPaidCheckout("New patients must select a service and complete checkout before creating an account.");
+          return;
+        }
+
         if (registerMode && registration) {
           registration.email = fbUser.email || registration.email;
           if (!registration.email) throw new Error("Unable to determine patient email address.");
+          if (getPendingPaidSignupState().sessionId) {
+            await completePaidSignupForAuthenticatedUser(fbUser, registration);
+            return;
+          }
           const dbResult = await persistPatientRegistration(fbUser, registration, {
             emailOverride: fbUser.email,
             mergePatientRecord: true,
@@ -753,6 +1221,9 @@
         } else {
           document.getElementById("authModal").classList.remove("active");
           if (typeof window.resumePendingPaymentSuccess === "function" && await window.resumePendingPaymentSuccess()) {
+            return;
+          }
+          if (typeof window.resumePaidSignupAfterAuth === "function" && await window.resumePaidSignupAfterAuth()) {
             return;
           }
           if (window._pendingHairLossConsult && typeof window.resumeHairConsultationAfterAuth === "function") {

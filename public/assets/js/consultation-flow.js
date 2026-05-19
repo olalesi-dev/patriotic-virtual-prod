@@ -90,9 +90,14 @@
       selSvc = k;
       window._initialSvcClick = k;
       if (!user) {
-        // Save intent so after login/register the consult opens automatically
-        window._pendingVisit = true;
-        return openModal("register");
+        window._pendingVisit = false;
+        openConsultation({ allowAnonymousCheckout: true });
+        setTimeout(() => {
+          document.querySelectorAll("#svcSel .ro").forEach((el) => {
+            el.classList.toggle("sel", el.dataset.v === k);
+          });
+        }, 50);
+        return;
       }
       window._pendingVisit = false;
       openConsultation();
@@ -102,8 +107,8 @@
         });
       }, 50);
     }
-    function openConsultation() {
-      if (!user) return openModal("register");
+    function openConsultation(options = {}) {
+      if (!user && !options.allowAnonymousCheckout) return openModal("register");
       intake = {};
       selSvc = selSvc || "membership_elite";
       if (!selSvc) window._initialSvcClick = null;
@@ -150,6 +155,10 @@
             return toast("Please answer every Metabolic Wellness safety screening question.");
           }
           if (metabolicSafety.blocked.length > 0) {
+            if (!auth.currentUser) {
+              showMetabolicHoldMessage(METABOLIC_HOLD_MESSAGE);
+              return;
+            }
             await submitMetabolicHoldConsultation();
             return;
           }
@@ -191,6 +200,56 @@
       el.classList.add("sel");
       intake[k] = v;
     }
+    async function startAnonymousPaidSignupCheckout(sv, metabolicScreening) {
+      const landingOrigin = typeof getLandingOrigin === "function"
+        ? getLandingOrigin()
+        : window.location.origin;
+      const landingPath = window.location.pathname || "/";
+      const checkoutReturnUrl = `${landingOrigin}${landingPath}`;
+
+      const payRes = await fetch(`${API}/api/v1/public/intake-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceKey: sv.k,
+          intake,
+          ...(metabolicScreening ? { screening: metabolicScreening } : {}),
+          returnUrl: checkoutReturnUrl,
+          cancelUrl: checkoutReturnUrl,
+        }),
+      });
+
+      const payText = await payRes.text();
+      const payData = payText ? JSON.parse(payText) : {};
+      if (!payRes.ok) throw new Error(payData.error || "Payment initialization failed");
+      if (!payData.checkoutUrl) throw new Error("Missing checkout URL");
+
+      const startedAt = String(Date.now());
+      sessionStorage.setItem("pendingPaidSignupCheckoutId", payData.intakeCheckoutId);
+      localStorage.setItem("pendingPaidSignupCheckoutId", payData.intakeCheckoutId);
+      sessionStorage.setItem("pendingPaidSignupStartedAt", startedAt);
+      localStorage.setItem("pendingPaidSignupStartedAt", startedAt);
+      sessionStorage.setItem("pendingPaidSignupReturnExpected", "1");
+      localStorage.setItem("pendingPaidSignupReturnExpected", "1");
+      if (payData.sessionId) {
+        sessionStorage.setItem("pendingPaidSignupSessionId", payData.sessionId);
+        localStorage.setItem("pendingPaidSignupSessionId", payData.sessionId);
+      }
+      if (typeof window.setPendingPaidSignupState === "function") {
+        window.setPendingPaidSignupState({
+          sessionId: payData.sessionId || "",
+          intakeCheckoutId: payData.intakeCheckoutId,
+          serviceKey: sv.k,
+          serviceName: sv.name,
+          startedAt,
+          returnExpected: true,
+        });
+      }
+
+      window.location.href = payData.checkoutUrl;
+    }
     async function subC() {
       try {
         const btn = document.querySelector("#cS3 .btn-primary");
@@ -206,6 +265,14 @@
             throw new Error("Please answer every Metabolic Wellness safety screening question.");
           }
           if (metabolicSafety.blocked.length > 0) {
+            if (!auth.currentUser) {
+              if (btn) {
+                btn.disabled = false;
+                btn.innerText = "Submit Visit →";
+              }
+              showMetabolicHoldMessage(METABOLIC_HOLD_MESSAGE);
+              return;
+            }
             if (btn) {
               btn.disabled = false;
               btn.innerText = "Submit Visit →";
@@ -217,6 +284,11 @@
         const metabolicScreening = selSvc === METABOLIC_SERVICE_KEY
           ? buildMetabolicScreeningPayload()
           : null;
+
+        if (!auth.currentUser) {
+          await startAnonymousPaidSignupCheckout(sv, metabolicScreening);
+          return;
+        }
 
         // 1. Create Consultation
         console.log("Creating consultation for:", sv.name);

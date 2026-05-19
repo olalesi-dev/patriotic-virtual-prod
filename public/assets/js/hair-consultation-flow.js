@@ -302,10 +302,10 @@ function showHairScreeningModal() {
 }
 
 function startHairGrowthConsultation() {
-  const state = getHairConsultState();
+  clearHairConsultationFlow();
   saveHairConsultState({
-    step: state.step || "screening",
-    answers: state.answers || {},
+    step: "screening",
+    answers: {},
   });
   showHairScreeningModal();
 }
@@ -324,9 +324,8 @@ async function continueHairConsultationFromScreening() {
   });
 
   if (!auth.currentUser) {
-    document.getElementById("consultModal").classList.remove("active");
     window._pendingHairLossConsult = true;
-    return openModal("register");
+    return submitHairConsultationCheckout();
   }
 
   return submitHairConsultationCheckout();
@@ -357,7 +356,6 @@ function buildHairConsultationIntake(profile) {
 
 async function submitHairConsultationCheckout() {
   const firebaseUser = auth.currentUser || fbUser;
-  if (!firebaseUser) return openModal("login");
 
   const btn = document.getElementById("hairScreeningContinueBtn");
   if (btn) {
@@ -366,6 +364,58 @@ async function submitHairConsultationCheckout() {
   }
 
   try {
+    if (!firebaseUser) {
+      const screening = buildHairScreeningPayload();
+      const landingOrigin = typeof getLandingOrigin === "function"
+        ? getLandingOrigin()
+        : window.location.origin;
+      const landingPath = window.location.pathname || "/";
+      const checkoutReturnUrl = `${landingOrigin}${landingPath}`;
+      const payRes = await fetch(`${API}/api/v1/public/intake-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceKey: HAIR_CONSULT_SERVICE_KEY,
+          intake: buildHairConsultationIntake({}),
+          screening,
+          returnUrl: checkoutReturnUrl,
+          cancelUrl: checkoutReturnUrl,
+        }),
+      });
+
+      const payText = await payRes.text();
+      const payData = payText ? JSON.parse(payText) : {};
+      if (!payRes.ok) throw new Error(payData.error || "Payment initialization failed");
+      if (!payData.checkoutUrl) throw new Error("Missing checkout URL");
+
+      const startedAt = String(Date.now());
+      sessionStorage.setItem("pendingPaidSignupCheckoutId", payData.intakeCheckoutId);
+      localStorage.setItem("pendingPaidSignupCheckoutId", payData.intakeCheckoutId);
+      sessionStorage.setItem("pendingPaidSignupStartedAt", startedAt);
+      localStorage.setItem("pendingPaidSignupStartedAt", startedAt);
+      sessionStorage.setItem("pendingPaidSignupReturnExpected", "1");
+      localStorage.setItem("pendingPaidSignupReturnExpected", "1");
+      if (payData.sessionId) {
+        sessionStorage.setItem("pendingPaidSignupSessionId", payData.sessionId);
+        localStorage.setItem("pendingPaidSignupSessionId", payData.sessionId);
+      }
+      if (typeof window.setPendingPaidSignupState === "function") {
+        window.setPendingPaidSignupState({
+          sessionId: payData.sessionId || "",
+          intakeCheckoutId: payData.intakeCheckoutId,
+          serviceKey: HAIR_CONSULT_SERVICE_KEY,
+          serviceName: "Hair Growth & Hair Loss Consultation",
+          startedAt,
+          returnExpected: true,
+        });
+      }
+      saveHairConsultState({ step: "checkout_started", intakeCheckoutId: payData.intakeCheckoutId });
+      window.location.href = payData.checkoutUrl;
+      return;
+    }
+
     token = await firebaseUser.getIdToken();
     user = await loadUserProfile(firebaseUser);
     const screening = buildHairScreeningPayload();

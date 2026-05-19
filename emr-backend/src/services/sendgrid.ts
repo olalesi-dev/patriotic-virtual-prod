@@ -10,8 +10,7 @@ if (apiKey) {
 
 export const sendEmail = async (to: string, subject: string, text: string, html?: string) => {
     if (!apiKey) {
-        logger.warn('SendGrid API Key missing. Skipping email to:', to);
-        return;
+        throw new Error('SENDGRID_API_KEY is not configured.');
     }
 
     const msg = {
@@ -31,5 +30,6 @@ export const sendEmail = async (to: string, subject: string, text: string, html?
         if (error.response) {
             logger.error(error.response.body);
         }
+        throw error;
     }
 };

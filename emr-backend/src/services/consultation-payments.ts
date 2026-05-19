@@ -221,7 +221,7 @@ export async function completeTelehealthConsultationPayment(args: {
     }, { merge: true });
 
     if (existingPatientAppointment.empty) {
-        batch.set(patientAppointmentsRef.doc(), appointmentPayload);
+        batch.set(patientAppointmentsRef.doc(consultationId), appointmentPayload, { merge: true });
     } else {
         batch.set(existingPatientAppointment.docs[0].ref, {
             ...appointmentPayload,
